@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    <!-- Site Title -->
+    <title>Arquivo Mundial de Raspadinhas | Archivio Mondiale Gratta e Vinci</title>
+    
+    <!-- SEO Description (Bilingual) -->
+    <meta name="description" content="Catálogo digital para colecionadores de raspadinhas. Organize por jogo, número e estado com IA. | Archivio digitale per collezionisti di Gratta e Vinci." />
+    
+    <!-- Mobile Theme Color -->
+    <meta name="theme-color" content="#030712" />
+    
+    <!-- Favicon (Ticket Emoji) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎟️</text></svg>">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#fff1f2',
+                100: '#ffe4e6',
+                500: '#f43f5e',
+                600: '#e11d48',
+                900: '#881337',
+              },
+              gold: {
+                400: '#fbbf24',
+                500: '#f59e0b',
+              }
+            },
+            animation: {
+              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'fade-in': 'fadeIn 0.3s ease-out forwards',
+              'bounce-in': 'bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              bounceIn: {
+                '0%': { transform: 'scale(0.8)', opacity: '0' },
+                '100%': { transform: 'scale(1)', opacity: '1' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      /* Custom scrollbar for better aesthetics */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #111827; /* gray-900 */
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #374151; /* gray-700 */
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #4b5563; /* gray-600 */
+      }
+      
+      /* Smooth scrolling for the whole page */
+      html {
+        scroll-behavior: smooth;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
+    "uuid": "https://esm.sh/uuid@^13.0.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-gray-950 text-gray-100 font-sans antialiased overflow-hidden selection:bg-brand-500 selection:text-white">
+    <div id="root" class="h-screen w-screen flex flex-col"></div>
+  </body>
+</html>
