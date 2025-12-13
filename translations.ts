@@ -5,19 +5,22 @@ export const translations = {
   pt: {
     header: {
       title: "Arquivo Mundial",
-      subtitle: "de Raspadinhas",
+      subtitle: "de Raspadinhas & Lotarias",
       search: "Buscar...",
       admin: "Admin",
       logout: "Sair",
       new: "Nova",
       loginTitle: "Entrar como Admin",
       logoutTitle: "Sair do modo Administrador",
-      addTitle: "Adicionar Nova Raspadinha",
-      loginRequired: "Faça login para adicionar"
+      addTitle: "Adicionar Novo Item",
+      loginRequired: "Faça login para adicionar",
+      backup: "Backup",
+      backupTitle: "Baixar cópia de segurança dos dados (JSON)"
     },
     grid: {
       filters: "Filtros de Gestão",
       results: "resultados",
+      country: "País",
       state: "Estado",
       year: "Ano",
       size: "Tamanho",
@@ -29,21 +32,31 @@ export const translations = {
       clearFilters: "Limpar filtros",
       gameNo: "Jogo Nº",
       viewGrid: "Grade",
-      viewList: "Lista"
+      viewList: "Lista",
+      type: "Categoria",
+      allTypes: "Tudo",
+      scratchcard: "Raspadinhas",
+      lottery: "Lotarias"
+    },
+    stats: {
+      title: "Estatísticas do Arquivo",
+      distribution: "Distribuição por Continente",
+      totalRecords: "Total Geral de Registos",
+      liveUpdate: "Atualizado em Tempo Real"
     },
     upload: {
-      title: "Catalogar Raspadinha",
+      title: "Catalogar Item",
       reviewTitle: "Revisar Dados",
       errorImage: "Por favor, selecione apenas arquivos de imagem.",
       errorFront: "A imagem da FRENTE é obrigatória.",
       errorAnalyze: "Falha ao analisar. Tente novamente.",
       success: "Sucesso!",
-      saved: "Raspadinha arquivada.",
+      saved: "Item arquivado com sucesso.",
       clickDrag: "Clique ou arraste",
       front: "Frente (Obrigatório)",
       back: "Verso (Opcional)",
       aiTitle: "IA de Catalogação",
-      aiDesc: "O sistema irá identificar automaticamente o jogo, valores, estado, país e continente.",
+      aiDesc: "O sistema irá identificar se é Raspadinha ou Lotaria, além do país e dados técnicos.",
       isSeries: "É um SET (Série)?",
       gameName: "Nome do Jogo",
       country: "País",
@@ -51,7 +64,7 @@ export const translations = {
       state: "Estado (Manual)",
       customId: "ID Personalizado",
       collector: "Colecionador",
-      releaseDate: "Data Lançamento (Ano)",
+      releaseDate: "Data Lançamento / Sorteio",
       size: "Tamanho",
       price: "Preço Facial",
       emission: "Emissão / Tiragem",
@@ -62,7 +75,10 @@ export const translations = {
       analyze: "Processar Imagem",
       analyzing: "Analisando...",
       save: "Confirmar e Salvar",
-      saving: "Salvando..."
+      saving: "Salvando...",
+      category: "Categoria",
+      typeScratch: "Raspadinha",
+      typeLottery: "Lotaria"
     },
     viewer: {
       front: "FRENTE",
@@ -76,7 +92,7 @@ export const translations = {
       deleteConfirm: "Tem certeza que deseja excluir este registro permanentemente?",
       addedOn: "Adicionado em",
       adminMode: "Modo Admin",
-      gameNo: "Nº Jogo",
+      gameNo: "Nº Jogo/Sorteio",
       price: "Preço (Facial)",
       state: "Estado",
       size: "Tamanho",
@@ -84,13 +100,14 @@ export const translations = {
       emission: "Emissão",
       printer: "Impresso Por",
       values: "Valores / Prêmios",
-      close: "Fechar Visualização"
+      close: "Fechar Visualização",
+      category: "Tipo"
     },
     login: {
       title: "Área Administrativa",
       subtitle: "Identifique-se para gerir o arquivo.",
       errorEmpty: "Por favor, preencha todos os campos.",
-      errorInvalid: "Credenciais inválidas. Acesso restrito.",
+      errorInvalid: "Credenziali inválidas. Acesso restrito.",
       adminLabel: "Administrador",
       passLabel: "Palavra-passe",
       forgot: "Esqueceu a palavra-passe?",
@@ -99,7 +116,7 @@ export const translations = {
       restricted: "Acesso restrito a pessoal autorizado."
     },
     home: {
-      newArrivals: "Últimas Chegadas",
+      newArrivals: "Últimos Registos",
       explore: "Explorar os 5 Continentes",
       countriesIncluded: "Países incluídos nesta secção:",
       noCountries: "Nenhum país encontrado.",
@@ -109,19 +126,22 @@ export const translations = {
   it: {
     header: {
       title: "Archivio Mondiale",
-      subtitle: "di Gratta e Vinci",
+      subtitle: "di Gratta e Vinci & Lotterie",
       search: "Cerca...",
       admin: "Admin",
       logout: "Esci",
       new: "Nuovo",
       loginTitle: "Accedi come Admin",
       logoutTitle: "Esci dalla modalità Amministratore",
-      addTitle: "Aggiungi Nuovo Gratta e Vinci",
-      loginRequired: "Accedi per aggiungere"
+      addTitle: "Aggiungi Nuovo Oggetto",
+      loginRequired: "Accedi per aggiungere",
+      backup: "Backup",
+      backupTitle: "Scarica copia di backup dei dati (JSON)"
     },
     grid: {
       filters: "Filtri di Gestione",
       results: "risultati",
+      country: "Paese",
       state: "Stato",
       year: "Anno",
       size: "Dimensione",
@@ -133,21 +153,31 @@ export const translations = {
       clearFilters: "Pulisci filtri",
       gameNo: "Gioco N.",
       viewGrid: "Griglia",
-      viewList: "Lista"
+      viewList: "Lista",
+      type: "Categoria",
+      allTypes: "Tutto",
+      scratchcard: "Gratta e Vinci",
+      lottery: "Lotterie"
+    },
+    stats: {
+      title: "Statistiche dell'Archivio",
+      distribution: "Distribuzione per Continente",
+      totalRecords: "Totale Generale di Registrazioni",
+      liveUpdate: "Aggiornato in Tempo Reale"
     },
     upload: {
-      title: "Catalogare Gratta e Vinci",
+      title: "Catalogare Oggetto",
       reviewTitle: "Revisione Dati",
       errorImage: "Si prega di selezionare solo file immagine.",
       errorFront: "L'immagine FRONTE è obbligatoria.",
       errorAnalyze: "Errore durante l'analisi. Riprova.",
       success: "Successo!",
-      saved: "Gratta e Vinci archiviato.",
+      saved: "Oggetto archiviato con successo.",
       clickDrag: "Clicca o trascina",
       front: "Fronte (Obbligatorio)",
       back: "Retro (Opzionale)",
       aiTitle: "IA di Catalogazione",
-      aiDesc: "Il sistema identificherà automaticamente gioco, valori, stato, paese e continente.",
+      aiDesc: "Il sistema identificherà se è Gratta e Vinci o Lotteria, oltre a paese e dati.",
       isSeries: "È un SET (Serie)?",
       gameName: "Nome del Gioco",
       country: "Paese",
@@ -155,7 +185,7 @@ export const translations = {
       state: "Stato (Manuale)",
       customId: "ID Personalizzato",
       collector: "Collezionista",
-      releaseDate: "Data Rilascio (Anno)",
+      releaseDate: "Data Rilascio / Estrazione",
       size: "Dimensione",
       price: "Prezzo Facciale",
       emission: "Emissione / Tiratura",
@@ -166,7 +196,10 @@ export const translations = {
       analyze: "Elabora Immagine",
       analyzing: "Analisi in corso...",
       save: "Conferma e Salva",
-      saving: "Salvataggio..."
+      saving: "Salvataggio...",
+      category: "Categoria",
+      typeScratch: "Gratta e Vinci",
+      typeLottery: "Lotteria"
     },
     viewer: {
       front: "FRONTE",
@@ -174,13 +207,13 @@ export const translations = {
       cancel: "Annulla",
       save: "Salva",
       share: "Condividi",
-      copied: "Link Copiato!",
+      copied: "Link Copiado!",
       edit: "Correggi",
       delete: "Elimina",
       deleteConfirm: "Sei sicuro di voler eliminare questo record in modo permanente?",
       addedOn: "Aggiunto il",
       adminMode: "Modalità Admin",
-      gameNo: "N. Gioco",
+      gameNo: "N. Gioco/Estrazione",
       price: "Prezzo (Facciale)",
       state: "Condizione",
       size: "Dimensione",
@@ -188,7 +221,8 @@ export const translations = {
       emission: "Emissione",
       printer: "Stampato Da",
       values: "Valori / Premi",
-      close: "Chiudi Visualizzazione"
+      close: "Chiudi Visualizzazione",
+      category: "Tipo"
     },
     login: {
       title: "Area Amministrativa",
@@ -203,7 +237,7 @@ export const translations = {
       restricted: "Accesso limitato al personale autorizzato."
     },
     home: {
-      newArrivals: "Ultimi Arrivi",
+      newArrivals: "Ultimi Inserimenti",
       explore: "Esplora i 5 Continenti",
       countriesIncluded: "Paesi inclusi in questa sezione:",
       noCountries: "Nessun paese trovato.",

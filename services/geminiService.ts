@@ -16,7 +16,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
         }
       },
       {
-        text: "Analise esta imagem de raspadinha. Extraia: Nome do Jogo, Número do Jogo, Data/Ano, Tamanho estimado, Valores de prêmios, Estado (MINT, VOID, etc), País e Continente. Tente identificar o 'Preço Facial' (custo do bilhete, ex: 5€, $10) geralmente em destaque. Identifique também a 'Emissão' (tiragem) e 'Gráfica' (printer) se visível."
+        text: "Analise esta imagem de colecionismo. Primeiro, determine a CATEGORIA: É uma 'raspadinha' (tem área de látex para raspar, prémio instantâneo) ou uma 'lotaria' (bilhete de sorteio, totoloto, rifa nacional, sem área de raspar, com data de extração/draw date)? Extraia: Nome do Jogo/Lotaria, Número do Jogo/Sorteio, Data/Ano (Draw Date), Tamanho estimado, Valores de prêmios (se visível), Estado (MINT, VOID, etc), País e Continente. Identifique o 'Preço Facial'. Identifique 'Emissão' e 'Gráfica' se visível."
       }
     ];
 
@@ -44,8 +44,13 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
         responseSchema: {
           type: Type.OBJECT,
           properties: {
+            category: {
+              type: Type.STRING,
+              enum: ["raspadinha", "lotaria"],
+              description: "Tipo de item: raspadinha (instantâneo) ou lotaria (sorteio)"
+            },
             gameName: { type: Type.STRING, description: "Nome principal impresso no bilhete" },
-            gameNumber: { type: Type.STRING, description: "Número de série ou código do jogo (ex: 005)" },
+            gameNumber: { type: Type.STRING, description: "Número de série, código do jogo ou número do sorteio (Draw No)" },
             releaseDate: { type: Type.STRING, description: "Data no formato YYYY-MM-DD ou apenas Ano" },
             size: { type: Type.STRING, description: "Estimativa de tamanho (ex: 10x5cm)" },
             values: { type: Type.STRING, description: "Lista de valores monetários impressos na frente" },
@@ -64,7 +69,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
             emission: { type: Type.STRING, description: "Emissão ou tiragem total (ex: 500.000 un)" },
             printer: { type: Type.STRING, description: "Empresa que imprimiu (ex: Scientific Games, Pollard)" }
           },
-          required: ["gameName", "gameNumber", "size", "values", "state", "country", "continent"]
+          required: ["category", "gameName", "gameNumber", "size", "values", "state", "country", "continent"]
         }
       }
     });
@@ -78,6 +83,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     console.error("Erro ao analisar raspadinha com Gemini:", error);
     // Fallback in case of error
     return {
+      category: "raspadinha",
       gameName: "Desconhecido",
       gameNumber: "???",
       releaseDate: new Date().toISOString().split('T')[0],

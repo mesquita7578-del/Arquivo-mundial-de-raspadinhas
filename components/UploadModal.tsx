@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
-import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins } from 'lucide-react';
 import { analyzeImage } from '../services/geminiService';
-import { ScratchcardData, ScratchcardState, Continent } from '../types';
+import { ScratchcardData, ScratchcardState, Continent, Category } from '../types';
 
 interface UploadModalProps {
   onClose: () => void;
   onUploadComplete: (image: ScratchcardData) => void;
+  existingImages?: ScratchcardData[];
+  initialFile?: File | null;
   t: any;
 }
 
-export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadComplete, t }) => {
+export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadComplete, existingImages = [], initialFile, t }) => {
   const [step, setStep] = useState<'upload' | 'review'>('upload');
   
   const [frontFile, setFrontFile] = useState<File | null>(null);
@@ -23,6 +25,13 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
   
   // Form data for review step
   const [formData, setFormData] = useState<ScratchcardData | null>(null);
+
+  // Handle Initial File from Drag and Drop
+  useEffect(() => {
+    if (initialFile) {
+      processFile(initialFile, true);
+    }
+  }, [initialFile]);
 
   const processFile = (file: File, isFront: boolean) => {
     if (!file.type.startsWith('image/')) {
@@ -44,9 +53,76 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     reader.readAsDataURL(file);
   };
 
-  const generateCustomId = () => {
-    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    return `RASP-${random}`;
+  // Helper to map Country Names to 2 Letter codes
+  const getCountryCode = (countryName: string): string => {
+    const name = countryName.toLowerCase().trim();
+    
+    const map: Record<string, string> = {
+      'portugal': 'PT',
+      'italia': 'IT',
+      'itália': 'IT',
+      'italy': 'IT',
+      'espanha': 'ES',
+      'spain': 'ES',
+      'españa': 'ES',
+      'usa': 'US',
+      'eua': 'US',
+      'united states': 'US',
+      'frança': 'FR',
+      'france': 'FR',
+      'franca': 'FR',
+      'alemanha': 'DE',
+      'germany': 'DE',
+      'reino unido': 'UK',
+      'uk': 'UK',
+      'england': 'UK',
+      'inglaterra': 'UK',
+      'brasil': 'BR',
+      'brazil': 'BR',
+      'japao': 'JP',
+      'japão': 'JP',
+      'japan': 'JP',
+      'china': 'CN',
+      'belgica': 'BE',
+      'belgium': 'BE',
+      'bélgica': 'BE',
+      'suica': 'CH',
+      'suíça': 'CH',
+      'switzerland': 'CH',
+      'singapore': 'SG',
+      'singapura': 'SG'
+    };
+
+    if (map[name]) return map[name];
+
+    // Fallback: First 2 letters uppercase
+    return countryName.substring(0, 2).toUpperCase();
+  };
+
+  // Helper to generate next ID in sequence
+  const generateNextId = (country: string): string => {
+    const code = getCountryCode(country);
+    const prefix = `${code}-`;
+    
+    let maxNum = 0;
+
+    existingImages.forEach(img => {
+      if (img.customId && img.customId.startsWith(prefix)) {
+        // Extract the number part
+        const parts = img.customId.split('-');
+        if (parts.length >= 2) {
+          // Remove non-numeric characters just in case
+          const numStr = parts[parts.length - 1].replace(/[^0-9]/g, '');
+          const num = parseInt(numStr, 10);
+          if (!isNaN(num) && num > maxNum) {
+            maxNum = num;
+          }
+        }
+      }
+    });
+
+    const nextNum = (maxNum + 1).toString().padStart(6, '0');
+    return `${prefix}${nextNum}`;
   };
 
   const handleAnalyze = async () => {
@@ -62,9 +138,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       
       const analysis = await analyzeImage(frontBase64, backBase64, frontFile.type);
 
+      // Generate Smart ID
+      const smartId = generateNextId(analysis.country);
+
       const newCard: ScratchcardData = {
         id: Math.random().toString(36).substr(2, 9),
-        customId: generateCustomId(),
+        customId: smartId, // Use the smart ID
         frontUrl: frontPreview,
         backUrl: backPreview || undefined,
         gameName: analysis.gameName,
@@ -80,6 +159,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
         emission: analysis.emission || '', // New field
         printer: analysis.printer || '', // New field
         isSeries: false, // Default false
+        category: analysis.category || 'raspadinha', // AI detected category
         createdAt: Date.now(),
         aiGenerated: true
       };
@@ -108,6 +188,14 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
   const updateField = (field: keyof ScratchcardData, value: string | boolean) => {
     if (formData) {
       setFormData({ ...formData, [field]: value });
+    }
+  };
+
+  // Function to regenerate ID manually if user changes country
+  const regenerateId = () => {
+    if (formData && formData.country) {
+      const newId = generateNextId(formData.country);
+      updateField('customId', newId);
     }
   };
 
@@ -208,7 +296,28 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                   </div>
                 )}
                 
-                {/* Checkbox Series - Moved to left column or below images */}
+                {/* Category Selector */}
+                <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+                  <label className="block text-xs text-gray-500 font-bold mb-2 uppercase">{t.category}</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => updateField('category', 'raspadinha')}
+                      className={`flex flex-col items-center justify-center p-2 rounded border transition-all ${formData?.category === 'raspadinha' ? 'bg-brand-600 border-brand-500 text-white' : 'bg-gray-800 border-gray-600 text-gray-400 hover:bg-gray-700'}`}
+                    >
+                      <Coins className="w-4 h-4 mb-1" />
+                      <span className="text-[10px] font-bold">{t.typeScratch}</span>
+                    </button>
+                    <button
+                      onClick={() => updateField('category', 'lotaria')}
+                      className={`flex flex-col items-center justify-center p-2 rounded border transition-all ${formData?.category === 'lotaria' ? 'bg-purple-600 border-purple-500 text-white' : 'bg-gray-800 border-gray-600 text-gray-400 hover:bg-gray-700'}`}
+                    >
+                      <Ticket className="w-4 h-4 mb-1" />
+                      <span className="text-[10px] font-bold">{t.typeLottery}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Checkbox Series */}
                  <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700 flex items-center gap-3">
                    <div 
                      className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-colors ${formData?.isSeries ? 'bg-brand-500 border-brand-500' : 'border-gray-500 hover:border-gray-400'}`}
@@ -240,12 +349,22 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    
                    <div>
                      <label className="block text-xs text-gray-500 font-bold mb-1">{t.country}</label>
-                     <input 
-                       type="text" 
-                       value={formData?.country || ''}
-                       onChange={e => updateField('country', e.target.value)}
-                       className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 focus:outline-none"
-                     />
+                     <div className="relative">
+                       <input 
+                         type="text" 
+                         value={formData?.country || ''}
+                         onChange={e => updateField('country', e.target.value)}
+                         className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 focus:outline-none pr-8"
+                       />
+                       {/* Button to regenerate ID if country changes manually */}
+                       <button 
+                         onClick={regenerateId}
+                         className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-brand-400 transition-colors"
+                         title="Regenerar ID com base neste país"
+                       >
+                         <RefreshCw className="w-4 h-4" />
+                       </button>
+                     </div>
                    </div>
 
                    <div>

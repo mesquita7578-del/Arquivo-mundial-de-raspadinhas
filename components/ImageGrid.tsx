@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { ScratchcardData, ScratchcardState } from '../types';
-import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search } from 'lucide-react';
+import { ScratchcardData, ScratchcardState, Category } from '../types';
+import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins } from 'lucide-react';
 
 interface ImageGridProps {
   images: ScratchcardData[];
@@ -28,7 +28,11 @@ const StateBadge: React.FC<{ state: string }> = ({ state }) => {
 };
 
 export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hideFilters = false, viewMode = 'grid', isAdmin = false, t }) => {
+  // Category Filter (Always visible even if hideFilters is true, usually handled by parent but we add local toggle)
+  const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
+
   // Manual text filters
+  const [filterCountry, setFilterCountry] = useState<string>('');
   const [filterState, setFilterState] = useState<string>('');
   const [filterYear, setFilterYear] = useState<string>('');
   const [filterSize, setFilterSize] = useState<string>('');
@@ -39,7 +43,15 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
   // Apply filters
   const filteredImages = useMemo(() => {
     return images.filter(img => {
+      // Filter by Category
+      if (activeCategory !== 'all') {
+         // Handle legacy data where category might be undefined (assume raspadinha)
+         const cat = img.category || 'raspadinha';
+         if (cat !== activeCategory) return false;
+      }
+
       // Case insensitive partial matching
+      if (filterCountry && !img.country.toLowerCase().includes(filterCountry.toLowerCase())) return false;
       if (filterState && !img.state.toLowerCase().includes(filterState.toLowerCase())) return false;
       if (filterYear && !img.releaseDate.includes(filterYear)) return false;
       if (filterSize && !img.size.toLowerCase().includes(filterSize.toLowerCase())) return false;
@@ -49,9 +61,10 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
       
       return true;
     });
-  }, [images, filterState, filterYear, filterSize, filterEmission, filterPrinter, filterSeries]);
+  }, [images, activeCategory, filterCountry, filterState, filterYear, filterSize, filterEmission, filterPrinter, filterSeries]);
 
   const clearFilters = () => {
+    setFilterCountry('');
     setFilterState('');
     setFilterYear('');
     setFilterSize('');
@@ -60,11 +73,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
     setFilterSeries(false);
   };
 
-  const hasFilters = filterState || filterYear || filterSize || filterEmission || filterPrinter || filterSeries;
-
-  if (images.length === 0 && hideFilters) {
-     return null;
-  }
+  const hasFilters = filterCountry || filterState || filterYear || filterSize || filterEmission || filterPrinter || filterSeries;
 
   const InputFilter = ({ 
     value, 
@@ -91,6 +100,33 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
 
   return (
     <div className="flex flex-col h-full">
+      
+      {/* Category Tabs (Visible above filters) */}
+      {!hideFilters && (
+        <div className="px-6 pt-2 pb-2 flex gap-2 border-b border-gray-800/50 bg-gray-900/30">
+          <button
+             onClick={() => setActiveCategory('all')}
+             className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${activeCategory === 'all' ? 'bg-gray-700 text-white border-gray-600' : 'text-gray-500 border-transparent hover:text-white'}`}
+          >
+            {t.allTypes}
+          </button>
+          <button
+             onClick={() => setActiveCategory('raspadinha')}
+             className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border flex items-center gap-2 ${activeCategory === 'raspadinha' ? 'bg-brand-600 text-white border-brand-500' : 'text-gray-500 border-transparent hover:text-white'}`}
+          >
+            <Coins className="w-3 h-3" />
+            {t.scratchcard}
+          </button>
+          <button
+             onClick={() => setActiveCategory('lotaria')}
+             className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border flex items-center gap-2 ${activeCategory === 'lotaria' ? 'bg-purple-600 text-white border-purple-500' : 'text-gray-500 border-transparent hover:text-white'}`}
+          >
+            <Ticket className="w-3 h-3" />
+            {t.lottery}
+          </button>
+        </div>
+      )}
+
       {/* Filter Bar - Restricted to ADMIN only */}
       {!hideFilters && isAdmin && (
         <div className="px-6 py-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm z-10 sticky top-0 space-y-3 animate-fade-in">
@@ -106,6 +142,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
           </div>
 
           <div className="flex flex-wrap gap-2">
+            <InputFilter value={filterCountry} onChange={setFilterCountry} placeholder={t.country} icon={Globe} />
             <InputFilter value={filterState} onChange={setFilterState} placeholder={t.state} icon={Search} />
             <InputFilter value={filterYear} onChange={setFilterYear} placeholder={t.year} icon={Calendar} />
             <InputFilter value={filterSize} onChange={setFilterSize} placeholder={t.size} icon={Maximize2} />
@@ -163,6 +200,11 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono text-gray-500 bg-gray-800 px-1.5 rounded">{item.customId}</span>
                     <h3 className="font-bold text-gray-200 truncate">{item.gameName}</h3>
+                    {item.category === 'lotaria' ? (
+                      <Ticket className="w-3 h-3 text-purple-400" title={t.lottery} />
+                    ) : (
+                      <Coins className="w-3 h-3 text-brand-400" title={t.scratchcard} />
+                    )}
                     {item.isSeries && (
                       <span title={t.series}>
                         <Layers className="w-3 h-3 text-brand-500" />
@@ -222,8 +264,9 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
                   </div>
                   
                   {/* ID Badge */}
-                  <div className="absolute top-2 left-2 bg-black/70 backdrop-blur text-white text-[10px] font-mono px-2 py-1 rounded border border-gray-700 shadow-sm">
-                    {item.customId}
+                  <div className="absolute top-2 left-2 bg-black/70 backdrop-blur text-white text-[10px] font-mono px-2 py-1 rounded border border-gray-700 shadow-sm flex items-center gap-1">
+                     {item.category === 'lotaria' && <Ticket className="w-3 h-3 text-purple-400" />}
+                     {item.customId}
                   </div>
 
                    <div className="absolute top-2 right-2 flex gap-1">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Upload, Ticket, Lock, LogOut } from 'lucide-react';
+import { Search, Upload, Ticket, Lock, LogOut, Download } from 'lucide-react';
 import { Language } from '../translations';
 
 interface HeaderProps {
@@ -9,6 +9,7 @@ interface HeaderProps {
   isAdmin: boolean;
   onAdminToggle: () => void;
   onLogout: () => void;
+  onExport: () => void;
   language: Language;
   setLanguage: (lang: Language) => void;
   t: any;
@@ -21,6 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
   isAdmin, 
   onAdminToggle, 
   onLogout,
+  onExport,
   language,
   setLanguage,
   t
@@ -96,14 +98,25 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Admin Controls */}
         {isAdmin ? (
-          <button
-            onClick={onLogout}
-            className="flex items-center gap-2 bg-red-900/30 hover:bg-red-600 text-red-400 hover:text-white border border-red-800 hover:border-red-500 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-300"
-            title={t.logoutTitle}
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">{t.logout}</span>
-          </button>
+          <>
+            <button
+              onClick={onExport}
+              className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700 px-3 py-2 rounded-full text-xs sm:text-sm font-medium transition-all"
+              title={t.backupTitle}
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden lg:inline">{t.backup}</span>
+            </button>
+
+            <button
+              onClick={onLogout}
+              className="flex items-center gap-2 bg-red-900/30 hover:bg-red-600 text-red-400 hover:text-white border border-red-800 hover:border-red-500 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-300"
+              title={t.logoutTitle}
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">{t.logout}</span>
+            </button>
+          </>
         ) : (
           <button
             onClick={onAdminToggle}

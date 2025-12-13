@@ -3,6 +3,8 @@ export type ScratchcardState = 'AMOSTRA' | 'VOID' | 'MUESTRA' | 'CAMPIONE' | 'MI
 
 export type Continent = 'Europa' | 'América' | 'Ásia' | 'África' | 'Oceania' | 'Mundo';
 
+export type Category = 'raspadinha' | 'lotaria';
+
 export interface ScratchcardData {
   id: string; // Internal unique ID
   customId: string; // "ID feita por ti" (e.g. CAT-001)
@@ -23,6 +25,8 @@ export interface ScratchcardData {
   emission?: string; // Emissão / Tiragem
   printer?: string; // Impresso por (Gráfica)
   isSeries?: boolean; // É um SET / Série?
+  
+  category: Category; // Nova distinção: Raspadinha vs Lotaria
 
   aiGenerated: boolean;
   createdAt: number;
@@ -40,4 +44,5 @@ export interface AnalysisResult {
   continent: Continent;
   emission?: string;
   printer?: string;
+  category: Category;
 }

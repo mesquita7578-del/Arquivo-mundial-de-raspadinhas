@@ -4,13 +4,15 @@ import { ImageGrid } from './components/ImageGrid';
 import { UploadModal } from './components/UploadModal';
 import { ImageViewer } from './components/ImageViewer';
 import { LoginModal } from './components/LoginModal';
+import { StatsSection } from './components/StatsSection'; // Nova importação
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent } from './types';
-import { Globe, Clock, Map, LayoutGrid, List } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud } from 'lucide-react';
 import { translations, Language } from './translations';
 
 // Lista de administradores autorizados (Case insensitive na verificação)
-const AUTHORIZED_ADMINS = ["JORGE MESQUITA", "FABIO PAGNI"];
+// Adicionada "CHLOE" como homenagem
+const AUTHORIZED_ADMINS = ["JORGE MESQUITA", "FABIO PAGNI", "CHLOE"];
 // Senha padrão para demonstração
 const ADMIN_PASSWORD = "123456";
 
@@ -35,6 +37,10 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeContinent, setActiveContinent] = useState<Continent | 'Mundo'>('Mundo');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  
+  // Drag and Drop state
+  const [isDragging, setIsDragging] = useState(false);
+  const [droppedFile, setDroppedFile] = useState<File | null>(null);
   
   // Language State
   const [language, setLanguage] = useState<Language>('pt');
@@ -88,6 +94,7 @@ function App() {
 
   const handleUploadComplete = (newImage: ScratchcardData) => {
     setImages(prev => [newImage, ...prev]);
+    setDroppedFile(null); // Reset dropped file after upload
   };
 
   const handleUpdateImage = (updatedImage: ScratchcardData) => {
@@ -127,13 +134,72 @@ function App() {
       alert(t.home.restrictedAccess);
       return;
     }
+    setDroppedFile(null);
     setIsUploadModalOpen(true);
+  };
+
+  const handleExportData = () => {
+    const dataStr = JSON.stringify(images, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `raspadinhas-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Drag and Drop Handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set false if leaving the window (relatedTarget is null or HTML)
+    if (!e.relatedTarget || (e.relatedTarget as HTMLElement).nodeName === 'HTML') {
+       setIsDragging(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      
+      // Check if image
+      if (!file.type.startsWith('image/')) {
+        alert(t.upload.errorImage);
+        return;
+      }
+
+      // Check admin
+      if (!isAdmin) {
+        alert(t.home.restrictedAccess);
+        return;
+      }
+
+      setDroppedFile(file);
+      setIsUploadModalOpen(true);
+    }
   };
 
   const continents: (Continent | 'Mundo')[] = ['Mundo', 'Europa', 'América', 'Ásia', 'África', 'Oceania'];
 
   return (
-    <div className="flex flex-col h-full bg-gray-950 text-gray-100">
+    <div 
+      className="flex flex-col h-full bg-gray-950 text-gray-100 relative"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <Header 
         searchTerm={searchTerm}
         onSearch={setSearchTerm}
@@ -141,10 +207,22 @@ function App() {
         isAdmin={isAdmin}
         onAdminToggle={handleAdminToggle}
         onLogout={handleLogout}
+        onExport={handleExportData}
         language={language}
         setLanguage={setLanguage}
         t={t.header}
       />
+
+      {/* Drag & Drop Overlay */}
+      {isDragging && (
+        <div className="absolute inset-0 z-50 bg-brand-600/90 backdrop-blur-md flex flex-col items-center justify-center animate-fade-in border-8 border-brand-400 border-dashed m-4 rounded-3xl pointer-events-none">
+           <div className="bg-white p-6 rounded-full shadow-2xl mb-6 animate-bounce">
+             <UploadCloud className="w-16 h-16 text-brand-600" />
+           </div>
+           <h2 className="text-4xl font-bold text-white tracking-tight">{t.upload.clickDrag}</h2>
+           <p className="text-brand-100 mt-2 text-lg">{t.upload.aiDesc}</p>
+        </div>
+      )}
 
       <main className="flex-1 overflow-y-auto relative scroll-smooth">
         
@@ -242,6 +320,9 @@ function App() {
             </div>
           </section>
 
+          {/* New Stats Section - Footer of content */}
+          <StatsSection images={images} t={t.stats} />
+
         </div>
       </main>
 
@@ -256,8 +337,13 @@ function App() {
 
       {isUploadModalOpen && (
         <UploadModal 
-          onClose={() => setIsUploadModalOpen(false)}
+          onClose={() => {
+            setIsUploadModalOpen(false);
+            setDroppedFile(null);
+          }}
           onUploadComplete={handleUploadComplete}
+          existingImages={images}
+          initialFile={droppedFile}
           t={t.upload}
         />
       )}
