@@ -13,6 +13,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
   const [activeTab, setActiveTab] = useState<'articles' | 'documents'>('articles');
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<DocumentItem | null>(null);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null); // New state for Blob URL
   const [isUploading, setIsUploading] = useState(false);
   const [docTitle, setDocTitle] = useState('');
   
@@ -20,6 +21,34 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
   useEffect(() => {
     loadDocuments();
   }, []);
+
+  // Handle PDF Blob creation when a document is selected
+  useEffect(() => {
+    if (selectedDoc && selectedDoc.fileUrl) {
+      try {
+        // Convert Base64 string to Blob to fix iframe rendering issues in modern browsers
+        const base64Part = selectedDoc.fileUrl.split(',')[1] || selectedDoc.fileUrl;
+        const binaryString = window.atob(base64Part);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        setPdfBlobUrl(url);
+
+        // Cleanup function to revoke URL when closing/switching
+        return () => {
+          URL.revokeObjectURL(url);
+          setPdfBlobUrl(null);
+        };
+      } catch (e) {
+        console.error("Erro ao processar PDF:", e);
+        alert("Erro ao abrir o ficheiro PDF.");
+      }
+    }
+  }, [selectedDoc]);
 
   const loadDocuments = async () => {
     try {
@@ -150,12 +179,19 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
                  </button>
                  <span className="text-white font-bold truncate">{selectedDoc.title}</span>
                </div>
-               <div className="flex-1 bg-gray-800">
-                 <iframe 
-                   src={selectedDoc.fileUrl} 
-                   className="w-full h-full border-none"
-                   title="PDF Viewer"
-                 />
+               <div className="flex-1 bg-gray-800 relative">
+                 {pdfBlobUrl ? (
+                   <iframe 
+                     src={pdfBlobUrl} 
+                     className="w-full h-full border-none"
+                     title="PDF Viewer"
+                     type="application/pdf"
+                   />
+                 ) : (
+                   <div className="flex items-center justify-center h-full">
+                     <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
+                   </div>
+                 )}
                </div>
              </div>
            ) : (
