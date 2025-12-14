@@ -218,13 +218,18 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
                     <span className="text-xs font-mono text-gray-500 bg-gray-800 px-1.5 rounded">{item.customId}</span>
                     <h3 className="font-bold text-gray-200 truncate">{item.gameName}</h3>
                     {item.category === 'lotaria' ? (
-                      <Ticket className="w-3 h-3 text-purple-400" title={t.lottery} />
+                      <div title={t.lottery}>
+                        <Ticket className="w-3 h-3 text-purple-400" />
+                      </div>
                     ) : (
-                      <Coins className="w-3 h-3 text-brand-400" title={t.scratchcard} />
+                      <div title={t.scratchcard}>
+                        <Coins className="w-3 h-3 text-brand-400" />
+                      </div>
                     )}
                     {item.isSeries && (
-                      <span title={t.series}>
+                      <span title={t.series} className="flex items-center gap-1 bg-brand-900/20 px-1.5 py-0.5 rounded border border-brand-900/30">
                         <Layers className="w-3 h-3 text-brand-500" />
+                        {item.seriesDetails && <span className="text-[10px] text-brand-400 font-medium">{item.seriesDetails}</span>}
                       </span>
                     )}
                   </div>
@@ -286,10 +291,11 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
                      {item.customId}
                   </div>
 
-                   <div className="absolute top-2 right-2 flex gap-1">
+                   <div className="absolute top-2 right-2 flex gap-1 items-start">
                       {item.isSeries && (
-                        <div className="bg-brand-600/90 backdrop-blur text-white p-1 rounded-full shadow-sm" title={t.series}>
+                        <div className={`backdrop-blur text-white rounded-lg shadow-sm flex items-center justify-center gap-1 ${item.seriesDetails ? 'bg-brand-600/90 px-1.5 py-0.5' : 'bg-brand-600/90 p-1 rounded-full'}`} title={t.series}>
                           <Layers className="w-3 h-3" />
+                          {item.seriesDetails && <span className="text-[10px] font-bold leading-none">{item.seriesDetails}</span>}
                         </div>
                       )}
                       {item.backUrl && (

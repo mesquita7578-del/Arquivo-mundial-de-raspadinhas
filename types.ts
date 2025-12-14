@@ -5,6 +5,8 @@ export type Continent = 'Europa' | 'América' | 'Ásia' | 'África' | 'Oceania' 
 
 export type Category = 'raspadinha' | 'lotaria';
 
+export type LineType = 'blue' | 'red' | 'multicolor' | 'none';
+
 export interface ScratchcardData {
   id: string; // Internal unique ID
   customId: string; // "ID feita por ti" (e.g. CAT-001)
@@ -14,7 +16,7 @@ export interface ScratchcardData {
   gameNumber: string; // Nº de jogo
   releaseDate: string; // Data de lançamento
   size: string; // Tamanho
-  values: string; // Todos os valores
+  values: string; // Renomeado na interface para "Nota", mantemos a chave 'values' para compatibilidade
   price?: string; // Preço Facial (Novo campo)
   state: ScratchcardState; // Estado
   country: string; // País de origem
@@ -26,6 +28,7 @@ export interface ScratchcardData {
   printer?: string; // Impresso por (Gráfica)
   isSeries?: boolean; // É um SET / Série?
   seriesDetails?: string; // Detalhes manuais do SET (ex: "1-10" ou "5/12")
+  lines?: LineType; // Tipo de Linhas (Azul, Vermelha, Multicolor, Sem)
   
   category: Category; // Nova distinção: Raspadinha vs Lotaria
 

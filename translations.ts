@@ -77,7 +77,13 @@ export const translations = {
       price: "Preço Facial",
       emission: "Emissão / Tiragem",
       printer: "Impresso Por",
-      values: "Valores / Prêmios",
+      values: "Nota", // Changed from Valores / Prêmios
+      lines: "Tipo de Linhas", // New
+      linesPlaceholder: "Selecione as linhas...",
+      linesBlue: "Linhas Azuis",
+      linesRed: "Linhas Vermelhas",
+      linesMulti: "Linhas Multicolor",
+      linesNone: "Sem Linhas",
       cancel: "Cancelar",
       backBtn: "Voltar",
       analyze: "Processar Imagem",
@@ -107,10 +113,16 @@ export const translations = {
       release: "Lançamento",
       emission: "Emissão",
       printer: "Impresso Por",
-      values: "Valores / Prêmios",
+      values: "Nota", // Changed
+      lines: "Linhas", // New
+      linesBlue: "Azuis",
+      linesRed: "Vermelhas",
+      linesMulti: "Multicolor",
+      linesNone: "Sem Linhas",
       close: "Fechar Visualização",
       category: "Tipo",
-      collector: "Colecionador"
+      collector: "Colecionador",
+      seriesDetailsPlaceholder: "Nºs (ex: 1-5)"
     },
     login: {
       title: "Área Administrativa",
@@ -207,7 +219,13 @@ export const translations = {
       price: "Prezzo Facciale",
       emission: "Emissione / Tiratura",
       printer: "Stampato Da",
-      values: "Valori / Premi",
+      values: "Nota", // Changed
+      lines: "Tipo di Linee", // New
+      linesPlaceholder: "Seleziona le linee...",
+      linesBlue: "Linee Blu",
+      linesRed: "Linee Rosse",
+      linesMulti: "Linee Multicolor",
+      linesNone: "Senza Linee",
       cancel: "Annulla",
       backBtn: "Indietro",
       analyze: "Elabora Immagine",
@@ -237,10 +255,16 @@ export const translations = {
       release: "Rilascio",
       emission: "Emissione",
       printer: "Stampato Da",
-      values: "Valori / Premi",
+      values: "Nota", // Changed
+      lines: "Linee", // New
+      linesBlue: "Blu",
+      linesRed: "Rosse",
+      linesMulti: "Multicolor",
+      linesNone: "Senza Linee",
       close: "Chiudi Visualizzazione",
       category: "Tipo",
-      collector: "Collezionista"
+      collector: "Collezionista",
+      seriesDetailsPlaceholder: "N. (es: 1-5)"
     },
     login: {
       title: "Area Amministrativa",

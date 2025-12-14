@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins } from 'lucide-react';
-import { ScratchcardData, ScratchcardState, Category } from '../types';
+import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify } from 'lucide-react';
+import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
 
 interface ImageViewerProps {
   image: ScratchcardData | null;
@@ -66,6 +66,25 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   const getCategoryLabel = (cat: Category | undefined) => {
      if (cat === 'lotaria') return t.category + ": Lotaria";
      return t.category + ": Raspadinha";
+  };
+  
+  const getLineLabel = (line: LineType | undefined) => {
+     switch(line) {
+         case 'blue': return t.linesBlue;
+         case 'red': return t.linesRed;
+         case 'multicolor': return t.linesMulti;
+         case 'none': return t.linesNone;
+         default: return t.linesNone;
+     }
+  };
+  
+  const getLineColor = (line: LineType | undefined) => {
+      switch(line) {
+         case 'blue': return 'text-blue-400 border-blue-500/30 bg-blue-500/10';
+         case 'red': return 'text-red-400 border-red-500/30 bg-red-500/10';
+         case 'multicolor': return 'text-purple-400 border-purple-500/30 bg-purple-500/10';
+         default: return 'text-gray-400 border-gray-700 bg-gray-800';
+     }
   };
 
   return (
@@ -267,7 +286,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                          type="text" 
                          value={formData.seriesDetails || ''}
                          onChange={(e) => handleChange('seriesDetails', e.target.value)}
-                         placeholder="Ex: 1-10 ou 1/5 (Detalhes da Série)"
+                         placeholder={t.seriesDetailsPlaceholder}
                          className="w-full bg-gray-900 border border-gray-600 text-gray-200 text-xs rounded px-2 py-1.5 focus:border-brand-500 outline-none placeholder-gray-500"
                        />
                      </div>
@@ -428,12 +447,35 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                     <p className="text-gray-200 text-sm">{image.printer || 'Desconhecido'}</p>
                   )}
                 </div>
+
+                {/* Lines Field (New) */}
+                <div className="bg-gray-800/40 p-3 rounded-lg border border-gray-800 col-span-2 sm:col-span-1">
+                   <span className="flex items-center gap-2 text-xs uppercase text-gray-500 mb-1">
+                      <AlignJustify className="w-3 h-3" /> {t.lines}
+                   </span>
+                   {isEditing ? (
+                      <select
+                        value={formData.lines || 'none'}
+                        onChange={(e) => handleChange('lines', e.target.value as LineType)}
+                        className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-sm rounded px-2 py-1 focus:border-brand-500 outline-none appearance-none cursor-pointer"
+                      >
+                        <option value="none">{t.linesNone}</option>
+                        <option value="blue">{t.linesBlue}</option>
+                        <option value="red">{t.linesRed}</option>
+                        <option value="multicolor">{t.linesMulti}</option>
+                      </select>
+                   ) : (
+                      <span className={`px-2 py-0.5 rounded text-xs font-bold border ${getLineColor(image.lines)}`}>
+                         {getLineLabel(image.lines)}
+                      </span>
+                   )}
+                </div>
               </div>
 
               {/* Full width properties */}
               <div className="bg-gray-800/40 p-4 rounded-lg border border-gray-800 mt-4">
                 <span className="flex items-center gap-2 text-xs uppercase text-gray-500 mb-2">
-                  <DollarSign className="w-3 h-3" /> {t.values}
+                  <Info className="w-3 h-3" /> {t.values}
                 </span>
                 {isEditing ? (
                   <textarea 
@@ -442,8 +484,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                     className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-sm rounded px-2 py-2 focus:border-brand-500 outline-none min-h-[80px]"
                   />
                 ) : (
-                  <p className="text-gray-300 text-sm leading-relaxed">
-                    {image.values}
+                  <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
+                    {image.values || 'Nenhuma nota adicionada.'}
                   </p>
                 )}
               </div>

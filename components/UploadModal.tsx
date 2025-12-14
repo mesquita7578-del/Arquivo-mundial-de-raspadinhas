@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe } from 'lucide-react';
+import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify } from 'lucide-react';
 import { analyzeImage, searchScratchcardInfo } from '../services/geminiService';
-import { ScratchcardData, ScratchcardState, Continent, Category } from '../types';
+import { ScratchcardData, ScratchcardState, Continent, Category, LineType } from '../types';
 
 interface UploadModalProps {
   onClose: () => void;
@@ -172,6 +172,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       printer: analysis.printer || '',
       isSeries: false,
       seriesDetails: '',
+      lines: 'none', // Default to none or undefined
       category: analysis.category || 'raspadinha',
       createdAt: Date.now(),
       aiGenerated: true
@@ -608,6 +609,24 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                          className="w-full bg-gray-800 border border-gray-700 rounded pl-8 pr-3 py-2 text-white focus:border-brand-500 focus:outline-none"
                        />
                      </div>
+                   </div>
+
+                   {/* Line Type Selector */}
+                   <div className="col-span-2">
+                      <label className="block text-xs text-gray-500 font-bold mb-1">{t.lines}</label>
+                      <div className="relative">
+                        <AlignJustify className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500" />
+                        <select
+                          value={formData?.lines || 'none'}
+                          onChange={(e) => updateField('lines', e.target.value as LineType)}
+                          className="w-full bg-gray-800 border border-gray-700 rounded pl-8 pr-3 py-2 text-white focus:border-brand-500 focus:outline-none appearance-none cursor-pointer"
+                        >
+                          <option value="none">{t.linesNone}</option>
+                          <option value="blue">{t.linesBlue}</option>
+                          <option value="red">{t.linesRed}</option>
+                          <option value="multicolor">{t.linesMulti}</option>
+                        </select>
+                      </div>
                    </div>
                    
                    <div className="col-span-2">
