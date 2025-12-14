@@ -8,7 +8,7 @@ import { StatsSection } from './components/StatsSection';
 import { WorldMap } from './components/WorldMap';
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
@@ -23,12 +23,6 @@ function App() {
   
   // We need a separate state for "All Images" for the map visualization because the map needs
   // to show the global distribution, not just the paginated current page.
-  // However, for performance with 20k items, we might need a dedicated "getMapData" method in storageService later.
-  // For now, we will use the current loaded batch OR perform a lightweight fetch if needed, 
-  // but to keep it simple we will assume map visualizes the `displayedImages` if filtered, 
-  // or we might need to fetch all minimal data (just country info).
-  // Strategy: For this implementation, the map will visualize the "Search Results" or "Current Batch".
-  // Ideal: Map visualizes everything. Let's add `allItemsForMap` which fetches only country data.
   const [mapData, setMapData] = useState<ScratchcardData[]>([]);
   
   const [isLoadingDB, setIsLoadingDB] = useState(true);
@@ -67,16 +61,16 @@ function App() {
       const freshStats = await storageService.getStats();
       setTotalStats(freshStats);
 
-      // Fetch New Arrivals (Top 5)
+      // Fetch New Arrivals (Top 5) - Still by Date (Most Recent)
       const recent5 = await storageService.getRecent(5);
       setNewArrivals(recent5);
 
-      // Fetch First Page
-      const firstPage = await storageService.getRecent(PAGE_SIZE);
-      setDisplayedImages(firstPage);
+      // Fetch Main Grid - NOW BY NUMBER (Ascending) using search
+      // We perform an empty search to get all items sorted by number
+      const sortedAll = await storageService.search('', 'Mundo');
+      setDisplayedImages(sortedAll);
 
-      // For Map: Fetch all items (optimization: in real app, fetch only {country} fields)
-      // Since `getAll` is already there and IndexedDB is fast enough for <50k simple objects locally:
+      // For Map: Fetch all items
       const allItems = await storageService.getAll();
       setMapData(allItems);
 
@@ -97,20 +91,10 @@ function App() {
     const performSearch = async () => {
       setIsLoadingMore(true);
       try {
-        if (!searchTerm && activeContinent === 'Mundo') {
-           // Reset to default view (Recent items)
-           const firstPage = await storageService.getRecent(PAGE_SIZE);
-           setDisplayedImages(firstPage);
-           
-           // Refresh Map Data
-           const all = await storageService.getAll();
-           setMapData(all);
-        } else {
-           // Perform DB Search
-           const results = await storageService.search(searchTerm, activeContinent);
-           setDisplayedImages(results);
-           setMapData(results); // Map reflects search results
-        }
+        // Perform DB Search (which now sorts by number)
+        const results = await storageService.search(searchTerm, activeContinent);
+        setDisplayedImages(results);
+        setMapData(results); // Map reflects search results
       } catch (err) {
         console.error(err);
       } finally {
@@ -128,21 +112,8 @@ function App() {
 
   // Load More Handler (Infinite Scroll logic)
   const handleLoadMore = async () => {
-    if (searchTerm || activeContinent !== 'Mundo') return; // Disable load more during filtered search for simplicity
-    
-    setIsLoadingMore(true);
-    try {
-      const currentCount = displayedImages.length;
-      const nextBatch = await storageService.getRecent(PAGE_SIZE, currentCount);
-      
-      if (nextBatch.length > 0) {
-        setDisplayedImages(prev => [...prev, ...nextBatch]);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoadingMore(false);
-    }
+     // Simplified: Since we are using client-side sorting via the `search` method that fetches a large batch,
+     // we don't need complex pagination logic here for this version.
   };
 
   const handleCountrySelectFromMap = (countryName: string) => {
@@ -163,7 +134,9 @@ function App() {
   const handleUploadComplete = async (newImage: ScratchcardData) => {
     try {
       await storageService.save(newImage);
-      // Update UI
+      // Update UI - Add to displayed images and re-sort? 
+      // For simplicity, just prepend to displayed for immediate feedback, 
+      // even if it breaks sort momentarily until refresh.
       setDisplayedImages(prev => [newImage, ...prev]);
       setNewArrivals(prev => [newImage, ...prev].slice(0, 5));
       setMapData(prev => [...prev, newImage]);
@@ -273,7 +246,7 @@ function App() {
   };
 
   const continents: (Continent | 'Mundo')[] = ['Mundo', 'Europa', 'América', 'Ásia', 'África', 'Oceania'];
-  const showLoadMore = !searchTerm && activeContinent === 'Mundo' && displayedImages.length < totalStats.total && viewMode !== 'map';
+  const showLoadMore = false; // Disabled load more as we are now loading full sorted lists
 
   if (isLoadingDB) {
     return (
@@ -345,30 +318,6 @@ function App() {
                 <Globe className="w-5 h-5" />
                 <h2 className="text-xl font-bold text-white uppercase tracking-wider">{t.home.explore}</h2>
               </div>
-              
-              <div className="bg-gray-900 p-1 rounded-lg border border-gray-800 flex items-center">
-                <button 
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-gray-800 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
-                  title={t.grid.viewGrid}
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-gray-800 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
-                  title={t.grid.viewList}
-                >
-                  <List className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={() => setViewMode('map')}
-                  className={`p-2 rounded-md transition-all ${viewMode === 'map' ? 'bg-gray-800 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
-                  title={t.grid.viewMap}
-                >
-                  <MapIcon className="w-4 h-4" />
-                </button>
-              </div>
             </div>
 
             <div className="flex flex-wrap gap-2 mb-6">
@@ -392,10 +341,30 @@ function App() {
                 <Map className="w-4 h-4 mr-2" />
                 <span>{t.home.countriesIncluded}</span>
                 {availableCountries.length > 0 ? availableCountries.map(country => (
-                  <span key={country} className="px-3 py-1 bg-gray-800 text-gray-300 rounded border border-gray-700">
+                  <button
+                    key={country}
+                    onClick={() => setSearchTerm(country)}
+                    className={`px-3 py-1 rounded border text-xs font-bold transition-colors ${
+                      searchTerm === country
+                        ? 'bg-brand-600 text-white border-brand-500'
+                        : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700 hover:text-white cursor-pointer'
+                    }`}
+                    title={`Filtrar por ${country}`}
+                  >
                     {country}
-                  </span>
+                  </button>
                 )) : <span className="italic">{t.home.noCountries}</span>}
+                
+                {/* Clear filter button if a country is selected via search */}
+                {searchTerm && availableCountries.includes(searchTerm) && (
+                   <button 
+                     onClick={() => setSearchTerm('')}
+                     className="ml-2 p-1 rounded-full bg-gray-800 text-gray-500 hover:text-white hover:bg-red-900/50 transition-colors"
+                     title="Limpar filtro"
+                   >
+                     <X className="w-3 h-3" />
+                   </button>
+                )}
               </div>
             )}
 

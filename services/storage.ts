@@ -146,13 +146,24 @@ class StorageService {
           }
 
           // Safety Limit for search results to avoid UI freeze if result set is huge
-          if (results.length < 500) {
+          if (results.length < 1000) {
             cursor.continue();
           } else {
-            resolve(results);
+            // Sort by Game Number Ascending (1, 2, 3...)
+            resolve(results.sort((a, b) => {
+              const numA = parseInt(a.gameNumber.replace(/\D/g, '')) || 0;
+              const numB = parseInt(b.gameNumber.replace(/\D/g, '')) || 0;
+              return numA - numB;
+            }));
           }
         } else {
-          resolve(results.sort((a, b) => b.createdAt - a.createdAt)); // Sort results manually
+          // Finished cursor iteration
+          // Sort by Game Number Ascending (1, 2, 3...)
+          resolve(results.sort((a, b) => {
+            const numA = parseInt(a.gameNumber.replace(/\D/g, '')) || 0;
+            const numB = parseInt(b.gameNumber.replace(/\D/g, '')) || 0;
+            return numA - numB;
+          }));
         }
       };
 
