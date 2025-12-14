@@ -4,31 +4,19 @@ import { ImageGrid } from './components/ImageGrid';
 import { UploadModal } from './components/UploadModal';
 import { ImageViewer } from './components/ImageViewer';
 import { LoginModal } from './components/LoginModal';
-import { StatsSection } from './components/StatsSection'; // Nova importação
+import { StatsSection } from './components/StatsSection';
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2 } from 'lucide-react';
 import { translations, Language } from './translations';
+import { storageService } from './services/storage';
 
-// Lista de administradores autorizados (Case insensitive na verificação)
-// Adicionada "CHLOE" como homenagem
 const AUTHORIZED_ADMINS = ["JORGE MESQUITA", "FABIO PAGNI", "CHLOE"];
-// Senha padrão para demonstração
 const ADMIN_PASSWORD = "123456";
 
 function App() {
-  // Initialize state from LocalStorage if available, otherwise use mock data
-  const [images, setImages] = useState<ScratchcardData[]>(() => {
-    try {
-      const savedData = localStorage.getItem('raspadinhas-archive-v1');
-      if (savedData) {
-        return JSON.parse(savedData);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar do armazenamento local:", error);
-    }
-    return INITIAL_RASPADINHAS;
-  });
+  const [images, setImages] = useState<ScratchcardData[]>([]);
+  const [isLoadingDB, setIsLoadingDB] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -38,34 +26,50 @@ function App() {
   const [activeContinent, setActiveContinent] = useState<Continent | 'Mundo'>('Mundo');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
-  // Drag and Drop state
   const [isDragging, setIsDragging] = useState(false);
   const [droppedFile, setDroppedFile] = useState<File | null>(null);
   
-  // Language State
   const [language, setLanguage] = useState<Language>('pt');
   const t = translations[language];
 
-  // Save to LocalStorage whenever images change
+  // Initialize Database and Load Data
   useEffect(() => {
-    try {
-      localStorage.setItem('raspadinhas-archive-v1', JSON.stringify(images));
-    } catch (error) {
-      console.error("Erro ao salvar no armazenamento local (provavelmente limite excedido):", error);
-      alert("Aviso: Limite de armazenamento local atingido. Algumas imagens podem não ser salvas permanentemente.");
-    }
-  }, [images]);
+    const initData = async () => {
+      setIsLoadingDB(true);
+      try {
+        await storageService.init();
+        const savedItems = await storageService.getAll();
+        
+        if (savedItems.length > 0) {
+          setImages(savedItems);
+        } else {
+          // Optional: Load initial mock data if DB is empty for demo purposes
+          // In production for 20k items, you might want to start empty
+          setImages(INITIAL_RASPADINHAS);
+          // Save mocks to DB so they persist
+          for (const item of INITIAL_RASPADINHAS) {
+             await storageService.save(item);
+          }
+        }
+      } catch (error) {
+        console.error("Falha crítica ao carregar base de dados:", error);
+        alert("Erro ao carregar o arquivo. Por favor recarregue a página.");
+      } finally {
+        setIsLoadingDB(false);
+      }
+    };
 
-  // Filter images based on search term and continent
+    initData();
+  }, []);
+
+  // Filter images
   const filteredImages = useMemo(() => {
     let result = images;
 
-    // Filter by Continent
     if (activeContinent !== 'Mundo') {
       result = result.filter(img => img.continent === activeContinent);
     }
 
-    // Filter by Search Term
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       result = result.filter(img => 
@@ -80,31 +84,54 @@ function App() {
     return result;
   }, [images, searchTerm, activeContinent]);
 
-  // Get New Arrivals (Top 5 most recent by createdAt)
   const newArrivals = useMemo(() => {
     return [...images].sort((a, b) => b.createdAt - a.createdAt).slice(0, 5);
   }, [images]);
 
-  // Get available countries for the active continent
   const availableCountries = useMemo(() => {
     const countries = new Set<string>();
     filteredImages.forEach(img => countries.add(img.country));
     return Array.from(countries).sort();
   }, [filteredImages]);
 
-  const handleUploadComplete = (newImage: ScratchcardData) => {
-    setImages(prev => [newImage, ...prev]);
-    setDroppedFile(null); // Reset dropped file after upload
+  // Handlers now interact with StorageService
+
+  const handleUploadComplete = async (newImage: ScratchcardData) => {
+    try {
+      // 1. Save to DB first
+      await storageService.save(newImage);
+      // 2. Then update UI
+      setImages(prev => [newImage, ...prev]);
+      setDroppedFile(null);
+      
+      // 3. Open Viewer immediately for editing (as requested by user)
+      setSelectedImage(newImage);
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      alert("Erro ao gravar na base de dados. Verifique o espaço em disco.");
+    }
   };
 
-  const handleUpdateImage = (updatedImage: ScratchcardData) => {
-    setImages(prev => prev.map(img => img.id === updatedImage.id ? updatedImage : img));
-    setSelectedImage(updatedImage);
+  const handleUpdateImage = async (updatedImage: ScratchcardData) => {
+    try {
+      await storageService.save(updatedImage);
+      setImages(prev => prev.map(img => img.id === updatedImage.id ? updatedImage : img));
+      setSelectedImage(updatedImage);
+    } catch (error) {
+      console.error("Erro ao atualizar:", error);
+      alert("Erro ao atualizar registo.");
+    }
   };
 
-  const handleDeleteImage = (id: string) => {
-    setImages(prev => prev.filter(img => img.id !== id));
-    setSelectedImage(null);
+  const handleDeleteImage = async (id: string) => {
+    try {
+      await storageService.delete(id);
+      setImages(prev => prev.filter(img => img.id !== id));
+      setSelectedImage(null);
+    } catch (error) {
+      console.error("Erro ao apagar:", error);
+      alert("Erro ao apagar registo.");
+    }
   };
 
   const handleAdminToggle = () => {
@@ -114,14 +141,11 @@ function App() {
   };
 
   const handleLogout = () => {
-    // Immediate logout without confirmation to prevent issues
     setIsAdmin(false);
   };
 
   const handleLoginSubmit = (username: string, pass: string): boolean => {
     const cleanName = username.trim().toUpperCase();
-    
-    // Verifica se é um dos admins autorizados E se a senha está correta
     if (AUTHORIZED_ADMINS.includes(cleanName) && pass === ADMIN_PASSWORD) {
       setIsAdmin(true);
       return true;
@@ -138,19 +162,23 @@ function App() {
     setIsUploadModalOpen(true);
   };
 
-  const handleExportData = () => {
-    const dataStr = JSON.stringify(images, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `raspadinhas-backup-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleExportData = async () => {
+    try {
+      const jsonString = await storageService.exportData();
+      const blob = new Blob([jsonString], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `raspadinhas-arquivo-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Erro ao exportar:", error);
+      alert("Erro ao gerar backup.");
+    }
   };
 
-  // Drag and Drop Handlers
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -160,7 +188,6 @@ function App() {
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Only set false if leaving the window (relatedTarget is null or HTML)
     if (!e.relatedTarget || (e.relatedTarget as HTMLElement).nodeName === 'HTML') {
        setIsDragging(false);
     }
@@ -173,25 +200,30 @@ function App() {
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      
-      // Check if image
       if (!file.type.startsWith('image/')) {
         alert(t.upload.errorImage);
         return;
       }
-
-      // Check admin
       if (!isAdmin) {
         alert(t.home.restrictedAccess);
         return;
       }
-
       setDroppedFile(file);
       setIsUploadModalOpen(true);
     }
   };
 
   const continents: (Continent | 'Mundo')[] = ['Mundo', 'Europa', 'América', 'Ásia', 'África', 'Oceania'];
+
+  if (isLoadingDB) {
+    return (
+      <div className="h-screen w-screen bg-gray-950 flex flex-col items-center justify-center text-white">
+        <Database className="w-16 h-16 text-brand-600 animate-pulse mb-4" />
+        <h2 className="text-2xl font-bold">Carregando Arquivo...</h2>
+        <p className="text-gray-400 mt-2">A preparar base de dados segura.</p>
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -213,7 +245,6 @@ function App() {
         t={t.header}
       />
 
-      {/* Drag & Drop Overlay */}
       {isDragging && (
         <div className="absolute inset-0 z-50 bg-brand-600/90 backdrop-blur-md flex flex-col items-center justify-center animate-fade-in border-8 border-brand-400 border-dashed m-4 rounded-3xl pointer-events-none">
            <div className="bg-white p-6 rounded-full shadow-2xl mb-6 animate-bounce">
@@ -225,14 +256,11 @@ function App() {
       )}
 
       <main className="flex-1 overflow-y-auto relative scroll-smooth">
-        
-        {/* Background Gradients */}
         <div className="fixed top-0 left-0 w-full h-96 bg-brand-900/10 rounded-full blur-[120px] pointer-events-none -translate-y-1/2 z-0"></div>
         <div className="fixed bottom-0 right-0 w-full h-96 bg-purple-900/10 rounded-full blur-[120px] pointer-events-none translate-y-1/2 z-0"></div>
 
         <div className="max-w-7xl mx-auto py-8 relative z-10 space-y-12">
 
-          {/* New Arrivals Section */}
           <section className="px-6">
             <div className="flex items-center gap-2 mb-4 text-brand-400">
               <Clock className="w-5 h-5" />
@@ -251,7 +279,6 @@ function App() {
             </div>
           </section>
 
-          {/* Continents Section */}
           <section className="px-6 pb-12">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2 text-brand-400">
@@ -259,7 +286,6 @@ function App() {
                 <h2 className="text-xl font-bold text-white uppercase tracking-wider">{t.home.explore}</h2>
               </div>
               
-              {/* View Mode Toggles */}
               <div className="bg-gray-900 p-1 rounded-lg border border-gray-800 flex items-center">
                 <button 
                   onClick={() => setViewMode('grid')}
@@ -278,7 +304,6 @@ function App() {
               </div>
             </div>
 
-            {/* Continent Tabs */}
             <div className="flex flex-wrap gap-2 mb-6">
               {continents.map(c => (
                 <button
@@ -295,7 +320,6 @@ function App() {
               ))}
             </div>
 
-            {/* Available Countries Badges */}
             {activeContinent !== 'Mundo' && (
               <div className="mb-6 flex flex-wrap gap-2 items-center text-sm text-gray-500">
                 <Map className="w-4 h-4 mr-2" />
@@ -308,7 +332,6 @@ function App() {
               </div>
             )}
 
-            {/* Main Grid for Filtered Result */}
             <div className="bg-gray-900/30 border border-gray-800/50 rounded-2xl overflow-hidden min-h-[500px]">
               <ImageGrid 
                 images={filteredImages} 
@@ -320,13 +343,11 @@ function App() {
             </div>
           </section>
 
-          {/* New Stats Section - Footer of content */}
           <StatsSection images={images} t={t.stats} />
 
         </div>
       </main>
 
-      {/* Modals */}
       {isLoginModalOpen && (
         <LoginModal 
           onClose={() => setIsLoginModalOpen(false)}

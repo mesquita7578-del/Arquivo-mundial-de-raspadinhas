@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { AnalysisResult, ScratchcardState } from "../types";
+import { AnalysisResult, ScratchcardState, Category } from "../types";
 
 // Initialize Gemini client
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -8,7 +8,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
   try {
     const modelId = "gemini-2.5-flash"; // Efficient for vision tasks
     
-    const parts = [
+    const parts: any[] = [
       {
         inlineData: {
           mimeType: mimeType,
@@ -93,5 +93,58 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       country: "Desconhecido",
       continent: "Europa"
     };
+  }
+};
+
+export const searchScratchcardInfo = async (query: string): Promise<Partial<AnalysisResult>> => {
+  try {
+    // When using Google Search tool, we CANNOT use responseMimeType: application/json
+    // We must parse the markdown manually
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `Search for technical details about the scratchcard or lottery: "${query}".
+      Look for official sites like Jogos Santa Casa (SCML) if relevant.
+      Find: Game Name, Price, Game Number, Release Date, Emission (Tiragem), Printer, and Top Prize.
+      
+      Output ONLY a JSON block like this:
+      \`\`\`json
+      {
+        "gameName": "Name",
+        "price": "5€",
+        "gameNumber": "000",
+        "releaseDate": "YYYY-MM-DD",
+        "emission": "100.000",
+        "printer": "Scientific Games",
+        "values": "Max Prize...",
+        "country": "Portugal",
+        "category": "raspadinha"
+      }
+      \`\`\`
+      If you can't find specific info, leave it empty string.`,
+      config: {
+        tools: [{ googleSearch: {} }]
+      }
+    });
+
+    const text = response.text || "";
+    
+    // Extract JSON from markdown code block
+    const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```\n([\s\S]*?)\n```/);
+    
+    if (jsonMatch && jsonMatch[1]) {
+      const parsed = JSON.parse(jsonMatch[1]);
+      return {
+        ...parsed,
+        state: 'MINT',
+        continent: 'Europa', // Default assumption, user can change
+        size: '10x5cm' // Default
+      };
+    }
+    
+    throw new Error("Não foi possível encontrar dados estruturados.");
+
+  } catch (error) {
+    console.error("Search error:", error);
+    throw error;
   }
 };

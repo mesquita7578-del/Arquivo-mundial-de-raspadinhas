@@ -36,7 +36,13 @@ export const translations = {
       type: "Categoria",
       allTypes: "Tudo",
       scratchcard: "Raspadinhas",
-      lottery: "Lotarias"
+      lottery: "Lotarias",
+      // Pagination
+      page: "Página",
+      of: "de",
+      next: "Próxima",
+      prev: "Anterior",
+      showing: "Mostrando"
     },
     stats: {
       title: "Estatísticas do Arquivo",
@@ -157,7 +163,13 @@ export const translations = {
       type: "Categoria",
       allTypes: "Tutto",
       scratchcard: "Gratta e Vinci",
-      lottery: "Lotterie"
+      lottery: "Lotterie",
+      // Pagination
+      page: "Pagina",
+      of: "di",
+      next: "Prossima",
+      prev: "Precedente",
+      showing: "Mostrando"
     },
     stats: {
       title: "Statistiche dell'Archivio",

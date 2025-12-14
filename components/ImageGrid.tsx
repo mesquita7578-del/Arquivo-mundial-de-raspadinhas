@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ScratchcardData, ScratchcardState, Category } from '../types';
-import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins } from 'lucide-react';
+import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ImageGridProps {
   images: ScratchcardData[];
@@ -10,6 +10,8 @@ interface ImageGridProps {
   isAdmin?: boolean;
   t: any;
 }
+
+const ITEMS_PER_PAGE = 48;
 
 const StateBadge: React.FC<{ state: string }> = ({ state }) => {
   const getColor = (s: string) => {
@@ -28,8 +30,11 @@ const StateBadge: React.FC<{ state: string }> = ({ state }) => {
 };
 
 export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hideFilters = false, viewMode = 'grid', isAdmin = false, t }) => {
-  // Category Filter (Always visible even if hideFilters is true, usually handled by parent but we add local toggle)
+  // Category Filter
   const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Manual text filters
   const [filterCountry, setFilterCountry] = useState<string>('');
@@ -40,12 +45,16 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
   const [filterPrinter, setFilterPrinter] = useState<string>('');
   const [filterSeries, setFilterSeries] = useState<boolean>(false);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeCategory, filterCountry, filterState, filterYear, filterSize, filterEmission, filterPrinter, filterSeries, images]);
+
   // Apply filters
   const filteredImages = useMemo(() => {
     return images.filter(img => {
       // Filter by Category
       if (activeCategory !== 'all') {
-         // Handle legacy data where category might be undefined (assume raspadinha)
          const cat = img.category || 'raspadinha';
          if (cat !== activeCategory) return false;
       }
@@ -62,6 +71,14 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
       return true;
     });
   }, [images, activeCategory, filterCountry, filterState, filterYear, filterSize, filterEmission, filterPrinter, filterSeries]);
+
+  // Apply Pagination
+  const totalPages = Math.ceil(filteredImages.length / ITEMS_PER_PAGE);
+  const displayedImages = useMemo(() => {
+    if (hideFilters) return filteredImages; // Don't paginate "New Arrivals" horizontal scroll
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredImages.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredImages, currentPage, hideFilters]);
 
   const clearFilters = () => {
     setFilterCountry('');
@@ -184,7 +201,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
         ) : viewMode === 'list' ? (
           // LIST VIEW
           <div className="flex flex-col space-y-2">
-            {filteredImages.map((item) => (
+            {displayedImages.map((item) => (
               <div 
                 key={item.id}
                 onClick={() => onImageClick(item)}
@@ -241,7 +258,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
         ) : (
           // GRID VIEW
           <div className={`grid grid-cols-1 sm:grid-cols-2 ${hideFilters ? 'md:grid-cols-4 lg:grid-cols-5' : 'md:grid-cols-3 lg:grid-cols-4'} gap-6`}>
-            {filteredImages.map((item) => (
+            {displayedImages.map((item) => (
               <div
                 key={item.id}
                 className="group relative bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-brand-500/50 transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-500/20 hover:scale-[1.02] cursor-pointer flex flex-col h-full"
@@ -314,6 +331,34 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {!hideFilters && filteredImages.length > ITEMS_PER_PAGE && (
+          <div className="flex items-center justify-center gap-4 mt-8">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className={`p-2 rounded-full border transition-all ${currentPage === 1 ? 'bg-gray-800 text-gray-600 border-gray-800 cursor-not-allowed' : 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700 hover:border-gray-500'}`}
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <span>{t.page}</span>
+              <span className="font-bold text-white bg-gray-800 px-2 py-1 rounded">{currentPage}</span>
+              <span>{t.of}</span>
+              <span>{totalPages}</span>
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className={`p-2 rounded-full border transition-all ${currentPage === totalPages ? 'bg-gray-800 text-gray-600 border-gray-800 cursor-not-allowed' : 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700 hover:border-gray-500'}`}
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
         )}
       </div>

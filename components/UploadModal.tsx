@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins } from 'lucide-react';
-import { analyzeImage } from '../services/geminiService';
+import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe } from 'lucide-react';
+import { analyzeImage, searchScratchcardInfo } from '../services/geminiService';
 import { ScratchcardData, ScratchcardState, Continent, Category } from '../types';
 
 interface UploadModalProps {
@@ -11,19 +11,73 @@ interface UploadModalProps {
   t: any;
 }
 
+// Helper to compress images
+const resizeAndCompressImage = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Max dimensions (1024px is enough for web viewing and keeps size small)
+        const MAX_WIDTH = 1024;
+        const MAX_HEIGHT = 1024;
+        
+        let width = img.width;
+        let height = img.height;
+
+        // Calculate new dimensions maintaining aspect ratio
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          // Compress to JPEG at 70% quality
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          resolve(dataUrl);
+        } else {
+          reject(new Error("Failed to get canvas context"));
+        }
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
 export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadComplete, existingImages = [], initialFile, t }) => {
   const [step, setStep] = useState<'upload' | 'review'>('upload');
+  const [activeTab, setActiveTab] = useState<'image' | 'web'>('image'); // New Tab State
   
   const [frontFile, setFrontFile] = useState<File | null>(null);
   const [backFile, setBackFile] = useState<File | null>(null);
   const [frontPreview, setFrontPreview] = useState<string | null>(null);
   const [backPreview, setBackPreview] = useState<string | null>(null);
   
+  // Web Search State
+  const [searchQuery, setSearchQuery] = useState('');
+  
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   
-  // Form data for review step
   const [formData, setFormData] = useState<ScratchcardData | null>(null);
 
   // Handle Initial File from Drag and Drop
@@ -33,85 +87,58 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     }
   }, [initialFile]);
 
-  const processFile = (file: File, isFront: boolean) => {
+  const processFile = async (file: File, isFront: boolean) => {
     if (!file.type.startsWith('image/')) {
       setError(t.errorImage);
       return;
     }
     setError(null);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const res = e.target?.result as string;
+    setIsCompressing(true);
+
+    try {
+      const compressedBase64 = await resizeAndCompressImage(file);
+      
       if (isFront) {
         setFrontFile(file);
-        setFrontPreview(res);
+        setFrontPreview(compressedBase64);
       } else {
         setBackFile(file);
-        setBackPreview(res);
+        setBackPreview(compressedBase64);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Error compressing image:", err);
+      setError("Erro ao processar imagem. Tente outra.");
+    } finally {
+      setIsCompressing(false);
+    }
   };
 
-  // Helper to map Country Names to 2 Letter codes
   const getCountryCode = (countryName: string): string => {
     const name = countryName.toLowerCase().trim();
-    
     const map: Record<string, string> = {
-      'portugal': 'PT',
-      'italia': 'IT',
-      'itália': 'IT',
-      'italy': 'IT',
-      'espanha': 'ES',
-      'spain': 'ES',
-      'españa': 'ES',
-      'usa': 'US',
-      'eua': 'US',
-      'united states': 'US',
-      'frança': 'FR',
-      'france': 'FR',
-      'franca': 'FR',
-      'alemanha': 'DE',
-      'germany': 'DE',
-      'reino unido': 'UK',
-      'uk': 'UK',
-      'england': 'UK',
-      'inglaterra': 'UK',
-      'brasil': 'BR',
-      'brazil': 'BR',
-      'japao': 'JP',
-      'japão': 'JP',
-      'japan': 'JP',
-      'china': 'CN',
-      'belgica': 'BE',
-      'belgium': 'BE',
-      'bélgica': 'BE',
-      'suica': 'CH',
-      'suíça': 'CH',
-      'switzerland': 'CH',
-      'singapore': 'SG',
-      'singapura': 'SG'
+      'portugal': 'PT', 'italia': 'IT', 'itália': 'IT', 'italy': 'IT',
+      'espanha': 'ES', 'spain': 'ES', 'españa': 'ES',
+      'usa': 'US', 'eua': 'US', 'united states': 'US',
+      'frança': 'FR', 'france': 'FR', 'franca': 'FR',
+      'alemanha': 'DE', 'germany': 'DE', 'reino unido': 'UK',
+      'uk': 'UK', 'england': 'UK', 'inglaterra': 'UK',
+      'brasil': 'BR', 'brazil': 'BR', 'japao': 'JP', 'japão': 'JP',
+      'japan': 'JP', 'china': 'CN', 'belgica': 'BE', 'belgium': 'BE',
+      'bélgica': 'BE', 'suica': 'CH', 'suíça': 'CH', 'switzerland': 'CH',
+      'singapore': 'SG', 'singapura': 'SG'
     };
-
     if (map[name]) return map[name];
-
-    // Fallback: First 2 letters uppercase
     return countryName.substring(0, 2).toUpperCase();
   };
 
-  // Helper to generate next ID in sequence
   const generateNextId = (country: string): string => {
     const code = getCountryCode(country);
     const prefix = `${code}-`;
-    
     let maxNum = 0;
-
     existingImages.forEach(img => {
       if (img.customId && img.customId.startsWith(prefix)) {
-        // Extract the number part
         const parts = img.customId.split('-');
         if (parts.length >= 2) {
-          // Remove non-numeric characters just in case
           const numStr = parts[parts.length - 1].replace(/[^0-9]/g, '');
           const num = parseInt(numStr, 10);
           if (!isNaN(num) && num > maxNum) {
@@ -120,52 +147,49 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
         }
       }
     });
-
     const nextNum = (maxNum + 1).toString().padStart(6, '0');
     return `${prefix}${nextNum}`;
   };
 
-  const handleAnalyze = async () => {
+  const createFormData = (analysis: any) => {
+    const smartId = generateNextId(analysis.country || 'Desconhecido');
+    const newCard: ScratchcardData = {
+      id: Math.random().toString(36).substr(2, 9),
+      customId: smartId,
+      frontUrl: frontPreview || 'https://placehold.co/600x400/1f2937/white?text=Sem+Imagem',
+      backUrl: backPreview || undefined,
+      gameName: analysis.gameName || 'Novo Jogo',
+      gameNumber: analysis.gameNumber || '',
+      releaseDate: analysis.releaseDate || '',
+      size: analysis.size || '',
+      values: analysis.values || '',
+      price: analysis.price || '',
+      state: analysis.state || 'MINT',
+      country: analysis.country || 'Portugal',
+      continent: analysis.continent || 'Europa',
+      collector: '',
+      emission: analysis.emission || '',
+      printer: analysis.printer || '',
+      isSeries: false,
+      category: analysis.category || 'raspadinha',
+      createdAt: Date.now(),
+      aiGenerated: true
+    };
+    setFormData(newCard);
+    setStep('review');
+  };
+
+  const handleAnalyzeImage = async () => {
     if (!frontFile || !frontPreview) {
       setError(t.errorFront);
       return;
     }
-
     setIsProcessing(true);
     try {
       const frontBase64 = frontPreview.split(',')[1];
       const backBase64 = backPreview ? backPreview.split(',')[1] : null;
-      
       const analysis = await analyzeImage(frontBase64, backBase64, frontFile.type);
-
-      // Generate Smart ID
-      const smartId = generateNextId(analysis.country);
-
-      const newCard: ScratchcardData = {
-        id: Math.random().toString(36).substr(2, 9),
-        customId: smartId, // Use the smart ID
-        frontUrl: frontPreview,
-        backUrl: backPreview || undefined,
-        gameName: analysis.gameName,
-        gameNumber: analysis.gameNumber,
-        releaseDate: analysis.releaseDate,
-        size: analysis.size,
-        values: analysis.values,
-        price: analysis.price || '',
-        state: analysis.state,
-        country: analysis.country,
-        continent: analysis.continent,
-        collector: '', // Default empty
-        emission: analysis.emission || '', // New field
-        printer: analysis.printer || '', // New field
-        isSeries: false, // Default false
-        category: analysis.category || 'raspadinha', // AI detected category
-        createdAt: Date.now(),
-        aiGenerated: true
-      };
-
-      setFormData(newCard);
-      setStep('review');
+      createFormData(analysis);
     } catch (err) {
       console.error(err);
       setError(t.errorAnalyze);
@@ -174,11 +198,32 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     }
   };
 
+  const handleWebSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setIsProcessing(true);
+    setError(null);
+    try {
+      const results = await searchScratchcardInfo(searchQuery);
+      createFormData(results);
+    } catch (err) {
+      console.error(err);
+      setError("Não foi possível encontrar informações online. Tente ser mais específico.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleSave = () => {
     if (formData) {
-      onUploadComplete(formData);
+      // Ensure we use the latest image previews if they exist (important for Web Search flow where image is added late)
+      const finalData = {
+        ...formData,
+        frontUrl: frontPreview || formData.frontUrl,
+        backUrl: backPreview || formData.backUrl
+      };
+
+      onUploadComplete(finalData);
       setShowSuccess(true);
-      // Aguarda 1.5 segundos mostrando a notificação antes de fechar
       setTimeout(() => {
         onClose();
       }, 1500);
@@ -191,7 +236,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     }
   };
 
-  // Function to regenerate ID manually if user changes country
   const regenerateId = () => {
     if (formData && formData.country) {
       const newId = generateNextId(formData.country);
@@ -203,15 +247,25 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     <div className="flex-1">
        <label className="block text-xs uppercase text-gray-500 font-bold mb-2">{label}</label>
        {!preview ? (
-          <div className="border-2 border-dashed border-gray-700 hover:border-brand-500/50 hover:bg-gray-800/50 rounded-xl h-48 flex flex-col items-center justify-center transition-colors relative cursor-pointer">
+          <div className={`border-2 border-dashed ${isCompressing ? 'border-brand-500 bg-brand-900/10' : 'border-gray-700 hover:border-brand-500/50 hover:bg-gray-800/50'} rounded-xl h-48 flex flex-col items-center justify-center transition-colors relative cursor-pointer overflow-hidden`}>
             <input
               type="file"
               className="absolute inset-0 opacity-0 cursor-pointer"
               accept="image/*"
+              disabled={isCompressing}
               onChange={(e) => e.target.files?.[0] && processFile(e.target.files[0], isFront)}
             />
-            <UploadCloud className="w-8 h-8 text-gray-500 mb-2" />
-            <span className="text-xs text-gray-400">{t.clickDrag}</span>
+            {isCompressing ? (
+              <div className="flex flex-col items-center text-brand-400">
+                <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                <span className="text-xs font-bold animate-pulse">Comprimindo...</span>
+              </div>
+            ) : (
+              <>
+                <UploadCloud className="w-8 h-8 text-gray-500 mb-2" />
+                <span className="text-xs text-gray-400">{t.clickDrag}</span>
+              </>
+            )}
           </div>
        ) : (
          <div className="relative h-48 rounded-xl overflow-hidden bg-black border border-gray-700 group">
@@ -231,7 +285,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
       <div className={`bg-gray-900 border border-gray-800 rounded-2xl w-full ${step === 'review' ? 'max-w-4xl' : 'max-w-2xl'} shadow-2xl flex flex-col max-h-[90vh] transition-all duration-300 relative`}>
         
-        {/* Success Toast Notification */}
+        {/* Success Toast */}
         {showSuccess && (
           <div className="absolute bottom-6 right-6 z-50 animate-bounce-in bg-green-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-green-400/50">
             <div className="bg-white/20 p-1.5 rounded-full">
@@ -255,6 +309,26 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
           </button>
         </div>
 
+        {/* Tabs (Only in Upload Step) */}
+        {step === 'upload' && (
+          <div className="flex border-b border-gray-800 px-6">
+            <button
+              onClick={() => setActiveTab('image')}
+              className={`py-3 px-4 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'image' ? 'border-brand-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+            >
+              <UploadCloud className="w-4 h-4" />
+              Via Imagem
+            </button>
+            <button
+              onClick={() => setActiveTab('web')}
+              className={`py-3 px-4 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'web' ? 'border-brand-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+            >
+              <Globe className="w-4 h-4" />
+              Via Web/SCML
+            </button>
+          </div>
+        )}
+
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           {step === 'upload' ? (
@@ -266,35 +340,78 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row gap-6 mb-6">
-                <UploadBox label={t.front} preview={frontPreview} isFront={true} />
-                <UploadBox label={t.back} preview={backPreview} isFront={false} />
-              </div>
-
-              {(frontPreview || backPreview) && (
-                <div className="bg-brand-900/20 border border-brand-800/50 p-4 rounded-lg flex items-start gap-3">
-                  <Sparkles className="w-5 h-5 text-brand-400 mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="text-brand-200 font-semibold text-sm">{t.aiTitle}</h4>
-                    <p className="text-brand-200/70 text-xs mt-1">
-                      {t.aiDesc}
-                    </p>
+              {activeTab === 'image' ? (
+                <>
+                  <div className="flex flex-col sm:flex-row gap-6 mb-6">
+                    <UploadBox label={t.front} preview={frontPreview} isFront={true} />
+                    <UploadBox label={t.back} preview={backPreview} isFront={false} />
+                  </div>
+                  {(frontPreview || backPreview) && (
+                    <div className="bg-brand-900/20 border border-brand-800/50 p-4 rounded-lg flex items-start gap-3">
+                      <Sparkles className="w-5 h-5 text-brand-400 mt-1 flex-shrink-0" />
+                      <div>
+                        <h4 className="text-brand-200 font-semibold text-sm">{t.aiTitle}</h4>
+                        <p className="text-brand-200/70 text-xs mt-1">{t.aiDesc}</p>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-blue-900/20 border border-blue-800/50 p-4 rounded-lg flex items-start gap-3">
+                    <Globe className="w-5 h-5 text-blue-400 mt-1 flex-shrink-0" />
+                    <div>
+                      <h4 className="text-blue-200 font-semibold text-sm">Importar Dados da SCML</h4>
+                      <p className="text-blue-200/70 text-xs mt-1">
+                        Pesquise por "Novas raspadinhas Santa Casa" ou o nome específico do jogo. A IA irá procurar os dados técnicos oficiais.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Ex: Nova Raspadinha Pé de Meia"
+                      className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 pl-12 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                      onKeyDown={(e) => e.key === 'Enter' && handleWebSearch()}
+                    />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => { setSearchQuery("Novas raspadinhas Santa Casa"); handleWebSearch(); }}
+                      className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-full border border-gray-700 transition-colors"
+                    >
+                      Últimos Lançamentos SCML
+                    </button>
+                    <button 
+                      onClick={() => setSearchQuery("Raspadinha 50X")}
+                      className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-full border border-gray-700 transition-colors"
+                    >
+                      Ex: 50X
+                    </button>
                   </div>
                 </div>
               )}
             </div>
           ) : (
+            // REVIEW STEP
             <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Left: Images */}
               <div className="space-y-4">
-                <div className="bg-black rounded-xl border border-gray-700 overflow-hidden h-48">
-                  <img src={frontPreview!} className="w-full h-full object-contain" alt="Frente" />
+                <div className="bg-black rounded-xl border border-gray-700 overflow-hidden h-48 relative group">
+                  <img src={frontPreview || formData?.frontUrl || ''} className="w-full h-full object-contain" alt="Frente" />
+                  {/* Allow upload/change image in review step if missing */}
+                  <label className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                    <UploadCloud className="w-6 h-6 text-white mb-2" />
+                    <span className="text-xs text-white font-bold">Alterar Imagem</span>
+                    <input type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && processFile(e.target.files[0], true)} />
+                  </label>
                 </div>
-                {backPreview && (
-                  <div className="bg-black rounded-xl border border-gray-700 overflow-hidden h-48">
-                    <img src={backPreview} className="w-full h-full object-contain" alt="Verso" />
-                  </div>
-                )}
+                {/* ... existing Back Image logic ... */}
                 
                 {/* Category Selector */}
                 <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
@@ -356,7 +473,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                          onChange={e => updateField('country', e.target.value)}
                          className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 focus:outline-none pr-8"
                        />
-                       {/* Button to regenerate ID if country changes manually */}
                        <button 
                          onClick={regenerateId}
                          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-brand-400 transition-colors"
@@ -507,7 +623,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
             <button
                onClick={onClose}
                className="text-gray-400 hover:text-white transition-colors text-sm font-medium"
-               disabled={isProcessing}
+               disabled={isProcessing || isCompressing}
             >
               {t.cancel}
             </button>
@@ -515,27 +631,51 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
           <div className="flex gap-3">
              {step === 'upload' ? (
-                <button
-                  onClick={handleAnalyze}
-                  disabled={!frontFile || isProcessing}
-                  className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold shadow-lg transition-all ${
-                    !frontFile || isProcessing
-                      ? "bg-gray-800 text-gray-500 cursor-not-allowed"
-                      : "bg-brand-600 hover:bg-brand-500 text-white shadow-brand-900/50"
-                  }`}
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t.analyzing}
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      {t.analyze}
-                    </>
-                  )}
-                </button>
+                activeTab === 'image' ? (
+                  <button
+                    onClick={handleAnalyzeImage}
+                    disabled={!frontFile || isProcessing || isCompressing}
+                    className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold shadow-lg transition-all ${
+                      !frontFile || isProcessing || isCompressing
+                        ? "bg-gray-800 text-gray-500 cursor-not-allowed"
+                        : "bg-brand-600 hover:bg-brand-500 text-white shadow-brand-900/50"
+                    }`}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {t.analyzing}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        {t.analyze}
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleWebSearch}
+                    disabled={!searchQuery.trim() || isProcessing}
+                    className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold shadow-lg transition-all ${
+                      !searchQuery.trim() || isProcessing
+                        ? "bg-gray-800 text-gray-500 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/50"
+                    }`}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Pesquisando...
+                      </>
+                    ) : (
+                      <>
+                        <Globe className="w-4 h-4" />
+                        Buscar Online
+                      </>
+                    )}
+                  </button>
+                )
              ) : (
                <button
                   onClick={handleSave}
