@@ -61,9 +61,9 @@ function App() {
       const freshStats = await storageService.getStats();
       setTotalStats(freshStats);
 
-      // Fetch New Arrivals (Top 5) - Still by Date (Most Recent)
-      const recent5 = await storageService.getRecent(5);
-      setNewArrivals(recent5);
+      // Fetch New Arrivals (Top 10) - Increased to show 2 rows
+      const recent10 = await storageService.getRecent(10);
+      setNewArrivals(recent10);
 
       // Fetch Main Grid - NOW BY NUMBER (Ascending) using search
       // We perform an empty search to get all items sorted by number
@@ -138,7 +138,10 @@ function App() {
       // For simplicity, just prepend to displayed for immediate feedback, 
       // even if it breaks sort momentarily until refresh.
       setDisplayedImages(prev => [newImage, ...prev]);
-      setNewArrivals(prev => [newImage, ...prev].slice(0, 5));
+      
+      // Update New Arrivals (Keep top 10)
+      setNewArrivals(prev => [newImage, ...prev].slice(0, 10));
+      
       setMapData(prev => [...prev, newImage]);
       setTotalStats(prev => ({
          total: prev.total + 1,
