@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Upload, Ticket, Lock, LogOut, Download, FileSpreadsheet } from 'lucide-react';
+import { Search, Upload, Ticket, Lock, LogOut, Download, FileSpreadsheet, BookOpen } from 'lucide-react';
 import { Language } from '../translations';
 
 interface HeaderProps {
@@ -10,7 +10,8 @@ interface HeaderProps {
   onAdminToggle: () => void;
   onLogout: () => void;
   onExport: () => void;
-  onDownloadList: () => void; // New prop for public list download
+  onDownloadList: () => void;
+  onHistoryClick: () => void; // New prop
   language: Language;
   setLanguage: (lang: Language) => void;
   t: any;
@@ -25,6 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
   onExport,
   onDownloadList,
+  onHistoryClick,
   language,
   setLanguage,
   t
@@ -46,7 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Mobile Language Toggle (Visible only on small screens) */}
+        {/* Mobile Language Toggle */}
         <div className="flex md:hidden bg-gray-800 rounded-lg p-1">
           <button 
             onClick={() => setLanguage('pt')}
@@ -63,18 +65,9 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="w-full md:flex-1 md:max-w-xl md:mx-4">
-        <div className="relative group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
-          <input
-            type="text"
-            placeholder={t.search}
-            value={searchTerm}
-            onChange={(e) => onSearch(e.target.value)}
-            className="w-full bg-gray-800 text-gray-200 rounded-full pl-10 pr-4 py-2 border border-gray-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder-gray-500 text-sm"
-          />
-        </div>
+      {/* Spacer where Search used to be (keeps layout balanced) or simple text */}
+      <div className="hidden md:flex flex-1 justify-center items-center text-gray-600 text-sm font-medium tracking-wide">
+         Arquivo Digital & Colecionismo
       </div>
 
       {/* Actions */}
@@ -98,6 +91,16 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
 
+        {/* History Button (New) */}
+        <button
+          onClick={onHistoryClick}
+          className="flex items-center gap-2 bg-blue-900/20 hover:bg-blue-800/40 text-blue-400 hover:text-blue-300 border border-blue-800/50 px-3 py-2 rounded-full text-xs sm:text-sm font-medium transition-all"
+          title={t.history}
+        >
+          <BookOpen className="w-4 h-4" />
+          <span className="hidden lg:inline">{t.history}</span>
+        </button>
+
         {/* Public Excel Download Button */}
         <button
           onClick={onDownloadList}
@@ -105,7 +108,7 @@ export const Header: React.FC<HeaderProps> = ({
           title="Download Lista Excel"
         >
           <FileSpreadsheet className="w-4 h-4" />
-          <span className="hidden lg:inline">Lista Excel</span>
+          <span className="hidden lg:inline">Excel</span>
         </button>
 
         {/* Admin Controls */}

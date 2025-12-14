@@ -6,6 +6,7 @@ import { ImageViewer } from './components/ImageViewer';
 import { LoginModal } from './components/LoginModal';
 import { StatsSection } from './components/StatsSection';
 import { WorldMap } from './components/WorldMap';
+import { HistoryModal } from './components/HistoryModal'; // New Import
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent } from './types';
 import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X } from 'lucide-react';
@@ -14,15 +15,13 @@ import { storageService } from './services/storage';
 
 const AUTHORIZED_ADMINS = ["JORGE MESQUITA", "FABIO PAGNI", "CHLOE"];
 const ADMIN_PASSWORD = "123456";
-const PAGE_SIZE = 48; // Items per database fetch (sync with UI page if desired, or larger)
+const PAGE_SIZE = 48; 
 
 function App() {
   const [displayedImages, setDisplayedImages] = useState<ScratchcardData[]>([]);
   const [newArrivals, setNewArrivals] = useState<ScratchcardData[]>([]);
   const [totalStats, setTotalStats] = useState({ total: 0, stats: {} as Record<string, number> });
   
-  // We need a separate state for "All Images" for the map visualization because the map needs
-  // to show the global distribution, not just the paginated current page.
   const [mapData, setMapData] = useState<ScratchcardData[]>([]);
   
   const [isLoadingDB, setIsLoadingDB] = useState(true);
@@ -33,6 +32,7 @@ function App() {
   
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); // New State
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
@@ -49,7 +49,6 @@ function App() {
     try {
       await storageService.init();
       
-      // Check if empty and seed
       const stats = await storageService.getStats();
       if (stats.total === 0) {
         for (const item of INITIAL_RASPADINHAS) {
@@ -57,20 +56,15 @@ function App() {
         }
       }
 
-      // Fetch Stats
       const freshStats = await storageService.getStats();
       setTotalStats(freshStats);
 
-      // Fetch New Arrivals (Top 10) - Increased to show 2 rows
       const recent10 = await storageService.getRecent(10);
       setNewArrivals(recent10);
 
-      // Fetch Main Grid - NOW BY NUMBER (Ascending) using search
-      // We perform an empty search to get all items sorted by number
       const sortedAll = await storageService.search('', 'Mundo');
       setDisplayedImages(sortedAll);
 
-      // For Map: Fetch all items
       const allItems = await storageService.getAll();
       setMapData(allItems);
 
@@ -91,10 +85,9 @@ function App() {
     const performSearch = async () => {
       setIsLoadingMore(true);
       try {
-        // Perform DB Search (which now sorts by number)
         const results = await storageService.search(searchTerm, activeContinent);
         setDisplayedImages(results);
-        setMapData(results); // Map reflects search results
+        setMapData(results); 
       } catch (err) {
         console.error(err);
       } finally {
@@ -102,7 +95,6 @@ function App() {
       }
     };
     
-    // Debounce slightly to avoid hitting DB too hard while typing
     const timeoutId = setTimeout(() => {
       if (!isLoadingDB) performSearch();
     }, 300);
@@ -110,22 +102,18 @@ function App() {
     return () => clearTimeout(timeoutId);
   }, [searchTerm, activeContinent, isLoadingDB]);
 
-  // Load More Handler (Infinite Scroll logic)
   const handleLoadMore = async () => {
-     // Simplified: Since we are using client-side sorting via the `search` method that fetches a large batch,
-     // we don't need complex pagination logic here for this version.
+     // Placeholder
   };
 
   const handleCountrySelectFromMap = (countryName: string) => {
-    // When clicking map, we filter by that country
     setSearchTerm(countryName);
-    setViewMode('grid'); // Switch back to grid to show results
+    setViewMode('grid');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const availableCountries = useMemo(() => {
     const countries = new Set<string>();
-    // Use mapData (all available or filtered) to calculate available countries list
     mapData.forEach(img => countries.add(img.country));
     return Array.from(countries).sort();
   }, [mapData]);
@@ -134,20 +122,13 @@ function App() {
   const handleUploadComplete = async (newImage: ScratchcardData) => {
     try {
       await storageService.save(newImage);
-      // Update UI - Add to displayed images and re-sort? 
-      // For simplicity, just prepend to displayed for immediate feedback, 
-      // even if it breaks sort momentarily until refresh.
       setDisplayedImages(prev => [newImage, ...prev]);
-      
-      // Update New Arrivals (Keep top 10)
       setNewArrivals(prev => [newImage, ...prev].slice(0, 10));
-      
       setMapData(prev => [...prev, newImage]);
       setTotalStats(prev => ({
          total: prev.total + 1,
          stats: { ...prev.stats, [newImage.continent]: (prev.stats[newImage.continent] || 0) + 1 }
       }));
-      
       setDroppedFile(null);
       setSelectedImage(newImage);
     } catch (error) {
@@ -174,8 +155,6 @@ function App() {
       setNewArrivals(prev => prev.filter(img => img.id !== id));
       setMapData(prev => prev.filter(img => img.id !== id));
       setSelectedImage(null);
-      
-      // Update stats count roughly
       setTotalStats(prev => ({ ...prev, total: Math.max(0, prev.total - 1) }));
     } catch (error) {
       console.error("Erro ao apagar:", error);
@@ -223,37 +202,24 @@ function App() {
     }
   };
 
-  // Generate and Download CSV (Excel style)
   const handleDownloadList = async () => {
     try {
-      // 1. Fetch ALL items
       const allItems = await storageService.getAll();
-
-      // 2. Sort by Continent -> Country -> Category -> Game Number/Name
       const sortedItems = allItems.sort((a, b) => {
-        // Sort by Continent
         const contCompare = a.continent.localeCompare(b.continent);
         if (contCompare !== 0) return contCompare;
-
-        // Sort by Country
         const countryCompare = a.country.localeCompare(b.country);
         if (countryCompare !== 0) return countryCompare;
-
-        // Sort by Category (Raspadinha before Lotaria)
         const catA = a.category || '';
         const catB = b.category || '';
         const catCompare = catA.localeCompare(catB);
         if (catCompare !== 0) return catCompare;
-
-        // Sort by Game Number (Numeric if possible)
         const numA = parseInt(a.gameNumber.replace(/\D/g, '')) || 0;
         const numB = parseInt(b.gameNumber.replace(/\D/g, '')) || 0;
         if (numA !== numB) return numA - numB;
-
         return a.gameName.localeCompare(b.gameName);
       });
 
-      // 3. Define Headers (Including Continent now)
       const headers = [
         "Continente / Continent",
         "País / Country",
@@ -267,12 +233,11 @@ function App() {
         "Emissão / Emission",
         "Gráfica / Printer",
         "Colecionador / Collector",
-        "Link Imagem / Image Link", // New: URL to image for verification
+        "Link Imagem / Image Link",
         "Notas / Notes",
-        "Correções (Para Preencher) / Corrections" // New: Empty column for manual notes
+        "Correções (Para Preencher) / Corrections"
       ];
 
-      // 4. Create CSV Rows (using semicolon ';' for better Excel compatibility in Europe)
       const escapeCsv = (field: string | undefined) => {
         if (!field) return "";
         const stringField = String(field);
@@ -295,15 +260,12 @@ function App() {
         escapeCsv(item.emission),
         escapeCsv(item.printer),
         escapeCsv(item.collector),
-        escapeCsv(item.frontUrl), // Image URL
+        escapeCsv(item.frontUrl),
         escapeCsv(item.values),
-        "" // Empty column for granddaughter's corrections
+        ""
       ].join(";"));
 
-      // 5. Combine with BOM for UTF-8 support in Excel
       const csvContent = "\uFEFF" + headers.join(";") + "\n" + rows.join("\n");
-      
-      // 6. Download
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -312,14 +274,12 @@ function App() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
     } catch (error) {
       console.error("Erro ao gerar lista:", error);
       alert("Erro ao criar a lista para download.");
     }
   };
 
-  // Drag & Drop
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault(); e.stopPropagation(); setIsDragging(true);
   };
@@ -345,7 +305,7 @@ function App() {
   };
 
   const continents: (Continent | 'Mundo')[] = ['Mundo', 'Europa', 'América', 'Ásia', 'África', 'Oceania'];
-  const showLoadMore = false; // Disabled load more as we are now loading full sorted lists
+  const showLoadMore = false; 
 
   if (isLoadingDB) {
     return (
@@ -373,6 +333,7 @@ function App() {
         onLogout={handleLogout}
         onExport={handleExportData}
         onDownloadList={handleDownloadList}
+        onHistoryClick={() => setIsHistoryModalOpen(true)} // Pass the handler
         language={language}
         setLanguage={setLanguage}
         t={t.header}
@@ -422,7 +383,6 @@ function App() {
 
             <div className="flex flex-wrap gap-2 mb-6">
               {continents.map(c => {
-                // Calculate count for this continent
                 let count = 0;
                 if (c === 'Mundo') {
                    count = totalStats.total;
@@ -468,7 +428,6 @@ function App() {
                   </button>
                 )) : <span className="italic">{t.home.noCountries}</span>}
                 
-                {/* Clear filter button if a country is selected via search */}
                 {searchTerm && availableCountries.includes(searchTerm) && (
                    <button 
                      onClick={() => setSearchTerm('')}
@@ -500,7 +459,6 @@ function App() {
                     t={t.grid}
                   />
                   
-                  {/* Load More Trigger */}
                   {showLoadMore && (
                     <div className="p-6 flex justify-center border-t border-gray-800/50">
                       <button 
@@ -541,6 +499,13 @@ function App() {
           existingImages={displayedImages}
           initialFile={droppedFile}
           t={t.upload}
+        />
+      )}
+
+      {isHistoryModalOpen && (
+        <HistoryModal 
+          onClose={() => setIsHistoryModalOpen(false)}
+          t={t.history}
         />
       )}
 

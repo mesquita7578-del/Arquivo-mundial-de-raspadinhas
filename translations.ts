@@ -6,6 +6,7 @@ export const translations = {
     header: {
       title: "Arquivo Mundial",
       subtitle: "de Raspadinhas & Lotarias",
+      history: "História", // New
       search: "Buscar...",
       admin: "Admin",
       logout: "Sair",
@@ -16,6 +17,11 @@ export const translations = {
       loginRequired: "Faça login para adicionar",
       backup: "Backup",
       backupTitle: "Baixar cópia de segurança dos dados (JSON)"
+    },
+    history: { // New Section
+      title: "História da Raspadinha",
+      subtitle: "Curiosidades e factos sobre o colecionismo",
+      close: "Fechar Leitura"
     },
     grid: {
       filters: "Filtros de Gestão",
@@ -80,8 +86,8 @@ export const translations = {
       price: "Preço Facial",
       emission: "Emissão / Tiragem",
       printer: "Impresso Por",
-      values: "Nota", // Changed from Valores / Prêmios
-      lines: "Tipo de Linhas", // New
+      values: "Nota", 
+      lines: "Tipo de Linhas", 
       linesPlaceholder: "Selecione as linhas...",
       linesBlue: "Linhas Azuis",
       linesRed: "Linhas Vermelhas",
@@ -116,8 +122,8 @@ export const translations = {
       release: "Lançamento",
       emission: "Emissão",
       printer: "Impresso Por",
-      values: "Nota", // Changed
-      lines: "Linhas", // New
+      values: "Nota", 
+      lines: "Linhas", 
       linesBlue: "Azuis",
       linesRed: "Vermelhas",
       linesMulti: "Multicolor",
@@ -125,7 +131,7 @@ export const translations = {
       close: "Fechar Visualização",
       category: "Tipo",
       collector: "Colecionador",
-      seriesDetailsPlaceholder: "Nºs (ex: 1-5)"
+      seriesDetailsPlaceholder: "N. (es: 1-5)"
     },
     login: {
       title: "Área Administrativa",
@@ -151,6 +157,7 @@ export const translations = {
     header: {
       title: "Archivio Mondiale",
       subtitle: "di Gratta e Vinci & Lotterie",
+      history: "Storia", // New
       search: "Cerca...",
       admin: "Admin",
       logout: "Esci",
@@ -161,6 +168,11 @@ export const translations = {
       loginRequired: "Accedi per aggiungere",
       backup: "Backup",
       backupTitle: "Scarica copia di backup dei dati (JSON)"
+    },
+    history: { // New Section
+      title: "Storia del Gratta e Vinci",
+      subtitle: "Curiosità e fatti sul collezionismo",
+      close: "Chiudi Lettura"
     },
     grid: {
       filters: "Filtri di Gestione",
@@ -225,8 +237,8 @@ export const translations = {
       price: "Prezzo Facciale",
       emission: "Emissione / Tiratura",
       printer: "Stampato Da",
-      values: "Nota", // Changed
-      lines: "Tipo di Linee", // New
+      values: "Nota", 
+      lines: "Tipo di Linee", 
       linesPlaceholder: "Seleziona le linee...",
       linesBlue: "Linee Blu",
       linesRed: "Linee Rosse",
@@ -261,8 +273,8 @@ export const translations = {
       release: "Rilascio",
       emission: "Emissione",
       printer: "Stampato Da",
-      values: "Nota", // Changed
-      lines: "Linee", // New
+      values: "Nota", 
+      lines: "Linee", 
       linesBlue: "Blu",
       linesRed: "Rosse",
       linesMulti: "Multicolor",
