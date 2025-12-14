@@ -506,6 +506,7 @@ function App() {
         <HistoryModal 
           onClose={() => setIsHistoryModalOpen(false)}
           t={t.history}
+          isAdmin={isAdmin}
         />
       )}
 

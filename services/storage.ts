@@ -1,8 +1,9 @@
-import { ScratchcardData } from "../types";
+import { ScratchcardData, DocumentItem } from "../types";
 
 const DB_NAME = 'raspadinhas-archive-db';
-const DB_VERSION = 2; // Increment version to trigger upgrade
-const STORE_NAME = 'items';
+const DB_VERSION = 3; // Incremented for Documents Store
+const STORE_ITEMS = 'items';
+const STORE_DOCS = 'documents';
 
 class StorageService {
   private db: IDBDatabase | null = null;
@@ -23,22 +24,29 @@ class StorageService {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        let store: IDBObjectStore;
         
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          // Create object store with 'id' as key path
-          store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        // Store for Scratchcards
+        if (!db.objectStoreNames.contains(STORE_ITEMS)) {
+          const store = db.createObjectStore(STORE_ITEMS, { keyPath: 'id' });
+          store.createIndex('createdAt', 'createdAt', { unique: false });
         } else {
-          store = (event.target as IDBOpenDBRequest).transaction!.objectStore(STORE_NAME);
+           // Ensure index exists if upgrading from v1
+           const store = (event.target as IDBOpenDBRequest).transaction!.objectStore(STORE_ITEMS);
+           if (!store.indexNames.contains('createdAt')) {
+             store.createIndex('createdAt', 'createdAt', { unique: false });
+           }
         }
 
-        // Create index for sorting by Date
-        if (!store.indexNames.contains('createdAt')) {
-          store.createIndex('createdAt', 'createdAt', { unique: false });
+        // Store for PDF Documents
+        if (!db.objectStoreNames.contains(STORE_DOCS)) {
+          const docStore = db.createObjectStore(STORE_DOCS, { keyPath: 'id' });
+          docStore.createIndex('createdAt', 'createdAt', { unique: false });
         }
       };
     });
   }
+
+  // --- IMAGES / SCRATCHCARDS METHODS ---
 
   async getAll(): Promise<ScratchcardData[]> {
     if (!this.db) await this.init();
@@ -46,8 +54,8 @@ class StorageService {
     return new Promise((resolve, reject) => {
       if (!this.db) return reject("Database not initialized");
 
-      const transaction = this.db.transaction([STORE_NAME], 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
+      const transaction = this.db.transaction([STORE_ITEMS], 'readonly');
+      const store = transaction.objectStore(STORE_ITEMS);
       const request = store.getAll();
 
       request.onsuccess = () => {
@@ -60,22 +68,20 @@ class StorageService {
     });
   }
 
-  // New method for Pagination
   async getRecent(limit: number, offset: number = 0): Promise<ScratchcardData[]> {
     if (!this.db) await this.init();
 
     return new Promise((resolve, reject) => {
       if (!this.db) return reject("Database not initialized");
 
-      const transaction = this.db.transaction([STORE_NAME], 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
+      const transaction = this.db.transaction([STORE_ITEMS], 'readonly');
+      const store = transaction.objectStore(STORE_ITEMS);
       
-      // Use index if available, otherwise fallback to store
       const source = store.indexNames.contains('createdAt') 
         ? store.index('createdAt') 
         : store;
       
-      const request = source.openCursor(null, 'prev'); // 'prev' for descending order (newest first)
+      const request = source.openCursor(null, 'prev');
       const results: ScratchcardData[] = [];
       let hasSkipped = false;
 
@@ -87,7 +93,6 @@ class StorageService {
           return;
         }
 
-        // Handle Offset
         if (offset > 0 && !hasSkipped) {
           hasSkipped = true;
           cursor.advance(offset);
@@ -107,16 +112,15 @@ class StorageService {
     });
   }
 
-  // New method for Search/Filter
   async search(term: string, continent: string | 'Mundo'): Promise<ScratchcardData[]> {
     if (!this.db) await this.init();
 
     return new Promise((resolve, reject) => {
       if (!this.db) return reject("Database not initialized");
 
-      const transaction = this.db.transaction([STORE_NAME], 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.openCursor(); // Iterate all for search (IndexedDB lacks full-text search)
+      const transaction = this.db.transaction([STORE_ITEMS], 'readonly');
+      const store = transaction.objectStore(STORE_ITEMS);
+      const request = store.openCursor();
       
       const results: ScratchcardData[] = [];
       const lowerTerm = term.toLowerCase().trim();
@@ -145,11 +149,9 @@ class StorageService {
             results.push(img);
           }
 
-          // Safety Limit for search results to avoid UI freeze if result set is huge
           if (results.length < 1000) {
             cursor.continue();
           } else {
-            // Sort by Game Number Ascending (1, 2, 3...)
             resolve(results.sort((a, b) => {
               const numA = parseInt(a.gameNumber.replace(/\D/g, '')) || 0;
               const numB = parseInt(b.gameNumber.replace(/\D/g, '')) || 0;
@@ -157,8 +159,6 @@ class StorageService {
             }));
           }
         } else {
-          // Finished cursor iteration
-          // Sort by Game Number Ascending (1, 2, 3...)
           resolve(results.sort((a, b) => {
             const numA = parseInt(a.gameNumber.replace(/\D/g, '')) || 0;
             const numB = parseInt(b.gameNumber.replace(/\D/g, '')) || 0;
@@ -177,8 +177,8 @@ class StorageService {
      return new Promise((resolve, reject) => {
       if (!this.db) return reject("Database not initialized");
       
-      const transaction = this.db.transaction([STORE_NAME], 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
+      const transaction = this.db.transaction([STORE_ITEMS], 'readonly');
+      const store = transaction.objectStore(STORE_ITEMS);
       const request = store.openCursor();
 
       const stats: Record<string, number> = {
@@ -209,9 +209,9 @@ class StorageService {
     return new Promise((resolve, reject) => {
       if (!this.db) return reject("Database not initialized");
 
-      const transaction = this.db.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.put(item); // .put updates if exists, adds if not
+      const transaction = this.db.transaction([STORE_ITEMS], 'readwrite');
+      const store = transaction.objectStore(STORE_ITEMS);
+      const request = store.put(item);
 
       request.onsuccess = () => resolve();
       request.onerror = () => reject("Erro ao salvar item");
@@ -224,8 +224,8 @@ class StorageService {
     return new Promise((resolve, reject) => {
       if (!this.db) return reject("Database not initialized");
 
-      const transaction = this.db.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
+      const transaction = this.db.transaction([STORE_ITEMS], 'readwrite');
+      const store = transaction.objectStore(STORE_ITEMS);
       const request = store.delete(id);
 
       request.onsuccess = () => resolve();
@@ -236,6 +236,58 @@ class StorageService {
   async exportData(): Promise<string> {
     const items = await this.getAll();
     return JSON.stringify(items, null, 2);
+  }
+
+  // --- DOCUMENTS / PDF METHODS ---
+
+  async getDocuments(): Promise<DocumentItem[]> {
+    if (!this.db) await this.init();
+
+    return new Promise((resolve, reject) => {
+      if (!this.db) return reject("Database not initialized");
+      
+      const transaction = this.db.transaction([STORE_DOCS], 'readonly');
+      const store = transaction.objectStore(STORE_DOCS);
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        // Sort manually by createdAt desc
+        const docs = (request.result || []) as DocumentItem[];
+        docs.sort((a, b) => b.createdAt - a.createdAt);
+        resolve(docs);
+      };
+      request.onerror = () => reject("Erro ao buscar documentos");
+    });
+  }
+
+  async saveDocument(doc: DocumentItem): Promise<void> {
+    if (!this.db) await this.init();
+
+    return new Promise((resolve, reject) => {
+      if (!this.db) return reject("Database not initialized");
+
+      const transaction = this.db.transaction([STORE_DOCS], 'readwrite');
+      const store = transaction.objectStore(STORE_DOCS);
+      const request = store.put(doc);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject("Erro ao salvar documento");
+    });
+  }
+
+  async deleteDocument(id: string): Promise<void> {
+    if (!this.db) await this.init();
+
+    return new Promise((resolve, reject) => {
+      if (!this.db) return reject("Database not initialized");
+
+      const transaction = this.db.transaction([STORE_DOCS], 'readwrite');
+      const store = transaction.objectStore(STORE_DOCS);
+      const request = store.delete(id);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject("Erro ao deletar documento");
+    });
   }
 }
 

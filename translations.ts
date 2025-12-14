@@ -6,7 +6,7 @@ export const translations = {
     header: {
       title: "Arquivo Mundial",
       subtitle: "de Raspadinhas & Lotarias",
-      history: "História", // New
+      history: "Biblioteca", // Changed to Library
       search: "Buscar...",
       admin: "Admin",
       logout: "Sair",
@@ -18,10 +18,21 @@ export const translations = {
       backup: "Backup",
       backupTitle: "Baixar cópia de segurança dos dados (JSON)"
     },
-    history: { // New Section
-      title: "História da Raspadinha",
-      subtitle: "Curiosidades e factos sobre o colecionismo",
-      close: "Fechar Leitura"
+    history: {
+      title: "Biblioteca do Colecionador",
+      subtitle: "História, Artigos e Documentos Oficiais",
+      close: "Fechar",
+      tabArticles: "Artigos & História",
+      tabDocs: "Documentos PDF",
+      uploadPdf: "Carregar PDF (Admin)",
+      uploadPdfDesc: "Selecione um arquivo PDF para adicionar à biblioteca.",
+      noDocs: "Nenhum documento disponível no momento.",
+      deleteDocConfirm: "Apagar este documento?",
+      viewPdf: "Ler Documento",
+      backToList: "Voltar à Lista",
+      docTitlePlaceholder: "Título do Documento (Ex: Regulamento 2024)",
+      addDocSuccess: "Documento adicionado com sucesso!",
+      fileTooBig: "O arquivo é muito grande. Tente arquivos menores que 5MB."
     },
     grid: {
       filters: "Filtros de Gestão",
@@ -157,7 +168,7 @@ export const translations = {
     header: {
       title: "Archivio Mondiale",
       subtitle: "di Gratta e Vinci & Lotterie",
-      history: "Storia", // New
+      history: "Biblioteca", // Library
       search: "Cerca...",
       admin: "Admin",
       logout: "Esci",
@@ -169,10 +180,21 @@ export const translations = {
       backup: "Backup",
       backupTitle: "Scarica copia di backup dei dati (JSON)"
     },
-    history: { // New Section
-      title: "Storia del Gratta e Vinci",
-      subtitle: "Curiosità e fatti sul collezionismo",
-      close: "Chiudi Lettura"
+    history: {
+      title: "Biblioteca del Collezionista",
+      subtitle: "Storia, Articoli e Documenti Ufficiali",
+      close: "Chiudi",
+      tabArticles: "Articoli & Storia",
+      tabDocs: "Documenti PDF",
+      uploadPdf: "Carica PDF (Admin)",
+      uploadPdfDesc: "Seleziona un file PDF da aggiungere alla biblioteca.",
+      noDocs: "Nessun documento disponibile al momento.",
+      deleteDocConfirm: "Cancellare questo documento?",
+      viewPdf: "Leggi Documento",
+      backToList: "Torna alla Lista",
+      docTitlePlaceholder: "Titolo Documento (Es: Regolamento 2024)",
+      addDocSuccess: "Documento aggiunto con successo!",
+      fileTooBig: "Il file è troppo grande. Prova con file inferiori a 5MB."
     },
     grid: {
       filters: "Filtri di Gestione",

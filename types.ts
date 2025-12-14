@@ -36,6 +36,15 @@ export interface ScratchcardData {
   createdAt: number;
 }
 
+export interface DocumentItem {
+  id: string;
+  title: string;
+  description?: string;
+  fileUrl: string; // Base64 PDF data
+  fileName: string;
+  createdAt: number;
+}
+
 export interface AnalysisResult {
   gameName: string;
   gameNumber: string;
