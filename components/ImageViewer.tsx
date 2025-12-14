@@ -210,7 +210,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
 
                    {image.isSeries && (
                      <span className="text-brand-400 bg-brand-900/30 border border-brand-800 px-2 py-0.5 rounded text-xs flex items-center gap-1" title="SET / Serie">
-                       <Layers className="w-3 h-3" /> SET
+                       <Layers className="w-3 h-3" /> SET {image.seriesDetails ? `(${image.seriesDetails})` : ''}
                      </span>
                    )}
                    {image.aiGenerated && (
@@ -237,26 +237,41 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                   placeholder="País"
                   className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded px-3 py-1 focus:border-brand-500 outline-none"
                 />
-                <div className="flex items-center gap-4 mt-2">
-                   <div className="flex items-center gap-2">
-                     <div 
-                       className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer ${formData.isSeries ? 'bg-brand-500 border-brand-500' : 'border-gray-500'}`}
-                       onClick={() => handleChange('isSeries', !formData.isSeries)}
-                     >
-                       {formData.isSeries && <Check className="w-3 h-3 text-white" />}
+                <div className="flex flex-col gap-2 mt-2 bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                   <div className="flex items-center justify-between">
+                     <div className="flex items-center gap-2">
+                       <div 
+                         className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer ${formData.isSeries ? 'bg-brand-500 border-brand-500' : 'border-gray-500'}`}
+                         onClick={() => handleChange('isSeries', !formData.isSeries)}
+                       >
+                         {formData.isSeries && <Check className="w-3 h-3 text-white" />}
+                       </div>
+                       <label className="text-xs text-gray-400 cursor-pointer font-bold" onClick={() => handleChange('isSeries', !formData.isSeries)}>SET / Serie?</label>
                      </div>
-                     <label className="text-xs text-gray-400 cursor-pointer" onClick={() => handleChange('isSeries', !formData.isSeries)}>SET / Serie?</label>
-                   </div>
 
-                   {/* Category Editor */}
-                   <select 
-                     value={formData.category || 'raspadinha'}
-                     onChange={(e) => handleChange('category', e.target.value as Category)}
-                     className="bg-gray-800 text-white text-xs border border-gray-700 rounded px-2 py-1 outline-none focus:border-brand-500"
-                   >
-                     <option value="raspadinha">Raspadinha</option>
-                     <option value="lotaria">Lotaria</option>
-                   </select>
+                     {/* Category Editor */}
+                     <select 
+                       value={formData.category || 'raspadinha'}
+                       onChange={(e) => handleChange('category', e.target.value as Category)}
+                       className="bg-gray-800 text-white text-xs border border-gray-700 rounded px-2 py-1 outline-none focus:border-brand-500"
+                     >
+                       <option value="raspadinha">Raspadinha</option>
+                       <option value="lotaria">Lotaria</option>
+                     </select>
+                   </div>
+                   
+                   {/* Manual numbers input for SET */}
+                   {formData.isSeries && (
+                     <div className="animate-fade-in mt-1">
+                       <input 
+                         type="text" 
+                         value={formData.seriesDetails || ''}
+                         onChange={(e) => handleChange('seriesDetails', e.target.value)}
+                         placeholder="Ex: 1-10 ou 1/5 (Detalhes da Série)"
+                         className="w-full bg-gray-900 border border-gray-600 text-gray-200 text-xs rounded px-2 py-1.5 focus:border-brand-500 outline-none placeholder-gray-500"
+                       />
+                     </div>
+                   )}
                 </div>
               </div>
             ) : (
@@ -279,7 +294,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-800/40 p-3 rounded-lg border border-gray-800">
                   <span className="flex items-center gap-2 text-xs uppercase text-gray-500 mb-1">
-                    <User className="w-3 h-3" /> {t.collector || "Collector"}
+                    <User className="w-3 h-3" /> {t.collector}
                   </span>
                   {isEditing ? (
                     <div className="relative group">
@@ -290,7 +305,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                         type="text" 
                         value={formData.collector || ''}
                         onChange={(e) => handleChange('collector', e.target.value)}
-                        placeholder="Nome do Colecionador"
+                        placeholder={t.collector}
                         className="w-full bg-gray-900 border border-gray-700 text-white text-sm rounded-lg pl-10 pr-3 py-2 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 outline-none transition-all placeholder-gray-600 font-medium"
                       />
                     </div>

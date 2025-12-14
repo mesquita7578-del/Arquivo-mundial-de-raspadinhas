@@ -5,26 +5,43 @@ import { UploadModal } from './components/UploadModal';
 import { ImageViewer } from './components/ImageViewer';
 import { LoginModal } from './components/LoginModal';
 import { StatsSection } from './components/StatsSection';
+import { WorldMap } from './components/WorldMap';
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2 } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
 const AUTHORIZED_ADMINS = ["JORGE MESQUITA", "FABIO PAGNI", "CHLOE"];
 const ADMIN_PASSWORD = "123456";
+const PAGE_SIZE = 48; // Items per database fetch (sync with UI page if desired, or larger)
 
 function App() {
-  const [images, setImages] = useState<ScratchcardData[]>([]);
+  const [displayedImages, setDisplayedImages] = useState<ScratchcardData[]>([]);
+  const [newArrivals, setNewArrivals] = useState<ScratchcardData[]>([]);
+  const [totalStats, setTotalStats] = useState({ total: 0, stats: {} as Record<string, number> });
+  
+  // We need a separate state for "All Images" for the map visualization because the map needs
+  // to show the global distribution, not just the paginated current page.
+  // However, for performance with 20k items, we might need a dedicated "getMapData" method in storageService later.
+  // For now, we will use the current loaded batch OR perform a lightweight fetch if needed, 
+  // but to keep it simple we will assume map visualizes the `displayedImages` if filtered, 
+  // or we might need to fetch all minimal data (just country info).
+  // Strategy: For this implementation, the map will visualize the "Search Results" or "Current Batch".
+  // Ideal: Map visualizes everything. Let's add `allItemsForMap` which fetches only country data.
+  const [mapData, setMapData] = useState<ScratchcardData[]>([]);
+  
   const [isLoadingDB, setIsLoadingDB] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeContinent, setActiveContinent] = useState<Continent | 'Mundo'>('Mundo');
+  
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeContinent, setActiveContinent] = useState<Continent | 'Mundo'>('Mundo');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
   
   const [isDragging, setIsDragging] = useState(false);
   const [droppedFile, setDroppedFile] = useState<File | null>(null);
@@ -32,117 +49,168 @@ function App() {
   const [language, setLanguage] = useState<Language>('pt');
   const t = translations[language];
 
-  // Initialize Database and Load Data
-  useEffect(() => {
-    const initData = async () => {
-      setIsLoadingDB(true);
-      try {
-        await storageService.init();
-        const savedItems = await storageService.getAll();
-        
-        if (savedItems.length > 0) {
-          setImages(savedItems);
-        } else {
-          // Optional: Load initial mock data if DB is empty for demo purposes
-          // In production for 20k items, you might want to start empty
-          setImages(INITIAL_RASPADINHAS);
-          // Save mocks to DB so they persist
-          for (const item of INITIAL_RASPADINHAS) {
-             await storageService.save(item);
-          }
+  // Load Initial Data (Stats + Recent)
+  const loadInitialData = async () => {
+    setIsLoadingDB(true);
+    try {
+      await storageService.init();
+      
+      // Check if empty and seed
+      const stats = await storageService.getStats();
+      if (stats.total === 0) {
+        for (const item of INITIAL_RASPADINHAS) {
+          await storageService.save(item);
         }
-      } catch (error) {
-        console.error("Falha crítica ao carregar base de dados:", error);
-        alert("Erro ao carregar o arquivo. Por favor recarregue a página.");
-      } finally {
-        setIsLoadingDB(false);
       }
-    };
 
-    initData();
+      // Fetch Stats
+      const freshStats = await storageService.getStats();
+      setTotalStats(freshStats);
+
+      // Fetch New Arrivals (Top 5)
+      const recent5 = await storageService.getRecent(5);
+      setNewArrivals(recent5);
+
+      // Fetch First Page
+      const firstPage = await storageService.getRecent(PAGE_SIZE);
+      setDisplayedImages(firstPage);
+
+      // For Map: Fetch all items (optimization: in real app, fetch only {country} fields)
+      // Since `getAll` is already there and IndexedDB is fast enough for <50k simple objects locally:
+      const allItems = await storageService.getAll();
+      setMapData(allItems);
+
+    } catch (error) {
+      console.error("Falha ao carregar:", error);
+      alert("Erro ao carregar o arquivo.");
+    } finally {
+      setIsLoadingDB(false);
+    }
+  };
+
+  useEffect(() => {
+    loadInitialData();
   }, []);
 
-  // Filter images
-  const filteredImages = useMemo(() => {
-    let result = images;
-
-    if (activeContinent !== 'Mundo') {
-      result = result.filter(img => img.continent === activeContinent);
-    }
-
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(img => 
-        img.gameName.toLowerCase().includes(term) ||
-        img.customId.toLowerCase().includes(term) ||
-        img.gameNumber.toLowerCase().includes(term) ||
-        img.state.toLowerCase().includes(term) ||
-        img.country.toLowerCase().includes(term)
-      );
-    }
+  // Handle Search & Continent Filters
+  useEffect(() => {
+    const performSearch = async () => {
+      setIsLoadingMore(true);
+      try {
+        if (!searchTerm && activeContinent === 'Mundo') {
+           // Reset to default view (Recent items)
+           const firstPage = await storageService.getRecent(PAGE_SIZE);
+           setDisplayedImages(firstPage);
+           
+           // Refresh Map Data
+           const all = await storageService.getAll();
+           setMapData(all);
+        } else {
+           // Perform DB Search
+           const results = await storageService.search(searchTerm, activeContinent);
+           setDisplayedImages(results);
+           setMapData(results); // Map reflects search results
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoadingMore(false);
+      }
+    };
     
-    return result;
-  }, [images, searchTerm, activeContinent]);
+    // Debounce slightly to avoid hitting DB too hard while typing
+    const timeoutId = setTimeout(() => {
+      if (!isLoadingDB) performSearch();
+    }, 300);
 
-  const newArrivals = useMemo(() => {
-    return [...images].sort((a, b) => b.createdAt - a.createdAt).slice(0, 5);
-  }, [images]);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, activeContinent, isLoadingDB]);
+
+  // Load More Handler (Infinite Scroll logic)
+  const handleLoadMore = async () => {
+    if (searchTerm || activeContinent !== 'Mundo') return; // Disable load more during filtered search for simplicity
+    
+    setIsLoadingMore(true);
+    try {
+      const currentCount = displayedImages.length;
+      const nextBatch = await storageService.getRecent(PAGE_SIZE, currentCount);
+      
+      if (nextBatch.length > 0) {
+        setDisplayedImages(prev => [...prev, ...nextBatch]);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  const handleCountrySelectFromMap = (countryName: string) => {
+    // When clicking map, we filter by that country
+    setSearchTerm(countryName);
+    setViewMode('grid'); // Switch back to grid to show results
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const availableCountries = useMemo(() => {
     const countries = new Set<string>();
-    filteredImages.forEach(img => countries.add(img.country));
+    // Use mapData (all available or filtered) to calculate available countries list
+    mapData.forEach(img => countries.add(img.country));
     return Array.from(countries).sort();
-  }, [filteredImages]);
+  }, [mapData]);
 
-  // Handlers now interact with StorageService
-
+  // Actions
   const handleUploadComplete = async (newImage: ScratchcardData) => {
     try {
-      // 1. Save to DB first
       await storageService.save(newImage);
-      // 2. Then update UI
-      setImages(prev => [newImage, ...prev]);
-      setDroppedFile(null);
+      // Update UI
+      setDisplayedImages(prev => [newImage, ...prev]);
+      setNewArrivals(prev => [newImage, ...prev].slice(0, 5));
+      setMapData(prev => [...prev, newImage]);
+      setTotalStats(prev => ({
+         total: prev.total + 1,
+         stats: { ...prev.stats, [newImage.continent]: (prev.stats[newImage.continent] || 0) + 1 }
+      }));
       
-      // 3. Open Viewer immediately for editing (as requested by user)
+      setDroppedFile(null);
       setSelectedImage(newImage);
     } catch (error) {
       console.error("Erro ao salvar:", error);
-      alert("Erro ao gravar na base de dados. Verifique o espaço em disco.");
     }
   };
 
   const handleUpdateImage = async (updatedImage: ScratchcardData) => {
     try {
       await storageService.save(updatedImage);
-      setImages(prev => prev.map(img => img.id === updatedImage.id ? updatedImage : img));
+      setDisplayedImages(prev => prev.map(img => img.id === updatedImage.id ? updatedImage : img));
+      setNewArrivals(prev => prev.map(img => img.id === updatedImage.id ? updatedImage : img));
+      setMapData(prev => prev.map(img => img.id === updatedImage.id ? updatedImage : img));
       setSelectedImage(updatedImage);
     } catch (error) {
       console.error("Erro ao atualizar:", error);
-      alert("Erro ao atualizar registo.");
     }
   };
 
   const handleDeleteImage = async (id: string) => {
     try {
       await storageService.delete(id);
-      setImages(prev => prev.filter(img => img.id !== id));
+      setDisplayedImages(prev => prev.filter(img => img.id !== id));
+      setNewArrivals(prev => prev.filter(img => img.id !== id));
+      setMapData(prev => prev.filter(img => img.id !== id));
       setSelectedImage(null);
+      
+      // Update stats count roughly
+      setTotalStats(prev => ({ ...prev, total: Math.max(0, prev.total - 1) }));
     } catch (error) {
       console.error("Erro ao apagar:", error);
-      alert("Erro ao apagar registo.");
     }
   };
 
   const handleAdminToggle = () => {
-    if (!isAdmin) {
-      setIsLoginModalOpen(true);
-    }
+    if (!isAdmin) setIsLoginModalOpen(true);
   };
 
-  const handleLogout = () => {
-    setIsAdmin(false);
-  };
+  const handleLogout = () => setIsAdmin(false);
 
   const handleLoginSubmit = (username: string, pass: string): boolean => {
     const cleanName = username.trim().toUpperCase();
@@ -179,25 +247,16 @@ function App() {
     }
   };
 
+  // Drag & Drop
   const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
+    e.preventDefault(); e.stopPropagation(); setIsDragging(true);
   };
-
   const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!e.relatedTarget || (e.relatedTarget as HTMLElement).nodeName === 'HTML') {
-       setIsDragging(false);
-    }
+    e.preventDefault(); e.stopPropagation();
+    if (!e.relatedTarget || (e.relatedTarget as HTMLElement).nodeName === 'HTML') setIsDragging(false);
   };
-
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
+    e.preventDefault(); e.stopPropagation(); setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
       if (!file.type.startsWith('image/')) {
@@ -214,13 +273,14 @@ function App() {
   };
 
   const continents: (Continent | 'Mundo')[] = ['Mundo', 'Europa', 'América', 'Ásia', 'África', 'Oceania'];
+  const showLoadMore = !searchTerm && activeContinent === 'Mundo' && displayedImages.length < totalStats.total && viewMode !== 'map';
 
   if (isLoadingDB) {
     return (
       <div className="h-screen w-screen bg-gray-950 flex flex-col items-center justify-center text-white">
         <Database className="w-16 h-16 text-brand-600 animate-pulse mb-4" />
         <h2 className="text-2xl font-bold">Carregando Arquivo...</h2>
-        <p className="text-gray-400 mt-2">A preparar base de dados segura.</p>
+        <p className="text-gray-400 mt-2">A conectar base de dados segura.</p>
       </div>
     );
   }
@@ -301,6 +361,13 @@ function App() {
                 >
                   <List className="w-4 h-4" />
                 </button>
+                <button 
+                  onClick={() => setViewMode('map')}
+                  className={`p-2 rounded-md transition-all ${viewMode === 'map' ? 'bg-gray-800 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
+                  title={t.grid.viewMap}
+                >
+                  <MapIcon className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
@@ -320,7 +387,7 @@ function App() {
               ))}
             </div>
 
-            {activeContinent !== 'Mundo' && (
+            {activeContinent !== 'Mundo' && viewMode !== 'map' && (
               <div className="mb-6 flex flex-wrap gap-2 items-center text-sm text-gray-500">
                 <Map className="w-4 h-4 mr-2" />
                 <span>{t.home.countriesIncluded}</span>
@@ -333,17 +400,43 @@ function App() {
             )}
 
             <div className="bg-gray-900/30 border border-gray-800/50 rounded-2xl overflow-hidden min-h-[500px]">
-              <ImageGrid 
-                images={filteredImages} 
-                onImageClick={setSelectedImage} 
-                viewMode={viewMode}
-                isAdmin={isAdmin}
-                t={t.grid}
-              />
+              {viewMode === 'map' ? (
+                <div className="p-4 h-[600px]">
+                   <WorldMap 
+                     images={mapData} 
+                     onCountrySelect={handleCountrySelectFromMap}
+                     t={t} 
+                    />
+                </div>
+              ) : (
+                <>
+                  <ImageGrid 
+                    images={displayedImages} 
+                    onImageClick={setSelectedImage} 
+                    viewMode={viewMode}
+                    isAdmin={isAdmin}
+                    t={t.grid}
+                  />
+                  
+                  {/* Load More Trigger */}
+                  {showLoadMore && (
+                    <div className="p-6 flex justify-center border-t border-gray-800/50">
+                      <button 
+                        onClick={handleLoadMore}
+                        disabled={isLoadingMore}
+                        className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-full font-bold transition-all shadow-lg hover:shadow-brand-900/20 disabled:opacity-50"
+                      >
+                        {isLoadingMore ? <Loader2 className="w-4 h-4 animate-spin" /> : <PlusCircle className="w-4 h-4" />}
+                        {isLoadingMore ? "Carregando..." : "Carregar Mais Itens"}
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </section>
 
-          <StatsSection images={images} t={t.stats} />
+          <StatsSection stats={totalStats.stats} totalRecords={totalStats.total} t={t.stats} />
 
         </div>
       </main>
@@ -363,7 +456,7 @@ function App() {
             setDroppedFile(null);
           }}
           onUploadComplete={handleUploadComplete}
-          existingImages={images}
+          existingImages={displayedImages}
           initialFile={droppedFile}
           t={t.upload}
         />

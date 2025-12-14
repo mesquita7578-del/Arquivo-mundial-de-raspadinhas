@@ -72,7 +72,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, t }) =
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Fabio Pagni / Jorge Mesquita"
+                  placeholder="Fabio Pagni / Jorge Mesquita / Chloe"
                   className="w-full bg-gray-800 text-white pl-10 pr-4 py-3 rounded-xl border border-gray-700 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-all placeholder-gray-600"
                   autoFocus
                 />

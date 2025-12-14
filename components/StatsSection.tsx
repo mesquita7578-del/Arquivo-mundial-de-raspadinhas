@@ -1,13 +1,14 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { ScratchcardData, Continent } from '../types';
+import { Continent } from '../types';
 import { BarChart3, Database, Globe } from 'lucide-react';
 
 interface StatsSectionProps {
-  images: ScratchcardData[];
+  stats: Record<string, number>;
+  totalRecords: number;
   t: any;
 }
 
-export const StatsSection: React.FC<StatsSectionProps> = ({ images, t }) => {
+export const StatsSection: React.FC<StatsSectionProps> = ({ stats, totalRecords, t }) => {
   const [animate, setAnimate] = useState(false);
 
   // Trigger animation on mount
@@ -15,26 +16,6 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, t }) => {
     const timer = setTimeout(() => setAnimate(true), 100);
     return () => clearTimeout(timer);
   }, []);
-  
-  const stats = useMemo(() => {
-    const counts: Record<string, number> = {
-      'Europa': 0,
-      'América': 0,
-      'Ásia': 0,
-      'África': 0,
-      'Oceania': 0
-    };
-
-    images.forEach(img => {
-      if (counts[img.continent] !== undefined) {
-        counts[img.continent]++;
-      }
-    });
-
-    return counts;
-  }, [images]);
-
-  const total = images.length;
   
   // Find the max value to calculate bar height percentage relative to the highest bar
   const maxCount = Math.max(...(Object.values(stats) as number[]), 1); // Avoid division by zero
@@ -106,7 +87,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, t }) => {
             <h3 className="text-gray-300 font-medium uppercase tracking-widest text-sm mb-2 text-center">{t.totalRecords}</h3>
             
             <div className="text-6xl sm:text-7xl font-black text-white font-mono tracking-tighter relative z-10 drop-shadow-xl">
-              {total}
+              {totalRecords}
             </div>
             
             <div className="mt-4 px-4 py-1 bg-brand-500/20 border border-brand-500/30 rounded-full text-brand-300 text-xs font-bold animate-pulse-slow flex items-center gap-2">

@@ -33,6 +33,7 @@ export const translations = {
       gameNo: "Jogo Nº",
       viewGrid: "Grade",
       viewList: "Lista",
+      viewMap: "Mapa Mundi",
       type: "Categoria",
       allTypes: "Tudo",
       scratchcard: "Raspadinhas",
@@ -64,6 +65,7 @@ export const translations = {
       aiTitle: "IA de Catalogação",
       aiDesc: "O sistema irá identificar se é Raspadinha ou Lotaria, além do país e dados técnicos.",
       isSeries: "É um SET (Série)?",
+      seriesDetailsPlaceholder: "Nºs (ex: 1-5)",
       gameName: "Nome do Jogo",
       country: "País",
       continent: "Continente",
@@ -98,7 +100,7 @@ export const translations = {
       deleteConfirm: "Tem certeza que deseja excluir este registro permanentemente?",
       addedOn: "Adicionado em",
       adminMode: "Modo Admin",
-      gameNo: "Nº Jogo/Sorteio",
+      gameNo: "N. Jogo/Estrazione",
       price: "Preço (Facial)",
       state: "Estado",
       size: "Tamanho",
@@ -107,7 +109,8 @@ export const translations = {
       printer: "Impresso Por",
       values: "Valores / Prêmios",
       close: "Fechar Visualização",
-      category: "Tipo"
+      category: "Tipo",
+      collector: "Colecionador"
     },
     login: {
       title: "Área Administrativa",
@@ -160,6 +163,7 @@ export const translations = {
       gameNo: "Gioco N.",
       viewGrid: "Griglia",
       viewList: "Lista",
+      viewMap: "Mappa",
       type: "Categoria",
       allTypes: "Tutto",
       scratchcard: "Gratta e Vinci",
@@ -191,6 +195,7 @@ export const translations = {
       aiTitle: "IA di Catalogazione",
       aiDesc: "Il sistema identificherà se è Gratta e Vinci o Lotteria, oltre a paese e dati.",
       isSeries: "È un SET (Serie)?",
+      seriesDetailsPlaceholder: "N. (es: 1-5)",
       gameName: "Nome del Gioco",
       country: "Paese",
       continent: "Continente",
@@ -234,7 +239,8 @@ export const translations = {
       printer: "Stampato Da",
       values: "Valori / Premi",
       close: "Chiudi Visualizzazione",
-      category: "Tipo"
+      category: "Tipo",
+      collector: "Collezionista"
     },
     login: {
       title: "Area Amministrativa",

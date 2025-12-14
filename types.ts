@@ -25,6 +25,7 @@ export interface ScratchcardData {
   emission?: string; // Emissão / Tiragem
   printer?: string; // Impresso por (Gráfica)
   isSeries?: boolean; // É um SET / Série?
+  seriesDetails?: string; // Detalhes manuais do SET (ex: "1-10" ou "5/12")
   
   category: Category; // Nova distinção: Raspadinha vs Lotaria
 
@@ -45,4 +46,5 @@ export interface AnalysisResult {
   emission?: string;
   printer?: string;
   category: Category;
+  seriesDetails?: string;
 }

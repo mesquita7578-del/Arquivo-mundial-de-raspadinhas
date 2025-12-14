@@ -171,6 +171,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       emission: analysis.emission || '',
       printer: analysis.printer || '',
       isSeries: false,
+      seriesDetails: '',
       category: analysis.category || 'raspadinha',
       createdAt: Date.now(),
       aiGenerated: true
@@ -434,20 +435,33 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                   </div>
                 </div>
 
-                {/* Checkbox Series */}
-                 <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700 flex items-center gap-3">
-                   <div 
-                     className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-colors ${formData?.isSeries ? 'bg-brand-500 border-brand-500' : 'border-gray-500 hover:border-gray-400'}`}
-                     onClick={() => updateField('isSeries', !formData?.isSeries)}
-                   >
-                     {formData?.isSeries && <Check className="w-3.5 h-3.5 text-white" />}
+                {/* Checkbox Series with Manual Input */}
+                 <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700 flex flex-col gap-2">
+                   <div className="flex items-center gap-3">
+                     <div 
+                       className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-colors ${formData?.isSeries ? 'bg-brand-500 border-brand-500' : 'border-gray-500 hover:border-gray-400'}`}
+                       onClick={() => updateField('isSeries', !formData?.isSeries)}
+                     >
+                       {formData?.isSeries && <Check className="w-3.5 h-3.5 text-white" />}
+                     </div>
+                     <label 
+                       className="text-sm text-gray-300 cursor-pointer select-none font-bold"
+                       onClick={() => updateField('isSeries', !formData?.isSeries)}
+                     >
+                       {t.isSeries}
+                     </label>
                    </div>
-                   <label 
-                     className="text-sm text-gray-300 cursor-pointer select-none font-bold"
-                     onClick={() => updateField('isSeries', !formData?.isSeries)}
-                   >
-                     {t.isSeries}
-                   </label>
+                   
+                   {/* Manual Series Input */}
+                   {formData?.isSeries && (
+                      <input 
+                        type="text"
+                        value={formData.seriesDetails || ''}
+                        onChange={(e) => updateField('seriesDetails', e.target.value)}
+                        placeholder={t.seriesDetailsPlaceholder}
+                        className="w-full bg-gray-900 border border-gray-600 text-white text-xs rounded px-2 py-1.5 focus:border-brand-500 outline-none placeholder-gray-500 animate-fade-in"
+                      />
+                   )}
                  </div>
               </div>
 
