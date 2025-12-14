@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Upload, Ticket, Lock, LogOut, Download } from 'lucide-react';
+import { Search, Upload, Ticket, Lock, LogOut, Download, FileSpreadsheet } from 'lucide-react';
 import { Language } from '../translations';
 
 interface HeaderProps {
@@ -10,6 +10,7 @@ interface HeaderProps {
   onAdminToggle: () => void;
   onLogout: () => void;
   onExport: () => void;
+  onDownloadList: () => void; // New prop for public list download
   language: Language;
   setLanguage: (lang: Language) => void;
   t: any;
@@ -23,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
   onAdminToggle, 
   onLogout,
   onExport,
+  onDownloadList,
   language,
   setLanguage,
   t
@@ -95,6 +97,16 @@ export const Header: React.FC<HeaderProps> = ({
             🇮🇹 IT
           </button>
         </div>
+
+        {/* Public Excel Download Button */}
+        <button
+          onClick={onDownloadList}
+          className="flex items-center gap-2 bg-green-900/20 hover:bg-green-800/40 text-green-400 hover:text-green-300 border border-green-800/50 px-3 py-2 rounded-full text-xs sm:text-sm font-medium transition-all"
+          title="Download Lista Excel"
+        >
+          <FileSpreadsheet className="w-4 h-4" />
+          <span className="hidden lg:inline">Lista Excel</span>
+        </button>
 
         {/* Admin Controls */}
         {isAdmin ? (

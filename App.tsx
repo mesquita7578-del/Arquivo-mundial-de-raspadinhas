@@ -220,6 +220,98 @@ function App() {
     }
   };
 
+  // Generate and Download CSV (Excel style)
+  const handleDownloadList = async () => {
+    try {
+      // 1. Fetch ALL items
+      const allItems = await storageService.getAll();
+
+      // 2. Sort by Continent -> Country -> Category -> Game Number/Name
+      const sortedItems = allItems.sort((a, b) => {
+        // Sort by Continent
+        const contCompare = a.continent.localeCompare(b.continent);
+        if (contCompare !== 0) return contCompare;
+
+        // Sort by Country
+        const countryCompare = a.country.localeCompare(b.country);
+        if (countryCompare !== 0) return countryCompare;
+
+        // Sort by Category (Raspadinha before Lotaria)
+        const catA = a.category || '';
+        const catB = b.category || '';
+        const catCompare = catA.localeCompare(catB);
+        if (catCompare !== 0) return catCompare;
+
+        // Sort by Game Number (Numeric if possible)
+        const numA = parseInt(a.gameNumber.replace(/\D/g, '')) || 0;
+        const numB = parseInt(b.gameNumber.replace(/\D/g, '')) || 0;
+        if (numA !== numB) return numA - numB;
+
+        return a.gameName.localeCompare(b.gameName);
+      });
+
+      // 3. Define Headers (Including Continent now)
+      const headers = [
+        "Continente / Continent",
+        "País / Country",
+        "Categoria / Type",
+        "Nome do Jogo / Game Name",
+        "Número / No.",
+        "Ano / Year",
+        "Estado / State",
+        "Preço / Price",
+        "Tamanho / Size",
+        "Emissão / Emission",
+        "Gráfica / Printer",
+        "Colecionador / Collector",
+        "Notas / Notes"
+      ];
+
+      // 4. Create CSV Rows (using semicolon ';' for better Excel compatibility in Europe)
+      const escapeCsv = (field: string | undefined) => {
+        if (!field) return "";
+        const stringField = String(field);
+        if (stringField.includes(";") || stringField.includes("\n") || stringField.includes('"')) {
+           return `"${stringField.replace(/"/g, '""')}"`;
+        }
+        return stringField;
+      };
+
+      const rows = sortedItems.map(item => [
+        escapeCsv(item.continent),
+        escapeCsv(item.country),
+        escapeCsv(item.category),
+        escapeCsv(item.gameName),
+        escapeCsv(item.gameNumber),
+        escapeCsv(item.releaseDate),
+        escapeCsv(item.state),
+        escapeCsv(item.price),
+        escapeCsv(item.size),
+        escapeCsv(item.emission),
+        escapeCsv(item.printer),
+        escapeCsv(item.collector),
+        escapeCsv(item.values)
+      ].join(";"));
+
+      // 5. Combine with BOM for UTF-8 support in Excel
+      const csvContent = "\uFEFF" + headers.join(";") + "\n" + rows.join("\n");
+      
+      // 6. Download
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Arquivo-Mundial-Lista-Completa-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+    } catch (error) {
+      console.error("Erro ao gerar lista:", error);
+      alert("Erro ao criar a lista para download.");
+    }
+  };
+
   // Drag & Drop
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault(); e.stopPropagation(); setIsDragging(true);
@@ -273,6 +365,7 @@ function App() {
         onAdminToggle={handleAdminToggle}
         onLogout={handleLogout}
         onExport={handleExportData}
+        onDownloadList={handleDownloadList}
         language={language}
         setLanguage={setLanguage}
         t={t.header}
@@ -383,7 +476,7 @@ function App() {
                     images={displayedImages} 
                     onImageClick={setSelectedImage} 
                     viewMode={viewMode}
-                    isAdmin={isAdmin}
+                    isAdmin={isAdmin} 
                     t={t.grid}
                   />
                   
