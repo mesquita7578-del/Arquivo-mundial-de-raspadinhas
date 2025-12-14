@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ScratchcardData, ScratchcardState, Category } from '../types';
-import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
+import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify } from 'lucide-react';
 
 interface ImageGridProps {
   images: ScratchcardData[];
@@ -26,6 +26,37 @@ const StateBadge: React.FC<{ state: string }> = ({ state }) => {
     <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${getColor(state)}`}>
       {state}
     </span>
+  );
+};
+
+const LineIndicator: React.FC<{ type?: LineType; t: any }> = ({ type, t }) => {
+  if (!type || type === 'none') return null;
+
+  let colorClass = '';
+  let label = '';
+
+  switch (type) {
+    case 'blue':
+      colorClass = 'bg-blue-500';
+      label = t.linesBlue || 'Azuis';
+      break;
+    case 'red':
+      colorClass = 'bg-red-500';
+      label = t.linesRed || 'Vermelhas';
+      break;
+    case 'multicolor':
+      colorClass = 'bg-gradient-to-r from-blue-400 via-yellow-400 to-red-400';
+      label = t.linesMulti || 'Multi';
+      break;
+    default:
+      return null;
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 bg-gray-800/80 px-1.5 py-0.5 rounded border border-gray-700" title={`Linhas: ${label}`}>
+      <div className={`w-2 h-2 rounded-full ${colorClass} shadow-sm`}></div>
+      <span className="text-[9px] text-gray-400 uppercase font-bold hidden sm:inline">{label}</span>
+    </div>
   );
 };
 
@@ -232,6 +263,10 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
                         {item.seriesDetails && <span className="text-[10px] text-brand-400 font-medium">{item.seriesDetails}</span>}
                       </span>
                     )}
+                    {/* Line Indicator in List */}
+                    {item.lines && item.lines !== 'none' && (
+                       <LineIndicator type={item.lines} t={t} />
+                    )}
                   </div>
                   <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
                      <span className="flex items-center gap-1">
@@ -291,23 +326,28 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
                      {item.customId}
                   </div>
 
-                   <div className="absolute top-2 right-2 flex gap-1 items-start">
-                      {item.isSeries && (
-                        <div className={`backdrop-blur text-white rounded-lg shadow-sm flex items-center justify-center gap-1 ${item.seriesDetails ? 'bg-brand-600/90 px-1.5 py-0.5' : 'bg-brand-600/90 p-1 rounded-full'}`} title={t.series}>
-                          <Layers className="w-3 h-3" />
-                          {item.seriesDetails && <span className="text-[10px] font-bold leading-none">{item.seriesDetails}</span>}
-                        </div>
-                      )}
-                      {item.backUrl && (
-                        <div className="bg-gray-800/80 backdrop-blur text-gray-300 p-1 rounded-full shadow-sm" title="Possui verso / Retro">
-                          <RotateCcw className="w-3 h-3" />
-                        </div>
-                      )}
-                      {item.aiGenerated && (
-                        <div className="bg-brand-600/90 backdrop-blur text-white p-1 rounded-full shadow-sm" title="AI">
-                          <Sparkles className="w-3 h-3" />
-                        </div>
-                      )}
+                   <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+                      <div className="flex gap-1">
+                        {item.isSeries && (
+                            <div className={`backdrop-blur text-white rounded-lg shadow-sm flex items-center justify-center gap-1 ${item.seriesDetails ? 'bg-brand-600/90 px-1.5 py-0.5' : 'bg-brand-600/90 p-1 rounded-full'}`} title={t.series}>
+                            <Layers className="w-3 h-3" />
+                            {item.seriesDetails && <span className="text-[10px] font-bold leading-none">{item.seriesDetails}</span>}
+                            </div>
+                        )}
+                        {item.backUrl && (
+                            <div className="bg-gray-800/80 backdrop-blur text-gray-300 p-1 rounded-full shadow-sm" title="Possui verso / Retro">
+                            <RotateCcw className="w-3 h-3" />
+                            </div>
+                        )}
+                        {item.aiGenerated && (
+                            <div className="bg-brand-600/90 backdrop-blur text-white p-1 rounded-full shadow-sm" title="AI">
+                            <Sparkles className="w-3 h-3" />
+                            </div>
+                        )}
+                      </div>
+                      
+                      {/* Lines Visual Indicator on Grid */}
+                      <LineIndicator type={item.lines} t={t} />
                    </div>
                 </div>
 
