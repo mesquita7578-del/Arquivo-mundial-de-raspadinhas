@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
-import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify } from 'lucide-react';
+import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ImageGridProps {
   images: ScratchcardData[];

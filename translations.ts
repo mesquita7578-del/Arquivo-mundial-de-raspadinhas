@@ -38,6 +38,9 @@ export const translations = {
       allTypes: "Tudo",
       scratchcard: "Raspadinhas",
       lottery: "Lotarias",
+      linesBlue: "Azuis",
+      linesRed: "Vermelhas",
+      linesMulti: "Multi",
       // Pagination
       page: "Página",
       of: "de",
@@ -180,6 +183,9 @@ export const translations = {
       allTypes: "Tutto",
       scratchcard: "Gratta e Vinci",
       lottery: "Lotterie",
+      linesBlue: "Blu",
+      linesRed: "Rosse",
+      linesMulti: "Multi",
       // Pagination
       page: "Pagina",
       of: "di",
