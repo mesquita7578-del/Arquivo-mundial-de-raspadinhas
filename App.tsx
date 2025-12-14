@@ -267,7 +267,9 @@ function App() {
         "Emissão / Emission",
         "Gráfica / Printer",
         "Colecionador / Collector",
-        "Notas / Notes"
+        "Link Imagem / Image Link", // New: URL to image for verification
+        "Notas / Notes",
+        "Correções (Para Preencher) / Corrections" // New: Empty column for manual notes
       ];
 
       // 4. Create CSV Rows (using semicolon ';' for better Excel compatibility in Europe)
@@ -293,7 +295,9 @@ function App() {
         escapeCsv(item.emission),
         escapeCsv(item.printer),
         escapeCsv(item.collector),
-        escapeCsv(item.values)
+        escapeCsv(item.frontUrl), // Image URL
+        escapeCsv(item.values),
+        "" // Empty column for granddaughter's corrections
       ].join(";"));
 
       // 5. Combine with BOM for UTF-8 support in Excel
@@ -417,19 +421,32 @@ function App() {
             </div>
 
             <div className="flex flex-wrap gap-2 mb-6">
-              {continents.map(c => (
-                <button
-                  key={c}
-                  onClick={() => setActiveContinent(c)}
-                  className={`px-6 py-2 rounded-full text-sm font-bold transition-all border ${
-                    activeContinent === c 
-                      ? 'bg-brand-600 text-white border-brand-500 shadow-lg shadow-brand-900/50 scale-105' 
-                      : 'bg-gray-900 text-gray-400 border-gray-800 hover:bg-gray-800 hover:text-white'
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
+              {continents.map(c => {
+                // Calculate count for this continent
+                let count = 0;
+                if (c === 'Mundo') {
+                   count = totalStats.total;
+                } else {
+                   count = totalStats.stats[c] || 0;
+                }
+
+                return (
+                  <button
+                    key={c}
+                    onClick={() => setActiveContinent(c)}
+                    className={`px-6 py-2 rounded-full text-sm font-bold transition-all border flex items-center gap-2 ${
+                      activeContinent === c 
+                        ? 'bg-brand-600 text-white border-brand-500 shadow-lg shadow-brand-900/50 scale-105' 
+                        : 'bg-gray-900 text-gray-400 border-gray-800 hover:bg-gray-800 hover:text-white'
+                    }`}
+                  >
+                    {c}
+                    <span className={`text-xs ml-1 py-0.5 px-1.5 rounded-full ${activeContinent === c ? 'bg-white/20 text-white' : 'bg-gray-800 text-gray-500'}`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             {activeContinent !== 'Mundo' && viewMode !== 'map' && (
