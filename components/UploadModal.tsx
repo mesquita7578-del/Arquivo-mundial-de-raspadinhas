@@ -186,13 +186,14 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     return `${prefix}${nextNum}`;
   };
 
-  const createFormData = (analysis: any) => {
+  // Modified to return data and allow custom image override
+  const createFormData = (analysis: any): ScratchcardData => {
     const smartId = generateNextId(analysis.country || 'Desconhecido');
     
-    // Dynamic placeholder based on category
+    // Dynamic placeholder based on category if no image provided
     let defaultImage = 'https://placehold.co/600x400/1f2937/white?text=Sem+Imagem';
-    if (analysis.category === 'boletim') defaultImage = 'https://placehold.co/600x800/064e3b/white?text=BOLETIM';
-    if (analysis.category === 'objeto') defaultImage = 'https://placehold.co/600x600/7c2d12/white?text=OBJETO';
+    if (analysis.category === 'boletim') defaultImage = 'https://placehold.co/600x800/064e3b/ffffff?text=BOLETIM';
+    if (analysis.category === 'objeto') defaultImage = 'https://placehold.co/600x600/7c2d12/ffffff?text=OBJETO';
 
     const newCard: ScratchcardData = {
       id: Math.random().toString(36).substr(2, 9),
@@ -222,8 +223,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       aiGenerated: true
     };
     setFormData(newCard);
-    
-    // If we are in simple mode, return the data directly instead of setting step
     return newCard;
   };
 
@@ -238,7 +237,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       const backBase64 = backPreview ? backPreview.split(',')[1] : null;
       const analysis = await analyzeImage(frontBase64, backBase64, frontFile.type);
       createFormData(analysis);
-      setStep('review'); // Only go to review for AI analysis
+      setStep('review'); // Standard flow goes to review
     } catch (err) {
       console.error(err);
       setError(t.errorAnalyze);
@@ -254,7 +253,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     try {
       const results = await searchScratchcardInfo(searchQuery);
       createFormData(results);
-      setStep('review');
+      setStep('review'); // Web search goes to review
     } catch (err) {
       console.error(err);
       setError("Não foi possível encontrar informações online. Tente ser mais específico.");
@@ -279,8 +278,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
         gameNumber: '---',
      };
      
-     // Create data and SAVE DIRECTLY (Skip Review)
+     // INSTANT SAVE: Create data and skip review
      const finalData = createFormData(dummyAnalysis);
+     
+     // Explicitly use the generated data to save immediately
      onUploadComplete(finalData);
      setShowSuccess(true);
      setTimeout(() => {
@@ -290,7 +291,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
   const handleSave = () => {
     if (formData) {
-      // Ensure we use the latest image previews if they exist
+      // Ensure we use the latest image previews if they exist (important for Web Search flow where image is added late)
       const finalData = {
         ...formData,
         frontUrl: frontPreview || formData.frontUrl,
