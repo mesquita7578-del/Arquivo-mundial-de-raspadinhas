@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify, Gem, MapPin, Gift, Image as ImageIcon, FileSearch } from 'lucide-react';
+import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify, Gem, MapPin, Gift, Image as ImageIcon, FileSearch, ClipboardList, Package } from 'lucide-react';
 import { analyzeImage, searchScratchcardInfo } from '../services/geminiService';
 import { ScratchcardData, ScratchcardState, Continent, Category, LineType } from '../types';
 
@@ -63,7 +63,7 @@ const resizeAndCompressImage = (file: File): Promise<string> => {
 
 export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadComplete, existingImages = [], initialFile, t }) => {
   const [step, setStep] = useState<'upload' | 'review'>('upload');
-  const [activeTab, setActiveTab] = useState<'image' | 'web'>('image'); // New Tab State
+  const [activeTab, setActiveTab] = useState<'image' | 'web' | 'simple'>('image'); // New Tab State
   
   const [frontFile, setFrontFile] = useState<File | null>(null);
   const [backFile, setBackFile] = useState<File | null>(null);
@@ -73,6 +73,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
   // Web Search State
   const [searchQuery, setSearchQuery] = useState('');
   
+  // Simple Mode State
+  const [simpleName, setSimpleName] = useState('');
+  const [simpleCountry, setSimpleCountry] = useState('');
+  const [simpleCategory, setSimpleCategory] = useState<Category>('boletim');
+  const [simpleDate, setSimpleDate] = useState(new Date().toISOString().split('T')[0]);
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -247,6 +253,25 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     }
   };
 
+  const handleSimpleCreate = () => {
+     if (!simpleName || !simpleCountry) {
+        setError("Nome e País são obrigatórios");
+        return;
+     }
+
+     const dummyAnalysis = {
+        gameName: simpleName,
+        country: simpleCountry,
+        category: simpleCategory,
+        releaseDate: simpleDate,
+        state: 'MINT',
+        continent: 'Europa',
+        gameNumber: '---',
+     };
+     
+     createFormData(dummyAnalysis);
+  };
+
   const handleSave = () => {
     if (formData) {
       // Ensure we use the latest image previews if they exist (important for Web Search flow where image is added late)
@@ -410,20 +435,27 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
         {/* Tabs (Only in Upload Step) */}
         {step === 'upload' && (
-          <div className="p-2 mx-6 mt-6 bg-gray-950/50 rounded-xl border border-white/5 flex gap-1 relative">
+          <div className="p-2 mx-6 mt-6 bg-gray-950/50 rounded-xl border border-white/5 flex gap-1 relative overflow-x-auto">
             <button
               onClick={() => setActiveTab('image')}
-              className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'image' ? 'bg-gray-800 text-white shadow-lg border border-white/5' : 'text-gray-500 hover:text-gray-300'}`}
+              className={`flex-1 py-2.5 px-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === 'image' ? 'bg-gray-800 text-white shadow-lg border border-white/5' : 'text-gray-500 hover:text-gray-300'}`}
             >
               <ImageIcon className="w-4 h-4" />
               Via Imagem
             </button>
             <button
               onClick={() => setActiveTab('web')}
-              className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'web' ? 'bg-gray-800 text-white shadow-lg border border-white/5' : 'text-gray-500 hover:text-gray-300'}`}
+              className={`flex-1 py-2.5 px-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === 'web' ? 'bg-gray-800 text-white shadow-lg border border-white/5' : 'text-gray-500 hover:text-gray-300'}`}
             >
               <Globe className="w-4 h-4" />
-              Via Web/SCML
+              Web/SCML
+            </button>
+            <button
+              onClick={() => setActiveTab('simple')}
+              className={`flex-1 py-2.5 px-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === 'simple' ? 'bg-gray-800 text-white shadow-lg border border-white/5' : 'text-gray-500 hover:text-gray-300'}`}
+            >
+              <ClipboardList className="w-4 h-4" />
+              Registo Rápido
             </button>
           </div>
         )}
@@ -439,7 +471,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                 </div>
               )}
 
-              {activeTab === 'image' ? (
+              {activeTab === 'image' && (
                 <div className="animate-fade-in">
                   <div className="flex flex-col sm:flex-row gap-6 mb-6">
                     <UploadBox label={t.front} preview={frontPreview} isFront={true} />
@@ -457,7 +489,9 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                       </div>
                   </div>
                 </div>
-              ) : (
+              )}
+              
+              {activeTab === 'web' && (
                 <div className="space-y-6 animate-fade-in">
                   <div className="bg-blue-900/10 border border-blue-500/20 p-6 rounded-2xl flex items-start gap-4">
                     <div className="bg-blue-500/20 p-2.5 rounded-xl">
@@ -494,6 +528,76 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                   </div>
                 </div>
               )}
+
+              {activeTab === 'simple' && (
+                <div className="space-y-6 animate-fade-in">
+                   <div className="bg-green-900/10 border border-green-500/20 p-6 rounded-2xl flex items-start gap-4 mb-6">
+                    <div className="bg-green-500/20 p-2.5 rounded-xl">
+                       <ClipboardList className="w-6 h-6 text-green-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-green-100 font-bold text-lg mb-1">Boletins & Objetos</h4>
+                      <p className="text-green-200/60 text-sm leading-relaxed">
+                        Entrada rápida para boletins de registo, catálogos, calendários ou outros objetos de coleção sem necessidade de análise IA complexa.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div>
+                        <label className="block text-xs uppercase text-gray-500 font-bold mb-2">Tipo de Item</label>
+                        <select 
+                           className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-brand-500 outline-none"
+                           value={simpleCategory}
+                           onChange={(e) => setSimpleCategory(e.target.value as Category)}
+                        >
+                           <option value="boletim">Boletim de Registo</option>
+                           <option value="objeto">Objeto (Catálogo, Calendário...)</option>
+                           <option value="raspadinha">Raspadinha</option>
+                           <option value="lotaria">Lotaria</option>
+                        </select>
+                     </div>
+                     <div>
+                        <label className="block text-xs uppercase text-gray-500 font-bold mb-2">Data de Registo</label>
+                        <input 
+                           type="date"
+                           className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-brand-500 outline-none"
+                           value={simpleDate}
+                           onChange={(e) => setSimpleDate(e.target.value)}
+                        />
+                     </div>
+                     <div className="md:col-span-2">
+                        <label className="block text-xs uppercase text-gray-500 font-bold mb-2">Nome do Jogo / Objeto</label>
+                        <input 
+                           type="text"
+                           placeholder="Ex: Boletim Euromilhões 2024"
+                           className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-brand-500 outline-none text-lg font-bold"
+                           value={simpleName}
+                           onChange={(e) => setSimpleName(e.target.value)}
+                        />
+                     </div>
+                     <div className="md:col-span-2">
+                        <label className="block text-xs uppercase text-gray-500 font-bold mb-2">País</label>
+                        <input 
+                           type="text"
+                           list="list-countries"
+                           placeholder="Ex: Portugal"
+                           className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-brand-500 outline-none"
+                           value={simpleCountry}
+                           onChange={(e) => setSimpleCountry(e.target.value)}
+                        />
+                     </div>
+                     
+                     {/* Optional Image Upload in Simple Mode */}
+                     <div className="md:col-span-2">
+                        <label className="block text-xs uppercase text-gray-500 font-bold mb-2">Imagem (Opcional)</label>
+                        <div className="flex gap-4">
+                           <UploadBox label="Foto" preview={frontPreview} isFront={true} />
+                        </div>
+                     </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             // REVIEW STEP
@@ -527,6 +631,24 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                       <Ticket className={`w-5 h-5 ${formData?.category === 'lotaria' ? 'text-purple-400' : 'text-gray-500'}`} />
                       <span className={`text-xs font-bold uppercase ${formData?.category === 'lotaria' ? 'text-white' : 'text-gray-500'}`}>{t.typeLottery}</span>
                       {formData?.category === 'lotaria' && <div className="absolute top-2 right-2 w-2 h-2 bg-purple-500 rounded-full shadow-lg shadow-purple-500/50"></div>}
+                    </button>
+                    
+                    {/* Extra Categories for Simple Mode */}
+                    <button
+                      onClick={() => updateField('category', 'boletim')}
+                      className={`relative p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${formData?.category === 'boletim' ? 'bg-green-600/20 border-green-500' : 'bg-gray-800/40 border-gray-700 hover:bg-gray-800'}`}
+                    >
+                      <ClipboardList className={`w-5 h-5 ${formData?.category === 'boletim' ? 'text-green-400' : 'text-gray-500'}`} />
+                      <span className={`text-xs font-bold uppercase ${formData?.category === 'boletim' ? 'text-white' : 'text-gray-500'}`}>{t.typeBulletin}</span>
+                      {formData?.category === 'boletim' && <div className="absolute top-2 right-2 w-2 h-2 bg-green-500 rounded-full shadow-lg shadow-green-500/50"></div>}
+                    </button>
+                     <button
+                      onClick={() => updateField('category', 'objeto')}
+                      className={`relative p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${formData?.category === 'objeto' ? 'bg-orange-600/20 border-orange-500' : 'bg-gray-800/40 border-gray-700 hover:bg-gray-800'}`}
+                    >
+                      <Package className={`w-5 h-5 ${formData?.category === 'objeto' ? 'text-orange-400' : 'text-gray-500'}`} />
+                      <span className={`text-xs font-bold uppercase ${formData?.category === 'objeto' ? 'text-white' : 'text-gray-500'}`}>{t.typeObject}</span>
+                      {formData?.category === 'objeto' && <div className="absolute top-2 right-2 w-2 h-2 bg-orange-500 rounded-full shadow-lg shadow-orange-500/50"></div>}
                     </button>
                 </div>
 
@@ -698,7 +820,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                        type="text" 
                        value={formData?.releaseDate || ''}
                        onChange={e => updateField('releaseDate', e.target.value)}
-                       placeholder="YYYY"
+                       placeholder="YYYY-MM-DD"
                        className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2.5 text-white focus:border-brand-500 focus:outline-none text-sm"
                      />
                    </div>
@@ -836,7 +958,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                       </>
                     )}
                   </button>
-                ) : (
+                ) : activeTab === 'web' ? (
                   <button
                     onClick={handleWebSearch}
                     disabled={!searchQuery.trim() || isProcessing}
@@ -857,6 +979,18 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                         Buscar Online
                       </>
                     )}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSimpleCreate}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold shadow-lg transition-all ${
+                       !simpleName || !simpleCountry 
+                         ? "bg-gray-800 text-gray-500 cursor-not-allowed"
+                         : "bg-green-600 hover:bg-green-500 text-white shadow-green-900/40 hover:scale-105 active:scale-95"
+                    }`}
+                  >
+                    <ClipboardList className="w-4 h-4" />
+                    Criar Registo
                   </button>
                 )
              ) : (

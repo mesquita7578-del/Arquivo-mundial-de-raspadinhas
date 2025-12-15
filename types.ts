@@ -3,7 +3,7 @@ export type ScratchcardState = 'AMOSTRA' | 'VOID' | 'MUESTRA' | 'CAMPIONE' | 'MI
 
 export type Continent = 'Europa' | 'América' | 'Ásia' | 'África' | 'Oceania' | 'Mundo';
 
-export type Category = 'raspadinha' | 'lotaria';
+export type Category = 'raspadinha' | 'lotaria' | 'boletim' | 'objeto';
 
 export type LineType = 'blue' | 'red' | 'multicolor' | 'none';
 

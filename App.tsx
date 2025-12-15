@@ -10,7 +10,7 @@ import { HistoryModal } from './components/HistoryModal';
 import { WebsitesModal } from './components/WebsitesModal';
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2 } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
@@ -445,6 +445,20 @@ function App() {
              >
                <Ticket className="w-3.5 h-3.5" />
                {t.grid.lottery}
+             </button>
+             <button
+               onClick={() => setActiveCategory('boletim')}
+               className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border flex items-center gap-2 whitespace-nowrap ${activeCategory === 'boletim' ? 'bg-green-600 text-white border-green-500' : 'text-slate-500 border-transparent hover:text-white hover:bg-slate-800'}`}
+             >
+               <ClipboardList className="w-3.5 h-3.5" />
+               {t.grid.bulletin}
+             </button>
+             <button
+               onClick={() => setActiveCategory('objeto')}
+               className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border flex items-center gap-2 whitespace-nowrap ${activeCategory === 'objeto' ? 'bg-orange-600 text-white border-orange-500' : 'text-slate-500 border-transparent hover:text-white hover:bg-slate-800'}`}
+             >
+               <Package className="w-3.5 h-3.5" />
+               {t.grid.object}
              </button>
          </div>
       </div>

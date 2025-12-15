@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
-import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff, MapPin, LayoutGrid, List } from 'lucide-react';
+import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff, MapPin, LayoutGrid, List, ClipboardList, Package } from 'lucide-react';
 
 interface ImageGridProps {
   images: ScratchcardData[];
@@ -84,6 +84,15 @@ const SafeImage = ({ src, alt, className }: { src: string, alt: string, classNam
       loading="lazy"
     />
   );
+};
+
+const getCategoryIcon = (category: Category) => {
+   switch (category) {
+      case 'lotaria': return <Ticket className="w-3 h-3 text-purple-400" />;
+      case 'boletim': return <ClipboardList className="w-3 h-3 text-green-400" />;
+      case 'objeto': return <Package className="w-3 h-3 text-orange-400" />;
+      default: return <Coins className="w-3 h-3 text-brand-400" />;
+   }
 };
 
 export const ImageGrid: React.FC<ImageGridProps> = ({ 
@@ -320,15 +329,9 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono text-slate-500 bg-slate-800 px-1.5 rounded">{item.customId}</span>
                     <h3 className="font-bold text-slate-200 truncate">{item.gameName}</h3>
-                    {item.category === 'lotaria' ? (
-                      <div title={t.lottery}>
-                        <Ticket className="w-3 h-3 text-purple-400" />
-                      </div>
-                    ) : (
-                      <div title={t.scratchcard}>
-                        <Coins className="w-3 h-3 text-brand-400" />
-                      </div>
-                    )}
+                    <div title={item.category}>
+                        {getCategoryIcon(item.category)}
+                    </div>
                     {item.isSeries && (
                       <span title={t.series} className="flex items-center gap-1 bg-brand-900/20 px-1.5 py-0.5 rounded border border-brand-900/30">
                         <Layers className="w-3 h-3 text-brand-500" />
@@ -380,7 +383,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                   
                   {/* ID Badge */}
                   <div className="absolute top-2 left-2 bg-slate-950/70 backdrop-blur text-white text-[10px] font-mono px-2 py-1 rounded border border-slate-700 shadow-sm flex items-center gap-1 z-20">
-                     {item.category === 'lotaria' && <Ticket className="w-3 h-3 text-purple-400" />}
+                     {getCategoryIcon(item.category)}
                      {item.customId}
                   </div>
 

@@ -73,6 +73,8 @@ export const translations = {
       allTypes: "Tudo",
       scratchcard: "Raspadinha",
       lottery: "Lotaria",
+      bulletin: "Boletim",
+      object: "Objeto",
       linesBlue: "Azuis",
       linesRed: "Vermelhas",
       linesMulti: "Multi",
@@ -93,7 +95,7 @@ export const translations = {
       title: "Catalogar Item",
       reviewTitle: "Revisar Dados",
       errorImage: "Apenas imagens.",
-      errorFront: "Frente obrigatória.",
+      errorFront: "Frente obrigatória (ou use modo Registo Rápido).",
       errorAnalyze: "Falha ao analisar.",
       success: "Sucesso!",
       saved: "Item arquivado.",
@@ -106,7 +108,7 @@ export const translations = {
       isRarity: "É Raridade?", 
       isPromotional: "É Promocional?", // New
       seriesDetailsPlaceholder: "Nºs (ex: 1-5)",
-      gameName: "Nome",
+      gameName: "Nome / Título",
       country: "País",
       region: "Região / Cantão",
       continent: "Continente",
@@ -134,7 +136,9 @@ export const translations = {
       saving: "...",
       category: "Tipo",
       typeScratch: "Raspadinha",
-      typeLottery: "Lotaria"
+      typeLottery: "Lotaria",
+      typeBulletin: "Boletim",
+      typeObject: "Objeto (Catálogo/Cal...)"
     },
     viewer: {
       front: "FRENTE",
@@ -259,6 +263,8 @@ export const translations = {
       allTypes: "Tutto",
       scratchcard: "Gratta e Vinci",
       lottery: "Lotterie",
+      bulletin: "Bollettino",
+      object: "Oggetto",
       linesBlue: "Blu",
       linesRed: "Rosse",
       linesMulti: "Multi",
@@ -320,7 +326,9 @@ export const translations = {
       saving: "...",
       category: "Tipo",
       typeScratch: "Gratta e Vinci",
-      typeLottery: "Lotteria"
+      typeLottery: "Lotteria",
+      typeBulletin: "Bollettino",
+      typeObject: "Oggetto (Cat/Cal...)"
     },
     viewer: {
       front: "FRONTE",

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify, Gem, Gift, Eraser, Sliders, Sun, Contrast, Palette, RotateCcw } from 'lucide-react';
+import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify, Gem, Gift, Eraser, Sliders, Sun, Contrast, Palette, RotateCcw, ClipboardList, Package } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
 
 interface ImageViewerProps {
@@ -148,13 +148,21 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   };
 
   const getCategoryIcon = (cat: Category | undefined) => {
-     if (cat === 'lotaria') return <Ticket className="w-4 h-4 text-purple-400" />;
-     return <Coins className="w-4 h-4 text-brand-400" />;
+     switch (cat) {
+      case 'lotaria': return <Ticket className="w-4 h-4 text-purple-400" />;
+      case 'boletim': return <ClipboardList className="w-4 h-4 text-green-400" />;
+      case 'objeto': return <Package className="w-4 h-4 text-orange-400" />;
+      default: return <Coins className="w-4 h-4 text-brand-400" />;
+     }
   };
 
   const getCategoryLabel = (cat: Category | undefined) => {
-     if (cat === 'lotaria') return t.category + ": Lotaria";
-     return t.category + ": Raspadinha";
+     switch (cat) {
+       case 'lotaria': return t.category + ": Lotaria";
+       case 'boletim': return t.category + ": Boletim";
+       case 'objeto': return t.category + ": Objeto";
+       default: return t.category + ": Raspadinha";
+     }
   };
   
   const getLineLabel = (line: LineType | undefined) => {
@@ -495,6 +503,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                      >
                        <option value="raspadinha">Raspadinha</option>
                        <option value="lotaria">Lotaria</option>
+                       <option value="boletim">Boletim</option>
+                       <option value="objeto">Objeto</option>
                      </select>
                    </div>
                    
