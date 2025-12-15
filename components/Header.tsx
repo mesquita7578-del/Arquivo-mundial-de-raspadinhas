@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen, FileSpreadsheet, Home, BarChart2, Info, ChevronDown, Coins } from 'lucide-react';
+import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen, FileSpreadsheet, Home, BarChart2, Info, ChevronDown, Coins, Star, ArrowRight } from 'lucide-react';
 import { Language } from '../translations';
 
 interface HeaderProps {
@@ -55,73 +55,101 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Navigation Menu (Center) - Desktop */}
-      <nav className="hidden md:flex items-center gap-1 bg-slate-800/50 p-1 rounded-full border border-slate-700/50 absolute left-1/2 -translate-x-1/2">
+      <nav className="hidden md:flex items-center gap-1 bg-slate-800/50 p-1 rounded-full border border-slate-700/50 absolute left-1/2 -translate-x-1/2 h-9">
          <button
            onClick={() => onNavigate('home')}
-           className={`px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${currentPage === 'home' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+           className={`px-4 h-full rounded-full text-xs font-bold flex items-center gap-2 transition-all ${currentPage === 'home' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
          >
            <Home className="w-3.5 h-3.5" />
            Início
          </button>
 
-         {/* PORTUGAL DROPDOWN - FIXED HOVER ISSUE */}
-         <div className="relative group h-full flex items-center">
+         {/* PORTUGAL MEGA MENU */}
+         {/* Using 'group' here to trigger the hover state */}
+         <div className="h-full group static">
             <button
-              className={`px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${currentPage.startsWith('pt_') ? 'bg-green-900/40 text-green-400 border border-green-800' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+              className={`px-4 h-full rounded-full text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${currentPage.startsWith('pt_') ? 'bg-green-900/40 text-green-400 border border-green-800' : 'text-slate-400 group-hover:text-white group-hover:bg-slate-800'}`}
             >
-              <img src="https://flagcdn.com/pt.svg" alt="PT" className="w-3.5 h-3.5 rounded-sm object-cover" />
+              <img src="https://flagcdn.com/pt.svg" alt="PT" className="w-3.5 h-3.5 rounded-sm object-cover shadow-sm" />
               Portugal
               <ChevronDown className="w-3 h-3 opacity-50 transition-transform group-hover:rotate-180" />
             </button>
             
-            {/* Dropdown Content with Invisible Bridge (pt-4) */}
-            <div className="absolute top-full left-0 pt-4 w-60 hidden group-hover:block animate-fade-in z-50">
-               <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden ring-1 ring-white/10">
-                  
-                  {/* Dropdown Header */}
-                  <div className="px-4 py-2 bg-slate-950/50 border-b border-slate-800 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
-                    Coleção Nacional
+            {/* 
+               MEGA MENU CONTAINER 
+               Fixed position to span full screen width relative to viewport
+            */}
+            <div className="fixed top-[60px] left-0 w-full bg-slate-900/98 border-y border-slate-700 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl hidden group-hover:block animate-fade-in z-40">
+               <div className="max-w-5xl mx-auto p-6 md:p-8">
+                  <div className="flex items-start justify-between mb-6">
+                     <div>
+                        <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                           <img src="https://flagcdn.com/pt.svg" alt="PT" className="w-6 h-4 rounded shadow-sm object-cover" />
+                           Coleção Nacional Portuguesa
+                        </h3>
+                        <p className="text-slate-400 text-sm mt-1">Selecione a categoria que deseja explorar no arquivo.</p>
+                     </div>
                   </div>
 
-                  <button 
-                    onClick={() => onNavigate('pt_scratch')}
-                    className="w-full text-left px-4 py-3 hover:bg-slate-800 flex items-center gap-3 text-xs font-bold text-slate-300 hover:text-green-400 transition-colors border-b border-slate-800/50 group/item"
-                  >
-                    <div className="p-1.5 rounded bg-green-900/20 text-green-500 group-hover/item:bg-green-500 group-hover/item:text-white transition-colors">
-                       <Coins className="w-4 h-4" />
-                    </div>
-                    <div>
-                       <span className="block text-white text-sm">Raspadinhas</span>
-                       <span className="text-[10px] text-slate-500 font-normal">Todas as edições</span>
-                    </div>
-                  </button>
+                  <div className="grid grid-cols-2 gap-6">
+                     {/* Card Raspadinhas */}
+                     <button 
+                        onClick={() => onNavigate('pt_scratch')}
+                        className="flex items-center gap-6 p-4 rounded-2xl bg-slate-800/50 border border-slate-700 hover:bg-green-900/20 hover:border-green-500/50 transition-all group/card text-left"
+                     >
+                        <div className="w-16 h-16 rounded-2xl bg-green-900/30 flex items-center justify-center border border-green-500/20 group-hover/card:scale-110 transition-transform shadow-lg">
+                           <Coins className="w-8 h-8 text-green-400" />
+                        </div>
+                        <div>
+                           <h4 className="text-lg font-bold text-white mb-1 group-hover/card:text-green-400 transition-colors">Raspadinhas</h4>
+                           <p className="text-slate-400 text-xs mb-2 leading-relaxed">
+                              Arquivo completo de raspadinhas da Santa Casa.
+                           </p>
+                           <span className="inline-flex items-center gap-1 text-xs font-bold text-green-500 uppercase tracking-wider">
+                              Ver Coleção <ArrowRight className="w-3 h-3" />
+                           </span>
+                        </div>
+                     </button>
 
-                  <button 
-                    onClick={() => onNavigate('pt_lottery')}
-                    className="w-full text-left px-4 py-3 hover:bg-slate-800 flex items-center gap-3 text-xs font-bold text-slate-300 hover:text-purple-400 transition-colors group/item"
-                  >
-                    <div className="p-1.5 rounded bg-purple-900/20 text-purple-500 group-hover/item:bg-purple-500 group-hover/item:text-white transition-colors">
-                       <Ticket className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <span className="block text-white text-sm">Lotaria Nacional</span>
-                      <span className="text-[10px] text-slate-500 font-normal">Clássica e Popular</span>
-                    </div>
-                  </button>
+                     {/* Card Lotarias */}
+                     <button 
+                        onClick={() => onNavigate('pt_lottery')}
+                        className="flex items-center gap-6 p-4 rounded-2xl bg-slate-800/50 border border-slate-700 hover:bg-purple-900/20 hover:border-purple-500/50 transition-all group/card text-left"
+                     >
+                        <div className="w-16 h-16 rounded-2xl bg-purple-900/30 flex items-center justify-center border border-purple-500/20 group-hover/card:scale-110 transition-transform shadow-lg">
+                           <Ticket className="w-8 h-8 text-purple-400" />
+                        </div>
+                        <div>
+                           <h4 className="text-lg font-bold text-white mb-1 group-hover/card:text-purple-400 transition-colors">Lotaria Nacional</h4>
+                           <p className="text-slate-400 text-xs mb-2 leading-relaxed">
+                              Bilhetes de Lotaria Clássica e Popular.
+                           </p>
+                           <span className="inline-flex items-center gap-1 text-xs font-bold text-purple-500 uppercase tracking-wider">
+                              Ver Coleção <ArrowRight className="w-3 h-3" />
+                           </span>
+                        </div>
+                     </button>
+                  </div>
+                  
+                  {/* Decorative Footer inside menu */}
+                  <div className="mt-6 pt-4 border-t border-slate-800 flex justify-center text-slate-500 text-[10px] uppercase tracking-widest gap-4">
+                     <span className="flex items-center gap-1"><Star className="w-3 h-3" /> Base de Dados Atualizada</span>
+                     <span className="flex items-center gap-1"><Star className="w-3 h-3" /> Imagens em Alta Definição</span>
+                  </div>
                </div>
             </div>
          </div>
 
          <button
            onClick={() => onNavigate('stats')}
-           className={`px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${currentPage === 'stats' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+           className={`px-4 h-full rounded-full text-xs font-bold flex items-center gap-2 transition-all ${currentPage === 'stats' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
          >
            <BarChart2 className="w-3.5 h-3.5" />
            Estatísticas
          </button>
          <button
            onClick={() => onNavigate('about')}
-           className={`px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${currentPage === 'about' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+           className={`px-4 h-full rounded-full text-xs font-bold flex items-center gap-2 transition-all ${currentPage === 'about' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
          >
            <Info className="w-3.5 h-3.5" />
            Sobre
