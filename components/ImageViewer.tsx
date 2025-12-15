@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify, Gem, Gift, Eraser } from 'lucide-react';
+import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify, Gem, Gift, Eraser, Sliders, Sun, Contrast, Palette, RotateCcw } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
 
 interface ImageViewerProps {
@@ -18,6 +18,12 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   const [showingBack, setShowingBack] = useState(false);
   const [showCopied, setShowCopied] = useState(false);
   
+  // Image Filters State
+  const [showFilters, setShowFilters] = useState(false);
+  const [brightness, setBrightness] = useState(100);
+  const [contrast, setContrast] = useState(100);
+  const [saturation, setSaturation] = useState(100);
+  
   // Scratch Simulation State
   const [isScratchMode, setIsScratchMode] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -31,6 +37,11 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
     setShowingBack(false);
     setShowCopied(false);
     setIsScratchMode(false);
+    // Reset filters
+    setBrightness(100);
+    setContrast(100);
+    setSaturation(100);
+    setShowFilters(false);
   }, [image]);
 
   // Initialize Scratch Canvas
@@ -187,7 +198,10 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                src={showingBack ? (image.backUrl || image.frontUrl) : image.frontUrl} 
                alt={image.gameName} 
                className="max-w-full max-h-full object-contain transition-transform duration-300 pointer-events-none select-none" 
-               style={{ maxHeight: '70vh' }}
+               style={{ 
+                 maxHeight: '70vh',
+                 filter: `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`
+               }}
              />
              
              {isScratchMode && (
@@ -211,6 +225,40 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
              )}
           </div>
 
+          {/* Floating Filter Controls */}
+          {showFilters && (
+             <div className="absolute top-4 left-4 z-30 bg-black/80 backdrop-blur-md border border-gray-700 p-4 rounded-xl shadow-2xl w-64 animate-fade-in space-y-4">
+                <div className="flex justify-between items-center mb-2">
+                   <h4 className="text-xs font-bold text-white uppercase flex items-center gap-2"><Sliders className="w-3 h-3 text-brand-500" /> Ajustar Imagem</h4>
+                   <button onClick={() => { setBrightness(100); setContrast(100); setSaturation(100); }} className="text-[10px] text-gray-400 hover:text-white flex items-center gap-1"><RotateCcw className="w-3 h-3"/> Reset</button>
+                </div>
+                
+                <div className="space-y-1">
+                   <div className="flex justify-between text-[10px] text-gray-400 uppercase">
+                      <span>Brilho</span>
+                      <span>{brightness}%</span>
+                   </div>
+                   <input type="range" min="50" max="200" value={brightness} onChange={(e) => setBrightness(Number(e.target.value))} className="w-full accent-brand-500 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+                </div>
+
+                <div className="space-y-1">
+                   <div className="flex justify-between text-[10px] text-gray-400 uppercase">
+                      <span>Contraste</span>
+                      <span>{contrast}%</span>
+                   </div>
+                   <input type="range" min="50" max="200" value={contrast} onChange={(e) => setContrast(Number(e.target.value))} className="w-full accent-blue-500 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+                </div>
+
+                <div className="space-y-1">
+                   <div className="flex justify-between text-[10px] text-gray-400 uppercase">
+                      <span>Saturação</span>
+                      <span>{saturation}%</span>
+                   </div>
+                   <input type="range" min="0" max="200" value={saturation} onChange={(e) => setSaturation(Number(e.target.value))} className="w-full accent-purple-500 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+                </div>
+             </div>
+          )}
+
           <div className="absolute bottom-4 z-10 flex gap-2">
             {!image.backUrl ? null : (
                 <>
@@ -231,6 +279,16 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                 </>
             )}
             
+            {/* Filter Toggle */}
+            <button
+               type="button"
+               onClick={() => setShowFilters(!showFilters)}
+               className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${showFilters ? 'bg-white text-black' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+               title="Ajustar Imagem"
+            >
+               <Sliders className="w-3 h-3" />
+            </button>
+
             {/* Scratch Toggle Button */}
             <button
                type="button"

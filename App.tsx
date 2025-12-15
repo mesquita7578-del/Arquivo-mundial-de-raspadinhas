@@ -267,6 +267,64 @@ function App() {
     }
   };
 
+  const handleExportCSV = async () => {
+    try {
+      const items = await storageService.getAll();
+      if (items.length === 0) {
+        alert("Sem dados para exportar.");
+        return;
+      }
+
+      // Define CSV headers
+      const headers = [
+        "ID", "Nome Jogo", "Numero", "Pais", "Regiao", "Continente", 
+        "Ano", "Estado", "Preco", "Tiragem", "Grafica", "Colecionador", 
+        "Categoria", "Raridade", "Promo", "Serie", "Data Registo"
+      ];
+
+      // Convert items to CSV rows
+      const rows = items.map(item => [
+        `"${item.customId}"`,
+        `"${item.gameName.replace(/"/g, '""')}"`,
+        `"${item.gameNumber}"`,
+        `"${item.country}"`,
+        `"${item.region || ''}"`,
+        `"${item.continent}"`,
+        `"${item.releaseDate}"`,
+        `"${item.state}"`,
+        `"${item.price || ''}"`,
+        `"${item.emission || ''}"`,
+        `"${item.printer || ''}"`,
+        `"${item.collector || ''}"`,
+        `"${item.category || ''}"`,
+        item.isRarity ? "SIM" : "NAO",
+        item.isPromotional ? "SIM" : "NAO",
+        item.isSeries ? `SIM (${item.seriesDetails || ''})` : "NAO",
+        new Date(item.createdAt).toLocaleDateString()
+      ]);
+
+      // Combine headers and rows
+      const csvContent = [
+        headers.join(","),
+        ...rows.map(row => row.join(","))
+      ].join("\n");
+
+      // Create download link with BOM for Excel UTF-8 compatibility
+      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `raspadinhas-export-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+    } catch (error) {
+      console.error("Erro ao exportar CSV:", error);
+      alert("Erro ao gerar Excel.");
+    }
+  };
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault(); e.stopPropagation(); setIsDragging(true);
   };
@@ -319,6 +377,7 @@ function App() {
         onAdminToggle={handleAdminToggle}
         onLogout={handleLogout}
         onExport={handleExportData}
+        onExportCSV={handleExportCSV}
         onHistoryClick={() => setIsHistoryModalOpen(true)}
         language={language}
         setLanguage={setLanguage}

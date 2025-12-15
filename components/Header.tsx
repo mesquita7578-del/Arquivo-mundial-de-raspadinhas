@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen } from 'lucide-react';
+import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen, FileSpreadsheet } from 'lucide-react';
 import { Language } from '../translations';
 
 interface HeaderProps {
@@ -10,6 +10,7 @@ interface HeaderProps {
   onAdminToggle: () => void;
   onLogout: () => void;
   onExport: () => void;
+  onExportCSV: () => void; // New prop
   onHistoryClick: () => void;
   language: Language;
   setLanguage: (lang: Language) => void;
@@ -24,6 +25,7 @@ export const Header: React.FC<HeaderProps> = ({
   onAdminToggle, 
   onLogout,
   onExport,
+  onExportCSV,
   onHistoryClick,
   language,
   setLanguage,
@@ -77,13 +79,23 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Admin Controls */}
         {isAdmin ? (
           <>
-            <button
-              onClick={onExport}
-              className="hidden lg:flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-500 hover:text-white border border-slate-700 px-3 py-2 rounded-full text-xs font-medium transition-all"
-              title={t.backupTitle}
-            >
-              <Download className="w-3 h-3" />
-            </button>
+            <div className="hidden lg:flex items-center bg-slate-800 rounded-full p-0.5 border border-slate-700">
+                <button
+                  onClick={onExport}
+                  className="flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                  title={t.backupTitle}
+                >
+                  <Download className="w-3 h-3" /> JSON
+                </button>
+                <div className="w-px h-4 bg-slate-700 mx-1"></div>
+                <button
+                  onClick={onExportCSV}
+                  className="flex items-center gap-2 text-green-400 hover:text-green-300 hover:bg-green-900/20 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                  title="Exportar Excel (CSV)"
+                >
+                  <FileSpreadsheet className="w-3 h-3" /> Excel
+                </button>
+            </div>
 
             <button
               onClick={onLogout}
