@@ -64,32 +64,51 @@ export const Header: React.FC<HeaderProps> = ({
            Início
          </button>
 
-         {/* PORTUGAL DROPDOWN */}
-         <div className="relative group">
+         {/* PORTUGAL DROPDOWN - FIXED HOVER ISSUE */}
+         <div className="relative group h-full flex items-center">
             <button
               className={`px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${currentPage.startsWith('pt_') ? 'bg-green-900/40 text-green-400 border border-green-800' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
             >
               <img src="https://flagcdn.com/pt.svg" alt="PT" className="w-3.5 h-3.5 rounded-sm object-cover" />
               Portugal
-              <ChevronDown className="w-3 h-3 opacity-50" />
+              <ChevronDown className="w-3 h-3 opacity-50 transition-transform group-hover:rotate-180" />
             </button>
             
-            {/* Dropdown Content */}
-            <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden hidden group-hover:block animate-fade-in">
-               <button 
-                 onClick={() => onNavigate('pt_scratch')}
-                 className="w-full text-left px-4 py-3 hover:bg-slate-800 flex items-center gap-2 text-xs font-bold text-slate-300 hover:text-brand-400 transition-colors border-b border-slate-800"
-               >
-                 <Coins className="w-4 h-4" />
-                 Raspadinhas PT
-               </button>
-               <button 
-                 onClick={() => onNavigate('pt_lottery')}
-                 className="w-full text-left px-4 py-3 hover:bg-slate-800 flex items-center gap-2 text-xs font-bold text-slate-300 hover:text-purple-400 transition-colors"
-               >
-                 <Ticket className="w-4 h-4" />
-                 Lotaria Nacional
-               </button>
+            {/* Dropdown Content with Invisible Bridge (pt-4) */}
+            <div className="absolute top-full left-0 pt-4 w-60 hidden group-hover:block animate-fade-in z-50">
+               <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden ring-1 ring-white/10">
+                  
+                  {/* Dropdown Header */}
+                  <div className="px-4 py-2 bg-slate-950/50 border-b border-slate-800 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+                    Coleção Nacional
+                  </div>
+
+                  <button 
+                    onClick={() => onNavigate('pt_scratch')}
+                    className="w-full text-left px-4 py-3 hover:bg-slate-800 flex items-center gap-3 text-xs font-bold text-slate-300 hover:text-green-400 transition-colors border-b border-slate-800/50 group/item"
+                  >
+                    <div className="p-1.5 rounded bg-green-900/20 text-green-500 group-hover/item:bg-green-500 group-hover/item:text-white transition-colors">
+                       <Coins className="w-4 h-4" />
+                    </div>
+                    <div>
+                       <span className="block text-white text-sm">Raspadinhas</span>
+                       <span className="text-[10px] text-slate-500 font-normal">Todas as edições</span>
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={() => onNavigate('pt_lottery')}
+                    className="w-full text-left px-4 py-3 hover:bg-slate-800 flex items-center gap-3 text-xs font-bold text-slate-300 hover:text-purple-400 transition-colors group/item"
+                  >
+                    <div className="p-1.5 rounded bg-purple-900/20 text-purple-500 group-hover/item:bg-purple-500 group-hover/item:text-white transition-colors">
+                       <Ticket className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="block text-white text-sm">Lotaria Nacional</span>
+                      <span className="text-[10px] text-slate-500 font-normal">Clássica e Popular</span>
+                    </div>
+                  </button>
+               </div>
             </div>
          </div>
 
