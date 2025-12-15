@@ -27,6 +27,7 @@ export const translations = {
       add: "Adicionar Site",
       namePlaceholder: "Nome (ex: SCML)",
       urlPlaceholder: "URL (ex: https://...)",
+      logoPlaceholder: "Logo URL (Opcional)", // New
       countryPlaceholder: "País",
       visit: "Visitar",
       delete: "Remover",
@@ -211,6 +212,7 @@ export const translations = {
       add: "Aggiungi Sito",
       namePlaceholder: "Nome (es: Lottomatica)",
       urlPlaceholder: "URL",
+      logoPlaceholder: "Logo URL (Opzionale)", // New
       countryPlaceholder: "Paese",
       visit: "Visita",
       delete: "Rimuovi",
