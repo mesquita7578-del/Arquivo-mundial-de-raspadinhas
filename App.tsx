@@ -18,7 +18,8 @@ import { storageService } from './services/storage';
 const AUTHORIZED_ADMINS = ["JORGE MESQUITA", "FABIO PAGNI", "CHLOE"];
 const ADMIN_PASSWORD = "123456";
 
-type PageType = 'home' | 'stats' | 'about' | 'pt_scratch' | 'pt_lottery';
+// Updated PageType to include Continents
+type PageType = 'home' | 'stats' | 'about' | 'europe' | 'america' | 'asia' | 'africa' | 'oceania';
 
 function App() {
   const [displayedImages, setDisplayedImages] = useState<ScratchcardData[]>([]);
@@ -40,6 +41,9 @@ function App() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [activeContinent, setActiveContinent] = useState<Continent | 'Mundo'>('Mundo');
+  
+  // Continent Subpage Filter State
+  const [subPageCountryFilter, setSubPageCountryFilter] = useState<string | null>(null);
   
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -98,6 +102,11 @@ function App() {
     loadInitialData();
   }, []);
 
+  // Reset SubPage filters when page changes
+  useEffect(() => {
+     setSubPageCountryFilter(null);
+  }, [currentPage]);
+
   useEffect(() => {
     const performSearch = async () => {
       // Only perform generic search if on Home
@@ -139,25 +148,56 @@ function App() {
     return () => clearTimeout(timeoutId);
   }, [searchTerm, activeContinent, showRarities, showPromotional, activeCategory, isLoadingDB, currentPage]);
 
-  // Derived state for Sub-Pages (Portugal)
-  const portugalScratchcards = useMemo(() => {
-     return allImagesCache.filter(img => 
-        (img.country === 'Portugal' || img.country === 'PT') && 
-        (img.category === 'raspadinha' || !img.category) // Default to scratchcard if undefined
-     ).sort((a,b) => {
-        // Sort by Game Number Descending for these pages
-        const numA = parseInt(a.gameNumber.replace(/\D/g, '')) || 0;
-        const numB = parseInt(b.gameNumber.replace(/\D/g, '')) || 0;
-        return numB - numA; 
-     });
-  }, [allImagesCache]);
+  // --- LOGIC FOR CONTINENT SUBPAGES ---
+  
+  const getContinentNameFromPage = (page: PageType): Continent | null => {
+     switch(page) {
+        case 'europe': return 'Europa';
+        case 'america': return 'América';
+        case 'asia': return 'Ásia';
+        case 'africa': return 'África';
+        case 'oceania': return 'Oceania';
+        default: return null;
+     }
+  };
 
-  const portugalLotteries = useMemo(() => {
-     return allImagesCache.filter(img => 
-        (img.country === 'Portugal' || img.country === 'PT') && 
-        img.category === 'lotaria'
-     ).sort((a,b) => b.createdAt - a.createdAt); // Newest first
-  }, [allImagesCache]);
+  const getContinentColor = (page: PageType) => {
+      switch(page) {
+        case 'europe': return 'from-blue-900 to-indigo-900';
+        case 'america': return 'from-red-900 to-orange-900';
+        case 'asia': return 'from-yellow-900 to-amber-900';
+        case 'africa': return 'from-green-900 to-emerald-900';
+        case 'oceania': return 'from-purple-900 to-violet-900';
+        default: return 'from-slate-900 to-slate-800';
+     }
+  };
+
+  const getContinentIcon = (page: PageType) => {
+     // You could return specific SVG components here if you wanted specific continent shapes
+     return <Globe className="w-8 h-8 text-white/80" />;
+  };
+
+  // Derive data for the active continent subpage
+  const activeContinentData = useMemo(() => {
+      const targetContinent = getContinentNameFromPage(currentPage);
+      if (!targetContinent) return { items: [], countries: [] };
+
+      // 1. Get all items for this continent
+      let items = allImagesCache.filter(img => img.continent === targetContinent);
+
+      // 2. Extract available countries for the filter bar
+      const countries = Array.from(new Set(items.map(i => i.country))).sort();
+
+      // 3. Apply Local Country Filter if selected
+      if (subPageCountryFilter) {
+         items = items.filter(img => img.country === subPageCountryFilter);
+      }
+
+      // Sort by name or date default
+      items.sort((a,b) => b.createdAt - a.createdAt);
+
+      return { items, countries };
+  }, [allImagesCache, currentPage, subPageCountryFilter]);
 
 
   const toggleRarities = () => {
@@ -367,6 +407,83 @@ function App() {
     );
   }
 
+  // --- RENDER CONTINENT SUBPAGE ---
+  const renderContinentPage = (page: PageType) => {
+     const continentName = getContinentNameFromPage(page);
+     const { items, countries } = activeContinentData;
+     const bannerGradient = getContinentColor(page);
+
+     return (
+        <div className="animate-fade-in min-h-full max-w-7xl mx-auto px-4 md:px-6 py-6 pb-20">
+           {/* Dynamic Banner */}
+           <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-r ${bannerGradient} border border-white/10 p-8 md:p-12 mb-8 text-center shadow-2xl`}>
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+              <div className="relative z-10 flex flex-col items-center">
+                 <div className="bg-white/10 p-4 rounded-full mb-4 backdrop-blur-sm border border-white/20">
+                    {getContinentIcon(page)}
+                 </div>
+                 <h1 className="text-3xl md:text-5xl font-black text-white mb-2 drop-shadow-lg uppercase tracking-tight">{continentName}</h1>
+                 <p className="text-white/70 text-lg md:text-xl font-medium max-w-2xl">
+                    Arquivo oficial de raspadinhas e lotarias.
+                 </p>
+                 <div className="mt-6 flex items-center gap-2 text-sm font-bold bg-black/40 px-4 py-2 rounded-full border border-white/10">
+                    <Database className="w-4 h-4 text-white/70" />
+                    {items.length} Registos encontrados
+                 </div>
+              </div>
+           </div>
+
+           {/* Country Filters Bar */}
+           {countries.length > 0 ? (
+             <div className="mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex items-center gap-2">
+                   <button
+                     onClick={() => setSubPageCountryFilter(null)}
+                     className={`px-4 py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${
+                        subPageCountryFilter === null 
+                          ? 'bg-white text-slate-900 border-white shadow-md' 
+                          : 'bg-slate-900 text-slate-400 border-slate-700 hover:bg-slate-800'
+                     }`}
+                   >
+                     Todos
+                   </button>
+                   {countries.map(country => (
+                      <button
+                        key={country}
+                        onClick={() => setSubPageCountryFilter(country)}
+                        className={`px-4 py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${
+                           subPageCountryFilter === country 
+                              ? 'bg-brand-600 text-white border-brand-500 shadow-md' 
+                              : 'bg-slate-900 text-slate-400 border-slate-700 hover:bg-slate-800 hover:text-white'
+                        }`}
+                      >
+                        {country}
+                      </button>
+                   ))}
+                </div>
+             </div>
+           ) : (
+             <div className="text-center py-12 text-slate-500 bg-slate-900/50 rounded-2xl border border-slate-800 border-dashed mb-6">
+                <p>Ainda não existem registos para {continentName}.</p>
+                {isAdmin && <button onClick={handleUploadClick} className="mt-2 text-brand-400 hover:underline">Adicionar agora</button>}
+             </div>
+           )}
+
+           {/* Grid */}
+           <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
+              <ImageGrid 
+                images={items} 
+                onImageClick={setSelectedImage} 
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                isAdmin={isAdmin} 
+                t={t.grid}
+              />
+           </div>
+        </div>
+     );
+  };
+
   return (
     <div 
       className="flex flex-col h-[100dvh] bg-slate-950 text-slate-100 relative overflow-hidden transition-colors duration-500"
@@ -391,18 +508,14 @@ function App() {
         t={t.header}
       />
 
-      {/* MOBILE NAVIGATION BAR (Updated with Portugal Dropdown logic simulated) */}
+      {/* MOBILE NAVIGATION BAR (Updated for Continents) */}
       <div className="md:hidden sticky top-[60px] z-40 bg-slate-900 border-b border-slate-800 flex justify-between px-2 py-2 overflow-x-auto scrollbar-hide">
          <button onClick={() => setCurrentPage('home')} className={`px-3 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-1 min-w-[60px] ${currentPage === 'home' ? 'bg-slate-800 text-white' : 'text-slate-400'}`}>
            <Home className="w-4 h-4" /> Início
          </button>
          
-         {/* PT Section for Mobile */}
-         <button onClick={() => setCurrentPage('pt_scratch')} className={`px-3 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-1 min-w-[60px] ${currentPage === 'pt_scratch' ? 'bg-green-900/30 text-green-400' : 'text-slate-400'}`}>
-           <Coins className="w-4 h-4" /> PT Rasp.
-         </button>
-         <button onClick={() => setCurrentPage('pt_lottery')} className={`px-3 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-1 min-w-[60px] ${currentPage === 'pt_lottery' ? 'bg-purple-900/30 text-purple-400' : 'text-slate-400'}`}>
-           <Ticket className="w-4 h-4" /> PT Lot.
+         <button onClick={() => setCurrentPage('europe')} className={`px-3 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-1 min-w-[60px] ${currentPage === 'europe' ? 'bg-blue-900/30 text-blue-400' : 'text-slate-400'}`}>
+           <Globe className="w-4 h-4" /> Europa
          </button>
 
          <button onClick={() => setCurrentPage('stats')} className={`px-3 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-1 min-w-[60px] ${currentPage === 'stats' ? 'bg-slate-800 text-white' : 'text-slate-400'}`}>
@@ -640,75 +753,8 @@ function App() {
           </>
         )}
 
-        {/* --- PAGE: PORTUGAL SCRATCHCARDS --- */}
-        {currentPage === 'pt_scratch' && (
-          <div className="animate-fade-in min-h-full max-w-7xl mx-auto px-4 md:px-6 py-6 pb-20">
-             {/* Header Banner */}
-             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-green-900 to-red-900 border border-white/10 p-8 md:p-12 mb-8 text-center shadow-2xl">
-                <div className="absolute inset-0 bg-black/30"></div>
-                <div className="relative z-10 flex flex-col items-center">
-                   <div className="bg-white/10 p-4 rounded-full mb-4 backdrop-blur-sm border border-white/20">
-                      <img src="https://flagcdn.com/pt.svg" alt="Portugal" className="w-12 h-8 rounded shadow-lg object-cover" />
-                   </div>
-                   <h1 className="text-3xl md:text-5xl font-black text-white mb-2 drop-shadow-lg uppercase tracking-tight">Raspadinhas de Portugal</h1>
-                   <p className="text-gray-200 text-lg md:text-xl font-medium max-w-2xl">
-                      Coleção completa de raspadinhas emitidas em território nacional.
-                   </p>
-                   <div className="mt-6 flex items-center gap-2 text-sm font-bold bg-black/40 px-4 py-2 rounded-full border border-white/10">
-                      <Coins className="w-4 h-4 text-yellow-400" />
-                      {portugalScratchcards.length} Registos
-                   </div>
-                </div>
-             </div>
-
-             {/* Grid */}
-             <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
-                <ImageGrid 
-                  images={portugalScratchcards} 
-                  onImageClick={setSelectedImage} 
-                  viewMode={viewMode}
-                  onViewModeChange={setViewMode}
-                  isAdmin={isAdmin} 
-                  t={t.grid}
-                />
-             </div>
-          </div>
-        )}
-
-        {/* --- PAGE: PORTUGAL LOTTERY --- */}
-        {currentPage === 'pt_lottery' && (
-          <div className="animate-fade-in min-h-full max-w-7xl mx-auto px-4 md:px-6 py-6 pb-20">
-             {/* Header Banner */}
-             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-900 to-indigo-900 border border-white/10 p-8 md:p-12 mb-8 text-center shadow-2xl">
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
-                <div className="relative z-10 flex flex-col items-center">
-                   <div className="bg-white/10 p-4 rounded-full mb-4 backdrop-blur-sm border border-white/20">
-                      <Ticket className="w-8 h-8 text-purple-200" />
-                   </div>
-                   <h1 className="text-3xl md:text-5xl font-black text-white mb-2 drop-shadow-lg uppercase tracking-tight">Lotaria Nacional</h1>
-                   <p className="text-purple-200 text-lg md:text-xl font-medium max-w-2xl">
-                      Bilhetes de Lotaria Clássica e Popular de Portugal.
-                   </p>
-                   <div className="mt-6 flex items-center gap-2 text-sm font-bold bg-black/40 px-4 py-2 rounded-full border border-white/10">
-                      <Ticket className="w-4 h-4 text-purple-400" />
-                      {portugalLotteries.length} Registos
-                   </div>
-                </div>
-             </div>
-
-             {/* Grid */}
-             <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
-                <ImageGrid 
-                  images={portugalLotteries} 
-                  onImageClick={setSelectedImage} 
-                  viewMode={viewMode}
-                  onViewModeChange={setViewMode}
-                  isAdmin={isAdmin} 
-                  t={t.grid}
-                />
-             </div>
-          </div>
-        )}
+        {/* --- DYNAMIC CONTINENT PAGES --- */}
+        {['europe', 'america', 'asia', 'africa', 'oceania'].includes(currentPage) && renderContinentPage(currentPage)}
 
         {/* --- PAGE: STATS --- */}
         {currentPage === 'stats' && (

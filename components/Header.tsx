@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen, FileSpreadsheet, Home, BarChart2, Info, ChevronDown, Coins, Star, ArrowRight } from 'lucide-react';
+import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen, FileSpreadsheet, Home, BarChart2, Info, ChevronDown, Coins, Star, ArrowRight, Globe, Map } from 'lucide-react';
 import { Language } from '../translations';
 
 interface HeaderProps {
@@ -64,84 +64,107 @@ export const Header: React.FC<HeaderProps> = ({
            Início
          </button>
 
-         {/* PORTUGAL MEGA MENU */}
-         {/* Using 'group' here to trigger the hover state. Added 'relative' for positioning the bridge. */}
+         {/* GLOBAL CONTINENTS MEGA MENU */}
          <div className="h-full group relative">
             <button
-              className={`px-4 h-full rounded-full text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${currentPage.startsWith('pt_') ? 'bg-green-900/40 text-green-400 border border-green-800' : 'text-slate-400 group-hover:text-white group-hover:bg-slate-800'}`}
+              className={`px-4 h-full rounded-full text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${['europe', 'america', 'asia', 'africa', 'oceania'].includes(currentPage) ? 'bg-blue-900/40 text-blue-400 border border-blue-800' : 'text-slate-400 group-hover:text-white group-hover:bg-slate-800'}`}
             >
-              <img src="https://flagcdn.com/pt.svg" alt="PT" className="w-3.5 h-3.5 rounded-sm object-cover shadow-sm" />
-              Portugal
+              <Globe className="w-3.5 h-3.5" />
+              Explorar
               <ChevronDown className="w-3 h-3 opacity-50 transition-transform group-hover:rotate-180" />
             </button>
             
-            {/* 
-                INVISIBLE BRIDGE (PONTE INVISÍVEL)
-                Covers the gap between the button and the header bottom (12px gap).
-                Extends horizontally to catch diagonal movements.
-            */}
+            {/* INVISIBLE BRIDGE (Ponte Invisível) */}
             <div className="absolute left-[-20%] top-[50%] w-[140%] h-12 bg-transparent z-50"></div>
             
-            {/* 
-               MEGA MENU CONTAINER 
-               Fixed position to span full screen width relative to viewport
-            */}
+            {/* MEGA MENU CONTAINER */}
             <div className="fixed top-[60px] left-0 w-full bg-slate-900/98 border-y border-slate-700 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl hidden group-hover:block animate-fade-in z-40">
-               <div className="max-w-5xl mx-auto p-6 md:p-8">
+               <div className="max-w-6xl mx-auto p-6 md:p-8">
                   <div className="flex items-start justify-between mb-6">
                      <div>
                         <h3 className="text-white font-bold text-lg flex items-center gap-2">
-                           <img src="https://flagcdn.com/pt.svg" alt="PT" className="w-6 h-4 rounded shadow-sm object-cover" />
-                           Coleção Nacional Portuguesa
+                           <Map className="w-5 h-5 text-brand-500" />
+                           Arquivo Mundial por Continente
                         </h3>
-                        <p className="text-slate-400 text-sm mt-1">Selecione a categoria que deseja explorar no arquivo.</p>
+                        <p className="text-slate-400 text-sm mt-1">Selecione uma região para ver os países e coleções disponíveis.</p>
                      </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6">
-                     {/* Card Raspadinhas */}
+                  <div className="grid grid-cols-5 gap-4">
+                     {/* Europa */}
                      <button 
-                        onClick={() => onNavigate('pt_scratch')}
-                        className="flex items-center gap-6 p-4 rounded-2xl bg-slate-800/50 border border-slate-700 hover:bg-green-900/20 hover:border-green-500/50 transition-all group/card text-left"
+                        onClick={() => onNavigate('europe')}
+                        className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-slate-800/50 border border-slate-700 hover:bg-blue-900/20 hover:border-blue-500/50 transition-all group/card text-center"
                      >
-                        <div className="w-16 h-16 rounded-2xl bg-green-900/30 flex items-center justify-center border border-green-500/20 group-hover/card:scale-110 transition-transform shadow-lg">
-                           <Coins className="w-8 h-8 text-green-400" />
+                        <div className="w-12 h-12 rounded-full bg-blue-900/30 flex items-center justify-center border border-blue-500/20 group-hover/card:scale-110 transition-transform shadow-lg">
+                           <Globe className="w-6 h-6 text-blue-400" />
                         </div>
                         <div>
-                           <h4 className="text-lg font-bold text-white mb-1 group-hover/card:text-green-400 transition-colors">Raspadinhas</h4>
-                           <p className="text-slate-400 text-xs mb-2 leading-relaxed">
-                              Arquivo completo de raspadinhas da Santa Casa.
-                           </p>
-                           <span className="inline-flex items-center gap-1 text-xs font-bold text-green-500 uppercase tracking-wider">
-                              Ver Coleção <ArrowRight className="w-3 h-3" />
-                           </span>
+                           <h4 className="text-sm font-bold text-white mb-1 group-hover/card:text-blue-400 transition-colors">Europa</h4>
+                           <span className="text-[10px] text-slate-500 block">Inclui Portugal</span>
                         </div>
                      </button>
 
-                     {/* Card Lotarias */}
+                     {/* América */}
                      <button 
-                        onClick={() => onNavigate('pt_lottery')}
-                        className="flex items-center gap-6 p-4 rounded-2xl bg-slate-800/50 border border-slate-700 hover:bg-purple-900/20 hover:border-purple-500/50 transition-all group/card text-left"
+                        onClick={() => onNavigate('america')}
+                        className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-slate-800/50 border border-slate-700 hover:bg-red-900/20 hover:border-red-500/50 transition-all group/card text-center"
                      >
-                        <div className="w-16 h-16 rounded-2xl bg-purple-900/30 flex items-center justify-center border border-purple-500/20 group-hover/card:scale-110 transition-transform shadow-lg">
-                           <Ticket className="w-8 h-8 text-purple-400" />
+                        <div className="w-12 h-12 rounded-full bg-red-900/30 flex items-center justify-center border border-red-500/20 group-hover/card:scale-110 transition-transform shadow-lg">
+                           <Globe className="w-6 h-6 text-red-400" />
                         </div>
                         <div>
-                           <h4 className="text-lg font-bold text-white mb-1 group-hover/card:text-purple-400 transition-colors">Lotaria Nacional</h4>
-                           <p className="text-slate-400 text-xs mb-2 leading-relaxed">
-                              Bilhetes de Lotaria Clássica e Popular.
-                           </p>
-                           <span className="inline-flex items-center gap-1 text-xs font-bold text-purple-500 uppercase tracking-wider">
-                              Ver Coleção <ArrowRight className="w-3 h-3" />
-                           </span>
+                           <h4 className="text-sm font-bold text-white mb-1 group-hover/card:text-red-400 transition-colors">América</h4>
+                           <span className="text-[10px] text-slate-500 block">Norte, Sul e Central</span>
+                        </div>
+                     </button>
+
+                     {/* Ásia */}
+                     <button 
+                        onClick={() => onNavigate('asia')}
+                        className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-slate-800/50 border border-slate-700 hover:bg-yellow-900/20 hover:border-yellow-500/50 transition-all group/card text-center"
+                     >
+                        <div className="w-12 h-12 rounded-full bg-yellow-900/30 flex items-center justify-center border border-yellow-500/20 group-hover/card:scale-110 transition-transform shadow-lg">
+                           <Globe className="w-6 h-6 text-yellow-400" />
+                        </div>
+                        <div>
+                           <h4 className="text-sm font-bold text-white mb-1 group-hover/card:text-yellow-400 transition-colors">Ásia</h4>
+                           <span className="text-[10px] text-slate-500 block">Oriente</span>
+                        </div>
+                     </button>
+
+                     {/* África */}
+                     <button 
+                        onClick={() => onNavigate('africa')}
+                        className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-slate-800/50 border border-slate-700 hover:bg-green-900/20 hover:border-green-500/50 transition-all group/card text-center"
+                     >
+                        <div className="w-12 h-12 rounded-full bg-green-900/30 flex items-center justify-center border border-green-500/20 group-hover/card:scale-110 transition-transform shadow-lg">
+                           <Globe className="w-6 h-6 text-green-400" />
+                        </div>
+                        <div>
+                           <h4 className="text-sm font-bold text-white mb-1 group-hover/card:text-green-400 transition-colors">África</h4>
+                           <span className="text-[10px] text-slate-500 block">Continente Africano</span>
+                        </div>
+                     </button>
+
+                     {/* Oceania */}
+                     <button 
+                        onClick={() => onNavigate('oceania')}
+                        className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-slate-800/50 border border-slate-700 hover:bg-purple-900/20 hover:border-purple-500/50 transition-all group/card text-center"
+                     >
+                        <div className="w-12 h-12 rounded-full bg-purple-900/30 flex items-center justify-center border border-purple-500/20 group-hover/card:scale-110 transition-transform shadow-lg">
+                           <Globe className="w-6 h-6 text-purple-400" />
+                        </div>
+                        <div>
+                           <h4 className="text-sm font-bold text-white mb-1 group-hover/card:text-purple-400 transition-colors">Oceania</h4>
+                           <span className="text-[10px] text-slate-500 block">Austrália e Ilhas</span>
                         </div>
                      </button>
                   </div>
                   
-                  {/* Decorative Footer inside menu */}
+                  {/* Footer decoration */}
                   <div className="mt-6 pt-4 border-t border-slate-800 flex justify-center text-slate-500 text-[10px] uppercase tracking-widest gap-4">
-                     <span className="flex items-center gap-1"><Star className="w-3 h-3" /> Base de Dados Atualizada</span>
-                     <span className="flex items-center gap-1"><Star className="w-3 h-3" /> Imagens em Alta Definição</span>
+                     <span className="flex items-center gap-1"><Star className="w-3 h-3" /> Coleção Organizada por Geogradia</span>
                   </div>
                </div>
             </div>
