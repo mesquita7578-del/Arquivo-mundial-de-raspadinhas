@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify, Gem, MapPin, Gift, Image as ImageIcon, FileSearch, ClipboardList, Package } from 'lucide-react';
+import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify, Gem, MapPin, Gift, Image as ImageIcon, FileSearch, ClipboardList, Package, Calendar } from 'lucide-react';
 import { analyzeImage, searchScratchcardInfo } from '../services/geminiService';
 import { ScratchcardData, ScratchcardState, Continent, Category, LineType } from '../types';
 
@@ -63,7 +63,7 @@ const resizeAndCompressImage = (file: File): Promise<string> => {
 
 export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadComplete, existingImages = [], initialFile, t }) => {
   const [step, setStep] = useState<'upload' | 'review'>('upload');
-  const [activeTab, setActiveTab] = useState<'image' | 'web' | 'simple'>('image'); // New Tab State
+  const [activeTab, setActiveTab] = useState<'image' | 'web' | 'simple'>('image');
   
   const [frontFile, setFrontFile] = useState<File | null>(null);
   const [backFile, setBackFile] = useState<File | null>(null);
@@ -302,7 +302,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     }
   };
 
-  const UploadBox = ({ label, preview, isFront }: { label: string, preview: string | null, isFront: boolean }) => (
+  const UploadBox = ({ label, preview, isFront, icon: CustomIcon }: { label: string, preview: string | null, isFront: boolean, icon?: React.ElementType }) => (
     <div className="flex-1 group">
        <label className="block text-xs uppercase text-gray-500 font-bold mb-2 ml-1">{label}</label>
        {!preview ? (
@@ -322,7 +322,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
             ) : (
               <div className="flex flex-col items-center text-gray-500 group-hover:text-brand-400 transition-colors">
                 <div className="p-4 rounded-full bg-gray-800 group-hover:bg-brand-900/20 mb-3 transition-colors">
-                  <UploadCloud className="w-8 h-8" />
+                  {CustomIcon ? <CustomIcon className="w-8 h-8" /> : <UploadCloud className="w-8 h-8" />}
                 </div>
                 <span className="text-sm font-medium">{t.clickDrag}</span>
                 <span className="text-xs opacity-50 mt-1">JPG, PNG, WEBP</span>
@@ -531,71 +531,81 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
               {activeTab === 'simple' && (
                 <div className="space-y-6 animate-fade-in">
-                   <div className="bg-green-900/10 border border-green-500/20 p-6 rounded-2xl flex items-start gap-4 mb-6">
-                    <div className="bg-green-500/20 p-2.5 rounded-xl">
-                       <ClipboardList className="w-6 h-6 text-green-400" />
-                    </div>
-                    <div>
-                      <h4 className="text-green-100 font-bold text-lg mb-1">Boletins & Objetos</h4>
-                      <p className="text-green-200/60 text-sm leading-relaxed">
-                        Entrada rápida para boletins de registo, catálogos, calendários ou outros objetos de coleção sem necessidade de análise IA complexa.
-                      </p>
-                    </div>
-                  </div>
+                   <div className="flex gap-4">
+                      <button 
+                        onClick={() => setSimpleCategory('boletim')}
+                        className={`flex-1 p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 group ${simpleCategory === 'boletim' ? 'bg-green-600/20 border-green-500' : 'bg-gray-800/50 border-gray-700 hover:border-gray-500'}`}
+                      >
+                         <div className={`p-3 rounded-full ${simpleCategory === 'boletim' ? 'bg-green-500 text-white' : 'bg-gray-700 text-gray-400 group-hover:bg-gray-600'}`}>
+                            <ClipboardList className="w-6 h-6" />
+                         </div>
+                         <span className={`text-sm font-bold ${simpleCategory === 'boletim' ? 'text-green-400' : 'text-gray-400'}`}>Registar Boletim</span>
+                      </button>
+                      <button 
+                        onClick={() => setSimpleCategory('objeto')}
+                        className={`flex-1 p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 group ${simpleCategory === 'objeto' ? 'bg-orange-600/20 border-orange-500' : 'bg-gray-800/50 border-gray-700 hover:border-gray-500'}`}
+                      >
+                         <div className={`p-3 rounded-full ${simpleCategory === 'objeto' ? 'bg-orange-500 text-white' : 'bg-gray-700 text-gray-400 group-hover:bg-gray-600'}`}>
+                            <Package className="w-6 h-6" />
+                         </div>
+                         <span className={`text-sm font-bold ${simpleCategory === 'objeto' ? 'text-orange-400' : 'text-gray-400'}`}>Registar Objeto</span>
+                      </button>
+                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <div>
-                        <label className="block text-xs uppercase text-gray-500 font-bold mb-2">Tipo de Item</label>
-                        <select 
-                           className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-brand-500 outline-none"
-                           value={simpleCategory}
-                           onChange={(e) => setSimpleCategory(e.target.value as Category)}
-                        >
-                           <option value="boletim">Boletim de Registo</option>
-                           <option value="objeto">Objeto (Catálogo, Calendário...)</option>
-                           <option value="raspadinha">Raspadinha</option>
-                           <option value="lotaria">Lotaria</option>
-                        </select>
-                     </div>
-                     <div>
-                        <label className="block text-xs uppercase text-gray-500 font-bold mb-2">Data de Registo</label>
-                        <input 
-                           type="date"
-                           className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-brand-500 outline-none"
-                           value={simpleDate}
-                           onChange={(e) => setSimpleDate(e.target.value)}
-                        />
-                     </div>
-                     <div className="md:col-span-2">
-                        <label className="block text-xs uppercase text-gray-500 font-bold mb-2">Nome do Jogo / Objeto</label>
-                        <input 
-                           type="text"
-                           placeholder="Ex: Boletim Euromilhões 2024"
-                           className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-brand-500 outline-none text-lg font-bold"
-                           value={simpleName}
-                           onChange={(e) => setSimpleName(e.target.value)}
-                        />
-                     </div>
-                     <div className="md:col-span-2">
-                        <label className="block text-xs uppercase text-gray-500 font-bold mb-2">País</label>
-                        <input 
-                           type="text"
-                           list="list-countries"
-                           placeholder="Ex: Portugal"
-                           className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-brand-500 outline-none"
-                           value={simpleCountry}
-                           onChange={(e) => setSimpleCountry(e.target.value)}
-                        />
-                     </div>
-                     
-                     {/* Optional Image Upload in Simple Mode */}
-                     <div className="md:col-span-2">
-                        <label className="block text-xs uppercase text-gray-500 font-bold mb-2">Imagem (Opcional)</label>
-                        <div className="flex gap-4">
-                           <UploadBox label="Foto" preview={frontPreview} isFront={true} />
+                   <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 space-y-4 relative overflow-hidden">
+                      {/* Decorative background based on selection */}
+                      <div className={`absolute top-0 right-0 w-32 h-32 blur-[60px] rounded-full pointer-events-none opacity-20 ${simpleCategory === 'boletim' ? 'bg-green-500' : 'bg-orange-500'}`}></div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                        <div className="md:col-span-2">
+                            <label className="block text-xs uppercase text-gray-500 font-bold mb-2">Nome do {simpleCategory === 'boletim' ? 'Boletim' : 'Objeto'}</label>
+                            <input 
+                              type="text"
+                              placeholder={`Ex: ${simpleCategory === 'boletim' ? 'Boletim Euromilhões 2024' : 'Catálogo de Natal'}`}
+                              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-brand-500 outline-none text-lg font-bold"
+                              value={simpleName}
+                              onChange={(e) => setSimpleName(e.target.value)}
+                              autoFocus
+                            />
                         </div>
-                     </div>
-                  </div>
+                        <div>
+                            <label className="block text-xs uppercase text-gray-500 font-bold mb-2">País</label>
+                            <input 
+                              type="text"
+                              list="list-countries"
+                              placeholder="Ex: Portugal"
+                              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-brand-500 outline-none"
+                              value={simpleCountry}
+                              onChange={(e) => setSimpleCountry(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs uppercase text-gray-500 font-bold mb-2">Data de Registo</label>
+                            <div className="relative">
+                               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                               <input 
+                                  type="date"
+                                  className="w-full bg-gray-800 border border-gray-700 rounded-xl pl-10 pr-4 py-3 text-white focus:border-brand-500 outline-none"
+                                  value={simpleDate}
+                                  onChange={(e) => setSimpleDate(e.target.value)}
+                               />
+                            </div>
+                        </div>
+                        
+                        {/* Optional Image Upload in Simple Mode with Contextual Icon */}
+                        <div className="md:col-span-2">
+                            <label className="block text-xs uppercase text-gray-500 font-bold mb-2">Imagem (Opcional)</label>
+                            <div className="flex gap-4">
+                              <UploadBox 
+                                label="Foto do Item" 
+                                preview={frontPreview} 
+                                isFront={true} 
+                                icon={simpleCategory === 'boletim' ? ClipboardList : Package} 
+                              />
+                            </div>
+                        </div>
+                      </div>
+                   </div>
                 </div>
               )}
             </div>
@@ -986,11 +996,13 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                     className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold shadow-lg transition-all ${
                        !simpleName || !simpleCountry 
                          ? "bg-gray-800 text-gray-500 cursor-not-allowed"
-                         : "bg-green-600 hover:bg-green-500 text-white shadow-green-900/40 hover:scale-105 active:scale-95"
+                         : simpleCategory === 'boletim' 
+                            ? "bg-green-600 hover:bg-green-500 text-white shadow-green-900/40 hover:scale-105 active:scale-95" 
+                            : "bg-orange-600 hover:bg-orange-500 text-white shadow-orange-900/40 hover:scale-105 active:scale-95"
                     }`}
                   >
-                    <ClipboardList className="w-4 h-4" />
-                    Criar Registo
+                    {simpleCategory === 'boletim' ? <ClipboardList className="w-4 h-4" /> : <Package className="w-4 h-4" />}
+                    Guardar {simpleCategory === 'boletim' ? 'Boletim' : 'Objeto'}
                   </button>
                 )
              ) : (
