@@ -65,8 +65,8 @@ export const Header: React.FC<HeaderProps> = ({
          </button>
 
          {/* PORTUGAL MEGA MENU */}
-         {/* Using 'group' here to trigger the hover state */}
-         <div className="h-full group static">
+         {/* Using 'group' here to trigger the hover state. Added 'relative' for positioning the bridge. */}
+         <div className="h-full group relative">
             <button
               className={`px-4 h-full rounded-full text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${currentPage.startsWith('pt_') ? 'bg-green-900/40 text-green-400 border border-green-800' : 'text-slate-400 group-hover:text-white group-hover:bg-slate-800'}`}
             >
@@ -74,6 +74,13 @@ export const Header: React.FC<HeaderProps> = ({
               Portugal
               <ChevronDown className="w-3 h-3 opacity-50 transition-transform group-hover:rotate-180" />
             </button>
+            
+            {/* 
+                INVISIBLE BRIDGE (PONTE INVISÍVEL)
+                Covers the gap between the button and the header bottom (12px gap).
+                Extends horizontally to catch diagonal movements.
+            */}
+            <div className="absolute left-[-20%] top-[50%] w-[140%] h-12 bg-transparent z-50"></div>
             
             {/* 
                MEGA MENU CONTAINER 
