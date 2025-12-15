@@ -1,4 +1,5 @@
 
+
 export type Language = 'pt' | 'it';
 
 export const translations = {
@@ -16,10 +17,10 @@ export const translations = {
       addTitle: "Adicionar Novo Item",
       loginRequired: "Faça login para adicionar",
       backup: "Dados",
-      backupTitle: "Baixar cópia de segurança (JSON)",
+      backupTitle: "GUARDAR ARQUIVO COMPLETO (Backup JSON)", // Updated for emphasis
       rarities: "Raridades",
-      promos: "Promocionais", // New
-      websites: "Sites Oficiais" // New
+      promos: "Promocionais", 
+      websites: "Sites Oficiais"
     },
     websites: {
       title: "Diretório Oficial",
@@ -29,7 +30,7 @@ export const translations = {
       urlPlaceholder: "URL (ex: https://...)",
       logoPlaceholder: "Logo URL (Opcional)",
       countryPlaceholder: "País",
-      categoryPlaceholder: "Tipo (ex: Union Lottery, Olympic...)", // New
+      categoryPlaceholder: "Tipo (ex: Union Lottery, Olympic...)",
       visit: "Visitar",
       delete: "Remover",
       noSites: "Nenhum site registado ainda.",
@@ -106,7 +107,7 @@ export const translations = {
       aiDesc: "Identificando dados automaticamente...",
       isSeries: "È Serie (SET)?",
       isRarity: "É Raridade?", 
-      isPromotional: "É Promocional?", // New
+      isPromotional: "É Promocional?", 
       seriesDetailsPlaceholder: "Nºs (ex: 1-5)",
       gameName: "Nome / Título",
       country: "País",
@@ -161,7 +162,7 @@ export const translations = {
       printer: "Stampa",
       values: "Nota",
       rarityInfo: "Informação Histórica",
-      promoInfo: "Item Promo", // New
+      promoInfo: "Item Promo", 
       lines: "Linee", 
       linesBlue: "Blu",
       linesRed: "Rosse",
@@ -169,7 +170,7 @@ export const translations = {
       linesNone: "No",
       close: "Chiudi",
       category: "Tipo",
-      collector: "Colecionador",
+      collector: "Collezionista",
       seriesDetailsPlaceholder: "N. (es: 1-5)"
     },
     login: {
@@ -206,10 +207,10 @@ export const translations = {
       addTitle: "Aggiungi",
       loginRequired: "Accedi per aggiungere",
       backup: "Dati",
-      backupTitle: "Backup JSON",
+      backupTitle: "SALVA ARCHIVIO (Backup JSON)",
       rarities: "Rarità",
-      promos: "Promo", // New
-      websites: "Siti Ufficiali" // New
+      promos: "Promo", 
+      websites: "Siti Ufficiali"
     },
     websites: {
       title: "Siti Ufficiali",
@@ -219,7 +220,7 @@ export const translations = {
       urlPlaceholder: "URL",
       logoPlaceholder: "Logo URL (Opzionale)",
       countryPlaceholder: "Paese",
-      categoryPlaceholder: "Tipo (es: Union, Olympic...)", // New
+      categoryPlaceholder: "Tipo (es: Union, Olympic...)",
       visit: "Visita",
       delete: "Rimuovi",
       noSites: "Nessun sito registrato.",
@@ -296,7 +297,7 @@ export const translations = {
       aiDesc: "Analisi in corso...",
       isSeries: "È Serie?",
       isRarity: "È Rarità?", 
-      isPromotional: "È Promo?", // New
+      isPromotional: "È Promo?", 
       seriesDetailsPlaceholder: "N. (es: 1-5)",
       gameName: "Nome",
       country: "Paese",
@@ -351,7 +352,7 @@ export const translations = {
       printer: "Stampa",
       values: "Nota",
       rarityInfo: "Informazione Storica",
-      promoInfo: "Item Promo", // New
+      promoInfo: "Item Promo", 
       lines: "Linee", 
       linesBlue: "Blu",
       linesRed: "Rosse",

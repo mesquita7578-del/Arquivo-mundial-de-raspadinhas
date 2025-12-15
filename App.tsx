@@ -11,7 +11,7 @@ import { WebsitesModal } from './components/WebsitesModal';
 import { AboutPage } from './components/AboutPage'; 
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
@@ -772,10 +772,22 @@ function App() {
       </main>
 
       {/* Footer / Copyright (Always visible at very bottom) */}
-      <footer className="bg-slate-950 border-t border-slate-900 py-6 text-center text-slate-600 text-xs uppercase tracking-widest z-10 relative">
-          <p>© {new Date().getFullYear()} Arquivo Mundial de Raspadinhas</p>
-          <div className="mt-2 text-[10px] text-slate-700">
-             Jorge Mesquita & Fabio Pagni
+      <footer className="bg-slate-950 border-t border-slate-900 py-8 text-center text-slate-600 text-xs z-10 relative">
+          <p className="uppercase tracking-widest mb-4">© {new Date().getFullYear()} Arquivo Mundial de Raspadinhas</p>
+          
+          <div className="flex flex-col items-center gap-2">
+             <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">
+               Fundadores
+             </div>
+             <div className="text-slate-400">
+                Jorge Mesquita & Fabio Pagni
+             </div>
+             
+             {/* Dedication to Chloe */}
+             <div className="mt-4 flex items-center gap-2 bg-pink-900/10 border border-pink-500/10 px-4 py-2 rounded-full">
+                <Heart className="w-3 h-3 text-pink-500 fill-pink-500 animate-pulse" />
+                <span className="text-pink-200/80 font-medium italic">Dedicado à futura guardiã Chloe</span>
+             </div>
           </div>
       </footer>
 

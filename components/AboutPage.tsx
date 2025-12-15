@@ -1,5 +1,5 @@
 import React from 'react';
-import { Ticket, Globe, Users, Database, Sparkles, Mail, ArrowRight } from 'lucide-react';
+import { Ticket, Globe, Users, Database, Sparkles, Mail, ArrowRight, Hourglass, Save } from 'lucide-react';
 
 export const AboutPage = ({ t }: { t: any }) => {
   return (
@@ -30,6 +30,34 @@ export const AboutPage = ({ t }: { t: any }) => {
                     <Globe className="w-16 h-16 text-brand-500" />
                     <h3 className="text-2xl font-bold text-white">Arquivo Mundial</h3>
                     <p className="text-slate-400">Juntando peças de Portugal, Itália, Brasil e do mundo inteiro numa única plataforma inteligente.</p>
+                 </div>
+              </div>
+           </div>
+        </div>
+      </div>
+
+      {/* Legacy Section - TIME CAPSULE */}
+      <div className="max-w-7xl mx-auto px-6 pt-16">
+        <div className="bg-gradient-to-br from-indigo-900/20 to-brand-900/10 border border-indigo-500/20 rounded-3xl p-8 md:p-12 relative overflow-hidden">
+           <div className="absolute top-0 right-0 p-8 opacity-5">
+              <Hourglass className="w-64 h-64 text-white" />
+           </div>
+           
+           <div className="relative z-10 max-w-3xl">
+              <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                 <Hourglass className="w-8 h-8 text-indigo-400" />
+                 Um Legado para o Futuro
+              </h2>
+              <div className="space-y-4 text-slate-300 text-lg leading-relaxed">
+                 <p>
+                    Este arquivo foi construído com uma visão de longo prazo. Não serve apenas para organizar a coleção de hoje, mas para garantir que a história destas peças de arte efémera sobreviva ao tempo.
+                 </p>
+                 <p>
+                    <strong>Para a Chloe e para as gerações futuras:</strong> A tecnologia de "Exportação de Dados" (JSON) integrada neste site funciona como uma cápsula do tempo digital. Permite que toda a base de dados — com milhares de imagens e detalhes técnicos — seja guardada e transferida para novos sistemas no futuro, garantindo que o trabalho do avô Jorge nunca se perca.
+                 </p>
+                 <div className="mt-6 flex items-center gap-2 text-sm text-indigo-300 bg-indigo-900/30 w-fit px-4 py-2 rounded-lg border border-indigo-500/30">
+                    <Save className="w-4 h-4" />
+                    <span>Lembrete: Faça backups regulares usando o botão "Dados" no menu de Admin.</span>
                  </div>
               </div>
            </div>
