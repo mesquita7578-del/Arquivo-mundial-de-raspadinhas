@@ -108,13 +108,22 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, totalRecords,
               Jorge Mesquita & Fabio Pagni <span className="text-[10px] text-gray-500 align-top -mt-2">®</span>
             </h4>
             
-            <a 
-              href="mailto:mesquita757@hotmail.com" 
-              className="flex items-center gap-2 text-brand-500 hover:text-brand-400 text-xs transition-colors bg-brand-900/10 px-4 py-1.5 rounded-full border border-brand-500/20 hover:border-brand-500/50"
-            >
-               <Mail className="w-3.5 h-3.5" />
-               mesquita757@hotmail.com
-            </a>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-2">
+              <a 
+                href="mailto:mesquita757@hotmail.com" 
+                className="flex items-center gap-2 text-brand-500 hover:text-brand-400 text-xs transition-colors bg-brand-900/10 px-4 py-1.5 rounded-full border border-brand-500/20 hover:border-brand-500/50"
+              >
+                 <Mail className="w-3.5 h-3.5" />
+                 mesquita757@hotmail.com
+              </a>
+              <a 
+                href="mailto:fabio.pagni@libero.it" 
+                className="flex items-center gap-2 text-blue-400 hover:text-blue-300 text-xs transition-colors bg-blue-900/10 px-4 py-1.5 rounded-full border border-blue-500/20 hover:border-blue-500/50"
+              >
+                 <Mail className="w-3.5 h-3.5" />
+                 fabio.pagni@libero.it
+              </a>
+            </div>
         </div>
 
       </div>
