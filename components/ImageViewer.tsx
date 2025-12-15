@@ -478,8 +478,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
               <div className="grid grid-cols-2 gap-4">
                 
                 {/* Collector Field (Added/Moved here for prominence) */}
-                <div className="bg-gray-800/40 p-3 rounded-lg border border-gray-800">
-                  <span className="flex items-center gap-2 text-xs uppercase text-gray-500 mb-1">
+                <div className="bg-gradient-to-br from-brand-900/10 to-gray-800/40 p-3 rounded-lg border border-brand-500/20 relative overflow-hidden group-hover:border-brand-500/40 transition-colors">
+                  <span className="flex items-center gap-2 text-xs uppercase text-brand-400 font-bold mb-1">
                     <User className="w-3 h-3" /> {t.collector}
                   </span>
                   {isEditing ? (
@@ -496,7 +496,10 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                       />
                     </div>
                   ) : (
-                    <p className="text-gray-200">{image.collector || 'N/A'}</p>
+                    <p className="text-white font-medium flex items-center gap-2">
+                        {image.collector || <span className="text-gray-500 italic text-xs">Sem registo</span>}
+                        {image.collector && <Check className="w-3 h-3 text-brand-500" />}
+                    </p>
                   )}
                 </div>
 
