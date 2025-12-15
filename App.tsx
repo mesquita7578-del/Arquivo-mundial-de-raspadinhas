@@ -267,8 +267,6 @@ function App() {
         onAdminToggle={handleAdminToggle}
         onLogout={handleLogout}
         onExport={handleExportData}
-        onToggleRarities={() => {}} // Removed from main header UI
-        showRarities={showRarities}
         onHistoryClick={() => setIsHistoryModalOpen(true)}
         language={language}
         setLanguage={setLanguage}
