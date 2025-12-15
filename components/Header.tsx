@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Upload, Ticket, Lock, LogOut, Download, Gem, BookOpen } from 'lucide-react';
+import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen } from 'lucide-react';
 import { Language } from '../translations';
 
 interface HeaderProps {
@@ -10,8 +10,6 @@ interface HeaderProps {
   onAdminToggle: () => void;
   onLogout: () => void;
   onExport: () => void;
-  onToggleRarities: () => void; // Replaced download list
-  showRarities: boolean; // New prop
   onHistoryClick: () => void;
   language: Language;
   setLanguage: (lang: Language) => void;
@@ -26,99 +24,54 @@ export const Header: React.FC<HeaderProps> = ({
   onAdminToggle, 
   onLogout,
   onExport,
-  onToggleRarities,
-  showRarities,
   onHistoryClick,
   language,
   setLanguage,
   t
 }) => {
   return (
-    <header className="flex flex-col md:flex-row items-center justify-between px-4 sm:px-6 py-4 bg-gray-900 border-b border-gray-800 sticky top-0 z-20 shadow-lg gap-4 md:gap-0">
+    <header className="flex items-center justify-between px-3 md:px-6 py-3 bg-gray-900 border-b border-gray-800 sticky top-0 z-50 shadow-lg h-[60px]">
       
       {/* Logo & Title */}
-      <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-start">
-        <div className="flex items-center gap-2">
-          <div className="bg-brand-600 p-2 rounded-lg shadow-lg shadow-brand-900/50">
-            <Ticket className="w-6 h-6 text-white" />
-          </div>
-          <div className="flex flex-col">
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-500 to-white">
-              {t.title}
-            </h1>
-            <span className="text-[10px] sm:text-xs text-brand-500 font-bold uppercase tracking-widest">{t.subtitle}</span>
-          </div>
+      <div className="flex items-center gap-2">
+        <div className="bg-brand-600 p-1.5 md:p-2 rounded-lg shadow-lg shadow-brand-900/50 shrink-0">
+          <Ticket className="w-5 h-5 md:w-6 md:h-6 text-white" />
         </div>
-
-        {/* Mobile Language Toggle */}
-        <div className="flex md:hidden bg-gray-800 rounded-lg p-1">
-          <button 
-            onClick={() => setLanguage('pt')}
-            className={`px-2 py-1 rounded text-xs font-bold transition-colors ${language === 'pt' ? 'bg-brand-600 text-white' : 'text-gray-400'}`}
-          >
-            🇵🇹
-          </button>
-          <button 
-            onClick={() => setLanguage('it')}
-            className={`px-2 py-1 rounded text-xs font-bold transition-colors ${language === 'it' ? 'bg-green-600 text-white' : 'text-gray-400'}`}
-          >
-            🇮🇹
-          </button>
+        <div className="flex flex-col">
+          <h1 className="text-base md:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-500 to-white leading-tight">
+            {t.title}
+          </h1>
+          <span className="text-[9px] md:text-xs text-brand-500 font-bold uppercase tracking-widest hidden sm:block">{t.subtitle}</span>
         </div>
-      </div>
-
-      {/* Spacer / Context Text */}
-      <div className="hidden md:flex flex-1 justify-center items-center text-gray-600 text-sm font-medium tracking-wide">
-         {showRarities ? (
-           <span className="text-gold-400 flex items-center gap-2 animate-pulse">
-             <Gem className="w-4 h-4" /> Secção de Raridades
-           </span>
-         ) : "Arquivo Digital & Colecionismo"}
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 sm:gap-3 w-full md:w-auto justify-center md:justify-end">
+      <div className="flex items-center gap-2">
         
-        {/* Desktop Language Toggle */}
-        <div className="hidden md:flex bg-gray-800 rounded-lg p-1 mr-2 border border-gray-700">
+        {/* Language Toggles */}
+        <div className="flex bg-gray-800 rounded-md p-0.5 border border-gray-700">
           <button 
             onClick={() => setLanguage('pt')}
-            className={`px-2 py-1 rounded text-sm transition-all ${language === 'pt' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
-            title="Português"
+            className={`px-2 py-1 rounded text-[10px] md:text-xs font-bold transition-all ${language === 'pt' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
           >
-            🇵🇹 PT
+            PT
           </button>
           <button 
             onClick={() => setLanguage('it')}
-            className={`px-2 py-1 rounded text-sm transition-all ${language === 'it' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
-            title="Italiano"
+            className={`px-2 py-1 rounded text-[10px] md:text-xs font-bold transition-all ${language === 'it' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
           >
-            🇮🇹 IT
+            IT
           </button>
         </div>
 
         {/* History Button */}
         <button
           onClick={onHistoryClick}
-          className="flex items-center gap-2 bg-blue-900/20 hover:bg-blue-800/40 text-blue-400 hover:text-blue-300 border border-blue-800/50 px-3 py-2 rounded-full text-xs sm:text-sm font-medium transition-all"
+          className="flex items-center justify-center w-8 h-8 md:w-auto md:px-3 md:py-2 rounded-full bg-blue-900/20 hover:bg-blue-800/40 text-blue-400 border border-blue-800/50 transition-all"
           title={t.history}
         >
-          <BookOpen className="w-4 h-4" />
-          <span className="hidden lg:inline">{t.history}</span>
-        </button>
-
-        {/* Rarities Button (Replaces Excel) */}
-        <button
-          onClick={onToggleRarities}
-          className={`flex items-center gap-2 border px-3 py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
-             showRarities 
-               ? "bg-gold-500/20 text-gold-400 border-gold-500 shadow-lg shadow-gold-500/20" 
-               : "bg-gray-800/50 text-gray-400 border-gray-700 hover:border-gold-500/50 hover:text-gold-400"
-          }`}
-          title={t.rarities}
-        >
-          <Gem className="w-4 h-4" />
-          <span className="hidden lg:inline">{t.rarities}</span>
+          <BookOpen className="w-4 h-4 md:mr-2" />
+          <span className="hidden md:inline text-xs font-medium">{t.history}</span>
         </button>
 
         {/* Admin Controls */}
@@ -126,46 +79,41 @@ export const Header: React.FC<HeaderProps> = ({
           <>
             <button
               onClick={onExport}
-              className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700 px-3 py-2 rounded-full text-xs sm:text-sm font-medium transition-all"
+              className="hidden lg:flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-500 hover:text-white border border-gray-700 px-3 py-2 rounded-full text-xs font-medium transition-all"
               title={t.backupTitle}
             >
-              <Download className="w-4 h-4" />
-              <span className="hidden lg:inline">{t.backup}</span>
+              <Download className="w-3 h-3" />
             </button>
 
             <button
               onClick={onLogout}
-              className="flex items-center gap-2 bg-red-900/30 hover:bg-red-600 text-red-400 hover:text-white border border-red-800 hover:border-red-500 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-300"
+              className="flex items-center justify-center w-8 h-8 md:w-auto md:px-3 md:py-2 bg-red-900/30 hover:bg-red-600 text-red-400 hover:text-white border border-red-800 rounded-full transition-all"
               title={t.logoutTitle}
             >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">{t.logout}</span>
+              <LogOut className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline text-xs font-bold">{t.logout}</span>
+            </button>
+
+             {/* Upload Button */}
+            <button
+              onClick={onUploadClick}
+              className="flex items-center justify-center w-8 h-8 md:w-auto md:px-4 md:py-2 rounded-full bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-900/50 transition-all"
+              title={t.addTitle}
+            >
+              <Upload className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline text-xs font-bold">{t.new}</span>
             </button>
           </>
         ) : (
           <button
             onClick={onAdminToggle}
-            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 hover:border-gray-600 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300"
+            className="flex items-center justify-center w-8 h-8 md:w-auto md:px-3 md:py-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 rounded-full transition-all"
             title={t.loginTitle}
           >
-            <Lock className="w-4 h-4" />
-            <span className="hidden sm:inline">{t.admin}</span>
+            <Lock className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline text-xs font-medium">{t.admin}</span>
           </button>
         )}
-
-        {/* Upload Button */}
-        <button
-          onClick={onUploadClick}
-          className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all shadow-lg ${
-             isAdmin 
-             ? "bg-brand-600 hover:bg-brand-500 text-white shadow-brand-900/50 cursor-pointer" 
-             : "bg-gray-800 text-gray-600 cursor-not-allowed opacity-50"
-          }`}
-          title={isAdmin ? t.addTitle : t.loginRequired}
-        >
-          <Upload className="w-4 h-4" />
-          <span className="hidden sm:inline">{t.new}</span>
-        </button>
       </div>
     </header>
   );

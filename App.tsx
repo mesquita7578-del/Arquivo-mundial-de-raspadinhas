@@ -6,16 +6,15 @@ import { ImageViewer } from './components/ImageViewer';
 import { LoginModal } from './components/LoginModal';
 import { StatsSection } from './components/StatsSection';
 import { WorldMap } from './components/WorldMap';
-import { HistoryModal } from './components/HistoryModal'; // New Import
+import { HistoryModal } from './components/HistoryModal'; 
 import { INITIAL_RASPADINHAS } from './constants';
-import { ScratchcardData, Continent } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem } from 'lucide-react';
+import { ScratchcardData, Continent, Category } from './types';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
 const AUTHORIZED_ADMINS = ["JORGE MESQUITA", "FABIO PAGNI", "CHLOE"];
 const ADMIN_PASSWORD = "123456";
-const PAGE_SIZE = 48; 
 
 function App() {
   const [displayedImages, setDisplayedImages] = useState<ScratchcardData[]>([]);
@@ -37,7 +36,9 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
   
-  const [showRarities, setShowRarities] = useState(false); // New state for Rarities view
+  // Filter States (Lifted)
+  const [showRarities, setShowRarities] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
   
   const [isDragging, setIsDragging] = useState(false);
   const [droppedFile, setDroppedFile] = useState<File | null>(null);
@@ -45,7 +46,6 @@ function App() {
   const [language, setLanguage] = useState<Language>('pt');
   const t = translations[language];
 
-  // Load Initial Data (Stats + Recent)
   const loadInitialData = async () => {
     setIsLoadingDB(true);
     try {
@@ -82,27 +82,21 @@ function App() {
     loadInitialData();
   }, []);
 
-  // Handle Search & Continent & Rarities Filters
   useEffect(() => {
     const performSearch = async () => {
       setIsLoadingMore(true);
       try {
         let results = await storageService.search(searchTerm, activeContinent);
         
-        // Filter for Rarities if active
         if (showRarities) {
           results = results.filter(img => img.isRarity === true);
         }
 
         setDisplayedImages(results);
         
-        // Map data should usually reflect the current search/view, or remain global?
-        // Let's filter map data too if in rarities mode
         if (showRarities) {
            setMapData(results);
         } else {
-           // If search term exists, filter map. If not, map might need all? 
-           // Usually map syncs with grid for consistency
            setMapData(results);
         }
 
@@ -120,14 +114,12 @@ function App() {
     return () => clearTimeout(timeoutId);
   }, [searchTerm, activeContinent, showRarities, isLoadingDB]);
 
-  const handleLoadMore = async () => {
-     // Placeholder
-  };
-
   const handleCountrySelectFromMap = (countryName: string) => {
     setSearchTerm(countryName);
     setViewMode('grid');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Scroll to grid on mobile
+    const grid = document.getElementById('image-grid-section');
+    if (grid) grid.scrollIntoView({ behavior: 'smooth' });
   };
 
   const availableCountries = useMemo(() => {
@@ -136,11 +128,9 @@ function App() {
     return Array.from(countries).sort();
   }, [mapData]);
 
-  // Actions
   const handleUploadComplete = async (newImage: ScratchcardData) => {
     try {
       await storageService.save(newImage);
-      // Refresh logic relies on useEffects mostly, but lets update local state for instant feel
       setDisplayedImages(prev => {
          if (showRarities && !newImage.isRarity) return prev;
          return [newImage, ...prev];
@@ -250,11 +240,10 @@ function App() {
   };
 
   const continents: (Continent | 'Mundo')[] = ['Mundo', 'Europa', 'América', 'Ásia', 'África', 'Oceania'];
-  const showLoadMore = false; 
 
   if (isLoadingDB) {
     return (
-      <div className="h-screen w-screen bg-gray-950 flex flex-col items-center justify-center text-white">
+      <div className="h-[100dvh] w-screen bg-gray-950 flex flex-col items-center justify-center text-white">
         <Database className="w-16 h-16 text-brand-600 animate-pulse mb-4" />
         <h2 className="text-2xl font-bold">Carregando Arquivo...</h2>
         <p className="text-gray-400 mt-2">A conectar base de dados segura.</p>
@@ -263,8 +252,9 @@ function App() {
   }
 
   return (
+    // Mobile Fix: Use h-[100dvh] instead of h-screen to handle mobile browser bars correctly
     <div 
-      className="flex flex-col h-full bg-gray-950 text-gray-100 relative"
+      className="flex flex-col h-[100dvh] bg-gray-950 text-gray-100 relative overflow-hidden"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -277,13 +267,56 @@ function App() {
         onAdminToggle={handleAdminToggle}
         onLogout={handleLogout}
         onExport={handleExportData}
-        onToggleRarities={() => setShowRarities(!showRarities)}
+        onToggleRarities={() => {}} // Removed from main header UI
         showRarities={showRarities}
         onHistoryClick={() => setIsHistoryModalOpen(true)}
         language={language}
         setLanguage={setLanguage}
         t={t.header}
       />
+
+      {/* STICKY FILTER BAR (Categories + Rarities) - Visible below header */}
+      <div className="sticky top-[60px] z-40 bg-gray-900/95 backdrop-blur-md border-b border-gray-800 shadow-md">
+         <div className="max-w-7xl mx-auto px-4 md:px-6 py-2 flex flex-nowrap items-center gap-2 md:gap-4 overflow-x-auto scrollbar-hide">
+             
+             {/* Rarities Toggle */}
+             <button
+              onClick={() => setShowRarities(!showRarities)}
+              className={`flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${
+                 showRarities 
+                   ? "bg-gold-500 text-white border-gold-400 shadow-lg shadow-gold-500/20" 
+                   : "bg-gray-800 text-gray-400 border-gray-700 hover:border-gold-500/50 hover:text-gold-400"
+              }`}
+            >
+              <Gem className="w-3.5 h-3.5" />
+              {t.header.rarities}
+            </button>
+
+            <div className="w-px h-6 bg-gray-700 mx-1 shrink-0"></div>
+
+             {/* Category Toggles */}
+             <button
+               onClick={() => setActiveCategory('all')}
+               className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${activeCategory === 'all' ? 'bg-gray-700 text-white border-gray-600' : 'text-gray-500 border-transparent hover:text-white hover:bg-gray-800'}`}
+             >
+               {t.grid.allTypes}
+             </button>
+             <button
+               onClick={() => setActiveCategory('raspadinha')}
+               className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border flex items-center gap-2 whitespace-nowrap ${activeCategory === 'raspadinha' ? 'bg-brand-600 text-white border-brand-500' : 'text-gray-500 border-transparent hover:text-white hover:bg-gray-800'}`}
+             >
+               <Coins className="w-3.5 h-3.5" />
+               {t.grid.scratchcard}
+             </button>
+             <button
+               onClick={() => setActiveCategory('lotaria')}
+               className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border flex items-center gap-2 whitespace-nowrap ${activeCategory === 'lotaria' ? 'bg-purple-600 text-white border-purple-500' : 'text-gray-500 border-transparent hover:text-white hover:bg-gray-800'}`}
+             >
+               <Ticket className="w-3.5 h-3.5" />
+               {t.grid.lottery}
+             </button>
+         </div>
+      </div>
 
       {isDragging && (
         <div className="absolute inset-0 z-50 bg-brand-600/90 backdrop-blur-md flex flex-col items-center justify-center animate-fade-in border-8 border-brand-400 border-dashed m-4 rounded-3xl pointer-events-none">
@@ -295,26 +328,27 @@ function App() {
         </div>
       )}
 
-      <main className="flex-1 overflow-y-auto relative scroll-smooth">
+      <main className="flex-1 overflow-y-auto relative scroll-smooth w-full">
         <div className="fixed top-0 left-0 w-full h-96 bg-brand-900/10 rounded-full blur-[120px] pointer-events-none -translate-y-1/2 z-0"></div>
         <div className="fixed bottom-0 right-0 w-full h-96 bg-purple-900/10 rounded-full blur-[120px] pointer-events-none translate-y-1/2 z-0"></div>
 
-        <div className="max-w-7xl mx-auto py-8 relative z-10 space-y-12">
+        <div className="max-w-7xl mx-auto py-6 md:py-8 relative z-10 space-y-8 md:space-y-12">
 
-          {/* New Arrivals (Hidden if Rarities mode is active to focus on search/collection) */}
+          {/* New Arrivals (Hidden in Rarities mode) */}
           {!showRarities && (
-            <section className="px-6">
+            <section className="px-4 md:px-6">
               <div className="flex items-center gap-2 mb-4 text-brand-400">
                 <Clock className="w-5 h-5" />
-                <h2 className="text-xl font-bold text-white uppercase tracking-wider">{t.home.newArrivals}</h2>
+                <h2 className="text-lg md:text-xl font-bold text-white uppercase tracking-wider">{t.home.newArrivals}</h2>
               </div>
-              <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 overflow-x-auto">
+              <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-4 md:p-6 overflow-x-auto scrollbar-hide">
                  <div className="min-w-[800px]">
                    <ImageGrid 
                      images={newArrivals} 
                      onImageClick={setSelectedImage} 
                      hideFilters={true} 
                      isAdmin={isAdmin} 
+                     activeCategory={activeCategory} // Pass active Category
                      t={t.grid}
                    />
                  </div>
@@ -322,23 +356,20 @@ function App() {
             </section>
           )}
 
-          <section className="px-6 pb-12">
+          <section id="image-grid-section" className="px-4 md:px-6 pb-20">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2 text-brand-400">
                 {showRarities ? <Gem className="w-5 h-5 text-gold-500" /> : <Globe className="w-5 h-5" />}
-                <h2 className="text-xl font-bold text-white uppercase tracking-wider">
+                <h2 className="text-lg md:text-xl font-bold text-white uppercase tracking-wider">
                    {showRarities ? t.header.rarities : t.home.explore}
                 </h2>
               </div>
             </div>
 
-            {/* Continent Filters (Hide in Rarities if you want a cleaner look, or keep them) */}
-            <div className="flex flex-wrap gap-2 mb-6">
+            {/* Continent Filters - Scrollable on Mobile */}
+            <div className="flex overflow-x-auto pb-2 gap-2 mb-4 scrollbar-hide">
               {continents.map(c => {
                 let count = 0;
-                // Note: The count logic currently counts ALL items, not just rarities. 
-                // Updating stats logic for rarity mode would require more work in getStats(), 
-                // for now we keep general stats which is acceptable.
                 if (c === 'Mundo') {
                    count = totalStats.total;
                 } else {
@@ -349,14 +380,14 @@ function App() {
                   <button
                     key={c}
                     onClick={() => setActiveContinent(c)}
-                    className={`px-6 py-2 rounded-full text-sm font-bold transition-all border flex items-center gap-2 ${
+                    className={`px-4 md:px-6 py-2 rounded-full text-xs md:text-sm font-bold transition-all border flex items-center gap-2 whitespace-nowrap ${
                       activeContinent === c 
                         ? 'bg-brand-600 text-white border-brand-500 shadow-lg shadow-brand-900/50 scale-105' 
                         : 'bg-gray-900 text-gray-400 border-gray-800 hover:bg-gray-800 hover:text-white'
                     }`}
                   >
                     {c}
-                    <span className={`text-xs ml-1 py-0.5 px-1.5 rounded-full ${activeContinent === c ? 'bg-white/20 text-white' : 'bg-gray-800 text-gray-500'}`}>
+                    <span className={`text-[10px] ml-1 py-0.5 px-1.5 rounded-full ${activeContinent === c ? 'bg-white/20 text-white' : 'bg-gray-800 text-gray-500'}`}>
                       {count}
                     </span>
                   </button>
@@ -377,7 +408,6 @@ function App() {
                         ? 'bg-brand-600 text-white border-brand-500'
                         : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700 hover:text-white cursor-pointer'
                     }`}
-                    title={`Filtrar por ${country}`}
                   >
                     {country}
                   </button>
@@ -387,7 +417,6 @@ function App() {
                    <button 
                      onClick={() => setSearchTerm('')}
                      className="ml-2 p-1 rounded-full bg-gray-800 text-gray-500 hover:text-white hover:bg-red-900/50 transition-colors"
-                     title="Limpar filtro"
                    >
                      <X className="w-3 h-3" />
                    </button>
@@ -411,21 +440,9 @@ function App() {
                     onImageClick={setSelectedImage} 
                     viewMode={viewMode}
                     isAdmin={isAdmin} 
+                    activeCategory={activeCategory} // Pass active Category
                     t={t.grid}
                   />
-                  
-                  {showLoadMore && (
-                    <div className="p-6 flex justify-center border-t border-gray-800/50">
-                      <button 
-                        onClick={handleLoadMore}
-                        disabled={isLoadingMore}
-                        className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-full font-bold transition-all shadow-lg hover:shadow-brand-900/20 disabled:opacity-50"
-                      >
-                        {isLoadingMore ? <Loader2 className="w-4 h-4 animate-spin" /> : <PlusCircle className="w-4 h-4" />}
-                        {isLoadingMore ? "Carregando..." : "Carregar Mais Itens"}
-                      </button>
-                    </div>
-                  )}
                 </>
               )}
             </div>

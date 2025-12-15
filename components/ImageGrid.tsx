@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
-import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify } from 'lucide-react';
 
 interface ImageGridProps {
   images: ScratchcardData[];
@@ -8,6 +8,7 @@ interface ImageGridProps {
   hideFilters?: boolean;
   viewMode?: 'grid' | 'list';
   isAdmin?: boolean;
+  activeCategory?: Category | 'all'; // New prop
   t: any;
 }
 
@@ -60,9 +61,15 @@ const LineIndicator: React.FC<{ type?: LineType; t: any }> = ({ type, t }) => {
   );
 };
 
-export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hideFilters = false, viewMode = 'grid', isAdmin = false, t }) => {
-  // Category Filter
-  const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
+export const ImageGrid: React.FC<ImageGridProps> = ({ 
+  images, 
+  onImageClick, 
+  hideFilters = false, 
+  viewMode = 'grid', 
+  isAdmin = false, 
+  activeCategory = 'all', 
+  t 
+}) => {
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -84,7 +91,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
   // Apply filters
   const filteredImages = useMemo(() => {
     return images.filter(img => {
-      // Filter by Category
+      // Filter by Category (Passed from parent)
       if (activeCategory !== 'all') {
          const cat = img.category || 'raspadinha';
          if (cat !== activeCategory) return false;
@@ -149,31 +156,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
   return (
     <div className="flex flex-col h-full">
       
-      {/* Category Tabs (Visible above filters) */}
-      {!hideFilters && (
-        <div className="px-6 pt-2 pb-2 flex gap-2 border-b border-gray-800/50 bg-gray-900/30">
-          <button
-             onClick={() => setActiveCategory('all')}
-             className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${activeCategory === 'all' ? 'bg-gray-700 text-white border-gray-600' : 'text-gray-500 border-transparent hover:text-white'}`}
-          >
-            {t.allTypes}
-          </button>
-          <button
-             onClick={() => setActiveCategory('raspadinha')}
-             className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border flex items-center gap-2 ${activeCategory === 'raspadinha' ? 'bg-brand-600 text-white border-brand-500' : 'text-gray-500 border-transparent hover:text-white'}`}
-          >
-            <Coins className="w-3 h-3" />
-            {t.scratchcard}
-          </button>
-          <button
-             onClick={() => setActiveCategory('lotaria')}
-             className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border flex items-center gap-2 ${activeCategory === 'lotaria' ? 'bg-purple-600 text-white border-purple-500' : 'text-gray-500 border-transparent hover:text-white'}`}
-          >
-            <Ticket className="w-3 h-3" />
-            {t.lottery}
-          </button>
-        </div>
-      )}
+      {/* Category Tabs Removed from here - Lifted to App.tsx Sticky Bar */}
 
       {/* Filter Bar - Restricted to ADMIN only */}
       {!hideFilters && isAdmin && (
@@ -222,7 +205,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
       )}
 
       {/* Content */}
-      <div className={`${hideFilters ? '' : 'flex-1 overflow-y-auto p-6 pb-24 scroll-smooth'}`}>
+      <div className={`${hideFilters ? '' : 'flex-1 overflow-y-auto p-4 md:p-6 pb-24 scroll-smooth'}`}>
         {!hideFilters && filteredImages.length === 0 ? (
            <div className="flex flex-col items-center justify-center h-64 text-gray-500">
              <Filter className="w-12 h-12 mb-4 opacity-20" />
@@ -297,7 +280,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
           </div>
         ) : (
           // GRID VIEW
-          <div className={`grid grid-cols-1 sm:grid-cols-2 ${hideFilters ? 'md:grid-cols-4 lg:grid-cols-5' : 'md:grid-cols-3 lg:grid-cols-4'} gap-6`}>
+          <div className={`grid grid-cols-2 ${hideFilters ? 'md:grid-cols-4 lg:grid-cols-5' : 'md:grid-cols-3 lg:grid-cols-4'} gap-4 md:gap-6`}>
             {displayedImages.map((item) => (
               <div
                 key={item.id}
@@ -352,9 +335,9 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
                 </div>
 
                 {/* Info Container */}
-                <div className="p-4 flex flex-col flex-1">
+                <div className="p-3 md:p-4 flex flex-col flex-1">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-gray-200 truncate flex-1 mr-2" title={item.gameName}>{item.gameName}</h3>
+                    <h3 className="font-bold text-gray-200 truncate flex-1 mr-2 text-sm md:text-base" title={item.gameName}>{item.gameName}</h3>
                     <StateBadge state={item.state} />
                   </div>
                   
@@ -365,12 +348,12 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick, hide
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 mt-auto text-xs text-gray-400">
-                    <div className="bg-gray-800/50 p-2 rounded flex flex-col">
-                      <span className="text-[10px] uppercase text-gray-500">{t.gameNo}</span>
+                    <div className="bg-gray-800/50 p-1.5 md:p-2 rounded flex flex-col">
+                      <span className="text-[9px] md:text-[10px] uppercase text-gray-500">{t.gameNo}</span>
                       <span className="font-mono text-gray-300">{item.gameNumber}</span>
                     </div>
-                    <div className="bg-gray-800/50 p-2 rounded flex flex-col">
-                      <span className="text-[10px] uppercase text-gray-500">{t.year}</span>
+                    <div className="bg-gray-800/50 p-1.5 md:p-2 rounded flex flex-col">
+                      <span className="text-[9px] md:text-[10px] uppercase text-gray-500">{t.year}</span>
                       <span className="font-mono text-gray-300">{item.releaseDate.split('-')[0] || '?'}</span>
                     </div>
                   </div>

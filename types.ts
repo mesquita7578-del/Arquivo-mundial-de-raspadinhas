@@ -16,8 +16,8 @@ export interface ScratchcardData {
   gameNumber: string; // Nº de jogo
   releaseDate: string; // Data de lançamento
   size: string; // Tamanho
-  values: string; // Renomeado na interface para "Nota" ou "Informação"
-  price?: string; // Preço Facial (Novo campo)
+  values: string; // Usado para "Nota" ou "Informação Histórica"
+  price?: string; // Preço Facial
   state: ScratchcardState; // Estado
   country: string; // País de origem
   continent: Continent; // Continente
@@ -27,12 +27,12 @@ export interface ScratchcardData {
   emission?: string; // Emissão / Tiragem
   printer?: string; // Impresso por (Gráfica)
   isSeries?: boolean; // É um SET / Série?
-  seriesDetails?: string; // Detalhes manuais do SET (ex: "1-10" ou "5/12")
-  lines?: LineType; // Tipo de Linhas (Azul, Vermelha, Multicolor, Sem)
+  seriesDetails?: string; // Detalhes manuais do SET
+  lines?: LineType; // Tipo de Linhas
   
   isRarity?: boolean; // Novo campo: É uma raridade?
   
-  category: Category; // Nova distinção: Raspadinha vs Lotaria
+  category: Category; // Categoria
 
   aiGenerated: boolean;
   createdAt: number;
