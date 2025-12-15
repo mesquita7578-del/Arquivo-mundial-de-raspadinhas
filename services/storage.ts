@@ -155,7 +155,8 @@ class StorageService {
             results.push(img);
           }
 
-          if (results.length < 1000) {
+          // Increased limit to 50000 to accommodate large collections
+          if (results.length < 50000) {
             cursor.continue();
           } else {
             resolve(results.sort((a, b) => {
@@ -177,7 +178,7 @@ class StorageService {
     });
   }
 
-  async getStats(): Promise<{ stats: Record<string, number>, total: number }> {
+  async getStats(): Promise<{ stats: Record<string, number>, total: number, categoryStats: { scratch: number, lottery: number } }> {
      if (!this.db) await this.init();
 
      return new Promise((resolve, reject) => {
@@ -190,6 +191,12 @@ class StorageService {
       const stats: Record<string, number> = {
         'Europa': 0, 'América': 0, 'Ásia': 0, 'África': 0, 'Oceania': 0
       };
+      
+      const categoryStats = {
+        scratch: 0,
+        lottery: 0
+      };
+
       let total = 0;
 
       request.onsuccess = (event) => {
@@ -197,12 +204,22 @@ class StorageService {
         if (cursor) {
           const img = cursor.value as ScratchcardData;
           total++;
+          
+          // Continent Stats
           if (stats[img.continent] !== undefined) {
             stats[img.continent]++;
           }
+          
+          // Category Stats
+          if (img.category === 'lotaria') {
+            categoryStats.lottery++;
+          } else {
+            categoryStats.scratch++;
+          }
+
           cursor.continue();
         } else {
-          resolve({ stats, total });
+          resolve({ stats, total, categoryStats });
         }
       };
       request.onerror = () => reject("Erro stats");

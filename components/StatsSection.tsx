@@ -1,14 +1,15 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Continent } from '../types';
-import { BarChart3, Database, Globe, Mail } from 'lucide-react';
+import { BarChart3, Database, Globe, Mail, Ticket, Coins } from 'lucide-react';
 
 interface StatsSectionProps {
   stats: Record<string, number>;
+  categoryStats: { scratch: number; lottery: number };
   totalRecords: number;
   t: any;
 }
 
-export const StatsSection: React.FC<StatsSectionProps> = ({ stats, totalRecords, t }) => {
+export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats, totalRecords, t }) => {
   const [animate, setAnimate] = useState(false);
 
   // Trigger animation on mount
@@ -27,6 +28,12 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, totalRecords,
     { key: 'África', label: 'Afr', color: 'bg-green-500' },
     { key: 'Oceania', label: 'Oce', color: 'bg-purple-500' },
   ];
+
+  // Calculate percentages for the category bar
+  const totalCats = categoryStats.scratch + categoryStats.lottery;
+  // If no records, show neutral 50/50 split
+  const scratchPct = totalCats > 0 ? Math.round((categoryStats.scratch / totalCats) * 100) : 50;
+  const lotteryPct = totalCats > 0 ? 100 - scratchPct : 50;
 
   return (
     <div className="w-full bg-gray-900/50 border-t border-gray-800 py-12 mt-12 pb-20">
@@ -78,20 +85,40 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, totalRecords,
           </div>
 
           {/* Right: Total Card (1/3 width) */}
-          <div className="bg-gradient-to-br from-brand-900 to-gray-900 border border-brand-800 rounded-2xl p-8 flex flex-col justify-center items-center shadow-2xl relative overflow-hidden group">
+          <div className="bg-gradient-to-br from-brand-900 to-gray-900 border border-brand-800 rounded-2xl p-8 flex flex-col justify-between items-center shadow-2xl relative overflow-hidden group">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
             <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-brand-500/20 blur-[60px] rounded-full"></div>
             
-            <Database className="w-12 h-12 text-brand-400 mb-4 group-hover:scale-110 transition-transform duration-500" />
-            
-            <h3 className="text-gray-300 font-medium uppercase tracking-widest text-sm mb-2 text-center">{t.totalRecords}</h3>
-            
-            <div className="text-6xl sm:text-7xl font-black text-white font-mono tracking-tighter relative z-10 drop-shadow-xl">
-              {totalRecords}
+            <div className="flex flex-col items-center relative z-10">
+                <Database className="w-10 h-10 text-brand-400 mb-2 group-hover:scale-110 transition-transform duration-500" />
+                <h3 className="text-gray-300 font-medium uppercase tracking-widest text-xs mb-1 text-center">{t.totalRecords}</h3>
+                <div className="text-5xl sm:text-6xl font-black text-white font-mono tracking-tighter drop-shadow-xl mb-4">
+                  {totalRecords}
+                </div>
+            </div>
+
+            {/* Category Breakdown */}
+            <div className="w-full bg-gray-900/50 rounded-xl p-3 border border-gray-700/50 backdrop-blur-sm relative z-10">
+                <div className="flex items-center justify-between text-xs font-bold text-gray-400 mb-2 uppercase">
+                   <span className="flex items-center gap-1 text-brand-400"><Coins className="w-3 h-3" /> Rasp.</span>
+                   <span className="flex items-center gap-1 text-purple-400">Lotaria <Ticket className="w-3 h-3" /></span>
+                </div>
+                
+                {/* Progress Bar */}
+                <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden flex mb-2">
+                    <div className="h-full bg-brand-500 transition-all duration-1000" style={{ width: `${scratchPct}%` }}></div>
+                    <div className="h-full bg-purple-500 transition-all duration-1000" style={{ width: `${lotteryPct}%` }}></div>
+                </div>
+
+                <div className="flex items-center justify-between font-mono text-sm text-white">
+                   <span>{categoryStats.scratch}</span>
+                   <span className="text-gray-500 text-[10px]">vs</span>
+                   <span>{categoryStats.lottery}</span>
+                </div>
             </div>
             
-            <div className="mt-4 px-4 py-1 bg-brand-500/20 border border-brand-500/30 rounded-full text-brand-300 text-xs font-bold animate-pulse-slow flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-brand-500 animate-ping"></span>
+            <div className="mt-4 px-4 py-1 bg-brand-500/20 border border-brand-500/30 rounded-full text-brand-300 text-[10px] font-bold animate-pulse-slow flex items-center gap-2 z-10">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-ping"></span>
               {t.liveUpdate}
             </div>
           </div>
@@ -108,7 +135,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, totalRecords,
               Jorge Mesquita & Fabio Pagni <span className="text-[10px] text-gray-500 align-top -mt-2">®</span>
             </h4>
             
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-2">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-2 items-center">
               <a 
                 href="mailto:mesquita757@hotmail.com" 
                 className="flex items-center gap-2 text-brand-500 hover:text-brand-400 text-xs transition-colors bg-brand-900/10 px-4 py-1.5 rounded-full border border-brand-500/20 hover:border-brand-500/50"

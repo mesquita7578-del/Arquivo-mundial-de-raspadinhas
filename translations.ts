@@ -102,7 +102,7 @@ export const translations = {
       back: "Verso",
       aiTitle: "IA Ativa",
       aiDesc: "Identificando dados automaticamente...",
-      isSeries: "É Série (SET)?",
+      isSeries: "È Serie (SET)?",
       isRarity: "É Raridade?", 
       isPromotional: "É Promocional?", // New
       seriesDetailsPlaceholder: "Nºs (ex: 1-5)",
@@ -156,7 +156,7 @@ export const translations = {
       emission: "Emissione",
       printer: "Stampa",
       values: "Nota",
-      rarityInfo: "Informazione Storica",
+      rarityInfo: "Informação Histórica",
       promoInfo: "Item Promo", // New
       lines: "Linee", 
       linesBlue: "Blu",
@@ -165,7 +165,7 @@ export const translations = {
       linesNone: "No",
       close: "Chiudi",
       category: "Tipo",
-      collector: "Collezionista",
+      collector: "Colecionador",
       seriesDetailsPlaceholder: "N. (es: 1-5)"
     },
     login: {

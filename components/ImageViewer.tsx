@@ -476,12 +476,14 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
             <div className="space-y-4">
               {/* Grid of properties */}
               <div className="grid grid-cols-2 gap-4">
+                
+                {/* Collector Field (Added/Moved here for prominence) */}
                 <div className="bg-gray-800/40 p-3 rounded-lg border border-gray-800">
                   <span className="flex items-center gap-2 text-xs uppercase text-gray-500 mb-1">
                     <User className="w-3 h-3" /> {t.collector}
                   </span>
                   {isEditing ? (
-                    <div className="relative group">
+                    <div className="relative group animate-fade-in">
                       <div className="absolute left-2.5 top-1/2 -translate-y-1/2 bg-brand-500/10 p-1 rounded-md">
                          <User className="w-3.5 h-3.5 text-brand-500" />
                       </div>
@@ -613,7 +615,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                   )}
                 </div>
 
-                {/* Lines Field (New) */}
+                {/* Lines Field */}
                 <div className="bg-gray-800/40 p-3 rounded-lg border border-gray-800 col-span-2 sm:col-span-1">
                    <span className="flex items-center gap-2 text-xs uppercase text-gray-500 mb-1">
                       <AlignJustify className="w-3 h-3" /> {t.lines}

@@ -20,7 +20,11 @@ const ADMIN_PASSWORD = "123456";
 function App() {
   const [displayedImages, setDisplayedImages] = useState<ScratchcardData[]>([]);
   const [newArrivals, setNewArrivals] = useState<ScratchcardData[]>([]);
-  const [totalStats, setTotalStats] = useState({ total: 0, stats: {} as Record<string, number> });
+  const [totalStats, setTotalStats] = useState({ 
+    total: 0, 
+    stats: {} as Record<string, number>,
+    categoryStats: { scratch: 0, lottery: 0 } 
+  });
   
   const [mapData, setMapData] = useState<ScratchcardData[]>([]);
   
@@ -91,21 +95,25 @@ function App() {
       try {
         let results = await storageService.search(searchTerm, activeContinent);
         
+        // 1. Filter by Category Global (Syncs Map and Grid)
+        if (activeCategory !== 'all') {
+           results = results.filter(img => (img.category || 'raspadinha') === activeCategory);
+        }
+
+        // 2. Filter by Rarity
         if (showRarities) {
           results = results.filter(img => img.isRarity === true);
         }
         
+        // 3. Filter by Promotional
         if (showPromotional) {
           results = results.filter(img => img.isPromotional === true);
         }
 
         setDisplayedImages(results);
         
-        if (showRarities || showPromotional) {
-           setMapData(results);
-        } else {
-           setMapData(results);
-        }
+        // MapData always reflects the current filtered view
+        setMapData(results);
 
       } catch (err) {
         console.error(err);
@@ -119,7 +127,7 @@ function App() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, activeContinent, showRarities, showPromotional, isLoadingDB]);
+  }, [searchTerm, activeContinent, showRarities, showPromotional, activeCategory, isLoadingDB]); // Added activeCategory to dependencies
 
   // Handle toggling mutually exclusive filters (Optional behavior, but better UX)
   const toggleRarities = () => {
@@ -150,17 +158,33 @@ function App() {
     try {
       await storageService.save(newImage);
       setDisplayedImages(prev => {
+         // Apply current view filters to the new image immediately
+         if (activeCategory !== 'all' && newImage.category !== activeCategory) return prev;
          if (showRarities && !newImage.isRarity) return prev;
          if (showPromotional && !newImage.isPromotional) return prev;
          return [newImage, ...prev];
       });
       
       setNewArrivals(prev => [newImage, ...prev].slice(0, 10));
-      setMapData(prev => [...prev, newImage]);
-      setTotalStats(prev => ({
-         total: prev.total + 1,
-         stats: { ...prev.stats, [newImage.continent]: (prev.stats[newImage.continent] || 0) + 1 }
-      }));
+      setMapData(prev => {
+          if (activeCategory !== 'all' && newImage.category !== activeCategory) return prev;
+          return [...prev, newImage];
+      });
+      
+      // Update local stats immediately
+      setTotalStats(prev => {
+         const newStats = { ...prev.stats, [newImage.continent]: (prev.stats[newImage.continent] || 0) + 1 };
+         const newCatStats = { ...prev.categoryStats };
+         if (newImage.category === 'lotaria') newCatStats.lottery++;
+         else newCatStats.scratch++;
+         
+         return {
+           total: prev.total + 1,
+           stats: newStats,
+           categoryStats: newCatStats
+         };
+      });
+
       setDroppedFile(null);
       setSelectedImage(newImage);
     } catch (error) {
@@ -171,10 +195,17 @@ function App() {
   const handleUpdateImage = async (updatedImage: ScratchcardData) => {
     try {
       await storageService.save(updatedImage);
+      // We trigger a re-search to ensure filters are respected if the user changed the category/rarity of the item
+      const results = await storageService.search(searchTerm, activeContinent);
+      // Apply filters manually or just trigger the effect (simplest is manually updating state here or rely on the effect if we change a dep, but we aren't changing deps here)
+      // For simplicity, update arrays locally:
       setDisplayedImages(prev => prev.map(img => img.id === updatedImage.id ? updatedImage : img));
       setNewArrivals(prev => prev.map(img => img.id === updatedImage.id ? updatedImage : img));
       setMapData(prev => prev.map(img => img.id === updatedImage.id ? updatedImage : img));
+      
       setSelectedImage(updatedImage);
+      const freshStats = await storageService.getStats();
+      setTotalStats(freshStats);
     } catch (error) {
       console.error("Erro ao atualizar:", error);
     }
@@ -187,7 +218,9 @@ function App() {
       setNewArrivals(prev => prev.filter(img => img.id !== id));
       setMapData(prev => prev.filter(img => img.id !== id));
       setSelectedImage(null);
-      setTotalStats(prev => ({ ...prev, total: Math.max(0, prev.total - 1) }));
+      
+      const freshStats = await storageService.getStats();
+      setTotalStats(freshStats);
     } catch (error) {
       console.error("Erro ao apagar:", error);
     }
@@ -499,7 +532,7 @@ function App() {
             </div>
           </section>
 
-          {!showRarities && !showPromotional && <StatsSection stats={totalStats.stats} totalRecords={totalStats.total} t={t.stats} />}
+          {!showRarities && !showPromotional && <StatsSection stats={totalStats.stats} categoryStats={totalStats.categoryStats} totalRecords={totalStats.total} t={t.stats} />}
 
         </div>
       </main>
