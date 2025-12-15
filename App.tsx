@@ -7,9 +7,10 @@ import { LoginModal } from './components/LoginModal';
 import { StatsSection } from './components/StatsSection';
 import { WorldMap } from './components/WorldMap';
 import { HistoryModal } from './components/HistoryModal'; 
+import { WebsitesModal } from './components/WebsitesModal';
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2 } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
@@ -32,12 +33,14 @@ function App() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); 
+  const [isWebsitesModalOpen, setIsWebsitesModalOpen] = useState(false); // New Modal
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
   
   // Filter States (Lifted)
   const [showRarities, setShowRarities] = useState(false);
+  const [showPromotional, setShowPromotional] = useState(false); // New Filter
   const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
   
   const [isDragging, setIsDragging] = useState(false);
@@ -91,10 +94,14 @@ function App() {
         if (showRarities) {
           results = results.filter(img => img.isRarity === true);
         }
+        
+        if (showPromotional) {
+          results = results.filter(img => img.isPromotional === true);
+        }
 
         setDisplayedImages(results);
         
-        if (showRarities) {
+        if (showRarities || showPromotional) {
            setMapData(results);
         } else {
            setMapData(results);
@@ -112,7 +119,18 @@ function App() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, activeContinent, showRarities, isLoadingDB]);
+  }, [searchTerm, activeContinent, showRarities, showPromotional, isLoadingDB]);
+
+  // Handle toggling mutually exclusive filters (Optional behavior, but better UX)
+  const toggleRarities = () => {
+    if (!showRarities) setShowPromotional(false);
+    setShowRarities(!showRarities);
+  };
+
+  const togglePromotional = () => {
+    if (!showPromotional) setShowRarities(false);
+    setShowPromotional(!showPromotional);
+  };
 
   const handleCountrySelectFromMap = (countryName: string) => {
     setSearchTerm(countryName);
@@ -133,6 +151,7 @@ function App() {
       await storageService.save(newImage);
       setDisplayedImages(prev => {
          if (showRarities && !newImage.isRarity) return prev;
+         if (showPromotional && !newImage.isPromotional) return prev;
          return [newImage, ...prev];
       });
       
@@ -279,7 +298,7 @@ function App() {
              
              {/* Rarities Toggle */}
              <button
-              onClick={() => setShowRarities(!showRarities)}
+              onClick={toggleRarities}
               className={`flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${
                  showRarities 
                    ? "bg-gold-500 text-white border-gold-400 shadow-lg shadow-gold-500/20" 
@@ -288,6 +307,28 @@ function App() {
             >
               <Gem className="w-3.5 h-3.5" />
               {t.header.rarities}
+            </button>
+
+            {/* Promotional Toggle (New) */}
+            <button
+              onClick={togglePromotional}
+              className={`flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${
+                 showPromotional 
+                   ? "bg-pink-500 text-white border-pink-400 shadow-lg shadow-pink-500/20" 
+                   : "bg-gray-800 text-gray-400 border-gray-700 hover:border-pink-500/50 hover:text-pink-400"
+              }`}
+            >
+              <Gift className="w-3.5 h-3.5" />
+              {t.header.promos}
+            </button>
+
+            {/* Websites Modal Trigger (New) */}
+            <button
+              onClick={() => setIsWebsitesModalOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap bg-gray-800 text-gray-400 border-gray-700 hover:border-blue-500/50 hover:text-blue-400"
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              {t.header.websites}
             </button>
 
             <div className="w-px h-6 bg-gray-700 mx-1 shrink-0"></div>
@@ -332,8 +373,8 @@ function App() {
 
         <div className="max-w-7xl mx-auto py-6 md:py-8 relative z-10 space-y-8 md:space-y-12">
 
-          {/* New Arrivals (Hidden in Rarities mode) */}
-          {!showRarities && (
+          {/* New Arrivals (Hidden in Rarities or Promos mode) */}
+          {!showRarities && !showPromotional && (
             <section className="px-4 md:px-6">
               <div className="flex items-center gap-2 mb-4 text-brand-400">
                 <Clock className="w-5 h-5" />
@@ -357,9 +398,21 @@ function App() {
           <section id="image-grid-section" className="px-4 md:px-6 pb-20">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2 text-brand-400">
-                {showRarities ? <Gem className="w-5 h-5 text-gold-500" /> : <Globe className="w-5 h-5" />}
+                {showRarities ? (
+                   <Gem className="w-5 h-5 text-gold-500" />
+                ) : showPromotional ? (
+                   <Gift className="w-5 h-5 text-pink-500" />
+                ) : (
+                   <Globe className="w-5 h-5" />
+                )}
+                
                 <h2 className="text-lg md:text-xl font-bold text-white uppercase tracking-wider">
-                   {showRarities ? t.header.rarities : t.home.explore}
+                   {showRarities 
+                     ? t.header.rarities 
+                     : showPromotional 
+                       ? t.header.promos
+                       : t.home.explore
+                   }
                 </h2>
               </div>
             </div>
@@ -422,7 +475,7 @@ function App() {
               </div>
             )}
 
-            <div className={`bg-gray-900/30 border rounded-2xl overflow-hidden min-h-[500px] ${showRarities ? 'border-gold-500/30 bg-gold-900/5' : 'border-gray-800/50'}`}>
+            <div className={`bg-gray-900/30 border rounded-2xl overflow-hidden min-h-[500px] ${showRarities ? 'border-gold-500/30 bg-gold-900/5' : showPromotional ? 'border-pink-500/30 bg-pink-900/5' : 'border-gray-800/50'}`}>
               {viewMode === 'map' ? (
                 <div className="p-4 h-[600px]">
                    <WorldMap 
@@ -446,7 +499,7 @@ function App() {
             </div>
           </section>
 
-          {!showRarities && <StatsSection stats={totalStats.stats} totalRecords={totalStats.total} t={t.stats} />}
+          {!showRarities && !showPromotional && <StatsSection stats={totalStats.stats} totalRecords={totalStats.total} t={t.stats} />}
 
         </div>
       </main>
@@ -477,6 +530,14 @@ function App() {
           onClose={() => setIsHistoryModalOpen(false)}
           t={t.history}
           isAdmin={isAdmin}
+        />
+      )}
+
+      {isWebsitesModalOpen && (
+        <WebsitesModal 
+          onClose={() => setIsWebsitesModalOpen(false)}
+          isAdmin={isAdmin}
+          t={t.websites}
         />
       )}
 

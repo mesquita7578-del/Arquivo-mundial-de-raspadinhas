@@ -17,7 +17,21 @@ export const translations = {
       loginRequired: "Faça login para adicionar",
       backup: "Dados",
       backupTitle: "Baixar cópia de segurança (JSON)",
-      rarities: "Raridades" // New
+      rarities: "Raridades",
+      promos: "Promocionais", // New
+      websites: "Sites Oficiais" // New
+    },
+    websites: {
+      title: "Diretório Oficial",
+      subtitle: "Links para as Entidades de Jogos",
+      add: "Adicionar Site",
+      namePlaceholder: "Nome (ex: SCML)",
+      urlPlaceholder: "URL (ex: https://...)",
+      countryPlaceholder: "País",
+      visit: "Visitar",
+      delete: "Remover",
+      noSites: "Nenhum site registado ainda.",
+      save: "Guardar Link"
     },
     history: {
       title: "Biblioteca do Colecionador",
@@ -39,7 +53,7 @@ export const translations = {
       filters: "Filtros",
       results: "items",
       country: "País",
-      region: "Região", // New
+      region: "Região",
       state: "Estado",
       year: "Ano",
       size: "Tamanho",
@@ -87,11 +101,12 @@ export const translations = {
       aiTitle: "IA Ativa",
       aiDesc: "Identificando dados automaticamente...",
       isSeries: "É Série (SET)?",
-      isRarity: "É Raridade?", // New
+      isRarity: "É Raridade?", 
+      isPromotional: "É Promocional?", // New
       seriesDetailsPlaceholder: "Nºs (ex: 1-5)",
       gameName: "Nome",
       country: "País",
-      region: "Região / Cantão", // New
+      region: "Região / Cantão",
       continent: "Continente",
       state: "Estado",
       customId: "ID",
@@ -102,7 +117,7 @@ export const translations = {
       emission: "Tiragem",
       printer: "Gráfica",
       values: "Nota Curta", 
-      rarityInfo: "Informação Histórica (Cole aqui)", // New text for textarea
+      rarityInfo: "Informação Histórica (Cole aqui)",
       lines: "Linhas", 
       linesPlaceholder: "Selecione...",
       linesBlue: "Azuis",
@@ -139,7 +154,8 @@ export const translations = {
       emission: "Tiragem",
       printer: "Gráfica",
       values: "Nota",
-      rarityInfo: "Informação Histórica", // New
+      rarityInfo: "Informação Histórica",
+      promoInfo: "Item Promocional", // New
       lines: "Linhas", 
       linesBlue: "Azuis",
       linesRed: "Vermelhas",
@@ -185,7 +201,21 @@ export const translations = {
       loginRequired: "Accedi per aggiungere",
       backup: "Dati",
       backupTitle: "Backup JSON",
-      rarities: "Rarità" // New
+      rarities: "Rarità",
+      promos: "Promo", // New
+      websites: "Siti Ufficiali" // New
+    },
+    websites: {
+      title: "Siti Ufficiali",
+      subtitle: "Link agli Enti Ufficiali",
+      add: "Aggiungi Sito",
+      namePlaceholder: "Nome (es: Lottomatica)",
+      urlPlaceholder: "URL",
+      countryPlaceholder: "Paese",
+      visit: "Visita",
+      delete: "Rimuovi",
+      noSites: "Nessun sito registrato.",
+      save: "Salva Link"
     },
     history: {
       title: "Biblioteca",
@@ -207,7 +237,7 @@ export const translations = {
       filters: "Filtri",
       results: "risultati",
       country: "Paese",
-      region: "Regione", // New
+      region: "Regione",
       state: "Stato",
       year: "Anno",
       size: "Dim.",
@@ -255,11 +285,12 @@ export const translations = {
       aiTitle: "IA Attiva",
       aiDesc: "Analisi in corso...",
       isSeries: "È Serie?",
-      isRarity: "È Rarità?", // New
+      isRarity: "È Rarità?", 
+      isPromotional: "È Promo?", // New
       seriesDetailsPlaceholder: "N. (es: 1-5)",
       gameName: "Nome",
       country: "Paese",
-      region: "Regione / Cantone", // New
+      region: "Regione / Cantone",
       continent: "Continente",
       state: "Stato",
       customId: "ID",
@@ -270,7 +301,7 @@ export const translations = {
       emission: "Emissione",
       printer: "Stampa",
       values: "Nota", 
-      rarityInfo: "Informazione Storica (Incolla qui)", // New
+      rarityInfo: "Informazione Storica (Incolla qui)",
       lines: "Linee", 
       linesPlaceholder: "Seleziona...",
       linesBlue: "Blu",
@@ -293,7 +324,7 @@ export const translations = {
       cancel: "Annulla",
       save: "Salva",
       share: "Condividi",
-      copied: "Copiato!",
+      copied: "Copiado!",
       edit: "Modifica",
       delete: "Elimina",
       deleteConfirm: "Sicuro?",
@@ -307,7 +338,8 @@ export const translations = {
       emission: "Emissione",
       printer: "Stampa",
       values: "Nota",
-      rarityInfo: "Informazione Storica", // New
+      rarityInfo: "Informazione Storica",
+      promoInfo: "Item Promo", // New
       lines: "Linee", 
       linesBlue: "Blu",
       linesRed: "Rosse",

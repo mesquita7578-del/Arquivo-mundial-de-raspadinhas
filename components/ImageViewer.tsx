@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify, Gem } from 'lucide-react';
+import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify, Gem, Gift } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
 
 interface ImageViewerProps {
@@ -221,6 +221,11 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                         <Gem className="w-3 h-3" />
                       </span>
                    )}
+                   {image.isPromotional && (
+                      <span className="text-pink-400 bg-pink-900/30 border border-pink-500/50 px-2 py-0.5 rounded text-xs flex items-center gap-1 font-bold" title="Promocional">
+                        <Gift className="w-3 h-3" />
+                      </span>
+                   )}
 
                    <div 
                      className="text-gray-400 bg-gray-800 border border-gray-700 px-2 py-0.5 rounded text-xs flex items-center gap-1"
@@ -281,6 +286,19 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                        </label>
                    </div>
 
+                   {/* Promotional Toggle */}
+                   <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-700">
+                       <div 
+                         className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer ${formData.isPromotional ? 'bg-pink-500 border-pink-500' : 'border-gray-500'}`}
+                         onClick={() => handleChange('isPromotional', !formData.isPromotional)}
+                       >
+                         {formData.isPromotional && <Gift className="w-3 h-3 text-white" />}
+                       </div>
+                       <label className={`text-xs cursor-pointer font-bold ${formData.isPromotional ? 'text-pink-400' : 'text-gray-400'}`} onClick={() => handleChange('isPromotional', !formData.isPromotional)}>
+                          {formData.isPromotional ? 'Item Promocional!' : 'Marcar como Promo'}
+                       </label>
+                   </div>
+
                    <div className="flex items-center justify-between">
                      <div className="flex items-center gap-2">
                        <div 
@@ -319,7 +337,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
               </div>
             ) : (
               <>
-                <h2 className={`text-3xl font-bold mb-1 leading-tight ${image.isRarity ? 'text-gold-400' : 'text-white'}`}>{image.gameName}</h2>
+                <h2 className={`text-3xl font-bold mb-1 leading-tight ${image.isRarity ? 'text-gold-400' : image.isPromotional ? 'text-pink-400' : 'text-white'}`}>{image.gameName}</h2>
                 <div className="flex items-center gap-2 text-brand-400 text-sm mb-4">
                   <Globe className="w-4 h-4" />
                   <span>
@@ -501,10 +519,10 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
               </div>
 
               {/* Full width properties */}
-              <div className={`p-4 rounded-lg border mt-4 ${image.isRarity ? 'bg-gold-900/10 border-gold-500/30' : 'bg-gray-800/40 border-gray-800'}`}>
-                <span className={`flex items-center gap-2 text-xs uppercase mb-2 ${image.isRarity ? 'text-gold-500 font-bold' : 'text-gray-500'}`}>
-                  {image.isRarity ? <Gem className="w-3 h-3" /> : <Info className="w-3 h-3" />}
-                  {image.isRarity ? t.rarityInfo : t.values}
+              <div className={`p-4 rounded-lg border mt-4 ${image.isRarity ? 'bg-gold-900/10 border-gold-500/30' : image.isPromotional ? 'bg-pink-900/10 border-pink-500/30' : 'bg-gray-800/40 border-gray-800'}`}>
+                <span className={`flex items-center gap-2 text-xs uppercase mb-2 ${image.isRarity ? 'text-gold-500 font-bold' : image.isPromotional ? 'text-pink-400 font-bold' : 'text-gray-500'}`}>
+                  {image.isRarity ? <Gem className="w-3 h-3" /> : image.isPromotional ? <Gift className="w-3 h-3" /> : <Info className="w-3 h-3" />}
+                  {image.isRarity ? t.rarityInfo : image.isPromotional ? t.promoInfo : t.values}
                 </span>
                 {isEditing ? (
                   <textarea 

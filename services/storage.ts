@@ -1,9 +1,10 @@
-import { ScratchcardData, DocumentItem } from "../types";
+import { ScratchcardData, DocumentItem, WebsiteLink } from "../types";
 
 const DB_NAME = 'raspadinhas-archive-db';
-const DB_VERSION = 3; // Incremented for Documents Store
+const DB_VERSION = 4; // Incremented for Websites Store
 const STORE_ITEMS = 'items';
 const STORE_DOCS = 'documents';
+const STORE_SITES = 'websites';
 
 class StorageService {
   private db: IDBDatabase | null = null;
@@ -41,6 +42,11 @@ class StorageService {
         if (!db.objectStoreNames.contains(STORE_DOCS)) {
           const docStore = db.createObjectStore(STORE_DOCS, { keyPath: 'id' });
           docStore.createIndex('createdAt', 'createdAt', { unique: false });
+        }
+
+        // Store for Official Websites
+        if (!db.objectStoreNames.contains(STORE_SITES)) {
+          db.createObjectStore(STORE_SITES, { keyPath: 'id' });
         }
       };
     });
@@ -287,6 +293,53 @@ class StorageService {
 
       request.onsuccess = () => resolve();
       request.onerror = () => reject("Erro ao deletar documento");
+    });
+  }
+
+  // --- WEBSITE LINKS METHODS ---
+
+  async getWebsites(): Promise<WebsiteLink[]> {
+    if (!this.db) await this.init();
+
+    return new Promise((resolve, reject) => {
+      if (!this.db) return reject("Database not initialized");
+      
+      const transaction = this.db.transaction([STORE_SITES], 'readonly');
+      const store = transaction.objectStore(STORE_SITES);
+      const request = store.getAll();
+
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject("Erro ao buscar sites");
+    });
+  }
+
+  async saveWebsite(site: WebsiteLink): Promise<void> {
+    if (!this.db) await this.init();
+
+    return new Promise((resolve, reject) => {
+      if (!this.db) return reject("Database not initialized");
+
+      const transaction = this.db.transaction([STORE_SITES], 'readwrite');
+      const store = transaction.objectStore(STORE_SITES);
+      const request = store.put(site);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject("Erro ao salvar site");
+    });
+  }
+
+  async deleteWebsite(id: string): Promise<void> {
+    if (!this.db) await this.init();
+
+    return new Promise((resolve, reject) => {
+      if (!this.db) return reject("Database not initialized");
+
+      const transaction = this.db.transaction([STORE_SITES], 'readwrite');
+      const store = transaction.objectStore(STORE_SITES);
+      const request = store.delete(id);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject("Erro ao deletar site");
     });
   }
 }

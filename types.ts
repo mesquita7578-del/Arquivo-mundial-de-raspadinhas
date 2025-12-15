@@ -31,7 +31,8 @@ export interface ScratchcardData {
   seriesDetails?: string; // Detalhes manuais do SET
   lines?: LineType; // Tipo de Linhas
   
-  isRarity?: boolean; // Novo campo: É uma raridade?
+  isRarity?: boolean; // É uma raridade?
+  isPromotional?: boolean; // Novo: É uma raspadinha promocional?
   
   category: Category; // Categoria
 
@@ -46,6 +47,13 @@ export interface DocumentItem {
   fileUrl: string; // Base64 PDF data
   fileName: string;
   createdAt: number;
+}
+
+export interface WebsiteLink {
+  id: string;
+  name: string; // ex: Santa Casa (SCML)
+  url: string; // ex: https://jogossantacasa.pt
+  country: string; // ex: Portugal
 }
 
 export interface AnalysisResult {

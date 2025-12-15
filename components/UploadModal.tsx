@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify, Gem, MapPin } from 'lucide-react';
+import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify, Gem, MapPin, Gift } from 'lucide-react';
 import { analyzeImage, searchScratchcardInfo } from '../services/geminiService';
 import { ScratchcardData, ScratchcardState, Continent, Category, LineType } from '../types';
 
@@ -175,6 +175,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       seriesDetails: '',
       lines: 'none', 
       isRarity: false, // Default
+      isPromotional: false, // Default
       category: analysis.category || 'raspadinha',
       createdAt: Date.now(),
       aiGenerated: true
@@ -422,7 +423,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                   </div>
                 </div>
 
-                 {/* Checkbox Series & Rarity */}
+                 {/* Checkbox Series, Rarity & Promotional */}
                  <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700 flex flex-col gap-3">
                    
                    {/* Series Checkbox */}
@@ -467,6 +468,22 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                        onClick={() => updateField('isRarity', !formData?.isRarity)}
                      >
                        {t.isRarity}
+                     </label>
+                   </div>
+
+                   {/* Promotional Checkbox */}
+                   <div className="flex items-center gap-3">
+                     <div 
+                       className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-colors ${formData?.isPromotional ? 'bg-pink-500 border-pink-500' : 'border-gray-500 hover:border-gray-400'}`}
+                       onClick={() => updateField('isPromotional', !formData?.isPromotional)}
+                     >
+                       {formData?.isPromotional && <Gift className="w-3.5 h-3.5 text-white" />}
+                     </div>
+                     <label 
+                       className={`text-sm cursor-pointer select-none font-bold ${formData?.isPromotional ? 'text-pink-400' : 'text-gray-300'}`}
+                       onClick={() => updateField('isPromotional', !formData?.isPromotional)}
+                     >
+                       {t.isPromotional}
                      </label>
                    </div>
                  </div>
