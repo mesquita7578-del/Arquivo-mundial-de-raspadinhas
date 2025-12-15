@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Globe, Plus, Trash2, ExternalLink, Building2, Link } from 'lucide-react';
+import { X, Globe, Plus, Trash2, ExternalLink, Building2, Link, Tag } from 'lucide-react';
 import { WebsiteLink } from '../types';
 import { storageService } from '../services/storage';
 
@@ -43,7 +43,8 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
       name: newSite.name,
       url: finalUrl,
       logoUrl: newSite.logoUrl,
-      country: newSite.country
+      country: newSite.country,
+      category: newSite.category // Save the new category field
     };
 
     try {
@@ -146,19 +147,30 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
                          onChange={e => setNewSite({...newSite, url: e.target.value})}
                        />
                      </div>
-                     <div className="md:col-span-4 flex gap-4 items-center">
-                        <div className="flex-1">
-                           <label className="block text-xs uppercase text-gray-500 font-bold mb-1">Logo URL (Opcional)</label>
-                           <input 
-                             className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none text-xs"
-                             placeholder="Ex: https://site.com/logo.png"
-                             value={newSite.logoUrl || ''}
-                             onChange={e => setNewSite({...newSite, logoUrl: e.target.value})}
-                           />
-                           <p className="text-[10px] text-gray-500 mt-1">Se vazio, o sistema tenta buscar automaticamente.</p>
-                        </div>
-                        
-                        {/* Live Preview of Logo */}
+                     
+                     {/* Category Input */}
+                     <div className="md:col-span-2">
+                        <label className="block text-xs uppercase text-gray-500 font-bold mb-1">Tipo / Categoria (Opcional)</label>
+                        <input 
+                          className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none"
+                          placeholder={t.categoryPlaceholder}
+                          value={newSite.category || ''}
+                          onChange={e => setNewSite({...newSite, category: e.target.value})}
+                        />
+                     </div>
+
+                     <div className="md:col-span-2">
+                        <label className="block text-xs uppercase text-gray-500 font-bold mb-1">Logo URL (Opcional)</label>
+                        <input 
+                          className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none text-xs"
+                          placeholder="Ex: https://site.com/logo.png"
+                          value={newSite.logoUrl || ''}
+                          onChange={e => setNewSite({...newSite, logoUrl: e.target.value})}
+                        />
+                     </div>
+                     
+                     {/* Live Preview of Logo */}
+                     <div className="md:col-span-4 flex items-center gap-4 mt-2">
                         {(newSite.url || newSite.logoUrl) && (
                            <div className="flex flex-col items-center">
                               <span className="text-[10px] text-gray-500 mb-1 uppercase font-bold">Preview</span>
@@ -173,7 +185,7 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
                            </div>
                         )}
                         
-                        <div className="flex-1 flex justify-end items-end h-full mt-6">
+                        <div className="flex-1 flex justify-end items-end h-full">
                            <button onClick={handleAddSite} className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded font-bold shadow-lg w-full md:w-auto">
                              {t.save}
                            </button>
@@ -212,9 +224,18 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
                       </div>
 
                       <div className="flex-1 min-w-0">
-                         <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider bg-blue-900/20 px-2 py-0.5 rounded mb-1 inline-block">
-                           {site.country}
-                         </span>
+                         <div className="flex flex-wrap gap-2 mb-1">
+                            <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider bg-blue-900/20 px-2 py-0.5 rounded inline-block">
+                              {site.country}
+                            </span>
+                            {/* Category Badge */}
+                            {site.category && (
+                              <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider bg-purple-900/20 px-2 py-0.5 rounded inline-block flex items-center gap-1">
+                                <Tag className="w-3 h-3" />
+                                {site.category}
+                              </span>
+                            )}
+                         </div>
                          <h3 className="text-lg font-bold text-white truncate leading-tight" title={site.name}>
                            {site.name}
                          </h3>

@@ -53,8 +53,9 @@ export interface WebsiteLink {
   id: string;
   name: string; // ex: Santa Casa (SCML)
   url: string; // ex: https://jogossantacasa.pt
-  logoUrl?: string; // Novo: URL manual do logo (opcional)
+  logoUrl?: string; // URL manual do logo (opcional)
   country: string; // ex: Portugal
+  category?: string; // Novo: Tipo de casa (ex: Union Lottery, Olympic, etc)
 }
 
 export interface AnalysisResult {
