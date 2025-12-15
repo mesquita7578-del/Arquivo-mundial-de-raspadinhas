@@ -8,15 +8,17 @@ import { StatsSection } from './components/StatsSection';
 import { WorldMap } from './components/WorldMap';
 import { HistoryModal } from './components/HistoryModal'; 
 import { WebsitesModal } from './components/WebsitesModal';
-import { AboutPage } from './components/AboutPage'; // New Component
+import { AboutPage } from './components/AboutPage'; 
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
 const AUTHORIZED_ADMINS = ["JORGE MESQUITA", "FABIO PAGNI", "CHLOE"];
 const ADMIN_PASSWORD = "123456";
+
+type PageType = 'home' | 'stats' | 'about' | 'pt_scratch' | 'pt_lottery';
 
 function App() {
   const [displayedImages, setDisplayedImages] = useState<ScratchcardData[]>([]);
@@ -28,12 +30,13 @@ function App() {
   });
   
   const [mapData, setMapData] = useState<ScratchcardData[]>([]);
+  const [allImagesCache, setAllImagesCache] = useState<ScratchcardData[]>([]); // Cache all for subpages
   
   const [isLoadingDB, setIsLoadingDB] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Routing State
-  const [currentPage, setCurrentPage] = useState<'home' | 'stats' | 'about'>('home');
+  const [currentPage, setCurrentPage] = useState<PageType>('home');
 
   const [searchTerm, setSearchTerm] = useState('');
   const [activeContinent, setActiveContinent] = useState<Continent | 'Mundo'>('Mundo');
@@ -41,14 +44,14 @@ function App() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); 
-  const [isWebsitesModalOpen, setIsWebsitesModalOpen] = useState(false); // New Modal
+  const [isWebsitesModalOpen, setIsWebsitesModalOpen] = useState(false); 
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
   
   // Filter States (Lifted)
   const [showRarities, setShowRarities] = useState(false);
-  const [showPromotional, setShowPromotional] = useState(false); // New Filter
+  const [showPromotional, setShowPromotional] = useState(false); 
   const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
   
   const [isDragging, setIsDragging] = useState(false);
@@ -75,11 +78,13 @@ function App() {
       const recent10 = await storageService.getRecent(10);
       setNewArrivals(recent10);
 
+      // Cache all images for sub-page filtering
+      const allItems = await storageService.getAll();
+      setAllImagesCache(allItems);
+      setMapData(allItems);
+
       const sortedAll = await storageService.search('', 'Mundo');
       setDisplayedImages(sortedAll);
-
-      const allItems = await storageService.getAll();
-      setMapData(allItems);
 
     } catch (error) {
       console.error("Falha ao carregar:", error);
@@ -95,6 +100,9 @@ function App() {
 
   useEffect(() => {
     const performSearch = async () => {
+      // Only perform generic search if on Home
+      if (currentPage !== 'home') return;
+
       setIsLoadingMore(true);
       try {
         let results = await storageService.search(searchTerm, activeContinent);
@@ -115,9 +123,7 @@ function App() {
         }
 
         setDisplayedImages(results);
-        
-        // MapData always reflects the current filtered view
-        setMapData(results);
+        setMapData(results); // Map follows grid on home
 
       } catch (err) {
         console.error(err);
@@ -131,9 +137,29 @@ function App() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, activeContinent, showRarities, showPromotional, activeCategory, isLoadingDB]); // Added activeCategory to dependencies
+  }, [searchTerm, activeContinent, showRarities, showPromotional, activeCategory, isLoadingDB, currentPage]);
 
-  // Handle toggling mutually exclusive filters (Optional behavior, but better UX)
+  // Derived state for Sub-Pages (Portugal)
+  const portugalScratchcards = useMemo(() => {
+     return allImagesCache.filter(img => 
+        (img.country === 'Portugal' || img.country === 'PT') && 
+        (img.category === 'raspadinha' || !img.category) // Default to scratchcard if undefined
+     ).sort((a,b) => {
+        // Sort by Game Number Descending for these pages
+        const numA = parseInt(a.gameNumber.replace(/\D/g, '')) || 0;
+        const numB = parseInt(b.gameNumber.replace(/\D/g, '')) || 0;
+        return numB - numA; 
+     });
+  }, [allImagesCache]);
+
+  const portugalLotteries = useMemo(() => {
+     return allImagesCache.filter(img => 
+        (img.country === 'Portugal' || img.country === 'PT') && 
+        img.category === 'lotaria'
+     ).sort((a,b) => b.createdAt - a.createdAt); // Newest first
+  }, [allImagesCache]);
+
+
   const toggleRarities = () => {
     if (!showRarities) setShowPromotional(false);
     setShowRarities(!showRarities);
@@ -147,7 +173,6 @@ function App() {
   const handleCountrySelectFromMap = (countryName: string) => {
     setSearchTerm(countryName);
     setViewMode('grid');
-    // Scroll to grid on mobile
     const grid = document.getElementById('image-grid-section');
     if (grid) grid.scrollIntoView({ behavior: 'smooth' });
   };
@@ -161,33 +186,15 @@ function App() {
   const handleUploadComplete = async (newImage: ScratchcardData) => {
     try {
       await storageService.save(newImage);
-      setDisplayedImages(prev => {
-         // Apply current view filters to the new image immediately
-         if (activeCategory !== 'all' && newImage.category !== activeCategory) return prev;
-         if (showRarities && !newImage.isRarity) return prev;
-         if (showPromotional && !newImage.isPromotional) return prev;
-         return [newImage, ...prev];
-      });
-      
+      // Refresh Full Cache
+      const allItems = await storageService.getAll();
+      setAllImagesCache(allItems);
+
+      setDisplayedImages(prev => [newImage, ...prev]);
       setNewArrivals(prev => [newImage, ...prev].slice(0, 10));
-      setMapData(prev => {
-          if (activeCategory !== 'all' && newImage.category !== activeCategory) return prev;
-          return [...prev, newImage];
-      });
       
-      // Update local stats immediately
-      setTotalStats(prev => {
-         const newStats = { ...prev.stats, [newImage.continent]: (prev.stats[newImage.continent] || 0) + 1 };
-         const newCatStats = { ...prev.categoryStats };
-         if (newImage.category === 'lotaria') newCatStats.lottery++;
-         else newCatStats.scratch++;
-         
-         return {
-           total: prev.total + 1,
-           stats: newStats,
-           categoryStats: newCatStats
-         };
-      });
+      const freshStats = await storageService.getStats();
+      setTotalStats(freshStats);
 
       setDroppedFile(null);
       setSelectedImage(newImage);
@@ -199,15 +206,13 @@ function App() {
   const handleUpdateImage = async (updatedImage: ScratchcardData) => {
     try {
       await storageService.save(updatedImage);
-      // We trigger a re-search to ensure filters are respected if the user changed the category/rarity of the item
-      const results = await storageService.search(searchTerm, activeContinent);
-      // Apply filters manually or just trigger the effect (simplest is manually updating state here or rely on the effect if we change a dep, but we aren't changing deps here)
-      // For simplicity, update arrays locally:
+      // Refresh Cache
+      const allItems = await storageService.getAll();
+      setAllImagesCache(allItems);
+
       setDisplayedImages(prev => prev.map(img => img.id === updatedImage.id ? updatedImage : img));
-      setNewArrivals(prev => prev.map(img => img.id === updatedImage.id ? updatedImage : img));
-      setMapData(prev => prev.map(img => img.id === updatedImage.id ? updatedImage : img));
-      
       setSelectedImage(updatedImage);
+      
       const freshStats = await storageService.getStats();
       setTotalStats(freshStats);
     } catch (error) {
@@ -218,9 +223,10 @@ function App() {
   const handleDeleteImage = async (id: string) => {
     try {
       await storageService.delete(id);
+      const allItems = await storageService.getAll();
+      setAllImagesCache(allItems);
+      
       setDisplayedImages(prev => prev.filter(img => img.id !== id));
-      setNewArrivals(prev => prev.filter(img => img.id !== id));
-      setMapData(prev => prev.filter(img => img.id !== id));
       setSelectedImage(null);
       
       const freshStats = await storageService.getStats();
@@ -273,20 +279,19 @@ function App() {
 
   const handleExportCSV = async () => {
     try {
-      const items = await storageService.getAll();
+        // ... (Existing CSV logic same)
+         const items = await storageService.getAll();
       if (items.length === 0) {
         alert("Sem dados para exportar.");
         return;
       }
 
-      // Define CSV headers
       const headers = [
         "ID", "Nome Jogo", "Numero", "Pais", "Regiao", "Continente", 
         "Ano", "Estado", "Preco", "Tiragem", "Grafica", "Colecionador", 
         "Categoria", "Raridade", "Promo", "Serie", "Data Registo"
       ];
 
-      // Convert items to CSV rows
       const rows = items.map(item => [
         `"${item.customId}"`,
         `"${item.gameName.replace(/"/g, '""')}"`,
@@ -307,13 +312,11 @@ function App() {
         new Date(item.createdAt).toLocaleDateString()
       ]);
 
-      // Combine headers and rows
       const csvContent = [
         headers.join(","),
         ...rows.map(row => row.join(","))
       ].join("\n");
 
-      // Create download link with BOM for Excel UTF-8 compatibility
       const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -322,7 +325,6 @@ function App() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
     } catch (error) {
       console.error("Erro ao exportar CSV:", error);
       alert("Erro ao gerar Excel.");
@@ -366,7 +368,6 @@ function App() {
   }
 
   return (
-    // Mobile Fix: Use h-[100dvh] instead of h-screen to handle mobile browser bars correctly
     <div 
       className="flex flex-col h-[100dvh] bg-slate-950 text-slate-100 relative overflow-hidden transition-colors duration-500"
       onDragOver={handleDragOver}
@@ -390,28 +391,25 @@ function App() {
         t={t.header}
       />
 
-      {/* MOBILE NAVIGATION BAR (Bottom Sticky or Top below header) - Visible only on mobile */}
-      <div className="md:hidden sticky top-[60px] z-40 bg-slate-900 border-b border-slate-800 flex justify-around p-2">
-         <button
-           onClick={() => setCurrentPage('home')}
-           className={`flex-1 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-1 transition-all ${currentPage === 'home' ? 'bg-slate-800 text-white' : 'text-slate-400'}`}
-         >
-           <Home className="w-4 h-4" />
-           Início
+      {/* MOBILE NAVIGATION BAR (Updated with Portugal Dropdown logic simulated) */}
+      <div className="md:hidden sticky top-[60px] z-40 bg-slate-900 border-b border-slate-800 flex justify-between px-2 py-2 overflow-x-auto scrollbar-hide">
+         <button onClick={() => setCurrentPage('home')} className={`px-3 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-1 min-w-[60px] ${currentPage === 'home' ? 'bg-slate-800 text-white' : 'text-slate-400'}`}>
+           <Home className="w-4 h-4" /> Início
          </button>
-         <button
-           onClick={() => setCurrentPage('stats')}
-           className={`flex-1 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-1 transition-all ${currentPage === 'stats' ? 'bg-slate-800 text-white' : 'text-slate-400'}`}
-         >
-           <BarChart2 className="w-4 h-4" />
-           Stats
+         
+         {/* PT Section for Mobile */}
+         <button onClick={() => setCurrentPage('pt_scratch')} className={`px-3 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-1 min-w-[60px] ${currentPage === 'pt_scratch' ? 'bg-green-900/30 text-green-400' : 'text-slate-400'}`}>
+           <Coins className="w-4 h-4" /> PT Rasp.
          </button>
-         <button
-           onClick={() => setCurrentPage('about')}
-           className={`flex-1 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-1 transition-all ${currentPage === 'about' ? 'bg-slate-800 text-white' : 'text-slate-400'}`}
-         >
-           <Info className="w-4 h-4" />
-           Sobre
+         <button onClick={() => setCurrentPage('pt_lottery')} className={`px-3 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-1 min-w-[60px] ${currentPage === 'pt_lottery' ? 'bg-purple-900/30 text-purple-400' : 'text-slate-400'}`}>
+           <Ticket className="w-4 h-4" /> PT Lot.
+         </button>
+
+         <button onClick={() => setCurrentPage('stats')} className={`px-3 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-1 min-w-[60px] ${currentPage === 'stats' ? 'bg-slate-800 text-white' : 'text-slate-400'}`}>
+           <BarChart2 className="w-4 h-4" /> Stats
+         </button>
+         <button onClick={() => setCurrentPage('about')} className={`px-3 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-1 min-w-[60px] ${currentPage === 'about' ? 'bg-slate-800 text-white' : 'text-slate-400'}`}>
+           <Info className="w-4 h-4" /> Sobre
          </button>
       </div>
 
@@ -426,7 +424,6 @@ function App() {
       )}
 
       <main className="flex-1 overflow-y-auto relative scroll-smooth w-full">
-        {/* VIBRANT BACKGROUND BLOBS */}
         <div className="fixed top-0 left-0 w-full h-96 bg-brand-600/20 rounded-full blur-[120px] pointer-events-none -translate-y-1/2 z-0"></div>
         <div className="fixed bottom-0 right-0 w-full h-96 bg-blue-600/20 rounded-full blur-[120px] pointer-events-none translate-y-1/2 z-0"></div>
 
@@ -557,7 +554,7 @@ function App() {
                   </div>
                 </div>
 
-                {/* Continent Filters - Scrollable on Mobile */}
+                {/* Continent Filters */}
                 <div className="flex overflow-x-auto pb-2 gap-2 mb-4 scrollbar-hide">
                   {continents.map(c => {
                     let count = 0;
@@ -641,6 +638,76 @@ function App() {
               </section>
             </div>
           </>
+        )}
+
+        {/* --- PAGE: PORTUGAL SCRATCHCARDS --- */}
+        {currentPage === 'pt_scratch' && (
+          <div className="animate-fade-in min-h-full max-w-7xl mx-auto px-4 md:px-6 py-6 pb-20">
+             {/* Header Banner */}
+             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-green-900 to-red-900 border border-white/10 p-8 md:p-12 mb-8 text-center shadow-2xl">
+                <div className="absolute inset-0 bg-black/30"></div>
+                <div className="relative z-10 flex flex-col items-center">
+                   <div className="bg-white/10 p-4 rounded-full mb-4 backdrop-blur-sm border border-white/20">
+                      <img src="https://flagcdn.com/pt.svg" alt="Portugal" className="w-12 h-8 rounded shadow-lg object-cover" />
+                   </div>
+                   <h1 className="text-3xl md:text-5xl font-black text-white mb-2 drop-shadow-lg uppercase tracking-tight">Raspadinhas de Portugal</h1>
+                   <p className="text-gray-200 text-lg md:text-xl font-medium max-w-2xl">
+                      Coleção completa de raspadinhas emitidas em território nacional.
+                   </p>
+                   <div className="mt-6 flex items-center gap-2 text-sm font-bold bg-black/40 px-4 py-2 rounded-full border border-white/10">
+                      <Coins className="w-4 h-4 text-yellow-400" />
+                      {portugalScratchcards.length} Registos
+                   </div>
+                </div>
+             </div>
+
+             {/* Grid */}
+             <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
+                <ImageGrid 
+                  images={portugalScratchcards} 
+                  onImageClick={setSelectedImage} 
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  isAdmin={isAdmin} 
+                  t={t.grid}
+                />
+             </div>
+          </div>
+        )}
+
+        {/* --- PAGE: PORTUGAL LOTTERY --- */}
+        {currentPage === 'pt_lottery' && (
+          <div className="animate-fade-in min-h-full max-w-7xl mx-auto px-4 md:px-6 py-6 pb-20">
+             {/* Header Banner */}
+             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-900 to-indigo-900 border border-white/10 p-8 md:p-12 mb-8 text-center shadow-2xl">
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+                <div className="relative z-10 flex flex-col items-center">
+                   <div className="bg-white/10 p-4 rounded-full mb-4 backdrop-blur-sm border border-white/20">
+                      <Ticket className="w-8 h-8 text-purple-200" />
+                   </div>
+                   <h1 className="text-3xl md:text-5xl font-black text-white mb-2 drop-shadow-lg uppercase tracking-tight">Lotaria Nacional</h1>
+                   <p className="text-purple-200 text-lg md:text-xl font-medium max-w-2xl">
+                      Bilhetes de Lotaria Clássica e Popular de Portugal.
+                   </p>
+                   <div className="mt-6 flex items-center gap-2 text-sm font-bold bg-black/40 px-4 py-2 rounded-full border border-white/10">
+                      <Ticket className="w-4 h-4 text-purple-400" />
+                      {portugalLotteries.length} Registos
+                   </div>
+                </div>
+             </div>
+
+             {/* Grid */}
+             <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
+                <ImageGrid 
+                  images={portugalLotteries} 
+                  onImageClick={setSelectedImage} 
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  isAdmin={isAdmin} 
+                  t={t.grid}
+                />
+             </div>
+          </div>
         )}
 
         {/* --- PAGE: STATS --- */}

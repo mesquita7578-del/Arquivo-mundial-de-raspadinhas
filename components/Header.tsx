@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen, FileSpreadsheet, Home, BarChart2, Info } from 'lucide-react';
+import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen, FileSpreadsheet, Home, BarChart2, Info, ChevronDown, Coins } from 'lucide-react';
 import { Language } from '../translations';
 
 interface HeaderProps {
@@ -10,12 +10,12 @@ interface HeaderProps {
   onAdminToggle: () => void;
   onLogout: () => void;
   onExport: () => void;
-  onExportCSV: () => void; // New prop
+  onExportCSV: () => void;
   onHistoryClick: () => void;
   language: Language;
   setLanguage: (lang: Language) => void;
-  currentPage: 'home' | 'stats' | 'about';
-  onNavigate: (page: 'home' | 'stats' | 'about') => void;
+  currentPage: string;
+  onNavigate: (page: any) => void;
   t: any;
 }
 
@@ -54,7 +54,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Navigation Menu (Center) - Hidden on very small screens */}
+      {/* Navigation Menu (Center) - Desktop */}
       <nav className="hidden md:flex items-center gap-1 bg-slate-800/50 p-1 rounded-full border border-slate-700/50 absolute left-1/2 -translate-x-1/2">
          <button
            onClick={() => onNavigate('home')}
@@ -63,6 +63,36 @@ export const Header: React.FC<HeaderProps> = ({
            <Home className="w-3.5 h-3.5" />
            Início
          </button>
+
+         {/* PORTUGAL DROPDOWN */}
+         <div className="relative group">
+            <button
+              className={`px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${currentPage.startsWith('pt_') ? 'bg-green-900/40 text-green-400 border border-green-800' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+            >
+              <img src="https://flagcdn.com/pt.svg" alt="PT" className="w-3.5 h-3.5 rounded-sm object-cover" />
+              Portugal
+              <ChevronDown className="w-3 h-3 opacity-50" />
+            </button>
+            
+            {/* Dropdown Content */}
+            <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden hidden group-hover:block animate-fade-in">
+               <button 
+                 onClick={() => onNavigate('pt_scratch')}
+                 className="w-full text-left px-4 py-3 hover:bg-slate-800 flex items-center gap-2 text-xs font-bold text-slate-300 hover:text-brand-400 transition-colors border-b border-slate-800"
+               >
+                 <Coins className="w-4 h-4" />
+                 Raspadinhas PT
+               </button>
+               <button 
+                 onClick={() => onNavigate('pt_lottery')}
+                 className="w-full text-left px-4 py-3 hover:bg-slate-800 flex items-center gap-2 text-xs font-bold text-slate-300 hover:text-purple-400 transition-colors"
+               >
+                 <Ticket className="w-4 h-4" />
+                 Lotaria Nacional
+               </button>
+            </div>
+         </div>
+
          <button
            onClick={() => onNavigate('stats')}
            className={`px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${currentPage === 'stats' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
@@ -82,9 +112,6 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Actions */}
       <div className="flex items-center gap-2">
         
-        {/* Mobile Nav Trigger (Simple Icon for now, or just rely on bottom/top nav) */}
-        {/* For this iteration, we keep it clean. Mobile users might need a simpler menu later, but for now buttons fit in actions or distinct row */}
-
         {/* Language Toggles */}
         <div className="flex bg-slate-800 rounded-md p-0.5 border border-slate-700">
           <button 
