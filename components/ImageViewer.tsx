@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify, Gem, Gift } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify, Gem, Gift, Eraser } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
 
 interface ImageViewerProps {
@@ -17,6 +17,12 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   const [formData, setFormData] = useState<ScratchcardData | null>(null);
   const [showingBack, setShowingBack] = useState(false);
   const [showCopied, setShowCopied] = useState(false);
+  
+  // Scratch Simulation State
+  const [isScratchMode, setIsScratchMode] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
 
   useEffect(() => {
     setFormData(image);
@@ -24,7 +30,83 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
     setIsDeleting(false);
     setShowingBack(false);
     setShowCopied(false);
+    setIsScratchMode(false);
   }, [image]);
+
+  // Initialize Scratch Canvas
+  useEffect(() => {
+    if (isScratchMode && canvasRef.current && imageRef.current) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      const img = imageRef.current;
+
+      if (ctx) {
+        // Set canvas size to match displayed image
+        canvas.width = img.clientWidth;
+        canvas.height = img.clientHeight;
+
+        // Draw silver overlay
+        ctx.fillStyle = '#C0C0C0'; // Silver color
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Add some noise/texture to look like latex
+        for (let i = 0; i < 5000; i++) {
+            ctx.fillStyle = Math.random() > 0.5 ? '#A9A9A9' : '#D3D3D3';
+            ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 2, 2);
+        }
+        
+        // Add text "RASPE AQUI"
+        ctx.font = 'bold 24px monospace';
+        ctx.fillStyle = '#808080';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(-Math.PI / 6);
+        ctx.fillText("RASPE AQUI / SCRATCH HERE", 0, 0);
+        ctx.restore();
+
+        // Setup composite operation for erasing
+        ctx.globalCompositeOperation = 'destination-out';
+      }
+    }
+  }, [isScratchMode, showingBack]);
+
+  const handleScratchStart = (e: React.MouseEvent | React.TouchEvent) => {
+    setIsDrawing(true);
+    scratch(e);
+  };
+
+  const handleScratchEnd = () => {
+    setIsDrawing(false);
+  };
+
+  const scratch = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDrawing || !canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    
+    let clientX, clientY;
+    
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = (e as React.MouseEvent).clientX;
+      clientY = (e as React.MouseEvent).clientY;
+    }
+
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    if (ctx) {
+      ctx.beginPath();
+      ctx.arc(x, y, 20, 0, 2 * Math.PI); // Brush size 20
+      ctx.fill();
+    }
+  };
 
   if (!image || !formData) return null;
 
@@ -96,33 +178,70 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
       <div className="flex flex-col lg:flex-row w-full h-full lg:max-w-7xl lg:max-h-[85vh] bg-gray-900 rounded-none lg:rounded-2xl overflow-hidden border border-gray-800 shadow-2xl">
         
         {/* Image Section */}
-        <div className="flex-1 bg-black flex flex-col items-center justify-center relative overflow-hidden group">
+        <div className="flex-1 bg-black flex flex-col items-center justify-center relative overflow-hidden group select-none">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
           
-          <img 
-            src={showingBack ? (image.backUrl || image.frontUrl) : image.frontUrl} 
-            alt={image.gameName} 
-            className="max-w-full max-h-[calc(100%-4rem)] object-contain p-4 transition-transform duration-300" 
-          />
+          <div className="relative max-w-full max-h-[calc(100%-4rem)] p-4 flex items-center justify-center">
+             <img 
+               ref={imageRef}
+               src={showingBack ? (image.backUrl || image.frontUrl) : image.frontUrl} 
+               alt={image.gameName} 
+               className="max-w-full max-h-full object-contain transition-transform duration-300 pointer-events-none select-none" 
+               style={{ maxHeight: '70vh' }}
+             />
+             
+             {isScratchMode && (
+                <canvas
+                  ref={canvasRef}
+                  className="absolute top-4 left-4 cursor-crosshair touch-none"
+                  onMouseDown={handleScratchStart}
+                  onMouseMove={scratch}
+                  onMouseUp={handleScratchEnd}
+                  onMouseLeave={handleScratchEnd}
+                  onTouchStart={handleScratchStart}
+                  onTouchMove={scratch}
+                  onTouchEnd={handleScratchEnd}
+                  style={{ 
+                    width: imageRef.current?.clientWidth, 
+                    height: imageRef.current?.clientHeight,
+                    top: imageRef.current?.offsetTop,
+                    left: imageRef.current?.offsetLeft
+                  }}
+                />
+             )}
+          </div>
 
-          {image.backUrl && (
-            <div className="absolute bottom-4 z-10 flex gap-2">
-              <button 
-                type="button"
-                onClick={() => setShowingBack(false)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${!showingBack ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/50' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
-              >
-                {t.front}
-              </button>
-              <button 
-                type="button"
-                onClick={() => setShowingBack(true)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${showingBack ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/50' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
-              >
-                {t.back}
-              </button>
-            </div>
-          )}
+          <div className="absolute bottom-4 z-10 flex gap-2">
+            {!image.backUrl ? null : (
+                <>
+                <button 
+                    type="button"
+                    onClick={() => { setShowingBack(false); setIsScratchMode(false); }}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${!showingBack ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/50' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+                >
+                    {t.front}
+                </button>
+                <button 
+                    type="button"
+                    onClick={() => { setShowingBack(true); setIsScratchMode(false); }}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${showingBack ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/50' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+                >
+                    {t.back}
+                </button>
+                </>
+            )}
+            
+            {/* Scratch Toggle Button */}
+            <button
+               type="button"
+               onClick={() => setIsScratchMode(!isScratchMode)}
+               className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${isScratchMode ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/50 animate-pulse' : 'bg-gray-800 text-yellow-500 border border-yellow-600/30 hover:bg-gray-700'}`}
+               title="Simular Raspadinha"
+            >
+               <Eraser className="w-3 h-3" />
+               {isScratchMode ? "A Raspar..." : "Raspar!"}
+            </button>
+          </div>
         </div>
 
         {/* Info Section */}
