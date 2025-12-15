@@ -295,10 +295,10 @@ function App() {
 
   if (isLoadingDB) {
     return (
-      <div className="h-[100dvh] w-screen bg-gray-950 flex flex-col items-center justify-center text-white">
-        <Database className="w-16 h-16 text-brand-600 animate-pulse mb-4" />
+      <div className="h-[100dvh] w-screen bg-slate-950 flex flex-col items-center justify-center text-white">
+        <Database className="w-16 h-16 text-brand-500 animate-pulse mb-4" />
         <h2 className="text-2xl font-bold">Carregando Arquivo...</h2>
-        <p className="text-gray-400 mt-2">A conectar base de dados segura.</p>
+        <p className="text-slate-400 mt-2">A conectar base de dados segura.</p>
       </div>
     );
   }
@@ -306,7 +306,7 @@ function App() {
   return (
     // Mobile Fix: Use h-[100dvh] instead of h-screen to handle mobile browser bars correctly
     <div 
-      className="flex flex-col h-[100dvh] bg-gray-950 text-gray-100 relative overflow-hidden"
+      className="flex flex-col h-[100dvh] bg-slate-950 text-slate-100 relative overflow-hidden transition-colors duration-500"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -326,7 +326,7 @@ function App() {
       />
 
       {/* STICKY FILTER BAR (Categories + Rarities) - Visible below header */}
-      <div className="sticky top-[60px] z-40 bg-gray-900/95 backdrop-blur-md border-b border-gray-800 shadow-md">
+      <div className="sticky top-[60px] z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-md">
          <div className="max-w-7xl mx-auto px-4 md:px-6 py-2 flex flex-nowrap items-center gap-2 md:gap-4 overflow-x-auto scrollbar-hide">
              
              {/* Rarities Toggle */}
@@ -335,7 +335,7 @@ function App() {
               className={`flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${
                  showRarities 
                    ? "bg-gold-500 text-white border-gold-400 shadow-lg shadow-gold-500/20" 
-                   : "bg-gray-800 text-gray-400 border-gray-700 hover:border-gold-500/50 hover:text-gold-400"
+                   : "bg-slate-800 text-slate-400 border-slate-700 hover:border-gold-500/50 hover:text-gold-400"
               }`}
             >
               <Gem className="w-3.5 h-3.5" />
@@ -348,7 +348,7 @@ function App() {
               className={`flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${
                  showPromotional 
                    ? "bg-pink-500 text-white border-pink-400 shadow-lg shadow-pink-500/20" 
-                   : "bg-gray-800 text-gray-400 border-gray-700 hover:border-pink-500/50 hover:text-pink-400"
+                   : "bg-slate-800 text-slate-400 border-slate-700 hover:border-pink-500/50 hover:text-pink-400"
               }`}
             >
               <Gift className="w-3.5 h-3.5" />
@@ -358,31 +358,31 @@ function App() {
             {/* Websites Modal Trigger (New) */}
             <button
               onClick={() => setIsWebsitesModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap bg-gray-800 text-gray-400 border-gray-700 hover:border-blue-500/50 hover:text-blue-400"
+              className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap bg-slate-800 text-slate-400 border-slate-700 hover:border-blue-500/50 hover:text-blue-400"
             >
               <Building2 className="w-3.5 h-3.5" />
               {t.header.websites}
             </button>
 
-            <div className="w-px h-6 bg-gray-700 mx-1 shrink-0"></div>
+            <div className="w-px h-6 bg-slate-700 mx-1 shrink-0"></div>
 
              {/* Category Toggles */}
              <button
                onClick={() => setActiveCategory('all')}
-               className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${activeCategory === 'all' ? 'bg-gray-700 text-white border-gray-600' : 'text-gray-500 border-transparent hover:text-white hover:bg-gray-800'}`}
+               className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${activeCategory === 'all' ? 'bg-slate-700 text-white border-slate-600' : 'text-slate-500 border-transparent hover:text-white hover:bg-slate-800'}`}
              >
                {t.grid.allTypes}
              </button>
              <button
                onClick={() => setActiveCategory('raspadinha')}
-               className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border flex items-center gap-2 whitespace-nowrap ${activeCategory === 'raspadinha' ? 'bg-brand-600 text-white border-brand-500' : 'text-gray-500 border-transparent hover:text-white hover:bg-gray-800'}`}
+               className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border flex items-center gap-2 whitespace-nowrap ${activeCategory === 'raspadinha' ? 'bg-brand-600 text-white border-brand-500' : 'text-slate-500 border-transparent hover:text-white hover:bg-slate-800'}`}
              >
                <Coins className="w-3.5 h-3.5" />
                {t.grid.scratchcard}
              </button>
              <button
                onClick={() => setActiveCategory('lotaria')}
-               className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border flex items-center gap-2 whitespace-nowrap ${activeCategory === 'lotaria' ? 'bg-purple-600 text-white border-purple-500' : 'text-gray-500 border-transparent hover:text-white hover:bg-gray-800'}`}
+               className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border flex items-center gap-2 whitespace-nowrap ${activeCategory === 'lotaria' ? 'bg-purple-600 text-white border-purple-500' : 'text-slate-500 border-transparent hover:text-white hover:bg-slate-800'}`}
              >
                <Ticket className="w-3.5 h-3.5" />
                {t.grid.lottery}
@@ -401,8 +401,9 @@ function App() {
       )}
 
       <main className="flex-1 overflow-y-auto relative scroll-smooth w-full">
-        <div className="fixed top-0 left-0 w-full h-96 bg-brand-900/10 rounded-full blur-[120px] pointer-events-none -translate-y-1/2 z-0"></div>
-        <div className="fixed bottom-0 right-0 w-full h-96 bg-purple-900/10 rounded-full blur-[120px] pointer-events-none translate-y-1/2 z-0"></div>
+        {/* VIBRANT BACKGROUND BLOBS */}
+        <div className="fixed top-0 left-0 w-full h-96 bg-brand-600/20 rounded-full blur-[120px] pointer-events-none -translate-y-1/2 z-0"></div>
+        <div className="fixed bottom-0 right-0 w-full h-96 bg-blue-600/20 rounded-full blur-[120px] pointer-events-none translate-y-1/2 z-0"></div>
 
         <div className="max-w-7xl mx-auto py-6 md:py-8 relative z-10 space-y-8 md:space-y-12">
 
@@ -413,7 +414,7 @@ function App() {
                 <Clock className="w-5 h-5" />
                 <h2 className="text-lg md:text-xl font-bold text-white uppercase tracking-wider">{t.home.newArrivals}</h2>
               </div>
-              <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-4 md:p-6 overflow-x-auto scrollbar-hide">
+              <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 md:p-6 overflow-x-auto scrollbar-hide backdrop-blur-sm">
                  <div className="min-w-[800px]">
                    <ImageGrid 
                      images={newArrivals} 
@@ -467,11 +468,11 @@ function App() {
                     className={`px-4 md:px-6 py-2 rounded-full text-xs md:text-sm font-bold transition-all border flex items-center gap-2 whitespace-nowrap ${
                       activeContinent === c 
                         ? 'bg-brand-600 text-white border-brand-500 shadow-lg shadow-brand-900/50 scale-105' 
-                        : 'bg-gray-900 text-gray-400 border-gray-800 hover:bg-gray-800 hover:text-white'
+                        : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-white'
                     }`}
                   >
                     {c}
-                    <span className={`text-[10px] ml-1 py-0.5 px-1.5 rounded-full ${activeContinent === c ? 'bg-white/20 text-white' : 'bg-gray-800 text-gray-500'}`}>
+                    <span className={`text-[10px] ml-1 py-0.5 px-1.5 rounded-full ${activeContinent === c ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-500'}`}>
                       {count}
                     </span>
                   </button>
@@ -480,7 +481,7 @@ function App() {
             </div>
 
             {activeContinent !== 'Mundo' && viewMode !== 'map' && (
-              <div className="mb-6 flex flex-wrap gap-2 items-center text-sm text-gray-500">
+              <div className="mb-6 flex flex-wrap gap-2 items-center text-sm text-slate-500">
                 <Map className="w-4 h-4 mr-2" />
                 <span>{t.home.countriesIncluded}</span>
                 {availableCountries.length > 0 ? availableCountries.map(country => (
@@ -490,7 +491,7 @@ function App() {
                     className={`px-3 py-1 rounded border text-xs font-bold transition-colors ${
                       searchTerm === country
                         ? 'bg-brand-600 text-white border-brand-500'
-                        : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700 hover:text-white cursor-pointer'
+                        : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700 hover:text-white cursor-pointer'
                     }`}
                   >
                     {country}
@@ -500,7 +501,7 @@ function App() {
                 {searchTerm && availableCountries.includes(searchTerm) && (
                    <button 
                      onClick={() => setSearchTerm('')}
-                     className="ml-2 p-1 rounded-full bg-gray-800 text-gray-500 hover:text-white hover:bg-red-900/50 transition-colors"
+                     className="ml-2 p-1 rounded-full bg-slate-800 text-slate-500 hover:text-white hover:bg-red-900/50 transition-colors"
                    >
                      <X className="w-3 h-3" />
                    </button>
@@ -508,7 +509,7 @@ function App() {
               </div>
             )}
 
-            <div className={`bg-gray-900/30 border rounded-2xl overflow-hidden min-h-[500px] ${showRarities ? 'border-gold-500/30 bg-gold-900/5' : showPromotional ? 'border-pink-500/30 bg-pink-900/5' : 'border-gray-800/50'}`}>
+            <div className={`bg-slate-900/30 border rounded-2xl overflow-hidden min-h-[500px] backdrop-blur-sm ${showRarities ? 'border-gold-500/30 bg-gold-900/5' : showPromotional ? 'border-pink-500/30 bg-pink-900/5' : 'border-slate-800/50'}`}>
               {viewMode === 'map' ? (
                 <div className="p-4 h-[600px]">
                    <WorldMap 

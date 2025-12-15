@@ -21,7 +21,7 @@ const StateBadge: React.FC<{ state: string }> = ({ state }) => {
     if (normalized.includes('MINT')) return 'bg-green-500/20 text-green-400 border-green-500/50';
     if (normalized.includes('VOID')) return 'bg-red-500/20 text-red-400 border-red-500/50';
     if (normalized.includes('AMOSTRA') || normalized.includes('MUESTRA')) return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
-    return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
+    return 'bg-slate-500/20 text-slate-400 border-slate-500/50';
   };
 
   return (
@@ -55,9 +55,9 @@ const LineIndicator: React.FC<{ type?: LineType; t: any }> = ({ type, t }) => {
   }
 
   return (
-    <div className="flex items-center gap-1.5 bg-gray-800/80 px-1.5 py-0.5 rounded border border-gray-700" title={`Linhas: ${label}`}>
+    <div className="flex items-center gap-1.5 bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700" title={`Linhas: ${label}`}>
       <div className={`w-2 h-2 rounded-full ${colorClass} shadow-sm`}></div>
-      <span className="text-[9px] text-gray-400 uppercase font-bold hidden sm:inline">{label}</span>
+      <span className="text-[9px] text-slate-400 uppercase font-bold hidden sm:inline">{label}</span>
     </div>
   );
 };
@@ -68,7 +68,7 @@ const SafeImage = ({ src, alt, className }: { src: string, alt: string, classNam
 
   if (error || !src) {
     return (
-      <div className={`flex flex-col items-center justify-center bg-gray-800 text-gray-600 ${className}`}>
+      <div className={`flex flex-col items-center justify-center bg-slate-800 text-slate-600 ${className}`}>
         <ImageOff className="w-8 h-8 opacity-50 mb-1" />
         <span className="text-[10px] font-mono">No Image</span>
       </div>
@@ -115,18 +115,12 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-    // Note: We do NOT reset selectedRegion here immediately on image change, 
-    // because we want to keep the region selected if possible.
-    // However, if the new image set doesn't have that region, we might need to clear it.
   }, [activeCategory, filterCountry, filterState, filterYear, filterSize, filterEmission, filterPrinter, filterSeries, images]);
 
   // Determine available Regions based on CURRENT images (before applying sub-filters)
-  // This allows us to see "Oh, we are looking at Germany, here are the regions"
   const availableRegions = useMemo(() => {
     if (hideFilters) return [];
     
-    // Get unique non-empty regions from the passed 'images' prop
-    // The 'images' prop is already filtered by Country/SearchTerm from the parent
     const regions = new Set<string>();
     images.forEach(img => {
       if (img.region && img.region.trim().length > 0) {
@@ -139,16 +133,12 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   // Apply filters (Internal filters + Region)
   const filteredImages = useMemo(() => {
     return images.filter(img => {
-      // Filter by Category (Passed from parent)
       if (activeCategory !== 'all') {
          const cat = img.category || 'raspadinha';
          if (cat !== activeCategory) return false;
       }
-
-      // Region Filter (Dynamic Sub-filter)
       if (selectedRegion && (!img.region || img.region !== selectedRegion)) return false;
 
-      // Case insensitive partial matching
       if (filterCountry && !img.country.toLowerCase().includes(filterCountry.toLowerCase())) return false;
       if (filterState && !img.state.toLowerCase().includes(filterState.toLowerCase())) return false;
       if (filterYear && !img.releaseDate.includes(filterYear)) return false;
@@ -164,7 +154,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   // Apply Pagination
   const totalPages = Math.ceil(filteredImages.length / ITEMS_PER_PAGE);
   const displayedImages = useMemo(() => {
-    if (hideFilters) return filteredImages; // Don't paginate "New Arrivals" horizontal scroll
+    if (hideFilters) return filteredImages;
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredImages.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredImages, currentPage, hideFilters]);
@@ -194,13 +184,13 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
     icon: React.ElementType 
   }) => (
     <div className="relative group min-w-[140px] flex-1">
-      <Icon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 group-focus-within:text-brand-500 transition-colors" />
+      <Icon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 group-focus-within:text-brand-500 transition-colors" />
       <input 
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-gray-800 text-gray-200 text-xs rounded-lg border border-gray-700 pl-8 pr-2 py-2 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors placeholder-gray-600"
+        className="w-full bg-slate-800 text-slate-200 text-xs rounded-lg border border-slate-700 pl-8 pr-2 py-2 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors placeholder-slate-600"
       />
     </div>
   );
@@ -210,19 +200,19 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 
       {/* Public Toolbar (Results Count + View Toggle) */}
       {!hideFilters && (
-        <div className="px-4 md:px-6 py-2 flex justify-between items-center border-b border-gray-800 bg-gray-900/30">
+        <div className="px-4 md:px-6 py-2 flex justify-between items-center border-b border-slate-800 bg-slate-900/30">
            {/* Left side: Toggle (Moved here) */}
-           <div className="flex bg-gray-800 p-1 rounded-lg border border-gray-700">
+           <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
              <button 
                 onClick={() => onViewModeChange?.('grid')} 
-                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-brand-600 text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
                 title={t.viewGrid}
              >
                 <LayoutGrid className="w-4 h-4" />
              </button>
              <button 
                 onClick={() => onViewModeChange?.('list')} 
-                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-brand-600 text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
                 title={t.viewList}
              >
                 <List className="w-4 h-4" />
@@ -230,7 +220,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
            </div>
 
            {/* Right side: Count (Moved here) */}
-           <div className="text-xs text-gray-500 font-mono font-bold uppercase tracking-wider">
+           <div className="text-xs text-slate-500 font-mono font-bold uppercase tracking-wider">
              {filteredImages.length} {t.results}
            </div>
         </div>
@@ -238,7 +228,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
       
       {/* Filter Bar - Restricted to ADMIN only */}
       {!hideFilters && isAdmin && (
-        <div className="px-6 py-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm z-10 sticky top-0 space-y-3 animate-fade-in">
+        <div className="px-6 py-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm z-10 sticky top-0 space-y-3 animate-fade-in">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-brand-400 text-sm font-medium">
               <Filter className="w-4 h-4" />
@@ -259,7 +249,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
               className={`px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-2 transition-all ${
                 filterSeries 
                 ? 'bg-brand-600 border-brand-500 text-white shadow-lg shadow-brand-900/40' 
-                : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-gray-200'
+                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
@@ -280,9 +270,9 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 
       {/* Region Sub-Filter Bar (Public & Admin) */}
       {!hideFilters && availableRegions.length > 0 && (
-        <div className="px-4 md:px-6 py-3 border-b border-gray-800 bg-gray-900/30 overflow-x-auto scrollbar-hide">
+        <div className="px-4 md:px-6 py-3 border-b border-slate-800 bg-slate-900/30 overflow-x-auto scrollbar-hide">
           <div className="flex items-center gap-2">
-             <div className="flex items-center gap-1 text-gray-400 text-xs font-bold uppercase mr-2 shrink-0">
+             <div className="flex items-center gap-1 text-slate-400 text-xs font-bold uppercase mr-2 shrink-0">
                 <MapPin className="w-3 h-3" />
                 {t.region}:
              </div>
@@ -293,7 +283,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                   className={`px-3 py-1 rounded-full text-xs font-medium border transition-all whitespace-nowrap ${
                     selectedRegion === region 
                       ? 'bg-brand-600 text-white border-brand-500 shadow-md' 
-                      : 'bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-500 hover:text-gray-200'
+                      : 'bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-slate-200'
                   }`}
                 >
                   {region}
@@ -306,7 +296,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
       {/* Content */}
       <div className={`${hideFilters ? '' : 'flex-1 overflow-y-auto p-4 md:p-6 pb-24 scroll-smooth'}`}>
         {!hideFilters && filteredImages.length === 0 ? (
-           <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+           <div className="flex flex-col items-center justify-center h-64 text-slate-500">
              <Filter className="w-12 h-12 mb-4 opacity-20" />
              <p>{t.noResults}</p>
              <button onClick={clearFilters} className="text-brand-500 hover:underline mt-2 text-sm">{t.clearFilters}</button>
@@ -318,18 +308,18 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
               <div 
                 key={item.id}
                 onClick={() => onImageClick(item)}
-                className="group flex items-center gap-4 bg-gray-900 border border-gray-800 hover:border-brand-500/50 p-3 rounded-lg hover:bg-gray-800/50 cursor-pointer transition-all"
+                className="group flex items-center gap-4 bg-slate-900 border border-slate-800 hover:border-brand-500/50 p-3 rounded-lg hover:bg-slate-800/50 cursor-pointer transition-all"
               >
                 {/* Thumbnail */}
-                <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 bg-black/50 border border-gray-700">
+                <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 bg-slate-950/50 border border-slate-700">
                    <SafeImage src={item.frontUrl} alt={item.gameName} className="w-full h-full object-contain" />
                 </div>
                 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-gray-500 bg-gray-800 px-1.5 rounded">{item.customId}</span>
-                    <h3 className="font-bold text-gray-200 truncate">{item.gameName}</h3>
+                    <span className="text-xs font-mono text-slate-500 bg-slate-800 px-1.5 rounded">{item.customId}</span>
+                    <h3 className="font-bold text-slate-200 truncate">{item.gameName}</h3>
                     {item.category === 'lotaria' ? (
                       <div title={t.lottery}>
                         <Ticket className="w-3 h-3 text-purple-400" />
@@ -349,12 +339,12 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                        <LineIndicator type={item.lines} t={t} />
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
+                  <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
                      <span className="flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
-                        {item.country} {item.region && <span className="text-gray-500">• {item.region}</span>}
+                        {item.country} {item.region && <span className="text-slate-500">• {item.region}</span>}
                      </span>
-                     <span className="hidden sm:inline text-gray-600">|</span>
+                     <span className="hidden sm:inline text-slate-600">|</span>
                      <span className="hidden sm:inline font-mono">Nº {item.gameNumber}</span>
                   </div>
                 </div>
@@ -370,11 +360,11 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
             {displayedImages.map((item) => (
               <div
                 key={item.id}
-                className="group relative bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-brand-500/50 transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-500/20 hover:scale-[1.02] cursor-pointer flex flex-col h-full"
+                className="group relative bg-slate-900/80 rounded-xl overflow-hidden border border-slate-700/50 hover:border-brand-500/50 transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-500/20 hover:scale-[1.02] cursor-pointer flex flex-col h-full backdrop-blur-sm"
                 onClick={() => onImageClick(item)}
               >
                 {/* Image Container - object-contain and square aspect ratio */}
-                <div className="relative aspect-square overflow-hidden bg-gray-800 flex items-center justify-center p-2">
+                <div className="relative aspect-square overflow-hidden bg-slate-800/50 flex items-center justify-center p-2">
                   <SafeImage
                     src={item.frontUrl}
                     alt={item.gameName}
@@ -382,14 +372,14 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                   />
                   
                   {/* Overlay on hover */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+                  <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
                     <div className="bg-white/10 backdrop-blur-md p-3 rounded-full">
                       <Eye className="w-6 h-6 text-white" />
                     </div>
                   </div>
                   
                   {/* ID Badge */}
-                  <div className="absolute top-2 left-2 bg-black/70 backdrop-blur text-white text-[10px] font-mono px-2 py-1 rounded border border-gray-700 shadow-sm flex items-center gap-1 z-20">
+                  <div className="absolute top-2 left-2 bg-slate-950/70 backdrop-blur text-white text-[10px] font-mono px-2 py-1 rounded border border-slate-700 shadow-sm flex items-center gap-1 z-20">
                      {item.category === 'lotaria' && <Ticket className="w-3 h-3 text-purple-400" />}
                      {item.customId}
                   </div>
@@ -403,7 +393,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                             </div>
                         )}
                         {item.backUrl && (
-                            <div className="bg-gray-800/80 backdrop-blur text-gray-300 p-1 rounded-full shadow-sm" title="Possui verso / Retro">
+                            <div className="bg-slate-800/80 backdrop-blur text-slate-300 p-1 rounded-full shadow-sm" title="Possui verso / Retro">
                             <RotateCcw className="w-3 h-3" />
                             </div>
                         )}
@@ -419,29 +409,29 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 </div>
 
                 {/* Info Container */}
-                <div className="p-3 md:p-4 flex flex-col flex-1 bg-gray-900 border-t border-gray-800">
+                <div className="p-3 md:p-4 flex flex-col flex-1 bg-slate-900/50 border-t border-slate-800">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-gray-200 truncate flex-1 mr-2 text-sm md:text-base" title={item.gameName}>{item.gameName}</h3>
+                    <h3 className="font-bold text-slate-200 truncate flex-1 mr-2 text-sm md:text-base" title={item.gameName}>{item.gameName}</h3>
                     <StateBadge state={item.state} />
                   </div>
                   
                   {/* Flag / Country / Region Info */}
-                  <div className="mb-2 flex items-center gap-1.5 text-xs text-gray-400">
-                    <span className="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                  <div className="mb-2 flex items-center gap-1.5 text-xs text-slate-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]"></span>
                     <span className="truncate">
                       {item.country}
-                      {item.region && <span className="text-gray-500 font-medium"> • {item.region}</span>}
+                      {item.region && <span className="text-slate-500 font-medium"> • {item.region}</span>}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 mt-auto text-xs text-gray-400">
-                    <div className="bg-gray-800/50 p-1.5 md:p-2 rounded flex flex-col">
-                      <span className="text-[9px] md:text-[10px] uppercase text-gray-500">{t.gameNo}</span>
-                      <span className="font-mono text-gray-300">{item.gameNumber}</span>
+                  <div className="grid grid-cols-2 gap-2 mt-auto text-xs text-slate-400">
+                    <div className="bg-slate-800/50 p-1.5 md:p-2 rounded flex flex-col">
+                      <span className="text-[9px] md:text-[10px] uppercase text-slate-500">{t.gameNo}</span>
+                      <span className="font-mono text-slate-300">{item.gameNumber}</span>
                     </div>
-                    <div className="bg-gray-800/50 p-1.5 md:p-2 rounded flex flex-col">
-                      <span className="text-[9px] md:text-[10px] uppercase text-gray-500">{t.year}</span>
-                      <span className="font-mono text-gray-300">{item.releaseDate.split('-')[0] || '?'}</span>
+                    <div className="bg-slate-800/50 p-1.5 md:p-2 rounded flex flex-col">
+                      <span className="text-[9px] md:text-[10px] uppercase text-slate-500">{t.year}</span>
+                      <span className="font-mono text-slate-300">{item.releaseDate.split('-')[0] || '?'}</span>
                     </div>
                   </div>
                 </div>
@@ -456,14 +446,14 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className={`p-2 rounded-full border transition-all ${currentPage === 1 ? 'bg-gray-800 text-gray-600 border-gray-800 cursor-not-allowed' : 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700 hover:border-gray-500'}`}
+              className={`p-2 rounded-full border transition-all ${currentPage === 1 ? 'bg-slate-800 text-slate-600 border-slate-800 cursor-not-allowed' : 'bg-slate-800 text-white border-slate-700 hover:bg-slate-700 hover:border-slate-500'}`}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             
-            <div className="flex items-center gap-2 text-sm text-gray-400">
+            <div className="flex items-center gap-2 text-sm text-slate-400">
               <span>{t.page}</span>
-              <span className="font-bold text-white bg-gray-800 px-2 py-1 rounded">{currentPage}</span>
+              <span className="font-bold text-white bg-slate-800 px-2 py-1 rounded">{currentPage}</span>
               <span>{t.of}</span>
               <span>{totalPages}</span>
             </div>
@@ -471,7 +461,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
             <button
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className={`p-2 rounded-full border transition-all ${currentPage === totalPages ? 'bg-gray-800 text-gray-600 border-gray-800 cursor-not-allowed' : 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700 hover:border-gray-500'}`}
+              className={`p-2 rounded-full border transition-all ${currentPage === totalPages ? 'bg-slate-800 text-slate-600 border-slate-800 cursor-not-allowed' : 'bg-slate-800 text-white border-slate-700 hover:bg-slate-700 hover:border-slate-500'}`}
             >
               <ChevronRight className="w-5 h-5" />
             </button>

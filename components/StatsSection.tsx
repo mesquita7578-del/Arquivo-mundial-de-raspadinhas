@@ -36,7 +36,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
   const lotteryPct = totalCats > 0 ? 100 - scratchPct : 50;
 
   return (
-    <div className="w-full bg-gray-900/50 border-t border-gray-800 py-12 mt-12 pb-20">
+    <div className="w-full bg-slate-900/50 border-t border-slate-800 py-12 mt-12 pb-20 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-6">
         
         <div className="flex items-center gap-2 mb-8 text-brand-400">
@@ -47,12 +47,12 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Left: Bar Chart (2/3 width) */}
-          <div className="lg:col-span-2 bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+          <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10">
-              <Globe className="w-32 h-32 text-gray-500" />
+              <Globe className="w-32 h-32 text-slate-500" />
             </div>
             
-            <h3 className="text-sm font-bold text-gray-400 uppercase mb-6">{t.distribution}</h3>
+            <h3 className="text-sm font-bold text-slate-400 uppercase mb-6">{t.distribution}</h3>
             
             <div className="flex items-end justify-between h-48 gap-4 px-2">
               {continentsConfig.map((c) => {
@@ -75,8 +75,8 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                       </div>
                     </div>
                     <div className="mt-3 text-center z-10">
-                      <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider">{c.label}</span>
-                      <span className="block text-xs text-gray-500 font-mono mt-1 opacity-100 group-hover:text-white transition-colors">{count}</span>
+                      <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider">{c.label}</span>
+                      <span className="block text-xs text-slate-500 font-mono mt-1 opacity-100 group-hover:text-white transition-colors">{count}</span>
                     </div>
                   </div>
                 );
@@ -85,34 +85,34 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
           </div>
 
           {/* Right: Total Card (1/3 width) */}
-          <div className="bg-gradient-to-br from-brand-900 to-gray-900 border border-brand-800 rounded-2xl p-8 flex flex-col justify-between items-center shadow-2xl relative overflow-hidden group">
+          <div className="bg-gradient-to-br from-brand-900 to-slate-900 border border-brand-800 rounded-2xl p-8 flex flex-col justify-between items-center shadow-2xl relative overflow-hidden group">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
             <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-brand-500/20 blur-[60px] rounded-full"></div>
             
             <div className="flex flex-col items-center relative z-10">
                 <Database className="w-10 h-10 text-brand-400 mb-2 group-hover:scale-110 transition-transform duration-500" />
-                <h3 className="text-gray-300 font-medium uppercase tracking-widest text-xs mb-1 text-center">{t.totalRecords}</h3>
+                <h3 className="text-slate-300 font-medium uppercase tracking-widest text-xs mb-1 text-center">{t.totalRecords}</h3>
                 <div className="text-5xl sm:text-6xl font-black text-white font-mono tracking-tighter drop-shadow-xl mb-4">
                   {totalRecords}
                 </div>
             </div>
 
             {/* Category Breakdown */}
-            <div className="w-full bg-gray-900/50 rounded-xl p-3 border border-gray-700/50 backdrop-blur-sm relative z-10">
-                <div className="flex items-center justify-between text-xs font-bold text-gray-400 mb-2 uppercase">
+            <div className="w-full bg-slate-900/50 rounded-xl p-3 border border-slate-700/50 backdrop-blur-sm relative z-10">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-400 mb-2 uppercase">
                    <span className="flex items-center gap-1 text-brand-400"><Coins className="w-3 h-3" /> Rasp.</span>
                    <span className="flex items-center gap-1 text-purple-400">Lotaria <Ticket className="w-3 h-3" /></span>
                 </div>
                 
                 {/* Progress Bar */}
-                <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden flex mb-2">
+                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden flex mb-2">
                     <div className="h-full bg-brand-500 transition-all duration-1000" style={{ width: `${scratchPct}%` }}></div>
                     <div className="h-full bg-purple-500 transition-all duration-1000" style={{ width: `${lotteryPct}%` }}></div>
                 </div>
 
                 <div className="flex items-center justify-between font-mono text-sm text-white">
                    <span>{categoryStats.scratch}</span>
-                   <span className="text-gray-500 text-[10px]">vs</span>
+                   <span className="text-slate-500 text-[10px]">vs</span>
                    <span>{categoryStats.lottery}</span>
                 </div>
             </div>
@@ -126,13 +126,13 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
         </div>
 
         {/* FOOTER / SIGNATURE */}
-        <div className="mt-24 pt-8 border-t border-gray-800/50 flex flex-col items-center justify-center text-center space-y-3 opacity-70 hover:opacity-100 transition-opacity duration-500">
-            <p className="text-gray-500 text-[10px] uppercase tracking-[0.2em]">
+        <div className="mt-24 pt-8 border-t border-slate-800/50 flex flex-col items-center justify-center text-center space-y-3 opacity-70 hover:opacity-100 transition-opacity duration-500">
+            <p className="text-slate-500 text-[10px] uppercase tracking-[0.2em]">
               © Copyright {new Date().getFullYear()} • Arquivo Mundial
             </p>
             
-            <h4 className="text-gray-300 font-bold text-sm md:text-base flex items-center gap-1.5">
-              Jorge Mesquita & Fabio Pagni <span className="text-[10px] text-gray-500 align-top -mt-2">®</span>
+            <h4 className="text-slate-300 font-bold text-sm md:text-base flex items-center gap-1.5">
+              Jorge Mesquita & Fabio Pagni <span className="text-[10px] text-slate-500 align-top -mt-2">®</span>
             </h4>
             
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-2 items-center">
