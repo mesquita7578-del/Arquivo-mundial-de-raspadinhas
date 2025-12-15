@@ -505,6 +505,7 @@ function App() {
         setLanguage={setLanguage}
         currentPage={currentPage}
         onNavigate={setCurrentPage}
+        stats={totalStats.stats} // Pass stats to Header
         t={t.header}
       />
 

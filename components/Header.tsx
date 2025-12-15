@@ -16,6 +16,7 @@ interface HeaderProps {
   setLanguage: (lang: Language) => void;
   currentPage: string;
   onNavigate: (page: any) => void;
+  stats: Record<string, number>;
   t: any;
 }
 
@@ -33,6 +34,7 @@ export const Header: React.FC<HeaderProps> = ({
   setLanguage,
   currentPage,
   onNavigate,
+  stats,
   t
 }) => {
   return (
@@ -101,7 +103,9 @@ export const Header: React.FC<HeaderProps> = ({
                         </div>
                         <div>
                            <h4 className="text-sm font-bold text-white mb-1 group-hover/card:text-blue-400 transition-colors">Europa</h4>
-                           <span className="text-[10px] text-slate-500 block">Inclui Portugal</span>
+                           <span className="text-[10px] text-slate-500 block font-mono">
+                             {stats['Europa'] || 0} itens <span className="text-slate-600">|</span> Inclui Portugal
+                           </span>
                         </div>
                      </button>
 
@@ -115,7 +119,9 @@ export const Header: React.FC<HeaderProps> = ({
                         </div>
                         <div>
                            <h4 className="text-sm font-bold text-white mb-1 group-hover/card:text-red-400 transition-colors">América</h4>
-                           <span className="text-[10px] text-slate-500 block">Norte, Sul e Central</span>
+                           <span className="text-[10px] text-slate-500 block font-mono">
+                             {stats['América'] || 0} itens
+                           </span>
                         </div>
                      </button>
 
@@ -129,7 +135,9 @@ export const Header: React.FC<HeaderProps> = ({
                         </div>
                         <div>
                            <h4 className="text-sm font-bold text-white mb-1 group-hover/card:text-yellow-400 transition-colors">Ásia</h4>
-                           <span className="text-[10px] text-slate-500 block">Oriente</span>
+                           <span className="text-[10px] text-slate-500 block font-mono">
+                             {stats['Ásia'] || 0} itens
+                           </span>
                         </div>
                      </button>
 
@@ -143,7 +151,9 @@ export const Header: React.FC<HeaderProps> = ({
                         </div>
                         <div>
                            <h4 className="text-sm font-bold text-white mb-1 group-hover/card:text-green-400 transition-colors">África</h4>
-                           <span className="text-[10px] text-slate-500 block">Continente Africano</span>
+                           <span className="text-[10px] text-slate-500 block font-mono">
+                             {stats['África'] || 0} itens
+                           </span>
                         </div>
                      </button>
 
@@ -157,14 +167,16 @@ export const Header: React.FC<HeaderProps> = ({
                         </div>
                         <div>
                            <h4 className="text-sm font-bold text-white mb-1 group-hover/card:text-purple-400 transition-colors">Oceania</h4>
-                           <span className="text-[10px] text-slate-500 block">Austrália e Ilhas</span>
+                           <span className="text-[10px] text-slate-500 block font-mono">
+                             {stats['Oceania'] || 0} itens
+                           </span>
                         </div>
                      </button>
                   </div>
                   
                   {/* Footer decoration */}
                   <div className="mt-6 pt-4 border-t border-slate-800 flex justify-center text-slate-500 text-[10px] uppercase tracking-widest gap-4">
-                     <span className="flex items-center gap-1"><Star className="w-3 h-3" /> Coleção Organizada por Geogradia</span>
+                     <span className="flex items-center gap-1"><Star className="w-3 h-3" /> Coleção Organizada por Geografia</span>
                   </div>
                </div>
             </div>
