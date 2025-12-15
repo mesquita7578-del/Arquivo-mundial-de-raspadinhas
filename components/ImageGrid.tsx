@@ -8,7 +8,7 @@ interface ImageGridProps {
   hideFilters?: boolean;
   viewMode?: 'grid' | 'list';
   isAdmin?: boolean;
-  activeCategory?: Category | 'all'; // New prop
+  activeCategory?: Category | 'all';
   t: any;
 }
 
@@ -156,7 +156,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   return (
     <div className="flex flex-col h-full">
       
-      {/* Category Tabs Removed from here - Lifted to App.tsx Sticky Bar */}
+      {/* Category Tabs handled in App.tsx */}
 
       {/* Filter Bar - Restricted to ADMIN only */}
       {!hideFilters && isAdmin && (
@@ -222,8 +222,8 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 className="group flex items-center gap-4 bg-gray-900 border border-gray-800 hover:border-brand-500/50 p-3 rounded-lg hover:bg-gray-800/50 cursor-pointer transition-all"
               >
                 {/* Thumbnail */}
-                <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 bg-gray-800">
-                   <img src={item.frontUrl} alt={item.gameName} className="w-full h-full object-cover" />
+                <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 bg-black/50">
+                   <img src={item.frontUrl} alt={item.gameName} className="w-full h-full object-contain" />
                 </div>
                 
                 {/* Info */}
@@ -246,7 +246,6 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                         {item.seriesDetails && <span className="text-[10px] text-brand-400 font-medium">{item.seriesDetails}</span>}
                       </span>
                     )}
-                    {/* Line Indicator in List */}
                     {item.lines && item.lines !== 'none' && (
                        <LineIndicator type={item.lines} t={t} />
                     )}
@@ -279,7 +278,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
             ))}
           </div>
         ) : (
-          // GRID VIEW
+          // GRID VIEW (UPDATED)
           <div className={`grid grid-cols-2 ${hideFilters ? 'md:grid-cols-4 lg:grid-cols-5' : 'md:grid-cols-3 lg:grid-cols-4'} gap-4 md:gap-6`}>
             {displayedImages.map((item) => (
               <div
@@ -287,29 +286,29 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 className="group relative bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-brand-500/50 transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-500/20 hover:scale-[1.02] cursor-pointer flex flex-col h-full"
                 onClick={() => onImageClick(item)}
               >
-                {/* Image Container */}
-                <div className="relative aspect-[4/3] overflow-hidden bg-gray-800">
+                {/* Image Container - Updated to object-contain and square aspect ratio */}
+                <div className="relative aspect-square overflow-hidden bg-black/40 flex items-center justify-center p-2">
                   <img
                     src={item.frontUrl}
                     alt={item.gameName}
-                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                    className="w-full h-full object-contain transition-transform duration-700 ease-out group-hover:scale-105"
                     loading="lazy"
                   />
                   
                   {/* Overlay on hover */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
                     <div className="bg-white/10 backdrop-blur-md p-3 rounded-full">
                       <Eye className="w-6 h-6 text-white" />
                     </div>
                   </div>
                   
                   {/* ID Badge */}
-                  <div className="absolute top-2 left-2 bg-black/70 backdrop-blur text-white text-[10px] font-mono px-2 py-1 rounded border border-gray-700 shadow-sm flex items-center gap-1">
+                  <div className="absolute top-2 left-2 bg-black/70 backdrop-blur text-white text-[10px] font-mono px-2 py-1 rounded border border-gray-700 shadow-sm flex items-center gap-1 z-20">
                      {item.category === 'lotaria' && <Ticket className="w-3 h-3 text-purple-400" />}
                      {item.customId}
                   </div>
 
-                   <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+                   <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-20">
                       <div className="flex gap-1">
                         {item.isSeries && (
                             <div className={`backdrop-blur text-white rounded-lg shadow-sm flex items-center justify-center gap-1 ${item.seriesDetails ? 'bg-brand-600/90 px-1.5 py-0.5' : 'bg-brand-600/90 p-1 rounded-full'}`} title={t.series}>
@@ -329,13 +328,12 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                         )}
                       </div>
                       
-                      {/* Lines Visual Indicator on Grid */}
                       <LineIndicator type={item.lines} t={t} />
                    </div>
                 </div>
 
                 {/* Info Container */}
-                <div className="p-3 md:p-4 flex flex-col flex-1">
+                <div className="p-3 md:p-4 flex flex-col flex-1 bg-gray-900">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-bold text-gray-200 truncate flex-1 mr-2 text-sm md:text-base" title={item.gameName}>{item.gameName}</h3>
                     <StateBadge state={item.state} />
