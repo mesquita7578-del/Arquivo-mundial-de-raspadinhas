@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen, FileSpreadsheet } from 'lucide-react';
+import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen, FileSpreadsheet, Home, BarChart2, Info } from 'lucide-react';
 import { Language } from '../translations';
 
 interface HeaderProps {
@@ -14,6 +14,8 @@ interface HeaderProps {
   onHistoryClick: () => void;
   language: Language;
   setLanguage: (lang: Language) => void;
+  currentPage: 'home' | 'stats' | 'about';
+  onNavigate: (page: 'home' | 'stats' | 'about') => void;
   t: any;
 }
 
@@ -29,14 +31,19 @@ export const Header: React.FC<HeaderProps> = ({
   onHistoryClick,
   language,
   setLanguage,
+  currentPage,
+  onNavigate,
   t
 }) => {
   return (
     <header className="flex items-center justify-between px-3 md:px-6 py-3 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50 shadow-lg h-[60px]">
       
       {/* Logo & Title */}
-      <div className="flex items-center gap-2">
-        <div className="bg-brand-600 p-1.5 md:p-2 rounded-lg shadow-lg shadow-brand-900/50 shrink-0">
+      <div 
+        className="flex items-center gap-2 cursor-pointer group"
+        onClick={() => onNavigate('home')}
+      >
+        <div className="bg-brand-600 p-1.5 md:p-2 rounded-lg shadow-lg shadow-brand-900/50 shrink-0 group-hover:bg-brand-500 transition-colors">
           <Ticket className="w-5 h-5 md:w-6 md:h-6 text-white" />
         </div>
         <div className="flex flex-col">
@@ -47,9 +54,37 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
+      {/* Navigation Menu (Center) - Hidden on very small screens */}
+      <nav className="hidden md:flex items-center gap-1 bg-slate-800/50 p-1 rounded-full border border-slate-700/50 absolute left-1/2 -translate-x-1/2">
+         <button
+           onClick={() => onNavigate('home')}
+           className={`px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${currentPage === 'home' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+         >
+           <Home className="w-3.5 h-3.5" />
+           Início
+         </button>
+         <button
+           onClick={() => onNavigate('stats')}
+           className={`px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${currentPage === 'stats' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+         >
+           <BarChart2 className="w-3.5 h-3.5" />
+           Estatísticas
+         </button>
+         <button
+           onClick={() => onNavigate('about')}
+           className={`px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${currentPage === 'about' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+         >
+           <Info className="w-3.5 h-3.5" />
+           Sobre
+         </button>
+      </nav>
+
       {/* Actions */}
       <div className="flex items-center gap-2">
         
+        {/* Mobile Nav Trigger (Simple Icon for now, or just rely on bottom/top nav) */}
+        {/* For this iteration, we keep it clean. Mobile users might need a simpler menu later, but for now buttons fit in actions or distinct row */}
+
         {/* Language Toggles */}
         <div className="flex bg-slate-800 rounded-md p-0.5 border border-slate-700">
           <button 
