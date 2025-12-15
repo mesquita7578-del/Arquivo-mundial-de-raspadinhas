@@ -211,12 +211,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
       {/* Public Toolbar (Results Count + View Toggle) */}
       {!hideFilters && (
         <div className="px-4 md:px-6 py-2 flex justify-between items-center border-b border-gray-800 bg-gray-900/30">
-           {/* Left side: Count */}
-           <div className="text-xs text-gray-500 font-mono font-bold uppercase tracking-wider">
-             {filteredImages.length} {t.results}
-           </div>
-
-           {/* Right side: Toggle */}
+           {/* Left side: Toggle (Moved here) */}
            <div className="flex bg-gray-800 p-1 rounded-lg border border-gray-700">
              <button 
                 onClick={() => onViewModeChange?.('grid')} 
@@ -232,6 +227,11 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
              >
                 <List className="w-4 h-4" />
              </button>
+           </div>
+
+           {/* Right side: Count (Moved here) */}
+           <div className="text-xs text-gray-500 font-mono font-bold uppercase tracking-wider">
+             {filteredImages.length} {t.results}
            </div>
         </div>
       )}
