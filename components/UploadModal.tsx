@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify, Gem, MapPin, Gift, Image as ImageIcon, FileSearch } from 'lucide-react';
 import { analyzeImage, searchScratchcardInfo } from '../services/geminiService';
 import { ScratchcardData, ScratchcardState, Continent, Category, LineType } from '../types';
@@ -79,6 +79,35 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
   const [isCompressing, setIsCompressing] = useState(false);
   
   const [formData, setFormData] = useState<ScratchcardData | null>(null);
+
+  // Generate unique lists for autocomplete from existing data
+  const suggestions = useMemo(() => {
+    const countries = new Set<string>();
+    const regions = new Set<string>();
+    const printers = new Set<string>();
+    const collectors = new Set<string>();
+    const emissions = new Set<string>();
+    const sizes = new Set<string>();
+
+    existingImages.forEach(img => {
+      if (img.country) countries.add(img.country);
+      if (img.region) regions.add(img.region);
+      if (img.printer) printers.add(img.printer);
+      if (img.collector) collectors.add(img.collector);
+      if (img.emission) emissions.add(img.emission);
+      if (img.size) sizes.add(img.size);
+    });
+
+    return {
+      countries: Array.from(countries).sort(),
+      regions: Array.from(regions).sort(),
+      printers: Array.from(printers).sort(),
+      collectors: Array.from(collectors).sort(),
+      emissions: Array.from(emissions).sort(),
+      sizes: Array.from(sizes).sort(),
+      states: ['MINT', 'VOID', 'AMOSTRA', 'MUESTRA', 'CAMPIONE', 'SC', 'CS']
+    };
+  }, [existingImages]);
 
   // Handle Initial File from Drag and Drop
   useEffect(() => {
@@ -298,6 +327,30 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in">
+      
+      {/* Hidden Datalists for Autocomplete */}
+      <datalist id="list-countries">
+        {suggestions.countries.map(v => <option key={v} value={v} />)}
+      </datalist>
+      <datalist id="list-regions">
+        {suggestions.regions.map(v => <option key={v} value={v} />)}
+      </datalist>
+      <datalist id="list-printers">
+        {suggestions.printers.map(v => <option key={v} value={v} />)}
+      </datalist>
+      <datalist id="list-collectors">
+        {suggestions.collectors.map(v => <option key={v} value={v} />)}
+      </datalist>
+      <datalist id="list-emissions">
+        {suggestions.emissions.map(v => <option key={v} value={v} />)}
+      </datalist>
+      <datalist id="list-sizes">
+        {suggestions.sizes.map(v => <option key={v} value={v} />)}
+      </datalist>
+      <datalist id="list-states">
+        {suggestions.states.map(v => <option key={v} value={v} />)}
+      </datalist>
+
       {/* Container */}
       <div className={`bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl w-full ${step === 'review' ? 'max-w-5xl' : 'max-w-2xl'} shadow-2xl flex flex-col max-h-[90vh] transition-all duration-500 relative overflow-hidden`}>
         
@@ -559,6 +612,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                      <div className="relative">
                        <input 
                          type="text" 
+                         list="list-countries"
                          value={formData?.country || ''}
                          onChange={e => updateField('country', e.target.value)}
                          className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2.5 text-white focus:border-brand-500 focus:outline-none pr-8 text-sm"
@@ -579,6 +633,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 group-focus-within:text-brand-500" />
                        <input 
                          type="text" 
+                         list="list-regions"
                          value={formData?.region || ''}
                          onChange={e => updateField('region', e.target.value)}
                          placeholder="Ex: Baviera, Açores"
@@ -604,6 +659,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                      <label className="block text-[10px] uppercase text-gray-500 font-bold mb-1.5 tracking-wider">{t.state}</label>
                      <input
                        type="text"
+                       list="list-states"
                        value={formData?.state || ''}
                        onChange={e => updateField('state', e.target.value as ScratchcardState)}
                        placeholder="Ex: MINT"
@@ -627,6 +683,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 group-focus-within:text-brand-500" />
                        <input 
                          type="text" 
+                         list="list-collectors"
                          value={formData?.collector || ''}
                          onChange={e => updateField('collector', e.target.value)}
                          placeholder={t.collector}
@@ -650,6 +707,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                      <label className="block text-[10px] uppercase text-gray-500 font-bold mb-1.5 tracking-wider">{t.size}</label>
                      <input 
                        type="text" 
+                       list="list-sizes"
                        value={formData?.size || ''}
                        onChange={e => updateField('size', e.target.value)}
                        placeholder="Ex: 10x5cm"
@@ -677,6 +735,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                        <BarChart className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 group-focus-within:text-blue-500" />
                        <input 
                          type="text" 
+                         list="list-emissions"
                          value={formData?.emission || ''}
                          onChange={e => updateField('emission', e.target.value)}
                          placeholder="Ex: 500k"
@@ -691,6 +750,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                        <Printer className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 group-focus-within:text-brand-500" />
                        <input 
                          type="text" 
+                         list="list-printers"
                          value={formData?.printer || ''}
                          onChange={e => updateField('printer', e.target.value)}
                          placeholder="Ex: Scientific Games"
