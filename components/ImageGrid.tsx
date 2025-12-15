@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
-import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify } from 'lucide-react';
+import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff } from 'lucide-react';
 
 interface ImageGridProps {
   images: ScratchcardData[];
@@ -58,6 +58,30 @@ const LineIndicator: React.FC<{ type?: LineType; t: any }> = ({ type, t }) => {
       <div className={`w-2 h-2 rounded-full ${colorClass} shadow-sm`}></div>
       <span className="text-[9px] text-gray-400 uppercase font-bold hidden sm:inline">{label}</span>
     </div>
+  );
+};
+
+// Component to safely render images with fallback
+const SafeImage = ({ src, alt, className }: { src: string, alt: string, className: string }) => {
+  const [error, setError] = useState(false);
+
+  if (error || !src) {
+    return (
+      <div className={`flex flex-col items-center justify-center bg-gray-800 text-gray-600 ${className}`}>
+        <ImageOff className="w-8 h-8 opacity-50 mb-1" />
+        <span className="text-[10px] font-mono">No Image</span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      onError={() => setError(true)}
+      loading="lazy"
+    />
   );
 };
 
@@ -156,8 +180,6 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   return (
     <div className="flex flex-col h-full">
       
-      {/* Category Tabs handled in App.tsx */}
-
       {/* Filter Bar - Restricted to ADMIN only */}
       {!hideFilters && isAdmin && (
         <div className="px-6 py-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm z-10 sticky top-0 space-y-3 animate-fade-in">
@@ -222,8 +244,8 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 className="group flex items-center gap-4 bg-gray-900 border border-gray-800 hover:border-brand-500/50 p-3 rounded-lg hover:bg-gray-800/50 cursor-pointer transition-all"
               >
                 {/* Thumbnail */}
-                <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 bg-black/50">
-                   <img src={item.frontUrl} alt={item.gameName} className="w-full h-full object-contain" />
+                <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 bg-black/50 border border-gray-700">
+                   <SafeImage src={item.frontUrl} alt={item.gameName} className="w-full h-full object-contain" />
                 </div>
                 
                 {/* Info */}
@@ -260,18 +282,6 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                   </div>
                 </div>
 
-                {/* Meta details hidden on small screens */}
-                <div className="hidden sm:flex items-center gap-6 text-xs text-gray-500 mr-4">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {item.releaseDate.split('-')[0]}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Maximize2 className="w-3 h-3" />
-                    {item.size}
-                  </div>
-                </div>
-
                 {/* Badge */}
                 <StateBadge state={item.state} />
               </div>
@@ -286,13 +296,12 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 className="group relative bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-brand-500/50 transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-500/20 hover:scale-[1.02] cursor-pointer flex flex-col h-full"
                 onClick={() => onImageClick(item)}
               >
-                {/* Image Container - Updated to object-contain and square aspect ratio */}
-                <div className="relative aspect-square overflow-hidden bg-black/40 flex items-center justify-center p-2">
-                  <img
+                {/* Image Container - object-contain and square aspect ratio */}
+                <div className="relative aspect-square overflow-hidden bg-gray-800 flex items-center justify-center p-2">
+                  <SafeImage
                     src={item.frontUrl}
                     alt={item.gameName}
                     className="w-full h-full object-contain transition-transform duration-700 ease-out group-hover:scale-105"
-                    loading="lazy"
                   />
                   
                   {/* Overlay on hover */}
@@ -333,7 +342,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 </div>
 
                 {/* Info Container */}
-                <div className="p-3 md:p-4 flex flex-col flex-1 bg-gray-900">
+                <div className="p-3 md:p-4 flex flex-col flex-1 bg-gray-900 border-t border-gray-800">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-bold text-gray-200 truncate flex-1 mr-2 text-sm md:text-base" title={item.gameName}>{item.gameName}</h3>
                     <StateBadge state={item.state} />

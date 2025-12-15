@@ -4,7 +4,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
   {
     id: '1',
     customId: 'RASP-PT-001',
-    frontUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/e3/Scratch_card.jpg',
+    frontUrl: 'https://placehold.co/600x600/1f2937/white?text=Super+Pe+de+Meia',
     backUrl: 'https://placehold.co/600x400/1f2937/white?text=Verso+Super+Pe+de+Meia',
     gameName: 'Super Pé de Meia',
     gameNumber: '105',
@@ -21,7 +21,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
   {
     id: '2',
     customId: 'RASP-ES-042',
-    frontUrl: 'https://tse2.mm.bing.net/th?id=OIP.U5yZcTgwF6zC4_kC3wW2iQHaEK&pid=Api',
+    frontUrl: 'https://placehold.co/600x800/881337/white?text=Millonario',
     backUrl: 'https://placehold.co/600x400/1f2937/white?text=Verso+Millonario',
     gameName: 'Millonario',
     gameNumber: '502',
@@ -38,7 +38,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
   {
     id: '3',
     customId: 'RASP-US-889',
-    frontUrl: 'https://tse4.mm.bing.net/th?id=OIP.0C2_h-lq2x5sC6v8_yH2YQHaFj&pid=Api',
+    frontUrl: 'https://placehold.co/800x600/1e3a8a/white?text=Lucky+7s',
     gameName: 'Lucky 7s',
     gameNumber: '777',
     releaseDate: '2024-01-15',
@@ -54,7 +54,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
   {
     id: '4',
     customId: 'RASP-IT-202',
-    frontUrl: 'https://tse3.mm.bing.net/th?id=OIP.wReJ1rQ4yv_yW5xZ_zH1ZAHaE8&pid=Api',
+    frontUrl: 'https://placehold.co/600x600/065f46/white?text=Turista+per+Sempre',
     gameName: 'Turista per Sempre',
     gameNumber: '304',
     releaseDate: '2021-08-20',
@@ -70,7 +70,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
   {
     id: '5',
     customId: 'RASP-JP-999',
-    frontUrl: 'https://tse1.mm.bing.net/th?id=OIP.X1X3yC6zV9xB2nN3m4k5LwHaFj&pid=Api', // Placeholder
+    frontUrl: 'https://placehold.co/500x500/7c2d12/white?text=Anime+Scratch',
     gameName: 'Anime Scratch',
     gameNumber: '101',
     releaseDate: '2023-12-01',
