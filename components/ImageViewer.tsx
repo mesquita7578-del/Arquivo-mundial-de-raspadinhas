@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify } from 'lucide-react';
+import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify, Gem } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
 
 interface ImageViewerProps {
@@ -37,13 +37,10 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
 
   const handleConfirmDelete = () => {
     onDelete(image.id);
-    // No need to call onClose() manually as onDelete usually unmounts/hides the viewer via parent state
   };
 
   const handleShare = async () => {
-    // Generates a mock deep link based on ID
     const shareUrl = `${window.location.origin}?id=${image.customId}`;
-    
     try {
       await navigator.clipboard.writeText(shareUrl);
       setShowCopied(true);
@@ -57,7 +54,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
     setFormData(prev => prev ? { ...prev, [field]: value } : null);
   };
 
-  // Helper to get category label/icon
   const getCategoryIcon = (cat: Category | undefined) => {
      if (cat === 'lotaria') return <Ticket className="w-4 h-4 text-purple-400" />;
      return <Coins className="w-4 h-4 text-brand-400" />;
@@ -220,6 +216,12 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                
                {!isEditing && (
                  <div className="flex gap-2">
+                   {image.isRarity && (
+                      <span className="text-gold-400 bg-gold-900/30 border border-gold-500/50 px-2 py-0.5 rounded text-xs flex items-center gap-1 font-bold animate-pulse" title="Raridade">
+                        <Gem className="w-3 h-3" />
+                      </span>
+                   )}
+
                    <div 
                      className="text-gray-400 bg-gray-800 border border-gray-700 px-2 py-0.5 rounded text-xs flex items-center gap-1"
                      title={getCategoryLabel(image.category)}
@@ -257,6 +259,19 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                   className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded px-3 py-1 focus:border-brand-500 outline-none"
                 />
                 <div className="flex flex-col gap-2 mt-2 bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                   {/* Raridade Toggle */}
+                   <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-700">
+                       <div 
+                         className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer ${formData.isRarity ? 'bg-gold-500 border-gold-500' : 'border-gray-500'}`}
+                         onClick={() => handleChange('isRarity', !formData.isRarity)}
+                       >
+                         {formData.isRarity && <Gem className="w-3 h-3 text-white" />}
+                       </div>
+                       <label className={`text-xs cursor-pointer font-bold ${formData.isRarity ? 'text-gold-400' : 'text-gray-400'}`} onClick={() => handleChange('isRarity', !formData.isRarity)}>
+                          {formData.isRarity ? 'Item Raro!' : 'Marcar como Raridade'}
+                       </label>
+                   </div>
+
                    <div className="flex items-center justify-between">
                      <div className="flex items-center gap-2">
                        <div 
@@ -295,7 +310,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
               </div>
             ) : (
               <>
-                <h2 className="text-3xl font-bold text-white mb-1 leading-tight">{image.gameName}</h2>
+                <h2 className={`text-3xl font-bold mb-1 leading-tight ${image.isRarity ? 'text-gold-400' : 'text-white'}`}>{image.gameName}</h2>
                 <div className="flex items-center gap-2 text-brand-400 text-sm mb-4">
                   <Globe className="w-4 h-4" />
                   <span>{image.country} • {image.continent}</span>
@@ -473,9 +488,10 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
               </div>
 
               {/* Full width properties */}
-              <div className="bg-gray-800/40 p-4 rounded-lg border border-gray-800 mt-4">
-                <span className="flex items-center gap-2 text-xs uppercase text-gray-500 mb-2">
-                  <Info className="w-3 h-3" /> {t.values}
+              <div className={`p-4 rounded-lg border mt-4 ${image.isRarity ? 'bg-gold-900/10 border-gold-500/30' : 'bg-gray-800/40 border-gray-800'}`}>
+                <span className={`flex items-center gap-2 text-xs uppercase mb-2 ${image.isRarity ? 'text-gold-500 font-bold' : 'text-gray-500'}`}>
+                  {image.isRarity ? <Gem className="w-3 h-3" /> : <Info className="w-3 h-3" />}
+                  {image.isRarity ? t.rarityInfo : t.values}
                 </span>
                 {isEditing ? (
                   <textarea 
@@ -485,7 +501,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                   />
                 ) : (
                   <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
-                    {image.values || 'Nenhuma nota adicionada.'}
+                    {image.values || (image.isRarity ? 'Sem informação histórica.' : 'Nenhuma nota adicionada.')}
                   </p>
                 )}
               </div>

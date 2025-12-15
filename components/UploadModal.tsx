@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify } from 'lucide-react';
+import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify, Gem } from 'lucide-react';
 import { analyzeImage, searchScratchcardInfo } from '../services/geminiService';
 import { ScratchcardData, ScratchcardState, Continent, Category, LineType } from '../types';
 
@@ -172,7 +172,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       printer: analysis.printer || '',
       isSeries: false,
       seriesDetails: '',
-      lines: 'none', // Default to none or undefined
+      lines: 'none', 
+      isRarity: false, // Default
       category: analysis.category || 'raspadinha',
       createdAt: Date.now(),
       aiGenerated: true
@@ -381,21 +382,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                     />
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                   </div>
-                  
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => { setSearchQuery("Novas raspadinhas Santa Casa"); handleWebSearch(); }}
-                      className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-full border border-gray-700 transition-colors"
-                    >
-                      Últimos Lançamentos SCML
-                    </button>
-                    <button 
-                      onClick={() => setSearchQuery("Raspadinha 50X")}
-                      className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-full border border-gray-700 transition-colors"
-                    >
-                      Ex: 50X
-                    </button>
-                  </div>
                 </div>
               )}
             </div>
@@ -413,7 +399,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                     <input type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && processFile(e.target.files[0], true)} />
                   </label>
                 </div>
-                {/* ... existing Back Image logic ... */}
                 
                 {/* Category Selector */}
                 <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
@@ -436,33 +421,53 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                   </div>
                 </div>
 
-                {/* Checkbox Series with Manual Input */}
-                 <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700 flex flex-col gap-2">
+                 {/* Checkbox Series & Rarity */}
+                 <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700 flex flex-col gap-3">
+                   
+                   {/* Series Checkbox */}
+                   <div className="flex flex-col gap-2">
+                     <div className="flex items-center gap-3">
+                       <div 
+                         className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-colors ${formData?.isSeries ? 'bg-brand-500 border-brand-500' : 'border-gray-500 hover:border-gray-400'}`}
+                         onClick={() => updateField('isSeries', !formData?.isSeries)}
+                       >
+                         {formData?.isSeries && <Check className="w-3.5 h-3.5 text-white" />}
+                       </div>
+                       <label 
+                         className="text-sm text-gray-300 cursor-pointer select-none font-bold"
+                         onClick={() => updateField('isSeries', !formData?.isSeries)}
+                       >
+                         {t.isSeries}
+                       </label>
+                     </div>
+                     {formData?.isSeries && (
+                        <input 
+                          type="text"
+                          value={formData.seriesDetails || ''}
+                          onChange={(e) => updateField('seriesDetails', e.target.value)}
+                          placeholder={t.seriesDetailsPlaceholder}
+                          className="w-full bg-gray-900 border border-gray-600 text-white text-xs rounded px-2 py-1.5 focus:border-brand-500 outline-none placeholder-gray-500 animate-fade-in"
+                        />
+                     )}
+                   </div>
+
+                   <div className="h-px bg-gray-700"></div>
+
+                   {/* Rarity Checkbox */}
                    <div className="flex items-center gap-3">
                      <div 
-                       className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-colors ${formData?.isSeries ? 'bg-brand-500 border-brand-500' : 'border-gray-500 hover:border-gray-400'}`}
-                       onClick={() => updateField('isSeries', !formData?.isSeries)}
+                       className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-colors ${formData?.isRarity ? 'bg-gold-500 border-gold-500' : 'border-gray-500 hover:border-gray-400'}`}
+                       onClick={() => updateField('isRarity', !formData?.isRarity)}
                      >
-                       {formData?.isSeries && <Check className="w-3.5 h-3.5 text-white" />}
+                       {formData?.isRarity && <Gem className="w-3.5 h-3.5 text-white" />}
                      </div>
                      <label 
-                       className="text-sm text-gray-300 cursor-pointer select-none font-bold"
-                       onClick={() => updateField('isSeries', !formData?.isSeries)}
+                       className={`text-sm cursor-pointer select-none font-bold ${formData?.isRarity ? 'text-gold-400' : 'text-gray-300'}`}
+                       onClick={() => updateField('isRarity', !formData?.isRarity)}
                      >
-                       {t.isSeries}
+                       {t.isRarity}
                      </label>
                    </div>
-                   
-                   {/* Manual Series Input */}
-                   {formData?.isSeries && (
-                      <input 
-                        type="text"
-                        value={formData.seriesDetails || ''}
-                        onChange={(e) => updateField('seriesDetails', e.target.value)}
-                        placeholder={t.seriesDetailsPlaceholder}
-                        className="w-full bg-gray-900 border border-gray-600 text-white text-xs rounded px-2 py-1.5 focus:border-brand-500 outline-none placeholder-gray-500 animate-fade-in"
-                      />
-                   )}
                  </div>
               </div>
 
@@ -630,11 +635,13 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    </div>
                    
                    <div className="col-span-2">
-                     <label className="block text-xs text-gray-500 font-bold mb-1">{t.values}</label>
+                     <label className={`block text-xs font-bold mb-1 ${formData?.isRarity ? 'text-gold-400' : 'text-gray-500'}`}>
+                        {formData?.isRarity ? t.rarityInfo : t.values}
+                     </label>
                      <textarea 
                        value={formData?.values || ''}
                        onChange={e => updateField('values', e.target.value)}
-                       className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 focus:outline-none h-20"
+                       className={`w-full bg-gray-800 border rounded px-3 py-2 text-white focus:outline-none h-20 ${formData?.isRarity ? 'border-gold-500/50 focus:border-gold-500' : 'border-gray-700 focus:border-brand-500'}`}
                      />
                    </div>
                 </div>

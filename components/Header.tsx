@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Upload, Ticket, Lock, LogOut, Download, FileSpreadsheet, BookOpen } from 'lucide-react';
+import { Search, Upload, Ticket, Lock, LogOut, Download, Gem, BookOpen } from 'lucide-react';
 import { Language } from '../translations';
 
 interface HeaderProps {
@@ -10,8 +10,9 @@ interface HeaderProps {
   onAdminToggle: () => void;
   onLogout: () => void;
   onExport: () => void;
-  onDownloadList: () => void;
-  onHistoryClick: () => void; // New prop
+  onToggleRarities: () => void; // Replaced download list
+  showRarities: boolean; // New prop
+  onHistoryClick: () => void;
   language: Language;
   setLanguage: (lang: Language) => void;
   t: any;
@@ -25,7 +26,8 @@ export const Header: React.FC<HeaderProps> = ({
   onAdminToggle, 
   onLogout,
   onExport,
-  onDownloadList,
+  onToggleRarities,
+  showRarities,
   onHistoryClick,
   language,
   setLanguage,
@@ -65,9 +67,13 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Spacer where Search used to be (keeps layout balanced) or simple text */}
+      {/* Spacer / Context Text */}
       <div className="hidden md:flex flex-1 justify-center items-center text-gray-600 text-sm font-medium tracking-wide">
-         Arquivo Digital & Colecionismo
+         {showRarities ? (
+           <span className="text-gold-400 flex items-center gap-2 animate-pulse">
+             <Gem className="w-4 h-4" /> Secção de Raridades
+           </span>
+         ) : "Arquivo Digital & Colecionismo"}
       </div>
 
       {/* Actions */}
@@ -91,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
 
-        {/* History Button (New) */}
+        {/* History Button */}
         <button
           onClick={onHistoryClick}
           className="flex items-center gap-2 bg-blue-900/20 hover:bg-blue-800/40 text-blue-400 hover:text-blue-300 border border-blue-800/50 px-3 py-2 rounded-full text-xs sm:text-sm font-medium transition-all"
@@ -101,14 +107,18 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="hidden lg:inline">{t.history}</span>
         </button>
 
-        {/* Public Excel Download Button */}
+        {/* Rarities Button (Replaces Excel) */}
         <button
-          onClick={onDownloadList}
-          className="flex items-center gap-2 bg-green-900/20 hover:bg-green-800/40 text-green-400 hover:text-green-300 border border-green-800/50 px-3 py-2 rounded-full text-xs sm:text-sm font-medium transition-all"
-          title="Download Lista Excel"
+          onClick={onToggleRarities}
+          className={`flex items-center gap-2 border px-3 py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
+             showRarities 
+               ? "bg-gold-500/20 text-gold-400 border-gold-500 shadow-lg shadow-gold-500/20" 
+               : "bg-gray-800/50 text-gray-400 border-gray-700 hover:border-gold-500/50 hover:text-gold-400"
+          }`}
+          title={t.rarities}
         >
-          <FileSpreadsheet className="w-4 h-4" />
-          <span className="hidden lg:inline">Excel</span>
+          <Gem className="w-4 h-4" />
+          <span className="hidden lg:inline">{t.rarities}</span>
         </button>
 
         {/* Admin Controls */}

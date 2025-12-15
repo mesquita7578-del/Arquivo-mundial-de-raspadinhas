@@ -6,7 +6,7 @@ export const translations = {
     header: {
       title: "Arquivo Mundial",
       subtitle: "de Raspadinhas & Lotarias",
-      history: "Biblioteca", // Changed to Library
+      history: "Biblioteca", 
       search: "Buscar...",
       admin: "Admin",
       logout: "Sair",
@@ -16,7 +16,8 @@ export const translations = {
       addTitle: "Adicionar Novo Item",
       loginRequired: "Faça login para adicionar",
       backup: "Backup",
-      backupTitle: "Baixar cópia de segurança dos dados (JSON)"
+      backupTitle: "Baixar cópia de segurança dos dados (JSON)",
+      rarities: "Raridades" // New
     },
     history: {
       title: "Biblioteca do Colecionador",
@@ -85,6 +86,7 @@ export const translations = {
       aiTitle: "IA de Catalogação",
       aiDesc: "O sistema irá identificar se é Raspadinha ou Lotaria, além do país e dados técnicos.",
       isSeries: "É um SET (Série)?",
+      isRarity: "Item Raro / Raridade?", // New
       seriesDetailsPlaceholder: "Nºs (ex: 1-5)",
       gameName: "Nome do Jogo",
       country: "País",
@@ -98,6 +100,7 @@ export const translations = {
       emission: "Emissão / Tiragem",
       printer: "Impresso Por",
       values: "Nota", 
+      rarityInfo: "Informação Histórica", // New
       lines: "Tipo de Linhas", 
       linesPlaceholder: "Selecione as linhas...",
       linesBlue: "Linhas Azuis",
@@ -133,7 +136,8 @@ export const translations = {
       release: "Lançamento",
       emission: "Emissão",
       printer: "Impresso Por",
-      values: "Nota", 
+      values: "Nota",
+      rarityInfo: "Informação Histórica", // New
       lines: "Linhas", 
       linesBlue: "Azuis",
       linesRed: "Vermelhas",
@@ -168,7 +172,7 @@ export const translations = {
     header: {
       title: "Archivio Mondiale",
       subtitle: "di Gratta e Vinci & Lotterie",
-      history: "Biblioteca", // Library
+      history: "Biblioteca", 
       search: "Cerca...",
       admin: "Admin",
       logout: "Esci",
@@ -178,7 +182,8 @@ export const translations = {
       addTitle: "Aggiungi Nuovo Oggetto",
       loginRequired: "Accedi per aggiungere",
       backup: "Backup",
-      backupTitle: "Scarica copia di backup dei dati (JSON)"
+      backupTitle: "Scarica copia di backup dei dati (JSON)",
+      rarities: "Rarità" // New
     },
     history: {
       title: "Biblioteca del Collezionista",
@@ -247,6 +252,7 @@ export const translations = {
       aiTitle: "IA di Catalogazione",
       aiDesc: "Il sistema identificherà se è Gratta e Vinci o Lotteria, oltre a paese e dati.",
       isSeries: "È un SET (Serie)?",
+      isRarity: "Oggetto Raro / Rarità?", // New
       seriesDetailsPlaceholder: "N. (es: 1-5)",
       gameName: "Nome del Gioco",
       country: "Paese",
@@ -260,6 +266,7 @@ export const translations = {
       emission: "Emissione / Tiratura",
       printer: "Stampato Da",
       values: "Nota", 
+      rarityInfo: "Informazione Storica", // New
       lines: "Tipo di Linee", 
       linesPlaceholder: "Seleziona le linee...",
       linesBlue: "Linee Blu",
@@ -296,6 +303,7 @@ export const translations = {
       emission: "Emissione",
       printer: "Stampato Da",
       values: "Nota", 
+      rarityInfo: "Informazione Storica", // New
       lines: "Linee", 
       linesBlue: "Blu",
       linesRed: "Rosse",

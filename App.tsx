@@ -9,7 +9,7 @@ import { WorldMap } from './components/WorldMap';
 import { HistoryModal } from './components/HistoryModal'; // New Import
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
@@ -32,10 +32,12 @@ function App() {
   
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); // New State
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); 
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
+  
+  const [showRarities, setShowRarities] = useState(false); // New state for Rarities view
   
   const [isDragging, setIsDragging] = useState(false);
   const [droppedFile, setDroppedFile] = useState<File | null>(null);
@@ -80,14 +82,30 @@ function App() {
     loadInitialData();
   }, []);
 
-  // Handle Search & Continent Filters
+  // Handle Search & Continent & Rarities Filters
   useEffect(() => {
     const performSearch = async () => {
       setIsLoadingMore(true);
       try {
-        const results = await storageService.search(searchTerm, activeContinent);
+        let results = await storageService.search(searchTerm, activeContinent);
+        
+        // Filter for Rarities if active
+        if (showRarities) {
+          results = results.filter(img => img.isRarity === true);
+        }
+
         setDisplayedImages(results);
-        setMapData(results); 
+        
+        // Map data should usually reflect the current search/view, or remain global?
+        // Let's filter map data too if in rarities mode
+        if (showRarities) {
+           setMapData(results);
+        } else {
+           // If search term exists, filter map. If not, map might need all? 
+           // Usually map syncs with grid for consistency
+           setMapData(results);
+        }
+
       } catch (err) {
         console.error(err);
       } finally {
@@ -100,7 +118,7 @@ function App() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, activeContinent, isLoadingDB]);
+  }, [searchTerm, activeContinent, showRarities, isLoadingDB]);
 
   const handleLoadMore = async () => {
      // Placeholder
@@ -122,7 +140,12 @@ function App() {
   const handleUploadComplete = async (newImage: ScratchcardData) => {
     try {
       await storageService.save(newImage);
-      setDisplayedImages(prev => [newImage, ...prev]);
+      // Refresh logic relies on useEffects mostly, but lets update local state for instant feel
+      setDisplayedImages(prev => {
+         if (showRarities && !newImage.isRarity) return prev;
+         return [newImage, ...prev];
+      });
+      
       setNewArrivals(prev => [newImage, ...prev].slice(0, 10));
       setMapData(prev => [...prev, newImage]);
       setTotalStats(prev => ({
@@ -202,84 +225,6 @@ function App() {
     }
   };
 
-  const handleDownloadList = async () => {
-    try {
-      const allItems = await storageService.getAll();
-      const sortedItems = allItems.sort((a, b) => {
-        const contCompare = a.continent.localeCompare(b.continent);
-        if (contCompare !== 0) return contCompare;
-        const countryCompare = a.country.localeCompare(b.country);
-        if (countryCompare !== 0) return countryCompare;
-        const catA = a.category || '';
-        const catB = b.category || '';
-        const catCompare = catA.localeCompare(catB);
-        if (catCompare !== 0) return catCompare;
-        const numA = parseInt(a.gameNumber.replace(/\D/g, '')) || 0;
-        const numB = parseInt(b.gameNumber.replace(/\D/g, '')) || 0;
-        if (numA !== numB) return numA - numB;
-        return a.gameName.localeCompare(b.gameName);
-      });
-
-      const headers = [
-        "Continente / Continent",
-        "País / Country",
-        "Categoria / Type",
-        "Nome do Jogo / Game Name",
-        "Número / No.",
-        "Ano / Year",
-        "Estado / State",
-        "Preço / Price",
-        "Tamanho / Size",
-        "Emissão / Emission",
-        "Gráfica / Printer",
-        "Colecionador / Collector",
-        "Link Imagem / Image Link",
-        "Notas / Notes",
-        "Correções (Para Preencher) / Corrections"
-      ];
-
-      const escapeCsv = (field: string | undefined) => {
-        if (!field) return "";
-        const stringField = String(field);
-        if (stringField.includes(";") || stringField.includes("\n") || stringField.includes('"')) {
-           return `"${stringField.replace(/"/g, '""')}"`;
-        }
-        return stringField;
-      };
-
-      const rows = sortedItems.map(item => [
-        escapeCsv(item.continent),
-        escapeCsv(item.country),
-        escapeCsv(item.category),
-        escapeCsv(item.gameName),
-        escapeCsv(item.gameNumber),
-        escapeCsv(item.releaseDate),
-        escapeCsv(item.state),
-        escapeCsv(item.price),
-        escapeCsv(item.size),
-        escapeCsv(item.emission),
-        escapeCsv(item.printer),
-        escapeCsv(item.collector),
-        escapeCsv(item.frontUrl),
-        escapeCsv(item.values),
-        ""
-      ].join(";"));
-
-      const csvContent = "\uFEFF" + headers.join(";") + "\n" + rows.join("\n");
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `Arquivo-Mundial-Lista-Completa-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("Erro ao gerar lista:", error);
-      alert("Erro ao criar a lista para download.");
-    }
-  };
-
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault(); e.stopPropagation(); setIsDragging(true);
   };
@@ -332,8 +277,9 @@ function App() {
         onAdminToggle={handleAdminToggle}
         onLogout={handleLogout}
         onExport={handleExportData}
-        onDownloadList={handleDownloadList}
-        onHistoryClick={() => setIsHistoryModalOpen(true)} // Pass the handler
+        onToggleRarities={() => setShowRarities(!showRarities)}
+        showRarities={showRarities}
+        onHistoryClick={() => setIsHistoryModalOpen(true)}
         language={language}
         setLanguage={setLanguage}
         t={t.header}
@@ -355,35 +301,44 @@ function App() {
 
         <div className="max-w-7xl mx-auto py-8 relative z-10 space-y-12">
 
-          <section className="px-6">
-            <div className="flex items-center gap-2 mb-4 text-brand-400">
-              <Clock className="w-5 h-5" />
-              <h2 className="text-xl font-bold text-white uppercase tracking-wider">{t.home.newArrivals}</h2>
-            </div>
-            <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 overflow-x-auto">
-               <div className="min-w-[800px]">
-                 <ImageGrid 
-                   images={newArrivals} 
-                   onImageClick={setSelectedImage} 
-                   hideFilters={true} 
-                   isAdmin={isAdmin} 
-                   t={t.grid}
-                 />
-               </div>
-            </div>
-          </section>
+          {/* New Arrivals (Hidden if Rarities mode is active to focus on search/collection) */}
+          {!showRarities && (
+            <section className="px-6">
+              <div className="flex items-center gap-2 mb-4 text-brand-400">
+                <Clock className="w-5 h-5" />
+                <h2 className="text-xl font-bold text-white uppercase tracking-wider">{t.home.newArrivals}</h2>
+              </div>
+              <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 overflow-x-auto">
+                 <div className="min-w-[800px]">
+                   <ImageGrid 
+                     images={newArrivals} 
+                     onImageClick={setSelectedImage} 
+                     hideFilters={true} 
+                     isAdmin={isAdmin} 
+                     t={t.grid}
+                   />
+                 </div>
+              </div>
+            </section>
+          )}
 
           <section className="px-6 pb-12">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2 text-brand-400">
-                <Globe className="w-5 h-5" />
-                <h2 className="text-xl font-bold text-white uppercase tracking-wider">{t.home.explore}</h2>
+                {showRarities ? <Gem className="w-5 h-5 text-gold-500" /> : <Globe className="w-5 h-5" />}
+                <h2 className="text-xl font-bold text-white uppercase tracking-wider">
+                   {showRarities ? t.header.rarities : t.home.explore}
+                </h2>
               </div>
             </div>
 
+            {/* Continent Filters (Hide in Rarities if you want a cleaner look, or keep them) */}
             <div className="flex flex-wrap gap-2 mb-6">
               {continents.map(c => {
                 let count = 0;
+                // Note: The count logic currently counts ALL items, not just rarities. 
+                // Updating stats logic for rarity mode would require more work in getStats(), 
+                // for now we keep general stats which is acceptable.
                 if (c === 'Mundo') {
                    count = totalStats.total;
                 } else {
@@ -440,7 +395,7 @@ function App() {
               </div>
             )}
 
-            <div className="bg-gray-900/30 border border-gray-800/50 rounded-2xl overflow-hidden min-h-[500px]">
+            <div className={`bg-gray-900/30 border rounded-2xl overflow-hidden min-h-[500px] ${showRarities ? 'border-gold-500/30 bg-gold-900/5' : 'border-gray-800/50'}`}>
               {viewMode === 'map' ? (
                 <div className="p-4 h-[600px]">
                    <WorldMap 
@@ -476,7 +431,7 @@ function App() {
             </div>
           </section>
 
-          <StatsSection stats={totalStats.stats} totalRecords={totalStats.total} t={t.stats} />
+          {!showRarities && <StatsSection stats={totalStats.stats} totalRecords={totalStats.total} t={t.stats} />}
 
         </div>
       </main>
