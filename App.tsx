@@ -523,6 +523,7 @@ function App() {
                     images={displayedImages} 
                     onImageClick={setSelectedImage} 
                     viewMode={viewMode}
+                    onViewModeChange={setViewMode}
                     isAdmin={isAdmin} 
                     activeCategory={activeCategory} // Pass active Category
                     t={t.grid}

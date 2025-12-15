@@ -1,12 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
-import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff, MapPin } from 'lucide-react';
+import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff, MapPin, LayoutGrid, List } from 'lucide-react';
 
 interface ImageGridProps {
   images: ScratchcardData[];
   onImageClick: (image: ScratchcardData) => void;
   hideFilters?: boolean;
   viewMode?: 'grid' | 'list';
+  onViewModeChange?: (mode: 'grid' | 'list') => void;
   isAdmin?: boolean;
   activeCategory?: Category | 'all';
   t: any;
@@ -90,6 +91,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   onImageClick, 
   hideFilters = false, 
   viewMode = 'grid', 
+  onViewModeChange,
   isAdmin = false, 
   activeCategory = 'all', 
   t 
@@ -205,6 +207,34 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 
   return (
     <div className="flex flex-col h-full">
+
+      {/* Public Toolbar (Results Count + View Toggle) */}
+      {!hideFilters && (
+        <div className="px-4 md:px-6 py-2 flex justify-between items-center border-b border-gray-800 bg-gray-900/30">
+           {/* Left side: Count */}
+           <div className="text-xs text-gray-500 font-mono font-bold uppercase tracking-wider">
+             {filteredImages.length} {t.results}
+           </div>
+
+           {/* Right side: Toggle */}
+           <div className="flex bg-gray-800 p-1 rounded-lg border border-gray-700">
+             <button 
+                onClick={() => onViewModeChange?.('grid')} 
+                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-brand-600 text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                title={t.viewGrid}
+             >
+                <LayoutGrid className="w-4 h-4" />
+             </button>
+             <button 
+                onClick={() => onViewModeChange?.('list')} 
+                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-brand-600 text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                title={t.viewList}
+             >
+                <List className="w-4 h-4" />
+             </button>
+           </div>
+        </div>
+      )}
       
       {/* Filter Bar - Restricted to ADMIN only */}
       {!hideFilters && isAdmin && (
@@ -213,10 +243,6 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
             <div className="flex items-center gap-2 text-brand-400 text-sm font-medium">
               <Filter className="w-4 h-4" />
               <span className="hidden sm:inline">{t.filters} (Admin)</span>
-            </div>
-            
-            <div className="text-xs text-gray-500 font-mono">
-              {filteredImages.length} {t.results}
             </div>
           </div>
 
