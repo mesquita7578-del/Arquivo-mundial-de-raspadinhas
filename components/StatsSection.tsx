@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Continent } from '../types';
-import { BarChart3, Database, Globe } from 'lucide-react';
+import { BarChart3, Database, Globe, Mail } from 'lucide-react';
 
 interface StatsSectionProps {
   stats: Record<string, number>;
@@ -29,7 +29,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, totalRecords,
   ];
 
   return (
-    <div className="w-full bg-gray-900/50 border-t border-gray-800 py-12 mt-12">
+    <div className="w-full bg-gray-900/50 border-t border-gray-800 py-12 mt-12 pb-20">
       <div className="max-w-7xl mx-auto px-6">
         
         <div className="flex items-center gap-2 mb-8 text-brand-400">
@@ -97,6 +97,26 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, totalRecords,
           </div>
 
         </div>
+
+        {/* FOOTER / SIGNATURE */}
+        <div className="mt-24 pt-8 border-t border-gray-800/50 flex flex-col items-center justify-center text-center space-y-3 opacity-70 hover:opacity-100 transition-opacity duration-500">
+            <p className="text-gray-500 text-[10px] uppercase tracking-[0.2em]">
+              © Copyright {new Date().getFullYear()} • Arquivo Mundial
+            </p>
+            
+            <h4 className="text-gray-300 font-bold text-sm md:text-base flex items-center gap-1.5">
+              Jorge Mesquita & Fabio Pagni <span className="text-[10px] text-gray-500 align-top -mt-2">®</span>
+            </h4>
+            
+            <a 
+              href="mailto:mesquita757@hotmail.com" 
+              className="flex items-center gap-2 text-brand-500 hover:text-brand-400 text-xs transition-colors bg-brand-900/10 px-4 py-1.5 rounded-full border border-brand-500/20 hover:border-brand-500/50"
+            >
+               <Mail className="w-3.5 h-3.5" />
+               mesquita757@hotmail.com
+            </a>
+        </div>
+
       </div>
     </div>
   );
