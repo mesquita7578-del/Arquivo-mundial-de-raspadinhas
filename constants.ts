@@ -13,6 +13,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     values: '5€, 10€, 50€, 1000€',
     state: 'MINT',
     country: 'Portugal',
+    region: 'Continente', // Added region
     continent: 'Europa',
     category: 'raspadinha',
     aiGenerated: false,
@@ -30,6 +31,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     values: '10€, 20€, 500€, 1.000.000€',
     state: 'MUESTRA',
     country: 'Espanha',
+    region: 'Nacional', // Added region
     continent: 'Europa',
     category: 'raspadinha',
     aiGenerated: true,
@@ -82,5 +84,23 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     category: 'raspadinha',
     aiGenerated: true,
     createdAt: Date.now() - 50000,
+  },
+  // Add a specific Germany example with a region to demo the feature immediately
+  {
+    id: '6',
+    customId: 'RASP-DE-001',
+    frontUrl: 'https://placehold.co/600x600/eab308/black?text=Bayern+Gluck',
+    gameName: 'Bayern Glück',
+    gameNumber: '101',
+    releaseDate: '2023-01-01',
+    size: '10x10cm',
+    values: '5€',
+    state: 'MINT',
+    country: 'Alemanha',
+    region: 'Baviera',
+    continent: 'Europa',
+    category: 'raspadinha',
+    aiGenerated: true,
+    createdAt: Date.now() - 10000,
   }
 ];

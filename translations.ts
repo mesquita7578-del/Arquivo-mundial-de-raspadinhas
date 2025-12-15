@@ -39,6 +39,7 @@ export const translations = {
       filters: "Filtros",
       results: "items",
       country: "País",
+      region: "Região", // New
       state: "Estado",
       year: "Ano",
       size: "Tamanho",
@@ -90,6 +91,7 @@ export const translations = {
       seriesDetailsPlaceholder: "Nºs (ex: 1-5)",
       gameName: "Nome",
       country: "País",
+      region: "Região / Cantão", // New
       continent: "Continente",
       state: "Estado",
       customId: "ID",
@@ -205,6 +207,7 @@ export const translations = {
       filters: "Filtri",
       results: "risultati",
       country: "Paese",
+      region: "Regione", // New
       state: "Stato",
       year: "Anno",
       size: "Dim.",
@@ -256,6 +259,7 @@ export const translations = {
       seriesDetailsPlaceholder: "N. (es: 1-5)",
       gameName: "Nome",
       country: "Paese",
+      region: "Regione / Cantone", // New
       continent: "Continente",
       state: "Stato",
       customId: "ID",

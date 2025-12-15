@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify, Gem } from 'lucide-react';
+import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify, Gem, MapPin } from 'lucide-react';
 import { analyzeImage, searchScratchcardInfo } from '../services/geminiService';
 import { ScratchcardData, ScratchcardState, Continent, Category, LineType } from '../types';
 
@@ -166,6 +166,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       price: analysis.price || '',
       state: analysis.state || 'MINT',
       country: analysis.country || 'Portugal',
+      region: analysis.region || '',
       continent: analysis.continent || 'Europa',
       collector: '',
       emission: analysis.emission || '',
@@ -442,7 +443,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                      </div>
                      {formData?.isSeries && (
                         <input 
-                          type="text"
+                          type="text" 
                           value={formData.seriesDetails || ''}
                           onChange={(e) => updateField('seriesDetails', e.target.value)}
                           placeholder={t.seriesDetailsPlaceholder}
@@ -500,6 +501,21 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                        >
                          <RefreshCw className="w-4 h-4" />
                        </button>
+                     </div>
+                   </div>
+
+                   {/* REGION FIELD */}
+                   <div>
+                     <label className="block text-xs text-gray-500 font-bold mb-1">{t.region}</label>
+                     <div className="relative">
+                       <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500" />
+                       <input 
+                         type="text" 
+                         value={formData?.region || ''}
+                         onChange={e => updateField('region', e.target.value)}
+                         placeholder="Ex: Baviera, Açores"
+                         className="w-full bg-gray-800 border border-gray-700 rounded pl-8 pr-3 py-2 text-white focus:border-brand-500 focus:outline-none"
+                       />
                      </div>
                    </div>
 

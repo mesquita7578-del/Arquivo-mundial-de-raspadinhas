@@ -20,6 +20,7 @@ export interface ScratchcardData {
   price?: string; // Preço Facial
   state: ScratchcardState; // Estado
   country: string; // País de origem
+  region?: string; // Novo: Região / Cantão / Estado
   continent: Continent; // Continente
   collector?: string; // Nome do colecionador
   
@@ -56,6 +57,7 @@ export interface AnalysisResult {
   price?: string;
   state: ScratchcardState;
   country: string;
+  region?: string;
   continent: Continent;
   emission?: string;
   printer?: string;

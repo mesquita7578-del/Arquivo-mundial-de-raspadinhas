@@ -258,6 +258,15 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                   placeholder="País"
                   className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded px-3 py-1 focus:border-brand-500 outline-none"
                 />
+                {/* Region Edit */}
+                <input 
+                  type="text" 
+                  value={formData.region || ''}
+                  onChange={(e) => handleChange('region', e.target.value)}
+                  placeholder="Região (ex: Baviera)"
+                  className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded px-3 py-1 focus:border-brand-500 outline-none"
+                />
+
                 <div className="flex flex-col gap-2 mt-2 bg-gray-800/50 p-3 rounded-lg border border-gray-700">
                    {/* Raridade Toggle */}
                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-700">
@@ -313,7 +322,11 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                 <h2 className={`text-3xl font-bold mb-1 leading-tight ${image.isRarity ? 'text-gold-400' : 'text-white'}`}>{image.gameName}</h2>
                 <div className="flex items-center gap-2 text-brand-400 text-sm mb-4">
                   <Globe className="w-4 h-4" />
-                  <span>{image.country} • {image.continent}</span>
+                  <span>
+                    {image.country} 
+                    {image.region && <span className="text-gray-400"> • {image.region}</span>}
+                    <span className="text-gray-500 text-xs"> ({image.continent})</span>
+                  </span>
                 </div>
               </>
             )}

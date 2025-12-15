@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
-import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff } from 'lucide-react';
+import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff, MapPin } from 'lucide-react';
 
 interface ImageGridProps {
   images: ScratchcardData[];
@@ -106,13 +106,35 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   const [filterEmission, setFilterEmission] = useState<string>('');
   const [filterPrinter, setFilterPrinter] = useState<string>('');
   const [filterSeries, setFilterSeries] = useState<boolean>(false);
+  
+  // Region Sub-Filter (Dynamic)
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
+    // Note: We do NOT reset selectedRegion here immediately on image change, 
+    // because we want to keep the region selected if possible.
+    // However, if the new image set doesn't have that region, we might need to clear it.
   }, [activeCategory, filterCountry, filterState, filterYear, filterSize, filterEmission, filterPrinter, filterSeries, images]);
 
-  // Apply filters
+  // Determine available Regions based on CURRENT images (before applying sub-filters)
+  // This allows us to see "Oh, we are looking at Germany, here are the regions"
+  const availableRegions = useMemo(() => {
+    if (hideFilters) return [];
+    
+    // Get unique non-empty regions from the passed 'images' prop
+    // The 'images' prop is already filtered by Country/SearchTerm from the parent
+    const regions = new Set<string>();
+    images.forEach(img => {
+      if (img.region && img.region.trim().length > 0) {
+        regions.add(img.region.trim());
+      }
+    });
+    return Array.from(regions).sort();
+  }, [images, hideFilters]);
+
+  // Apply filters (Internal filters + Region)
   const filteredImages = useMemo(() => {
     return images.filter(img => {
       // Filter by Category (Passed from parent)
@@ -120,6 +142,9 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
          const cat = img.category || 'raspadinha';
          if (cat !== activeCategory) return false;
       }
+
+      // Region Filter (Dynamic Sub-filter)
+      if (selectedRegion && (!img.region || img.region !== selectedRegion)) return false;
 
       // Case insensitive partial matching
       if (filterCountry && !img.country.toLowerCase().includes(filterCountry.toLowerCase())) return false;
@@ -132,7 +157,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
       
       return true;
     });
-  }, [images, activeCategory, filterCountry, filterState, filterYear, filterSize, filterEmission, filterPrinter, filterSeries]);
+  }, [images, activeCategory, filterCountry, filterState, filterYear, filterSize, filterEmission, filterPrinter, filterSeries, selectedRegion]);
 
   // Apply Pagination
   const totalPages = Math.ceil(filteredImages.length / ITEMS_PER_PAGE);
@@ -150,9 +175,10 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
     setFilterEmission('');
     setFilterPrinter('');
     setFilterSeries(false);
+    setSelectedRegion(null);
   };
 
-  const hasFilters = filterCountry || filterState || filterYear || filterSize || filterEmission || filterPrinter || filterSeries;
+  const hasFilters = filterCountry || filterState || filterYear || filterSize || filterEmission || filterPrinter || filterSeries || selectedRegion;
 
   const InputFilter = ({ 
     value, 
@@ -226,6 +252,31 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
         </div>
       )}
 
+      {/* Region Sub-Filter Bar (Public & Admin) */}
+      {!hideFilters && availableRegions.length > 0 && (
+        <div className="px-4 md:px-6 py-3 border-b border-gray-800 bg-gray-900/30 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-2">
+             <div className="flex items-center gap-1 text-gray-400 text-xs font-bold uppercase mr-2 shrink-0">
+                <MapPin className="w-3 h-3" />
+                {t.region}:
+             </div>
+             {availableRegions.map(region => (
+                <button
+                  key={region}
+                  onClick={() => setSelectedRegion(selectedRegion === region ? null : region)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-all whitespace-nowrap ${
+                    selectedRegion === region 
+                      ? 'bg-brand-600 text-white border-brand-500 shadow-md' 
+                      : 'bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-500 hover:text-gray-200'
+                  }`}
+                >
+                  {region}
+                </button>
+             ))}
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       <div className={`${hideFilters ? '' : 'flex-1 overflow-y-auto p-4 md:p-6 pb-24 scroll-smooth'}`}>
         {!hideFilters && filteredImages.length === 0 ? (
@@ -275,7 +326,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                   <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
                      <span className="flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
-                        {item.country}
+                        {item.country} {item.region && <span className="text-gray-500">• {item.region}</span>}
                      </span>
                      <span className="hidden sm:inline text-gray-600">|</span>
                      <span className="hidden sm:inline font-mono">Nº {item.gameNumber}</span>
@@ -348,10 +399,13 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                     <StateBadge state={item.state} />
                   </div>
                   
-                  {/* Flag / Country Info */}
+                  {/* Flag / Country / Region Info */}
                   <div className="mb-2 flex items-center gap-1.5 text-xs text-gray-400">
                     <span className="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
-                    <span className="truncate">{item.country}</span>
+                    <span className="truncate">
+                      {item.country}
+                      {item.region && <span className="text-gray-500 font-medium"> • {item.region}</span>}
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 mt-auto text-xs text-gray-400">

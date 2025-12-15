@@ -16,7 +16,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
         }
       },
       {
-        text: "Analise esta imagem de colecionismo. Primeiro, determine a CATEGORIA: É uma 'raspadinha' (tem área de látex para raspar, prémio instantâneo) ou uma 'lotaria' (bilhete de sorteio, totoloto, rifa nacional, sem área de raspar, com data de extração/draw date)? Extraia: Nome do Jogo/Lotaria, Número do Jogo/Sorteio, Data/Ano (Draw Date), Tamanho estimado, Valores de prêmios (se visível), Estado (MINT, VOID, etc), País e Continente. Identifique o 'Preço Facial'. Identifique 'Emissão' e 'Gráfica' se visível."
+        text: "Analise esta imagem de colecionismo. Determine a CATEGORIA (raspadinha ou lotaria). Extraia: Nome do Jogo, Número do Jogo, Data, Tamanho, Valores, Estado, País e Continente. IMPORTANTE: Se o país tiver regiões específicas (ex: Alemanha tem 'Baviera', 'Saxónia'; Portugal tem 'Açores'; Espanha tem 'Catalunha'), identifique a 'Região/Cantão' através de brasões ou texto. Identifique Emissão e Gráfica."
       }
     ];
 
@@ -28,7 +28,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
         }
       });
       // Update text prompt if back is included
-      parts[parts.length - 1].text += " Use a imagem do verso para identificar regras, preço, país, gráfica e tiragem.";
+      parts[parts.length - 1].text += " Use o verso para confirmar a região/cantão, gráfica e tiragem.";
     }
 
     const response = await ai.models.generateContent({
@@ -47,29 +47,30 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
             category: {
               type: Type.STRING,
               enum: ["raspadinha", "lotaria"],
-              description: "Tipo de item: raspadinha (instantâneo) ou lotaria (sorteio)"
+              description: "Tipo de item"
             },
-            gameName: { type: Type.STRING, description: "Nome principal impresso no bilhete" },
-            gameNumber: { type: Type.STRING, description: "Número de série, código do jogo ou número do sorteio (Draw No)" },
-            releaseDate: { type: Type.STRING, description: "Data no formato YYYY-MM-DD ou apenas Ano" },
-            size: { type: Type.STRING, description: "Estimativa de tamanho (ex: 10x5cm)" },
-            values: { type: Type.STRING, description: "Lista de valores monetários impressos na frente" },
-            price: { type: Type.STRING, description: "Preço de custo do bilhete (ex: 5€, 10$)" },
+            gameName: { type: Type.STRING, description: "Nome principal" },
+            gameNumber: { type: Type.STRING, description: "Número de série" },
+            releaseDate: { type: Type.STRING, description: "Data/Ano" },
+            size: { type: Type.STRING, description: "Tamanho estimado" },
+            values: { type: Type.STRING, description: "Valores de prêmios" },
+            price: { type: Type.STRING, description: "Preço" },
             state: { 
               type: Type.STRING, 
               enum: ["AMOSTRA", "VOID", "MUESTRA", "CAMPIONE", "MINT", "CS", "SC"],
-              description: "O estado de conservação ou tipo do bilhete"
+              description: "Estado"
             },
-            country: { type: Type.STRING, description: "País de origem da raspadinha" },
+            country: { type: Type.STRING, description: "País" },
+            region: { type: Type.STRING, description: "Região, Cantão, Estado ou Ilha (ex: Baviera, Açores)" },
             continent: { 
               type: Type.STRING, 
               enum: ["Europa", "América", "Ásia", "África", "Oceania"],
-              description: "Continente do país"
+              description: "Continente"
             },
-            emission: { type: Type.STRING, description: "Emissão ou tiragem total (ex: 500.000 un)" },
-            printer: { type: Type.STRING, description: "Empresa que imprimiu (ex: Scientific Games, Pollard)" }
+            emission: { type: Type.STRING, description: "Emissão total" },
+            printer: { type: Type.STRING, description: "Gráfica" }
           },
-          required: ["category", "gameName", "gameNumber", "size", "values", "state", "country", "continent"]
+          required: ["category", "gameName", "gameNumber", "state", "country", "continent"]
         }
       }
     });
@@ -98,13 +99,10 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
 
 export const searchScratchcardInfo = async (query: string): Promise<Partial<AnalysisResult>> => {
   try {
-    // When using Google Search tool, we CANNOT use responseMimeType: application/json
-    // We must parse the markdown manually
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: `Search for technical details about the scratchcard or lottery: "${query}".
-      Look for official sites like Jogos Santa Casa (SCML) if relevant.
-      Find: Game Name, Price, Game Number, Release Date, Emission (Tiragem), Printer, and Top Prize.
+      Find: Game Name, Price, Game Number, Release Date, Emission, Printer, Region/State (if applicable).
       
       Output ONLY a JSON block like this:
       \`\`\`json
@@ -117,6 +115,7 @@ export const searchScratchcardInfo = async (query: string): Promise<Partial<Anal
         "printer": "Scientific Games",
         "values": "Max Prize...",
         "country": "Portugal",
+        "region": "Açores",
         "category": "raspadinha"
       }
       \`\`\`
@@ -127,8 +126,6 @@ export const searchScratchcardInfo = async (query: string): Promise<Partial<Anal
     });
 
     const text = response.text || "";
-    
-    // Extract JSON from markdown code block
     const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```\n([\s\S]*?)\n```/);
     
     if (jsonMatch && jsonMatch[1]) {
@@ -136,8 +133,8 @@ export const searchScratchcardInfo = async (query: string): Promise<Partial<Anal
       return {
         ...parsed,
         state: 'MINT',
-        continent: 'Europa', // Default assumption, user can change
-        size: '10x5cm' // Default
+        continent: 'Europa', 
+        size: '10x5cm' 
       };
     }
     
