@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify, Gem, MapPin, Gift, Image as ImageIcon, FileSearch, ClipboardList, Package, Calendar, Trophy } from 'lucide-react';
+import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify, Gem, MapPin, Gift, Image as ImageIcon, FileSearch, ClipboardList, Package, Calendar, Trophy, Lock } from 'lucide-react';
 import { analyzeImage, searchScratchcardInfo } from '../services/geminiService';
 import { ScratchcardData, ScratchcardState, Continent, Category, LineType } from '../types';
 
@@ -868,15 +868,29 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    <div>
                      <label className="block text-[10px] uppercase text-gray-500 font-bold mb-1.5 tracking-wider">{t.collector}</label>
                      <div className="relative group">
-                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 group-focus-within:text-brand-500" />
+                       {currentUser && formData?.collector === currentUser ? (
+                          <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center">
+                             <Lock className="w-3.5 h-3.5 text-brand-500" />
+                          </div>
+                       ) : (
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 group-focus-within:text-brand-500" />
+                       )}
+                       
                        <input 
                          type="text" 
                          list="list-collectors"
                          value={formData?.collector || ''}
                          onChange={e => updateField('collector', e.target.value)}
                          placeholder={t.collector}
-                         className="w-full bg-gray-900 border border-gray-700 rounded-xl pl-9 pr-3 py-2.5 text-white focus:border-brand-500 focus:outline-none text-sm placeholder-gray-600"
+                         readOnly={!!currentUser && formData?.collector === currentUser}
+                         className={`w-full bg-gray-900 border rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none text-sm placeholder-gray-600 ${currentUser && formData?.collector === currentUser ? 'border-brand-500/50 bg-brand-900/10 text-brand-100 font-medium' : 'border-gray-700 focus:border-brand-500'}`}
                        />
+                       
+                       {currentUser && formData?.collector === currentUser && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-brand-500/20 px-1.5 py-0.5 rounded text-[10px] text-brand-400 font-bold border border-brand-500/30">
+                             <CheckCircle className="w-3 h-3" /> Auto
+                          </div>
+                       )}
                      </div>
                    </div>
 

@@ -232,10 +232,31 @@ class StorageService {
           const state = img.state || 'Outro';
           stateStats[state] = (stateStats[state] || 0) + 1;
 
-          // Collector Stats
+          // Collector Stats - Advanced Normalization for Jorge, Fabio & Chloe
           if (img.collector && img.collector.trim() !== '') {
-             const name = img.collector.trim();
-             collectorStats[name] = (collectorStats[name] || 0) + 1;
+             const rawName = img.collector.trim().toLowerCase();
+             let finalName = rawName;
+
+             // Logic for Vovô Jorge
+             if (rawName.includes('jorge') || rawName.includes('mesquita') || rawName === 'jm' || rawName === 'j.m.') {
+                 finalName = 'Jorge Mesquita';
+             }
+             // Logic for Fabio
+             else if (rawName.includes('fabio') || rawName.includes('pagni') || rawName === 'fp') {
+                 finalName = 'Fabio Pagni';
+             }
+             // Logic for Chloe
+             else if (rawName.includes('chloe')) {
+                 finalName = 'Chloe';
+             }
+             else {
+                 // Standard Title Case for others
+                 finalName = rawName.split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+             }
+             
+             collectorStats[finalName] = (collectorStats[finalName] || 0) + 1;
           }
 
           cursor.continue();
