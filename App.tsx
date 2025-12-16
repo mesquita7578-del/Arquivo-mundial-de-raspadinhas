@@ -215,8 +215,8 @@ function App() {
   const getCollectorIcon = (name: string) => {
      const lower = name.toLowerCase();
      if (lower.includes('jorge')) return <Crown className="w-3 h-3 text-yellow-300 fill-yellow-300" />;
+     if (lower.includes('chloe')) return <Crown className="w-3 h-3 text-pink-300 fill-pink-300" />; // QUEEN CROWN
      if (lower.includes('fabio')) return <Star className="w-3 h-3 text-white fill-white" />;
-     if (lower.includes('chloe')) return <Heart className="w-3 h-3 text-white fill-white" />;
      return <User className="w-3 h-3 text-white" />;
   };
 

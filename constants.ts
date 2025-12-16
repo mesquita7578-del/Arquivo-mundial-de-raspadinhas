@@ -107,6 +107,43 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     collector: 'Jorge Mesquita',
     aiGenerated: true,
     createdAt: Date.now() - 10000,
+  },
+  // Added requested China Card
+  {
+    id: '7',
+    customId: 'RASP-CN-088',
+    frontUrl: 'https://placehold.co/600x400/ec4899/white?text=天生一对+Perfect+Match', 
+    gameName: '天生一对 (Perfect Match)',
+    gameNumber: 'J0603',
+    releaseDate: '2018-01-01',
+    size: '10x15cm',
+    values: 'Top Prize 200,000 RMB',
+    price: '10 RMB',
+    state: 'MINT',
+    country: 'China',
+    continent: 'Ásia',
+    category: 'raspadinha',
+    collector: 'Jorge Mesquita',
+    aiGenerated: false,
+    createdAt: Date.now(),
+  },
+  // Added Chloe's first item to display her Queen Crown
+  {
+    id: '8',
+    customId: 'RASP-PT-CHLOE',
+    frontUrl: 'https://placehold.co/400x400/f472b6/white?text=Chloe+Collection',
+    gameName: 'Edição Especial Princesa',
+    gameNumber: '001',
+    releaseDate: '2024-01-01',
+    size: '10x10cm',
+    values: 'Inestimável',
+    state: 'MINT',
+    country: 'Portugal',
+    continent: 'Europa',
+    category: 'objeto',
+    collector: 'Chloe',
+    aiGenerated: true,
+    createdAt: Date.now() - 5000,
   }
 ];
 
