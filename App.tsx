@@ -11,7 +11,7 @@ import { WebsitesModal } from './components/WebsitesModal';
 import { AboutPage } from './components/AboutPage'; 
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy, Crown, Star, User } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
@@ -195,24 +195,39 @@ function App() {
 
   const getContinentColor = (page: PageType) => {
       switch(page) {
-        case 'europe': return 'from-blue-900 to-indigo-900';
-        case 'america': return 'from-red-900 to-orange-900';
-        case 'asia': return 'from-yellow-900 to-amber-900';
-        case 'africa': return 'from-green-900 to-emerald-900';
-        case 'oceania': return 'from-purple-900 to-violet-900';
-        default: return 'from-slate-900 to-slate-800';
+        case 'europe': return 'from-blue-600 via-blue-500 to-indigo-600';
+        case 'america': return 'from-red-600 via-red-500 to-orange-600';
+        case 'asia': return 'from-yellow-500 via-amber-500 to-orange-500';
+        case 'africa': return 'from-green-600 via-green-500 to-emerald-600';
+        case 'oceania': return 'from-purple-600 via-purple-500 to-violet-600';
+        default: return 'from-slate-800 to-slate-900';
      }
   };
 
+  const getCollectorBadgeColor = (name: string) => {
+     const lower = name.toLowerCase();
+     if (lower.includes('jorge')) return 'bg-blue-500 shadow-blue-500/50';
+     if (lower.includes('fabio')) return 'bg-green-500 shadow-green-500/50';
+     if (lower.includes('chloe')) return 'bg-pink-500 shadow-pink-500/50';
+     return 'bg-slate-600 shadow-slate-600/50';
+  };
+
+  const getCollectorIcon = (name: string) => {
+     const lower = name.toLowerCase();
+     if (lower.includes('jorge')) return <Crown className="w-3 h-3 text-yellow-300 fill-yellow-300" />;
+     if (lower.includes('fabio')) return <Star className="w-3 h-3 text-white fill-white" />;
+     if (lower.includes('chloe')) return <Heart className="w-3 h-3 text-white fill-white" />;
+     return <User className="w-3 h-3 text-white" />;
+  };
+
   const getContinentIcon = (page: PageType) => {
-     // You could return specific SVG components here if you wanted specific continent shapes
-     return <Globe className="w-8 h-8 text-white/80" />;
+     return <Globe className="w-6 h-6 text-white drop-shadow-md" />;
   };
 
   // Derive data for the active continent subpage
   const activeContinentData = useMemo(() => {
       const targetContinent = getContinentNameFromPage(currentPage);
-      if (!targetContinent) return { items: [], countries: [] };
+      if (!targetContinent) return { items: [], countries: [], collectors: [] };
 
       // 1. Get all items for this continent
       let items = allImagesCache.filter(img => img.continent === targetContinent);
@@ -220,7 +235,35 @@ function App() {
       // 2. Extract available countries for the filter bar
       const countries = Array.from(new Set(items.map(i => i.country))).sort();
 
-      // 3. Apply Local Country Filter if selected
+      // 3. Calculate Collectors Stats for THIS continent
+      const collectorMap: Record<string, number> = {};
+      items.forEach(item => {
+          let name = (item.collector || 'Desconhecido').trim();
+          
+          // --- Reuse Normalization Logic ---
+          const lowerName = name.toLowerCase();
+          if (lowerName.includes('jorge') || lowerName.includes('mesquita') || lowerName === 'jm' || lowerName === 'j.m.' || lowerName === 'j' || lowerName === 'jjm' || lowerName === 'jn') {
+             name = 'Jorge Mesquita';
+          } else if (lowerName.includes('fabio') || lowerName.includes('pagni') || lowerName === 'fp') {
+             name = 'Fabio Pagni';
+          } else if (lowerName.includes('chloe')) {
+             name = 'Chloe';
+          } else {
+             name = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+          }
+
+          collectorMap[name] = (collectorMap[name] || 0) + 1;
+      });
+
+      const collectors = Object.entries(collectorMap)
+         .sort((a,b) => b[1] - a[1]) // Sort desc
+         .map(([name, count]) => ({
+             name,
+             count,
+             percent: items.length > 0 ? (count / items.length) * 100 : 0
+         }));
+
+      // 4. Apply Local Country Filter if selected
       if (subPageCountryFilter) {
          items = items.filter(img => img.country === subPageCountryFilter);
       }
@@ -228,7 +271,7 @@ function App() {
       // Sort by name or date default
       items.sort((a,b) => b.createdAt - a.createdAt);
 
-      return { items, countries };
+      return { items, countries, collectors };
   }, [allImagesCache, currentPage, subPageCountryFilter]);
 
 
@@ -496,41 +539,92 @@ function App() {
     );
   }
 
-  // --- RENDER CONTINENT SUBPAGE ---
+  // --- RENDER CONTINENT SUBPAGE (Updated with Compact 3D Header & Stats) ---
   const renderContinentPage = (page: PageType) => {
      const continentName = getContinentNameFromPage(page);
-     const { items, countries } = activeContinentData;
+     const { items, countries, collectors } = activeContinentData; // Now includes 'collectors'
      const bannerGradient = getContinentColor(page);
 
      return (
-        <div className="animate-fade-in min-h-full max-w-7xl mx-auto px-4 md:px-6 py-6 pb-20">
-           {/* Dynamic Banner */}
-           <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-r ${bannerGradient} border border-white/10 p-8 md:p-12 mb-8 text-center shadow-2xl`}>
-              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
-              <div className="relative z-10 flex flex-col items-center">
-                 <div className="bg-white/10 p-4 rounded-full mb-4 backdrop-blur-sm border border-white/20">
-                    {getContinentIcon(page)}
+        <div className="animate-fade-in min-h-full max-w-7xl mx-auto px-3 md:px-6 py-4 pb-20">
+           
+           {/* Compact 3D Animated Banner */}
+           <div 
+             className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${bannerGradient} shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-t border-white/20 p-6 md:p-8 mb-6 transform hover:scale-[1.01] transition-all duration-500 group`}
+           >
+              {/* Animated Pulse Overlay */}
+              <div className="absolute inset-0 bg-white/10 animate-pulse-slow pointer-events-none"></div>
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 pointer-events-none"></div>
+
+              {/* Header Content Grid */}
+              <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                 
+                 {/* Left: Title & Count */}
+                 <div className="flex flex-col items-start">
+                    <div className="flex items-center gap-3 mb-2">
+                       <div className="bg-black/30 p-2 rounded-xl backdrop-blur-sm shadow-lg border border-white/10">
+                          {getContinentIcon(page)}
+                       </div>
+                       <div className="px-3 py-1 bg-black/40 rounded-full text-[10px] font-bold text-white/90 border border-white/10 uppercase tracking-widest shadow-md">
+                          Arquivo Oficial
+                       </div>
+                    </div>
+                    <h1 className="text-4xl md:text-5xl font-black text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] tracking-tighter uppercase leading-none">
+                       {continentName}
+                    </h1>
+                    <div className="mt-3 flex items-center gap-2 text-white/80 font-medium">
+                       <Database className="w-4 h-4" />
+                       <span className="text-lg font-bold">{items.length}</span>
+                       <span className="text-sm opacity-70">registos preservados</span>
+                    </div>
                  </div>
-                 <h1 className="text-3xl md:text-5xl font-black text-white mb-2 drop-shadow-lg uppercase tracking-tight">{continentName}</h1>
-                 <p className="text-white/70 text-lg md:text-xl font-medium max-w-2xl">
-                    Arquivo oficial de raspadinhas e lotarias.
-                 </p>
-                 <div className="mt-6 flex items-center gap-2 text-sm font-bold bg-black/40 px-4 py-2 rounded-full border border-white/10">
-                    <Database className="w-4 h-4 text-white/70" />
-                    {items.length} Registos encontrados
+
+                 {/* Right: Collector Stats Mini-Dashboard (The "Idea Maluca") */}
+                 <div className="bg-black/30 rounded-2xl p-4 border border-white/10 backdrop-blur-sm shadow-inner w-full">
+                    <h3 className="text-[10px] uppercase font-bold text-white/60 mb-3 flex items-center gap-1">
+                       <Trophy className="w-3 h-3 text-yellow-400" /> Top Contribuidores ({continentName})
+                    </h3>
+                    <div className="space-y-3">
+                       {collectors.slice(0, 3).map((col, idx) => ( // Show top 3
+                          <div key={col.name} className="flex items-center gap-3">
+                             <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-white/20 shadow-lg ${getCollectorBadgeColor(col.name)}`}>
+                                {getCollectorIcon(col.name)}
+                             </div>
+                             <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-center text-xs font-bold text-white mb-1">
+                                   <span className="truncate">{col.name}</span>
+                                   <span className="font-mono text-white/90">{col.count}</span>
+                                </div>
+                                {/* Progress Bar */}
+                                <div className="h-1.5 w-full bg-black/40 rounded-full overflow-hidden">
+                                   <div 
+                                      className={`h-full rounded-full ${col.name.toLowerCase().includes('jorge') ? 'bg-blue-400' : col.name.toLowerCase().includes('fabio') ? 'bg-green-400' : 'bg-white'}`} 
+                                      style={{ width: `${col.percent}%` }}
+                                   ></div>
+                                </div>
+                             </div>
+                             <div className="text-[10px] font-bold text-white/70 w-8 text-right">
+                                {Math.round(col.percent)}%
+                             </div>
+                          </div>
+                       ))}
+                       {collectors.length === 0 && (
+                          <div className="text-xs text-white/40 italic text-center py-2">Sem dados.</div>
+                       )}
+                    </div>
                  </div>
               </div>
            </div>
 
-           {/* Country Filters Bar */}
+           {/* Country Filters Bar (Existing) */}
            {countries.length > 0 ? (
              <div className="mb-6 overflow-x-auto pb-2 scrollbar-hide">
                 <div className="flex items-center gap-2">
                    <button
                      onClick={() => setSubPageCountryFilter(null)}
-                     className={`px-4 py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${
+                     className={`px-4 py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap shadow-sm ${
                         subPageCountryFilter === null 
-                          ? 'bg-white text-slate-900 border-white shadow-md' 
+                          ? 'bg-white text-slate-900 border-white ring-2 ring-white/20' 
                           : 'bg-slate-900 text-slate-400 border-slate-700 hover:bg-slate-800'
                      }`}
                    >
@@ -542,7 +636,7 @@ function App() {
                         onClick={() => setSubPageCountryFilter(country)}
                         className={`px-4 py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${
                            subPageCountryFilter === country 
-                              ? 'bg-brand-600 text-white border-brand-500 shadow-md' 
+                              ? 'bg-brand-600 text-white border-brand-500 shadow-lg ring-2 ring-brand-500/20' 
                               : 'bg-slate-900 text-slate-400 border-slate-700 hover:bg-slate-800 hover:text-white'
                         }`}
                       >
