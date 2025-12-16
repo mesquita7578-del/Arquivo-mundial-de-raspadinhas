@@ -1,13 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
-import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff, MapPin, LayoutGrid, List, ClipboardList, Package, Trophy } from 'lucide-react';
+import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff, MapPin, LayoutGrid, List, ClipboardList, Package, Trophy, Map } from 'lucide-react';
 
 interface ImageGridProps {
   images: ScratchcardData[];
   onImageClick: (image: ScratchcardData) => void;
   hideFilters?: boolean;
-  viewMode?: 'grid' | 'list';
-  onViewModeChange?: (mode: 'grid' | 'list') => void;
+  viewMode?: 'grid' | 'list' | 'map';
+  onViewModeChange?: (mode: 'grid' | 'list' | 'map') => void;
   isAdmin?: boolean;
   activeCategory?: Category | 'all';
   t: any;
@@ -242,6 +242,13 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 title={t.viewList}
              >
                 <List className="w-4 h-4" />
+             </button>
+             <button 
+                onClick={() => onViewModeChange?.('map')} 
+                className={`p-1.5 rounded-md transition-all ${viewMode === 'map' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                title={t.viewMap}
+             >
+                <Map className="w-4 h-4" />
              </button>
            </div>
 
