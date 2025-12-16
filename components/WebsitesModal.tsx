@@ -82,7 +82,7 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
         
         await loadSites();
         if(addedCount > 0) {
-           alert(`${addedCount} novos sites europeus importados com sucesso!`);
+           alert(`${addedCount} novos sites importados (EL & WLA) com sucesso!`);
         } else {
            alert("A lista já está atualizada.");
         }
@@ -149,7 +149,7 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
                   className="w-full py-4 bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/30 rounded-xl flex items-center justify-center gap-3 text-blue-100 hover:text-white hover:from-blue-900/60 hover:to-indigo-900/60 transition-all shadow-lg group"
                >
                   {isImporting ? <DownloadCloud className="w-5 h-5 animate-bounce" /> : <Globe className="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" />}
-                  <span className="font-bold">{isImporting ? "Importando..." : "Importar Lista European Lotteries (EL)"}</span>
+                  <span className="font-bold">{isImporting ? "Importando..." : "Importar Lista Oficial (EL / WLA)"}</span>
               </button>
 
               <div className="bg-gray-900 border border-dashed border-gray-700 rounded-xl p-6 shadow-lg">

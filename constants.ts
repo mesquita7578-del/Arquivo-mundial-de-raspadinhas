@@ -104,8 +104,9 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
   }
 ];
 
-// Based on European Lotteries Members
+// Based on European Lotteries Members & World Lotteries
 export const EUROPEAN_LOTTERIES: Partial<WebsiteLink>[] = [
+  { name: "World Lottery Association (WLA)", url: "https://www.world-lotteries.org", country: "Mundo", category: "Global Organization" },
   { name: "Santa Casa (SCML)", url: "https://jogossantacasa.pt", country: "Portugal", category: "Regular Member" },
   { name: "FDJ (La Française des Jeux)", url: "https://www.fdj.fr", country: "França", category: "Regular Member" },
   { name: "SELAE (Loterías y Apuestas)", url: "https://www.loteriasyapuestas.es", country: "Espanha", category: "Regular Member" },
