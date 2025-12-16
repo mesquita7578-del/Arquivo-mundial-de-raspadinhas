@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Globe, Plus, Trash2, ExternalLink, Building2, Link, Tag, DownloadCloud, Check, RefreshCw } from 'lucide-react';
+import { X, Globe, Plus, Trash2, ExternalLink, Building2, Link, Tag, DownloadCloud, Check, RefreshCw, Search } from 'lucide-react';
 import { WebsiteLink } from '../types';
 import { storageService } from '../services/storage';
 import { EUROPEAN_LOTTERIES } from '../constants';
@@ -15,6 +15,7 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
   const [newSite, setNewSite] = useState<Partial<WebsiteLink>>({});
   const [isAdding, setIsAdding] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadSites();
@@ -26,7 +27,6 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
       
       // AUTO-FIX: Check if MUSL is missing and inject it silently
       const musl = EUROPEAN_LOTTERIES.find(s => s.name?.includes("Multi-State Lottery Association"));
-      // We check broadly to ensure we catch it
       const muslExists = data.some(s => s.url === musl?.url || s.name.includes("MUSL") || s.name.includes("Multi-State"));
 
       if (musl && !muslExists && musl.name && musl.url && musl.country) {
@@ -52,7 +52,6 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
   const handleAddSite = async () => {
     if (!newSite.name || !newSite.url || !newSite.country) return;
 
-    // Ensure URL has protocol
     let finalUrl = newSite.url;
     if (!finalUrl.startsWith('http')) {
       finalUrl = 'https://' + finalUrl;
@@ -64,7 +63,7 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
       url: finalUrl,
       logoUrl: newSite.logoUrl,
       country: newSite.country,
-      category: newSite.category // Save the new category field
+      category: newSite.category
     };
 
     try {
@@ -83,33 +82,29 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
         let addedCount = 0;
         let updatedCount = 0;
 
-        // Fetch latest data to ensure no sync issues
         const currentSites = await storageService.getWebsites();
 
         for (const el of EUROPEAN_LOTTERIES) {
            if (!el.name || !el.url) continue;
 
-           // Find if this official site already exists in DB
            const existingIndex = currentSites.findIndex(s => 
               s.url === el.url || 
               s.name.toLowerCase() === el.name?.toLowerCase() ||
-              (el.name?.includes("MUSL") && s.name.includes("MUSL")) // Specific check for MUSL
+              (el.name?.includes("MUSL") && s.name.includes("MUSL"))
            );
 
            if (existingIndex >= 0) {
-              // UPDATE (Upsert): Fix broken/outdated records
               const existing = currentSites[existingIndex];
               const updated: WebsiteLink = {
                  ...existing,
-                 name: el.name, // Enforce official name
-                 url: el.url,   // Enforce official URL
+                 name: el.name,
+                 url: el.url,
                  country: el.country || existing.country,
                  category: el.category || existing.category
               };
               await storageService.saveWebsite(updated);
               updatedCount++;
            } else {
-              // CREATE NEW
               const site: WebsiteLink = {
                  id: Math.random().toString(36).substr(2, 9),
                  name: el.name,
@@ -123,6 +118,10 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
         }
         
         await loadSites();
+        // Set search to MUSL if it was imported/updated so the user sees it immediately
+        if (addedCount > 0 || updatedCount > 0) {
+           setSearchTerm('MUSL'); 
+        }
         alert(`Sincronização concluída!\n${addedCount} novos sites adicionados.\n${updatedCount} sites atualizados/corrigidos.`);
 
      } catch (e) {
@@ -140,7 +139,6 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
     }
   };
 
-  // Helper to get logo (Custom or Auto-Favicon)
   const getLogo = (site: Partial<WebsiteLink>) => {
     if (site.logoUrl && site.logoUrl.trim() !== '') return site.logoUrl;
     if (site.url) {
@@ -153,6 +151,13 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
     }
     return null;
   };
+
+  const filteredSites = sites.filter(site => {
+     const term = searchTerm.toLowerCase();
+     return site.name.toLowerCase().includes(term) || 
+            site.country.toLowerCase().includes(term) ||
+            (site.category && site.category.toLowerCase().includes(term));
+  });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in">
@@ -177,135 +182,128 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 bg-gray-950">
           
-          {/* Admin Add Form */}
-          {isAdmin && (
-            <div className="mb-8 space-y-4">
-              {/* Import Button */}
-              <button 
+          {/* Actions & Search */}
+          <div className="flex flex-col md:flex-row gap-4 mb-8">
+             {isAdmin && (
+                <button 
                   onClick={handleImportEuropean}
                   disabled={isImporting}
-                  className="w-full py-4 bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/30 rounded-xl flex items-center justify-center gap-3 text-blue-100 hover:text-white hover:from-blue-900/60 hover:to-indigo-900/60 transition-all shadow-lg group"
+                  className="py-3 px-6 bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/30 rounded-xl flex items-center justify-center gap-2 text-blue-100 hover:text-white hover:from-blue-900/60 hover:to-indigo-900/60 transition-all shadow-lg group whitespace-nowrap"
+                >
+                  {isImporting ? <DownloadCloud className="w-4 h-4 animate-bounce" /> : <RefreshCw className="w-4 h-4 text-blue-400 group-hover:rotate-180 transition-transform" />}
+                  <span className="font-bold text-sm">{isImporting ? "Sincronizando..." : "Sincronizar Lista Oficial"}</span>
+                </button>
+             )}
+             
+             {/* SEARCH BAR - Here it is! */}
+             <div className="relative flex-1 group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-brand-500 transition-colors" />
+                <input 
+                  type="text"
+                  placeholder="Pesquisar site (ex: MUSL, Santa Casa)..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-gray-900 border border-gray-700 text-white pl-10 pr-4 py-3 rounded-xl focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/20 transition-all shadow-inner"
+                />
+             </div>
+
+             {isAdmin && (
+               <button 
+                  onClick={() => setIsAdding(!isAdding)}
+                  className={`p-3 rounded-xl border transition-all ${isAdding ? 'bg-gray-800 border-gray-600 text-white' : 'bg-gray-900 border-gray-700 text-gray-400 hover:text-white hover:border-gray-500'}`}
+                  title="Adicionar Manualmente"
                >
-                  {isImporting ? <DownloadCloud className="w-5 h-5 animate-bounce" /> : <RefreshCw className="w-5 h-5 text-blue-400 group-hover:rotate-180 transition-transform" />}
-                  <span className="font-bold">{isImporting ? "A Sincronizar..." : "Sincronizar Lista Oficial (Corrigir & Adicionar)"}</span>
-              </button>
+                  <Plus className={`w-5 h-5 transition-transform ${isAdding ? 'rotate-45' : ''}`} />
+               </button>
+             )}
+          </div>
 
-              <div className="bg-gray-900 border border-dashed border-gray-700 rounded-xl p-6 shadow-lg">
-                  {!isAdding ? (
-                    <button 
-                      onClick={() => setIsAdding(true)}
-                      className="w-full py-4 flex flex-col items-center justify-center text-gray-500 hover:text-white transition-colors gap-2 hover:bg-gray-800/50 rounded-lg"
-                    >
-                      <Plus className="w-8 h-8" />
-                      <span className="font-bold">{t.add}</span>
+          {/* Manual Add Form */}
+          {isAdding && isAdmin && (
+            <div className="mb-8 bg-gray-900 border border-dashed border-gray-700 rounded-xl p-6 shadow-lg animate-fade-in">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-white flex items-center gap-2 text-sm uppercase tracking-wider"><Plus className="w-4 h-4 text-green-500"/> {t.add}</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                  <div>
+                    <label className="block text-[10px] uppercase text-gray-500 font-bold mb-1">Nome</label>
+                    <input 
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-brand-500 outline-none text-sm"
+                      placeholder={t.namePlaceholder}
+                      value={newSite.name || ''}
+                      onChange={e => setNewSite({...newSite, name: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase text-gray-500 font-bold mb-1">País</label>
+                    <input 
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-brand-500 outline-none text-sm"
+                      placeholder={t.countryPlaceholder}
+                      value={newSite.country || ''}
+                      onChange={e => setNewSite({...newSite, country: e.target.value})}
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-[10px] uppercase text-gray-500 font-bold mb-1">URL Oficial</label>
+                    <input 
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-brand-500 outline-none text-sm"
+                      placeholder={t.urlPlaceholder}
+                      value={newSite.url || ''}
+                      onChange={e => setNewSite({...newSite, url: e.target.value})}
+                    />
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                      <label className="block text-[10px] uppercase text-gray-500 font-bold mb-1">Categoria (Opcional)</label>
+                      <input 
+                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-brand-500 outline-none text-sm"
+                        placeholder={t.categoryPlaceholder}
+                        value={newSite.category || ''}
+                        onChange={e => setNewSite({...newSite, category: e.target.value})}
+                      />
+                  </div>
+
+                  <div className="md:col-span-2">
+                      <label className="block text-[10px] uppercase text-gray-500 font-bold mb-1">Logo URL (Opcional)</label>
+                      <input 
+                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-brand-500 outline-none text-xs"
+                        placeholder="Ex: https://site.com/logo.png"
+                        value={newSite.logoUrl || ''}
+                        onChange={e => setNewSite({...newSite, logoUrl: e.target.value})}
+                      />
+                  </div>
+                  
+                  <div className="md:col-span-4 flex justify-end mt-2">
+                    <button onClick={handleAddSite} className="bg-green-600 hover:bg-green-500 text-white px-8 py-2 rounded-lg font-bold shadow-lg">
+                      {t.save}
                     </button>
-                  ) : (
-                    <div className="flex flex-col gap-4">
-                      <div className="flex justify-between items-center mb-2">
-                          <h3 className="font-bold text-white flex items-center gap-2"><Plus className="w-4 h-4 text-green-500"/> {t.add}</h3>
-                          <button onClick={() => setIsAdding(false)} className="text-gray-500 hover:text-white"><X className="w-5 h-5"/></button>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
-                        <div>
-                          <label className="block text-xs uppercase text-gray-500 font-bold mb-1">Nome</label>
-                          <input 
-                            className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none"
-                            placeholder={t.namePlaceholder}
-                            value={newSite.name || ''}
-                            onChange={e => setNewSite({...newSite, name: e.target.value})}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs uppercase text-gray-500 font-bold mb-1">País</label>
-                          <input 
-                            className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none"
-                            placeholder={t.countryPlaceholder}
-                            value={newSite.country || ''}
-                            onChange={e => setNewSite({...newSite, country: e.target.value})}
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block text-xs uppercase text-gray-500 font-bold mb-1">URL Oficial</label>
-                          <input 
-                            className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none"
-                            placeholder={t.urlPlaceholder}
-                            value={newSite.url || ''}
-                            onChange={e => setNewSite({...newSite, url: e.target.value})}
-                          />
-                        </div>
-                        
-                        {/* Category Input */}
-                        <div className="md:col-span-2">
-                            <label className="block text-xs uppercase text-gray-500 font-bold mb-1">Tipo / Categoria (Opcional)</label>
-                            <input 
-                              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none"
-                              placeholder={t.categoryPlaceholder}
-                              value={newSite.category || ''}
-                              onChange={e => setNewSite({...newSite, category: e.target.value})}
-                            />
-                        </div>
-
-                        <div className="md:col-span-2">
-                            <label className="block text-xs uppercase text-gray-500 font-bold mb-1">Logo URL (Opcional)</label>
-                            <input 
-                              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none text-xs"
-                              placeholder="Ex: https://site.com/logo.png"
-                              value={newSite.logoUrl || ''}
-                              onChange={e => setNewSite({...newSite, logoUrl: e.target.value})}
-                            />
-                        </div>
-                        
-                        {/* Live Preview of Logo */}
-                        <div className="md:col-span-4 flex items-center gap-4 mt-2">
-                            {(newSite.url || newSite.logoUrl) && (
-                              <div className="flex flex-col items-center">
-                                  <span className="text-[10px] text-gray-500 mb-1 uppercase font-bold">Preview</span>
-                                  <div className="w-10 h-10 bg-white rounded-lg p-1 flex items-center justify-center overflow-hidden border border-gray-600">
-                                    <img 
-                                        src={getLogo(newSite) || ''} 
-                                        alt="Logo" 
-                                        className="w-full h-full object-contain"
-                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                                    />
-                                  </div>
-                              </div>
-                            )}
-                            
-                            <div className="flex-1 flex justify-end items-end h-full">
-                              <button onClick={handleAddSite} className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded font-bold shadow-lg w-full md:w-auto">
-                                {t.save}
-                              </button>
-                            </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-              </div>
+                  </div>
+                </div>
             </div>
           )}
 
           {/* List */}
-          {sites.length === 0 ? (
-            <div className="text-center py-20 text-gray-500">
-               <Globe className="w-16 h-16 mx-auto mb-4 opacity-20" />
-               <p>{t.noSites}</p>
+          {filteredSites.length === 0 ? (
+            <div className="text-center py-20 text-gray-500 bg-gray-900/30 rounded-2xl border border-gray-800 border-dashed">
+               <Globe className="w-12 h-12 mx-auto mb-3 opacity-20" />
+               <p>{searchTerm ? "Nenhum site encontrado com esse nome." : t.noSites}</p>
+               {searchTerm && <button onClick={() => setSearchTerm('')} className="text-blue-400 text-sm hover:underline mt-2">Limpar pesquisa</button>}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sites.map(site => (
+              {filteredSites.map(site => (
                 <div key={site.id} className="bg-gray-900 border border-gray-800 hover:border-blue-500/50 rounded-2xl p-0 transition-all group relative overflow-hidden flex flex-col h-full shadow-lg hover:shadow-blue-900/10">
                    
                    {/* Card Content */}
                    <div className="p-5 flex items-start gap-4 flex-1">
                       {/* Logo Container */}
-                      <div className="w-14 h-14 shrink-0 bg-white rounded-xl p-1.5 flex items-center justify-center border border-gray-700 shadow-md">
+                      <div className="w-14 h-14 shrink-0 bg-white rounded-xl p-1.5 flex items-center justify-center border border-gray-700 shadow-md group-hover:scale-105 transition-transform">
                          <img 
                            src={getLogo(site) || ''} 
                            alt={site.name} 
                            className="w-full h-full object-contain"
                            onError={(e) => {
-                              // Fallback if image fails
                               (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/1f2937/white?text=' + site.name.substring(0,2).toUpperCase();
                            }} 
                          />
@@ -316,7 +314,6 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
                             <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider bg-blue-900/20 px-2 py-0.5 rounded inline-block">
                               {site.country}
                             </span>
-                            {/* Category Badge */}
                             {site.category && (
                               <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider bg-purple-900/20 px-2 py-0.5 rounded inline-block flex items-center gap-1">
                                 <Tag className="w-3 h-3" />
