@@ -887,7 +887,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                        />
                        
                        {currentUser && formData?.collector === currentUser && (
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-brand-500/20 px-1.5 py-0.5 rounded text-[10px] text-brand-400 font-bold border border-brand-500/30">
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-brand-500/20 px-1.5 py-0.5 rounded text-[10px] text-brand-400 font-bold border border-brand-500/30 animate-pulse">
                              <CheckCircle className="w-3 h-3" /> Auto
                           </div>
                        )}

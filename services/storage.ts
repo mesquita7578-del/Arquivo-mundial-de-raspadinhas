@@ -237,11 +237,11 @@ class StorageService {
              const rawName = img.collector.trim().toLowerCase();
              let finalName = rawName;
 
-             // Logic for Vovô Jorge
-             if (rawName.includes('jorge') || rawName.includes('mesquita') || rawName === 'jm' || rawName === 'j.m.') {
+             // Logic for Vovô Jorge (Agrupa 'Jorge', 'Mesquita', 'JM', 'J.M.')
+             if (rawName.includes('jorge') || rawName.includes('mesquita') || rawName === 'jm' || rawName === 'j.m.' || rawName === 'j') {
                  finalName = 'Jorge Mesquita';
              }
-             // Logic for Fabio
+             // Logic for Fabio (Agrupa 'Fabio', 'Pagni', 'FP')
              else if (rawName.includes('fabio') || rawName.includes('pagni') || rawName === 'fp') {
                  finalName = 'Fabio Pagni';
              }
