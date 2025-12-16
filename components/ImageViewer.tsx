@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify, Gem, Gift, Eraser, Sliders, Sun, Contrast, Palette, RotateCcw, ClipboardList, Package, ZoomIn, ZoomOut, ArrowRight, Trophy } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
 
@@ -36,6 +36,15 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+
+  // Generate unique collectors list for Autocomplete
+  const collectorsList = useMemo(() => {
+    const unique = new Set<string>();
+    contextImages.forEach(img => {
+      if (img.collector) unique.add(img.collector);
+    });
+    return Array.from(unique).sort();
+  }, [contextImages]);
 
   useEffect(() => {
     setFormData(image);
@@ -228,6 +237,11 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center p-0 sm:p-4 bg-black/95 animate-fade-in backdrop-blur-xl">
+      {/* Collectors Datalist for Autocomplete */}
+      <datalist id="viewer-collectors-list">
+         {collectorsList.map(c => <option key={c} value={c} />)}
+      </datalist>
+
       <button 
         type="button"
         onClick={onClose}
@@ -651,6 +665,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                         value={formData.collector || ''}
                         onChange={(e) => handleChange('collector', e.target.value)}
                         placeholder={t.collector}
+                        list="viewer-collectors-list"
                         className="w-full bg-gray-900 border border-gray-700 text-white text-sm rounded-lg pl-10 pr-3 py-2 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 outline-none transition-all placeholder-gray-600 font-medium"
                       />
                     </div>
