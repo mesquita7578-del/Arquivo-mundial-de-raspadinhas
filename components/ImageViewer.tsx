@@ -613,11 +613,11 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                      </select>
                    </div>
                    
-                   {/* Manual numbers input for SET */}
+                   {/* Manual numbers input for SET - NEWLY ADDED */}
                    {formData.isSeries && (
-                     <div className="animate-fade-in mt-1">
-                       <input 
-                         type="text" 
+                     <div className="animate-fade-in mt-2">
+                       <input
+                         type="text"
                          value={formData.seriesDetails || ''}
                          onChange={(e) => handleChange('seriesDetails', e.target.value)}
                          placeholder={t.seriesDetailsPlaceholder}

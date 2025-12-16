@@ -91,7 +91,7 @@ export const translations = {
       linesMulti: "Multi",
       // Pagination
       page: "Pág",
-      of: "de",
+      of: "di",
       next: "Próx",
       prev: "Ant",
       showing: "Mostrando"
@@ -184,7 +184,7 @@ export const translations = {
       close: "Chiudi",
       category: "Tipo",
       collector: "Collezionista",
-      seriesDetailsPlaceholder: "N. (es: 1-5)"
+      seriesDetailsPlaceholder: "Nºs (ex: 1-5)"
     },
     login: {
       title: "Admin",
