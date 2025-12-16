@@ -84,6 +84,13 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
   const stopCS = stopSC + pctCS;
   // Remaining is Amostra/Other
 
+  // Calculation for Separate Bars
+  const safeTotal = totalRecords || 1;
+  const scratchCount = categoryStats.scratch || 0;
+  const lotteryCount = categoryStats.lottery || 0;
+  const scratchPct = (scratchCount / safeTotal) * 100;
+  const lotteryPct = (lotteryCount / safeTotal) * 100;
+
   return (
     <div className="w-full bg-slate-950 border-t border-slate-900 py-12 pb-32 animate-fade-in relative overflow-hidden">
       
@@ -135,20 +142,42 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
               <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Países Representados</p>
            </div>
 
-           {/* Type Breakdown Card */}
-           <div className="col-span-1 md:col-span-2 bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-6 rounded-2xl flex items-center gap-8 relative overflow-hidden">
-              <div className="flex-1">
-                 <div className="flex items-center gap-2 mb-4">
-                    <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400"><Ticket className="w-5 h-5" /></div>
-                    <span className="text-sm font-bold text-white">Distribuição por Tipo</span>
+           {/* Type Breakdown Card (UPDATED TO SPLIT BARS) */}
+           <div className="col-span-1 md:col-span-2 bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-6 rounded-2xl flex flex-col justify-center relative overflow-hidden">
+              <div className="flex items-center gap-2 mb-4">
+                 <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400"><Ticket className="w-5 h-5" /></div>
+                 <span className="text-sm font-bold text-white">Distribuição por Tipo</span>
+              </div>
+              
+              <div className="space-y-4 w-full">
+                 {/* Raspadinhas Bar */}
+                 <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                       <span className="flex items-center gap-2 text-xs font-bold text-slate-300">
+                          <Coins className="w-3.5 h-3.5 text-brand-500" /> Raspadinhas
+                       </span>
+                       <span className="text-xs font-mono font-bold text-white">
+                          {scratchCount} <span className="text-slate-500">({Math.round(scratchPct)}%)</span>
+                       </span>
+                    </div>
+                    <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
+                       <div className="h-full bg-brand-500 shadow-[0_0_10px_rgba(244,63,94,0.5)] transition-all duration-1000 ease-out" style={{ width: `${animate ? scratchPct : 0}%` }}></div>
+                    </div>
                  </div>
-                 <div className="w-full h-4 bg-slate-800 rounded-full overflow-hidden flex">
-                    <div className="h-full bg-brand-500" style={{ width: `${((categoryStats.scratch as number) / (totalRecords || 1)) * 100}%` }}></div>
-                    <div className="h-full bg-purple-500" style={{ width: `${((categoryStats.lottery as number) / (totalRecords || 1)) * 100}%` }}></div>
-                 </div>
-                 <div className="flex justify-between mt-2 text-xs font-bold text-slate-400">
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-brand-500"></span>Raspadinhas ({categoryStats.scratch})</span>
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500"></span>Lotarias ({categoryStats.lottery})</span>
+
+                 {/* Lotarias Bar */}
+                 <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                       <span className="flex items-center gap-2 text-xs font-bold text-slate-300">
+                          <Ticket className="w-3.5 h-3.5 text-purple-500" /> Lotarias
+                       </span>
+                       <span className="text-xs font-mono font-bold text-white">
+                          {lotteryCount} <span className="text-slate-500">({Math.round(lotteryPct)}%)</span>
+                       </span>
+                    </div>
+                    <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
+                       <div className="h-full bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)] transition-all duration-1000 ease-out" style={{ width: `${animate ? lotteryPct : 0}%` }}></div>
+                    </div>
                  </div>
               </div>
            </div>
