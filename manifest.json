@@ -1,0 +1,22 @@
+{
+  "name": "Arquivo Mundial de Raspadinhas",
+  "short_name": "Arquivo Mundial",
+  "description": "O maior catálogo digital colaborativo de raspadinhas e lotarias.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2662/2662503.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2662/2662503.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
