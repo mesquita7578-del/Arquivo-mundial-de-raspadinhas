@@ -276,63 +276,51 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
                      </div>
                   </div>
                ) : (
-                 <div className="max-w-4xl mx-auto pb-20 space-y-12 animate-fade-in">
+                 <div className="max-w-4xl mx-auto pb-20 space-y-8 animate-fade-in">
                     
-                    {/* SECTION 1: STATIC HISTORY */}
-                    <div className="space-y-8">
-                        <div className="flex items-center gap-3 border-b border-gray-800 pb-4">
-                           <Scroll className="w-6 h-6 text-brand-500" />
-                           <h3 className="text-2xl font-bold text-white">{t.articlesTitle}</h3>
-                        </div>
-                        
-                        <article className="prose prose-invert max-w-none bg-gray-900/50 p-6 rounded-2xl border border-gray-800">
-                           <h3 className="text-xl font-bold text-gray-100 mb-3">A Origem das Raspadinhas</h3>
-                           <p className="text-gray-400 leading-relaxed text-sm">
-                              A história das raspadinhas modernas remonta a 1974, nos Estados Unidos, quando a empresa Scientific Games Corporation (liderada pelo cientista John Koza e pelo especialista em marketing Daniel Bower) criou o primeiro bilhete de lotaria instantânea seguro e gerado por computador.
-                           </p>
-                        </article>
-
-                        <article className="prose prose-invert max-w-none bg-gray-900/50 p-6 rounded-2xl border border-gray-800">
-                           <h3 className="text-xl font-bold text-gray-100 mb-3">O Colecionismo e o Estado "MINT"</h3>
-                           <p className="text-gray-400 leading-relaxed text-sm">
-                              Para um colecionador, o estado de conservação é tudo. Enquanto a maioria das pessoas raspa o bilhete inteiro e o deita fora, os colecionadores procuram bilhetes "MINT" (novos, sem raspar) ou amostras ("SPECIMEN" / "VOID").
-                           </p>
-                        </article>
-                    </div>
-
-                    {/* SECTION 2: UPLOADED DOCUMENTS */}
-                    <div className="space-y-6">
-                        <div className="flex items-center justify-between border-b border-gray-800 pb-4">
-                           <div className="flex items-center gap-3">
-                              <FileText className="w-6 h-6 text-blue-500" />
-                              <h3 className="text-2xl font-bold text-white">{t.documentsTitle}</h3>
-                           </div>
-                           <span className="text-xs font-bold bg-gray-800 px-2 py-1 rounded text-gray-400">{documents.length} Docs</span>
-                        </div>
-
-                        {/* Upload Form (Admin) */}
-                        {isAdmin && (
-                           <div className="bg-blue-900/10 border border-dashed border-blue-500/30 rounded-xl p-4 flex flex-col md:flex-row items-center gap-4">
+                    {/* UPLOAD SECTION (Moved to Top for Visibility) */}
+                    {isAdmin && (
+                       <div className="bg-gradient-to-r from-blue-900/20 to-brand-900/20 border border-blue-500/30 rounded-2xl p-6 shadow-lg">
+                          <div className="flex items-center gap-3 mb-4">
+                             <div className="bg-blue-500/20 p-2 rounded-lg">
+                                <UploadCloud className="w-6 h-6 text-blue-400" />
+                             </div>
+                             <h3 className="text-lg font-bold text-white">Adicionar Novo Documento (PDF)</h3>
+                          </div>
+                          
+                          <div className="flex flex-col md:flex-row items-center gap-4">
                               <div className="flex-1 w-full">
                                  <input 
                                     type="text" 
                                     value={docTitle}
                                     onChange={(e) => setDocTitle(e.target.value)}
                                     placeholder={t.docTitlePlaceholder}
-                                    className="w-full bg-gray-900 border border-gray-700 text-white rounded px-4 py-2 focus:border-brand-500 outline-none text-sm"
+                                    className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl px-4 py-3 focus:border-brand-500 outline-none text-sm shadow-inner transition-all"
                                  />
                               </div>
-                              <label className={`flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-lg cursor-pointer transition-colors shadow-lg whitespace-nowrap ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
-                                 {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
-                                 <span className="text-xs font-bold">{isUploading ? "Enviando..." : t.uploadPdf}</span>
+                              <label className={`flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl cursor-pointer transition-all shadow-lg hover:shadow-blue-900/50 hover:scale-105 whitespace-nowrap active:scale-95 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                                 {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <UploadCloud className="w-5 h-5" />}
+                                 <span className="font-bold">{isUploading ? "A carregar..." : "Selecionar PDF"}</span>
                                  <input type="file" accept="application/pdf" className="hidden" onChange={handleFileUpload} disabled={!docTitle.trim()} />
                               </label>
                            </div>
-                        )}
+                           <p className="text-[10px] text-gray-500 mt-2 ml-1 text-center md:text-left">Máximo 50MB. O título é obrigatório.</p>
+                       </div>
+                    )}
+
+                    {/* SECTION: DOCUMENTS */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between border-b border-gray-800 pb-2">
+                           <div className="flex items-center gap-2">
+                              <FileText className="w-5 h-5 text-blue-500" />
+                              <h3 className="text-xl font-bold text-white">{t.documentsTitle}</h3>
+                           </div>
+                           <span className="text-xs font-bold bg-gray-800 px-2 py-1 rounded text-gray-400">{documents.length}</span>
+                        </div>
 
                         {/* Documents Grid */}
                         {documents.length === 0 ? (
-                           <div className="text-center py-10 text-gray-600 italic border border-gray-800 rounded-xl">
+                           <div className="text-center py-10 text-gray-600 italic border border-gray-800 rounded-xl bg-gray-900/30">
                               {t.noDocs}
                            </div>
                         ) : (
@@ -364,6 +352,30 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
                               ))}
                            </div>
                         )}
+                    </div>
+
+                    {/* SECTION: HISTORY ARTICLES (Moved down) */}
+                    <div className="pt-8 border-t border-gray-800">
+                        <div className="flex items-center gap-2 mb-6 opacity-50 hover:opacity-100 transition-opacity">
+                           <Scroll className="w-5 h-5 text-brand-500" />
+                           <h3 className="text-lg font-bold text-white">{t.articlesTitle}</h3>
+                        </div>
+                        
+                        <div className="grid md:grid-cols-2 gap-6">
+                           <article className="prose prose-invert max-w-none bg-gray-900/30 p-5 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors">
+                              <h3 className="text-base font-bold text-gray-200 mb-2">A Origem</h3>
+                              <p className="text-gray-500 text-xs leading-relaxed">
+                                 A história das raspadinhas modernas remonta a 1974, nos Estados Unidos, quando a empresa Scientific Games Corporation (liderada pelo cientista John Koza e pelo especialista em marketing Daniel Bower) criou o primeiro bilhete de lotaria instantânea seguro e gerado por computador.
+                              </p>
+                           </article>
+
+                           <article className="prose prose-invert max-w-none bg-gray-900/30 p-5 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors">
+                              <h3 className="text-base font-bold text-gray-200 mb-2">Estado "MINT"</h3>
+                              <p className="text-gray-500 text-xs leading-relaxed">
+                                 Para um colecionador, o estado de conservação é tudo. Enquanto a maioria das pessoas raspa o bilhete inteiro e o deita fora, os colecionadores procuram bilhetes "MINT" (novos, sem raspar) ou amostras ("SPECIMEN" / "VOID").
+                              </p>
+                           </article>
+                        </div>
                     </div>
 
                  </div>
