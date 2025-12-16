@@ -53,7 +53,11 @@ function App() {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); 
   const [isWebsitesModalOpen, setIsWebsitesModalOpen] = useState(false); 
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Auth State - Changed to store User Name instead of boolean
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const isAdmin = !!currentUser; // Derived state
+
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
   const [showChloeMessage, setShowChloeMessage] = useState(false);
   
@@ -321,12 +325,18 @@ function App() {
     if (!isAdmin) setIsLoginModalOpen(true);
   };
 
-  const handleLogout = () => setIsAdmin(false);
+  const handleLogout = () => setCurrentUser(null);
 
   const handleLoginSubmit = (username: string, pass: string): boolean => {
     const cleanName = username.trim().toUpperCase();
-    if (AUTHORIZED_ADMINS.includes(cleanName) && pass === ADMIN_PASSWORD) {
-      setIsAdmin(true);
+    
+    // Check if the name partially matches any authorized admin (allows "Fabio" or "Fabio Pagni")
+    const match = AUTHORIZED_ADMINS.find(admin => admin.includes(cleanName) || cleanName.includes(admin));
+    
+    if ((match || AUTHORIZED_ADMINS.includes(cleanName)) && pass === ADMIN_PASSWORD) {
+      // Store nice formatted name (Title Case)
+      const formattedName = username.trim().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+      setCurrentUser(formattedName);
       return true;
     }
     return false;
@@ -574,6 +584,7 @@ function App() {
         onSearch={setSearchTerm}
         onUploadClick={handleUploadClick}
         isAdmin={isAdmin}
+        currentUser={currentUser} // Pass currentUser
         onAdminToggle={handleAdminToggle}
         onLogout={handleLogout}
         onExport={handleExportData}
@@ -935,6 +946,7 @@ function App() {
           onUploadComplete={handleUploadComplete}
           existingImages={displayedImages}
           initialFile={droppedFile}
+          currentUser={currentUser} // Pass currentUser for auto-tagging
           t={t.upload}
         />
       )}

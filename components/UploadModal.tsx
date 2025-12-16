@@ -8,6 +8,7 @@ interface UploadModalProps {
   onUploadComplete: (image: ScratchcardData) => void;
   existingImages?: ScratchcardData[];
   initialFile?: File | null;
+  currentUser?: string | null; // New Prop
   t: any;
 }
 
@@ -61,7 +62,7 @@ const resizeAndCompressImage = (file: File): Promise<string> => {
   });
 };
 
-export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadComplete, existingImages = [], initialFile, t }) => {
+export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadComplete, existingImages = [], initialFile, currentUser, t }) => {
   const [step, setStep] = useState<'upload' | 'review'>('upload');
   const [activeTab, setActiveTab] = useState<'image' | 'web' | 'simple'>('image');
   
@@ -214,7 +215,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       country: analysis.country || 'Portugal',
       region: analysis.region || '',
       continent: analysis.continent || 'Europa',
-      collector: '',
+      collector: currentUser || '', // Auto-fill with current user name
       emission: analysis.emission || '',
       printer: analysis.printer || '',
       isSeries: false,
@@ -446,9 +447,16 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                <h2 className="text-xl font-bold text-white tracking-tight">
                  {step === 'upload' ? t.title : t.reviewTitle}
                </h2>
-               <p className="text-xs text-gray-400 font-medium">
-                  {step === 'upload' ? "Adicione novas raspadinhas ao arquivo" : "Verifique os dados extraídos pela IA"}
-               </p>
+               <div className="flex items-center gap-2">
+                 <p className="text-xs text-gray-400 font-medium">
+                    {step === 'upload' ? "Adicione novas raspadinhas ao arquivo" : "Verifique os dados extraídos pela IA"}
+                 </p>
+                 {currentUser && (
+                    <span className="text-[10px] bg-brand-900/40 text-brand-400 px-2 py-0.5 rounded border border-brand-500/20 flex items-center gap-1">
+                       <User className="w-3 h-3" /> {currentUser}
+                    </span>
+                 )}
+               </div>
              </div>
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-white bg-gray-800/50 hover:bg-gray-700 p-2 rounded-full transition-colors">

@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen, FileSpreadsheet, Home, BarChart2, Info, ChevronDown, Coins, Star, ArrowRight, Globe, Map, UploadCloud } from 'lucide-react';
+import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen, FileSpreadsheet, Home, BarChart2, Info, ChevronDown, Coins, Star, ArrowRight, Globe, Map, UploadCloud, User } from 'lucide-react';
 import { Language } from '../translations';
 
 interface HeaderProps {
@@ -7,11 +7,12 @@ interface HeaderProps {
   onUploadClick: () => void;
   searchTerm: string;
   isAdmin: boolean;
+  currentUser?: string | null; // New Prop
   onAdminToggle: () => void;
   onLogout: () => void;
   onExport: () => void;
   onExportCSV: () => void;
-  onImport: (file: File) => void; // New Prop
+  onImport: (file: File) => void; 
   onHistoryClick: () => void;
   language: Language;
   setLanguage: (lang: Language) => void;
@@ -26,6 +27,7 @@ export const Header: React.FC<HeaderProps> = ({
   onUploadClick, 
   searchTerm, 
   isAdmin, 
+  currentUser,
   onAdminToggle, 
   onLogout,
   onExport,
@@ -285,11 +287,14 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={onLogout}
-              className="flex items-center justify-center w-8 h-8 md:w-auto md:px-3 md:py-2 bg-red-900/30 hover:bg-red-600 text-red-400 hover:text-white border border-red-800 rounded-full transition-all"
+              className="flex items-center justify-center gap-2 w-auto px-3 py-2 bg-red-900/20 hover:bg-red-900/40 text-red-400 hover:text-red-200 border border-red-900/50 rounded-full transition-all group"
               title={t.logoutTitle}
             >
-              <LogOut className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline text-xs font-bold">{t.logout}</span>
+              <div className="flex items-center gap-2">
+                 <div className="p-0.5 bg-red-500 rounded-full"><User className="w-3 h-3 text-black" /></div>
+                 {currentUser && <span className="text-[10px] font-bold uppercase hidden md:inline">Olá, {currentUser.split(' ')[0]}</span>}
+              </div>
+              <LogOut className="w-4 h-4" />
             </button>
 
              {/* Upload Button */}
