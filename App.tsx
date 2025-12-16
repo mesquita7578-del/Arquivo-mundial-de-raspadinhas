@@ -772,22 +772,25 @@ function App() {
       </main>
 
       {/* Footer / Copyright (Always visible at very bottom) */}
-      <footer className="bg-slate-950 border-t border-slate-900 py-8 text-center text-slate-600 text-xs z-10 relative">
-          <p className="uppercase tracking-widest mb-4">© {new Date().getFullYear()} Arquivo Mundial de Raspadinhas</p>
-          
-          <div className="flex flex-col items-center gap-2">
-             <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">
-               Fundadores
-             </div>
-             <div className="text-slate-400">
-                Jorge Mesquita & Fabio Pagni
-             </div>
-             
-             {/* Dedication to Chloe */}
-             <div className="mt-4 flex items-center gap-2 bg-pink-900/10 border border-pink-500/10 px-4 py-2 rounded-full">
-                <Heart className="w-3 h-3 text-pink-500 fill-pink-500 animate-pulse" />
-                <span className="text-pink-200/80 font-medium italic">Dedicado à futura guardiã Chloe</span>
-             </div>
+      <footer className="bg-slate-950 border-t border-slate-900/50 py-4 z-10 relative">
+          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-3 text-[10px] md:text-xs text-slate-500">
+              
+              {/* Left */}
+              <div className="flex items-center gap-4">
+                 <span className="uppercase tracking-widest opacity-50">© {new Date().getFullYear()} Arquivo Mundial</span>
+                 <span className="hidden md:inline text-slate-800">|</span>
+                 <div className="flex items-center gap-1 opacity-70">
+                    <span>Jorge Mesquita</span>
+                    <span className="text-slate-700">&</span>
+                    <span>Fabio Pagni</span>
+                 </div>
+              </div>
+
+              {/* Right: Delicate Chloe Badge */}
+              <div className="flex items-center gap-1.5 bg-pink-900/5 border border-pink-500/10 px-3 py-1 rounded-full hover:border-pink-500/20 transition-colors group cursor-default">
+                 <Heart className="w-2.5 h-2.5 text-pink-500/50 group-hover:text-pink-400 group-hover:fill-pink-400 transition-colors" />
+                 <span className="text-pink-200/40 group-hover:text-pink-300/80 italic font-serif transition-colors">Futura guardiã Chloe</span>
+              </div>
           </div>
       </footer>
 
