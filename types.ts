@@ -34,6 +34,10 @@ export interface ScratchcardData {
   isRarity?: boolean; // É uma raridade?
   isPromotional?: boolean; // Novo: É uma raspadinha promocional?
   
+  // Winner Fields
+  isWinner?: boolean; // É premiada?
+  prizeAmount?: string; // Valor do prémio (ex: 50€)
+  
   category: Category; // Categoria
 
   aiGenerated: boolean;

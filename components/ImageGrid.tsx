@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
-import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff, MapPin, LayoutGrid, List, ClipboardList, Package } from 'lucide-react';
+import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff, MapPin, LayoutGrid, List, ClipboardList, Package, Trophy } from 'lucide-react';
 
 interface ImageGridProps {
   images: ScratchcardData[];
@@ -355,6 +355,12 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                         {item.seriesDetails && <span className="text-[10px] text-brand-400 font-medium">{item.seriesDetails}</span>}
                       </span>
                     )}
+                    {item.isWinner && (
+                      <span title={item.prizeAmount} className="flex items-center gap-1 bg-green-900/20 px-1.5 py-0.5 rounded border border-green-900/30">
+                        <Trophy className="w-3 h-3 text-green-500" />
+                        <span className="text-[10px] text-green-400 font-medium">{item.prizeAmount}</span>
+                      </span>
+                    )}
                     {item.lines && item.lines !== 'none' && (
                        <LineIndicator type={item.lines} t={t} />
                     )}
@@ -405,6 +411,12 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                   </div>
 
                    <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-20">
+                      {item.isWinner && (
+                        <div className="bg-green-600/90 text-white p-1 rounded-full shadow-lg animate-bounce" title={`Premiada: ${item.prizeAmount || '?'}`}>
+                           <Trophy className="w-3 h-3" />
+                        </div>
+                      )}
+                      
                       <div className="flex gap-1">
                         {item.isSeries && (
                             <div className={`backdrop-blur text-white rounded-lg shadow-sm flex items-center justify-center gap-1 ${item.seriesDetails ? 'bg-brand-600/90 px-1.5 py-0.5' : 'bg-brand-600/90 p-1 rounded-full'}`} title={t.series}>

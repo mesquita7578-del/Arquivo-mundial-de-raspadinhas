@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify, Gem, MapPin, Gift, Image as ImageIcon, FileSearch, ClipboardList, Package, Calendar } from 'lucide-react';
+import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify, Gem, MapPin, Gift, Image as ImageIcon, FileSearch, ClipboardList, Package, Calendar, Trophy } from 'lucide-react';
 import { analyzeImage, searchScratchcardInfo } from '../services/geminiService';
 import { ScratchcardData, ScratchcardState, Continent, Category, LineType } from '../types';
 
@@ -222,6 +222,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       lines: 'none', 
       isRarity: false,
       isPromotional: false,
+      isWinner: false, // Default false
+      prizeAmount: '', 
       category: analysis.category || 'raspadinha',
       createdAt: Date.now(),
       aiGenerated: true
@@ -744,6 +746,31 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                         {formData?.isPromotional && <Check className="w-3 h-3 text-white" />}
                       </div>
                    </div>
+
+                   {/* WINNER Toggle */}
+                   <div 
+                     className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${formData?.isWinner ? 'bg-green-900/20 border-green-500/50' : 'bg-gray-800/30 border-gray-700 hover:bg-gray-800'}`}
+                     onClick={() => updateField('isWinner', !formData?.isWinner)}
+                   >
+                      <div className="flex items-center gap-3">
+                         <div className={`p-1.5 rounded-lg ${formData?.isWinner ? 'bg-green-500 text-white' : 'bg-gray-700 text-gray-400'}`}>
+                           <Trophy className="w-4 h-4" />
+                         </div>
+                         <span className={`text-xs font-bold ${formData?.isWinner ? 'text-green-300' : 'text-gray-400'}`}>{t.isWinner}</span>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${formData?.isWinner ? 'bg-green-500 border-green-500' : 'border-gray-600'}`}>
+                        {formData?.isWinner && <Check className="w-3 h-3 text-white" />}
+                      </div>
+                   </div>
+                   {formData?.isWinner && (
+                        <input 
+                          type="text" 
+                          value={formData.prizeAmount || ''}
+                          onChange={(e) => updateField('prizeAmount', e.target.value)}
+                          placeholder={t.prizeAmountPlaceholder}
+                          className="w-full bg-black/20 border border-green-500/30 text-white text-xs rounded-lg px-3 py-2 focus:border-green-500 outline-none placeholder-gray-600 animate-fade-in ml-4 w-[calc(100%-1rem)]"
+                        />
+                   )}
                  </div>
               </div>
 
