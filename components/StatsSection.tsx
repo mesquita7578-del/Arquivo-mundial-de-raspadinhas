@@ -45,12 +45,19 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
   const countSC = (stateStats['SC'] as number) || 0;
   // Group 3: CS
   const countCS = (stateStats['CS'] as number) || 0;
-  // Group 4: AMOSTRAS (Samples/Specimens/Void) - Including SPECIMEN
+  // Group 4: AMOSTRAS (Samples/Specimens/Void + International Variants)
   const countAmostra = ((stateStats['AMOSTRA'] as number) || 0) + 
                        ((stateStats['MUESTRA'] as number) || 0) + 
                        ((stateStats['CAMPIONE'] as number) || 0) + 
                        ((stateStats['SPECIMEN'] as number) || 0) + 
-                       ((stateStats['VOID'] as number) || 0);
+                       ((stateStats['VOID'] as number) || 0) +
+                       ((stateStats['MUSTER'] as number) || 0) +
+                       ((stateStats['ÉCHANTILLON'] as number) || 0) +
+                       ((stateStats['견본'] as number) || 0) +
+                       ((stateStats['STEEKPROEF'] as number) || 0) +
+                       ((stateStats['PRØVE'] as number) || 0) +
+                       ((stateStats['PROV'] as number) || 0) +
+                       ((stateStats['样本'] as number) || 0);
 
   // Calculate Percentages
   const pctMint = totalStateCount > 0 ? (countMint / totalStateCount) * 100 : 0;

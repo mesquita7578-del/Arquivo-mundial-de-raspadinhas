@@ -20,7 +20,18 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
         Extraia: Nome do Jogo, Número do Jogo, Data, Tamanho, Valores, Estado, País e Continente.
         
         IMPORTANTE - ESTADO (STATE):
-        Identifique se é uma amostra. Procure por textos como "AMOSTRA" (PT), "MUESTRA" (ES), "CAMPIONE" (IT), "VOID" ou "SPECIMEN" (EN).
+        Identifique se é uma amostra. Procure por textos como:
+        - "AMOSTRA" (PT)
+        - "MUESTRA" (ES)
+        - "CAMPIONE" (IT)
+        - "VOID" ou "SPECIMEN" (EN)
+        - "MUSTER" (DE)
+        - "ÉCHANTILLON" (FR)
+        - "견본" (KR)
+        - "STEEKPROEF" (NL)
+        - "PRØVE" (DK/NO)
+        - "PROV" (SE)
+        - "样本" (CN)
         
         IMPORTANTE - DETEÇÃO DE GRÁFICA (PRINTER) VIA FSC:
         Procure atentamente por logotipos FSC (Forest Stewardship Council) e o respetivo código de licença (ex: FSC® C108706).
@@ -72,8 +83,8 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
             price: { type: Type.STRING, description: "Preço" },
             state: { 
               type: Type.STRING, 
-              enum: ["AMOSTRA", "VOID", "MUESTRA", "CAMPIONE", "SPECIMEN", "MINT", "CS", "SC"],
-              description: "Estado (incluindo Specimen)"
+              enum: ["AMOSTRA", "VOID", "MUESTRA", "CAMPIONE", "SPECIMEN", "MUSTER", "ÉCHANTILLON", "견본", "STEEKPROEF", "PRØVE", "PROV", "样本", "MINT", "CS", "SC"],
+              description: "Estado (International Variants)"
             },
             country: { type: Type.STRING, description: "País" },
             region: { type: Type.STRING, description: "Região, Cantão, Estado ou Ilha (ex: Baviera, Açores)" },

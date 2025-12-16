@@ -20,8 +20,24 @@ const StateBadge: React.FC<{ state: string }> = ({ state }) => {
     const normalized = s.toUpperCase();
     if (normalized.includes('MINT')) return 'bg-green-500/20 text-green-400 border-green-500/50';
     if (normalized.includes('VOID')) return 'bg-red-500/20 text-red-400 border-red-500/50';
-    // Updated to include SPECIMEN
-    if (normalized.includes('AMOSTRA') || normalized.includes('MUESTRA') || normalized.includes('CAMPIONE') || normalized.includes('SPECIMEN')) return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
+    
+    // Updated to include all international variants for Sample/Specimen
+    if (
+      normalized.includes('AMOSTRA') || 
+      normalized.includes('MUESTRA') || 
+      normalized.includes('CAMPIONE') || 
+      normalized.includes('SPECIMEN') || 
+      normalized.includes('MUSTER') || 
+      normalized.includes('ÉCHANTILLON') || 
+      normalized.includes('견본') || 
+      normalized.includes('STEEKPROEF') || 
+      normalized.includes('PRØVE') || 
+      normalized.includes('PROV') || 
+      normalized.includes('样本')
+    ) {
+      return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
+    }
+    
     return 'bg-slate-500/20 text-slate-400 border-slate-500/50';
   };
 

@@ -111,7 +111,11 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       collectors: Array.from(collectors).sort(),
       emissions: Array.from(emissions).sort(),
       sizes: Array.from(sizes).sort(),
-      states: ['MINT', 'VOID', 'AMOSTRA', 'MUESTRA', 'CAMPIONE', 'SPECIMEN', 'SC', 'CS']
+      states: [
+        'MINT', 'VOID', 'AMOSTRA', 'MUESTRA', 'CAMPIONE', 'SPECIMEN', 
+        'MUSTER', 'ÉCHANTILLON', '견본', 'STEEKPROEF', 'PRØVE', 'PROV', '样本', 
+        'SC', 'CS'
+      ]
     };
   }, [existingImages]);
 
