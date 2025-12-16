@@ -22,6 +22,7 @@ export const translations = {
       importTitle: "Carregar ficheiro de Backup (JSON)",
       rarities: "Raridades",
       promos: "Promocionais", 
+      winners: "Premiadas",
       websites: "Sites Oficiais"
     },
     websites: {
@@ -222,6 +223,7 @@ export const translations = {
       importTitle: "Carica Backup (JSON)",
       rarities: "Rarità",
       promos: "Promo", 
+      winners: "Vincenti",
       websites: "Siti Ufficiali"
     },
     websites: {

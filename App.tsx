@@ -11,7 +11,7 @@ import { WebsitesModal } from './components/WebsitesModal';
 import { AboutPage } from './components/AboutPage'; 
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
@@ -60,6 +60,7 @@ function App() {
   // Filter States (Lifted)
   const [showRarities, setShowRarities] = useState(false);
   const [showPromotional, setShowPromotional] = useState(false); 
+  const [showWinners, setShowWinners] = useState(false); // New Winner Filter
   const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
   
   const [isDragging, setIsDragging] = useState(false);
@@ -152,6 +153,11 @@ function App() {
           results = results.filter(img => img.isPromotional === true);
         }
 
+        // 4. Filter by Winners
+        if (showWinners) {
+          results = results.filter(img => img.isWinner === true);
+        }
+
         setDisplayedImages(results);
         setMapData(results); // Map follows grid on home
 
@@ -167,7 +173,7 @@ function App() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, activeContinent, showRarities, showPromotional, activeCategory, isLoadingDB, currentPage]);
+  }, [searchTerm, activeContinent, showRarities, showPromotional, showWinners, activeCategory, isLoadingDB, currentPage]);
 
   // --- LOGIC FOR CONTINENT SUBPAGES ---
   
@@ -222,13 +228,27 @@ function App() {
 
 
   const toggleRarities = () => {
-    if (!showRarities) setShowPromotional(false);
+    if (!showRarities) {
+       setShowPromotional(false);
+       setShowWinners(false);
+    }
     setShowRarities(!showRarities);
   };
 
   const togglePromotional = () => {
-    if (!showPromotional) setShowRarities(false);
+    if (!showPromotional) {
+       setShowRarities(false);
+       setShowWinners(false);
+    }
     setShowPromotional(!showPromotional);
+  };
+
+  const toggleWinners = () => {
+    if (!showWinners) {
+       setShowRarities(false);
+       setShowPromotional(false);
+    }
+    setShowWinners(!showWinners);
   };
 
   const handleCountrySelectFromMap = (countryName: string) => {
@@ -633,6 +653,19 @@ function App() {
                     {t.header.promos}
                   </button>
 
+                  {/* WINNERS Filter Button (New) */}
+                  <button
+                    onClick={toggleWinners}
+                    className={`flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${
+                      showWinners 
+                        ? "bg-green-600 text-white border-green-500 shadow-lg shadow-green-500/20" 
+                        : "bg-slate-800 text-slate-400 border-slate-700 hover:border-green-500/50 hover:text-green-400"
+                    }`}
+                  >
+                    <Trophy className="w-3.5 h-3.5" />
+                    {t.header.winners}
+                  </button>
+
                   {/* Websites Modal Trigger */}
                   <button
                     onClick={() => setIsWebsitesModalOpen(true)}
@@ -683,8 +716,8 @@ function App() {
             </div>
 
             <div className="max-w-7xl mx-auto py-6 md:py-8 relative z-10 space-y-8 md:space-y-12 animate-fade-in">
-              {/* New Arrivals (Hidden in Rarities or Promos mode) */}
-              {!showRarities && !showPromotional && (
+              {/* New Arrivals (Hidden in Filter mode) */}
+              {!showRarities && !showPromotional && !showWinners && (
                 <section className="px-4 md:px-6">
                   <div className="flex items-center gap-2 mb-4 text-brand-400">
                     <Clock className="w-5 h-5" />
@@ -712,6 +745,8 @@ function App() {
                       <Gem className="w-5 h-5 text-gold-500" />
                     ) : showPromotional ? (
                       <Gift className="w-5 h-5 text-pink-500" />
+                    ) : showWinners ? (
+                      <Trophy className="w-5 h-5 text-green-500" />
                     ) : (
                       <Globe className="w-5 h-5" />
                     )}
@@ -721,7 +756,9 @@ function App() {
                         ? t.header.rarities 
                         : showPromotional 
                           ? t.header.promos
-                          : t.home.explore
+                          : showWinners
+                            ? t.header.winners
+                            : t.home.explore
                       }
                     </h2>
                   </div>
@@ -785,7 +822,7 @@ function App() {
                   </div>
                 )}
 
-                <div className={`bg-slate-900/30 border rounded-2xl overflow-hidden min-h-[500px] backdrop-blur-sm ${showRarities ? 'border-gold-500/30 bg-gold-900/5' : showPromotional ? 'border-pink-500/30 bg-pink-900/5' : 'border-slate-800/50'}`}>
+                <div className={`bg-slate-900/30 border rounded-2xl overflow-hidden min-h-[500px] backdrop-blur-sm ${showRarities ? 'border-gold-500/30 bg-gold-900/5' : showPromotional ? 'border-pink-500/30 bg-pink-900/5' : showWinners ? 'border-green-500/30 bg-green-900/5' : 'border-slate-800/50'}`}>
                   {viewMode === 'map' ? (
                     <div className="p-4 h-[600px]">
                       <WorldMap 
