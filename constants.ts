@@ -1,4 +1,4 @@
-import { ScratchcardData } from './types';
+import { ScratchcardData, WebsiteLink } from './types';
 
 export const INITIAL_RASPADINHAS: ScratchcardData[] = [
   {
@@ -85,7 +85,6 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     aiGenerated: true,
     createdAt: Date.now() - 50000,
   },
-  // Add a specific Germany example with a region to demo the feature immediately
   {
     id: '6',
     customId: 'RASP-DE-001',
@@ -103,4 +102,28 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     aiGenerated: true,
     createdAt: Date.now() - 10000,
   }
+];
+
+// Based on European Lotteries Members
+export const EUROPEAN_LOTTERIES: Partial<WebsiteLink>[] = [
+  { name: "Santa Casa (SCML)", url: "https://jogossantacasa.pt", country: "Portugal", category: "Regular Member" },
+  { name: "FDJ (La Française des Jeux)", url: "https://www.fdj.fr", country: "França", category: "Regular Member" },
+  { name: "SELAE (Loterías y Apuestas)", url: "https://www.loteriasyapuestas.es", country: "Espanha", category: "Regular Member" },
+  { name: "ONCE", url: "https://www.juegosonce.es", country: "Espanha", category: "Associate Member" },
+  { name: "Lottomatica", url: "https://www.lottomatica.it", country: "Itália", category: "Regular Member" },
+  { name: "Sisal", url: "https://www.sisal.it", country: "Itália", category: "Associate Member" },
+  { name: "National Lottery (Allwyn)", url: "https://www.national-lottery.co.uk", country: "Reino Unido", category: "Regular Member" },
+  { name: "Loterie Nationale", url: "https://www.loterie-nationale.be", country: "Bélgica", category: "Regular Member" },
+  { name: "Swisslos", url: "https://www.swisslos.ch", country: "Suíça", category: "Regular Member" },
+  { name: "Loterie Romande", url: "https://www.loro.ch", country: "Suíça", category: "Regular Member" },
+  { name: "Lotto Bayern", url: "https://www.lotto-bayern.de", country: "Alemanha", category: "Regular Member" },
+  { name: "WestLotto", url: "https://www.westlotto.de", country: "Alemanha", category: "Regular Member" },
+  { name: "Danske Spil", url: "https://danskespil.dk", country: "Dinamarca", category: "Regular Member" },
+  { name: "Norsk Tipping", url: "https://www.norsk-tipping.no", country: "Noruega", category: "Regular Member" },
+  { name: "Svenska Spel", url: "https://www.svenskaspel.se", country: "Suécia", category: "Regular Member" },
+  { name: "OPAP", url: "https://www.opap.gr", country: "Grécia", category: "Regular Member" },
+  { name: "Österreichische Lotterien", url: "https://www.lotterien.at", country: "Áustria", category: "Regular Member" },
+  { name: "Sazka", url: "https://www.sazka.cz", country: "Rep. Checa", category: "Regular Member" },
+  { name: "Szerencsejáték Zrt.", url: "https://www.szerencsejatek.hu", country: "Hungria", category: "Regular Member" },
+  { name: "Totalizator Sportowy", url: "https://www.lotto.pl", country: "Polónia", category: "Regular Member" }
 ];

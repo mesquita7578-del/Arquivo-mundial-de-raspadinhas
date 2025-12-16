@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Globe, Plus, Trash2, ExternalLink, Building2, Link, Tag } from 'lucide-react';
+import { X, Globe, Plus, Trash2, ExternalLink, Building2, Link, Tag, DownloadCloud, Check } from 'lucide-react';
 import { WebsiteLink } from '../types';
 import { storageService } from '../services/storage';
+import { EUROPEAN_LOTTERIES } from '../constants';
 
 interface WebsitesModalProps {
   onClose: () => void;
@@ -13,6 +14,7 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
   const [sites, setSites] = useState<WebsiteLink[]>([]);
   const [newSite, setNewSite] = useState<Partial<WebsiteLink>>({});
   const [isAdding, setIsAdding] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
   useEffect(() => {
     loadSites();
@@ -55,6 +57,42 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
     } catch (error) {
       alert("Erro ao salvar site.");
     }
+  };
+
+  const handleImportEuropean = async () => {
+     setIsImporting(true);
+     try {
+        let addedCount = 0;
+        for (const el of EUROPEAN_LOTTERIES) {
+           // Check if similar site already exists to avoid dupes
+           const exists = sites.some(s => s.name.toLowerCase() === el.name?.toLowerCase() || s.url === el.url);
+           
+           if (!exists && el.name && el.url && el.country) {
+              const site: WebsiteLink = {
+                 id: Math.random().toString(36).substr(2, 9),
+                 name: el.name,
+                 url: el.url,
+                 country: el.country,
+                 category: el.category || "European Lotteries"
+              };
+              await storageService.saveWebsite(site);
+              addedCount++;
+           }
+        }
+        
+        await loadSites();
+        if(addedCount > 0) {
+           alert(`${addedCount} novos sites europeus importados com sucesso!`);
+        } else {
+           alert("A lista já está atualizada.");
+        }
+
+     } catch (e) {
+        console.error(e);
+        alert("Erro ao importar.");
+     } finally {
+        setIsImporting(false);
+     }
   };
 
   const handleDeleteSite = async (id: string) => {
@@ -103,97 +141,109 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
           
           {/* Admin Add Form */}
           {isAdmin && (
-            <div className="mb-8 bg-gray-900 border border-dashed border-gray-700 rounded-xl p-6 shadow-lg">
-               {!isAdding ? (
-                 <button 
-                   onClick={() => setIsAdding(true)}
-                   className="w-full py-6 flex flex-col items-center justify-center text-gray-500 hover:text-white transition-colors gap-2 hover:bg-gray-800/50 rounded-lg"
-                 >
-                   <Plus className="w-10 h-10" />
-                   <span className="font-bold">{t.add}</span>
-                 </button>
-               ) : (
-                 <div className="flex flex-col gap-4">
-                   <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-bold text-white flex items-center gap-2"><Plus className="w-4 h-4 text-green-500"/> {t.add}</h3>
-                      <button onClick={() => setIsAdding(false)} className="text-gray-500 hover:text-white"><X className="w-5 h-5"/></button>
-                   </div>
-                   
-                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
-                     <div>
-                       <label className="block text-xs uppercase text-gray-500 font-bold mb-1">Nome</label>
-                       <input 
-                         className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none"
-                         placeholder={t.namePlaceholder}
-                         value={newSite.name || ''}
-                         onChange={e => setNewSite({...newSite, name: e.target.value})}
-                       />
-                     </div>
-                     <div>
-                       <label className="block text-xs uppercase text-gray-500 font-bold mb-1">País</label>
-                       <input 
-                         className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none"
-                         placeholder={t.countryPlaceholder}
-                         value={newSite.country || ''}
-                         onChange={e => setNewSite({...newSite, country: e.target.value})}
-                       />
-                     </div>
-                     <div className="md:col-span-2">
-                       <label className="block text-xs uppercase text-gray-500 font-bold mb-1">URL Oficial</label>
-                       <input 
-                         className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none"
-                         placeholder={t.urlPlaceholder}
-                         value={newSite.url || ''}
-                         onChange={e => setNewSite({...newSite, url: e.target.value})}
-                       />
-                     </div>
-                     
-                     {/* Category Input */}
-                     <div className="md:col-span-2">
-                        <label className="block text-xs uppercase text-gray-500 font-bold mb-1">Tipo / Categoria (Opcional)</label>
-                        <input 
-                          className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none"
-                          placeholder={t.categoryPlaceholder}
-                          value={newSite.category || ''}
-                          onChange={e => setNewSite({...newSite, category: e.target.value})}
-                        />
-                     </div>
+            <div className="mb-8 space-y-4">
+              {/* Import Button */}
+              <button 
+                  onClick={handleImportEuropean}
+                  disabled={isImporting}
+                  className="w-full py-4 bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/30 rounded-xl flex items-center justify-center gap-3 text-blue-100 hover:text-white hover:from-blue-900/60 hover:to-indigo-900/60 transition-all shadow-lg group"
+               >
+                  {isImporting ? <DownloadCloud className="w-5 h-5 animate-bounce" /> : <Globe className="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" />}
+                  <span className="font-bold">{isImporting ? "Importando..." : "Importar Lista European Lotteries (EL)"}</span>
+              </button>
 
-                     <div className="md:col-span-2">
-                        <label className="block text-xs uppercase text-gray-500 font-bold mb-1">Logo URL (Opcional)</label>
-                        <input 
-                          className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none text-xs"
-                          placeholder="Ex: https://site.com/logo.png"
-                          value={newSite.logoUrl || ''}
-                          onChange={e => setNewSite({...newSite, logoUrl: e.target.value})}
-                        />
-                     </div>
-                     
-                     {/* Live Preview of Logo */}
-                     <div className="md:col-span-4 flex items-center gap-4 mt-2">
-                        {(newSite.url || newSite.logoUrl) && (
-                           <div className="flex flex-col items-center">
-                              <span className="text-[10px] text-gray-500 mb-1 uppercase font-bold">Preview</span>
-                              <div className="w-10 h-10 bg-white rounded-lg p-1 flex items-center justify-center overflow-hidden border border-gray-600">
-                                 <img 
-                                    src={getLogo(newSite) || ''} 
-                                    alt="Logo" 
-                                    className="w-full h-full object-contain"
-                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                                 />
-                              </div>
-                           </div>
-                        )}
-                        
-                        <div className="flex-1 flex justify-end items-end h-full">
-                           <button onClick={handleAddSite} className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded font-bold shadow-lg w-full md:w-auto">
-                             {t.save}
-                           </button>
+              <div className="bg-gray-900 border border-dashed border-gray-700 rounded-xl p-6 shadow-lg">
+                  {!isAdding ? (
+                    <button 
+                      onClick={() => setIsAdding(true)}
+                      className="w-full py-4 flex flex-col items-center justify-center text-gray-500 hover:text-white transition-colors gap-2 hover:bg-gray-800/50 rounded-lg"
+                    >
+                      <Plus className="w-8 h-8" />
+                      <span className="font-bold">{t.add}</span>
+                    </button>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      <div className="flex justify-between items-center mb-2">
+                          <h3 className="font-bold text-white flex items-center gap-2"><Plus className="w-4 h-4 text-green-500"/> {t.add}</h3>
+                          <button onClick={() => setIsAdding(false)} className="text-gray-500 hover:text-white"><X className="w-5 h-5"/></button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                        <div>
+                          <label className="block text-xs uppercase text-gray-500 font-bold mb-1">Nome</label>
+                          <input 
+                            className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none"
+                            placeholder={t.namePlaceholder}
+                            value={newSite.name || ''}
+                            onChange={e => setNewSite({...newSite, name: e.target.value})}
+                          />
                         </div>
-                     </div>
-                   </div>
-                 </div>
-               )}
+                        <div>
+                          <label className="block text-xs uppercase text-gray-500 font-bold mb-1">País</label>
+                          <input 
+                            className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none"
+                            placeholder={t.countryPlaceholder}
+                            value={newSite.country || ''}
+                            onChange={e => setNewSite({...newSite, country: e.target.value})}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-xs uppercase text-gray-500 font-bold mb-1">URL Oficial</label>
+                          <input 
+                            className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none"
+                            placeholder={t.urlPlaceholder}
+                            value={newSite.url || ''}
+                            onChange={e => setNewSite({...newSite, url: e.target.value})}
+                          />
+                        </div>
+                        
+                        {/* Category Input */}
+                        <div className="md:col-span-2">
+                            <label className="block text-xs uppercase text-gray-500 font-bold mb-1">Tipo / Categoria (Opcional)</label>
+                            <input 
+                              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none"
+                              placeholder={t.categoryPlaceholder}
+                              value={newSite.category || ''}
+                              onChange={e => setNewSite({...newSite, category: e.target.value})}
+                            />
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-xs uppercase text-gray-500 font-bold mb-1">Logo URL (Opcional)</label>
+                            <input 
+                              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white focus:border-brand-500 outline-none text-xs"
+                              placeholder="Ex: https://site.com/logo.png"
+                              value={newSite.logoUrl || ''}
+                              onChange={e => setNewSite({...newSite, logoUrl: e.target.value})}
+                            />
+                        </div>
+                        
+                        {/* Live Preview of Logo */}
+                        <div className="md:col-span-4 flex items-center gap-4 mt-2">
+                            {(newSite.url || newSite.logoUrl) && (
+                              <div className="flex flex-col items-center">
+                                  <span className="text-[10px] text-gray-500 mb-1 uppercase font-bold">Preview</span>
+                                  <div className="w-10 h-10 bg-white rounded-lg p-1 flex items-center justify-center overflow-hidden border border-gray-600">
+                                    <img 
+                                        src={getLogo(newSite) || ''} 
+                                        alt="Logo" 
+                                        className="w-full h-full object-contain"
+                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                                    />
+                                  </div>
+                              </div>
+                            )}
+                            
+                            <div className="flex-1 flex justify-end items-end h-full">
+                              <button onClick={handleAddSite} className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded font-bold shadow-lg w-full md:w-auto">
+                                {t.save}
+                              </button>
+                            </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+              </div>
             </div>
           )}
 
