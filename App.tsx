@@ -11,11 +11,11 @@ import { WebsitesModal } from './components/WebsitesModal';
 import { AboutPage } from './components/AboutPage'; 
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy, Crown, Star, User } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy, Crown, Star, User, Bot, Sparkles } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
-const AUTHORIZED_ADMINS = ["JORGE MESQUITA", "FABIO PAGNI", "CHLOE"];
+const AUTHORIZED_ADMINS = ["JORGE MESQUITA", "FABIO PAGNI", "CHLOE", "IA", "SYSTEM"];
 const ADMIN_PASSWORD = "123456";
 
 // Updated PageType to include Continents
@@ -79,12 +79,8 @@ function App() {
     try {
       await storageService.init();
       
-      const stats = await storageService.getStats();
-      if (stats.total === 0) {
-        for (const item of INITIAL_RASPADINHAS) {
-          await storageService.save(item);
-        }
-      }
+      // Force sync INITIAL_RASPADINHAS to DB to ensure collectors and new cards are present
+      await storageService.syncInitialItems(INITIAL_RASPADINHAS);
 
       const freshStats = await storageService.getStats();
       setTotalStats(freshStats);
@@ -209,13 +205,15 @@ function App() {
      if (lower.includes('jorge')) return 'bg-blue-500 shadow-blue-500/50';
      if (lower.includes('fabio')) return 'bg-green-500 shadow-green-500/50';
      if (lower.includes('chloe')) return 'bg-pink-500 shadow-pink-500/50';
+     if (lower.includes('ia') || lower.includes('system') || lower.includes('gemini')) return 'bg-purple-600 shadow-purple-500/50';
      return 'bg-slate-600 shadow-slate-600/50';
   };
 
   const getCollectorIcon = (name: string) => {
      const lower = name.toLowerCase();
      if (lower.includes('jorge')) return <Crown className="w-3 h-3 text-yellow-300 fill-yellow-300" />;
-     if (lower.includes('chloe')) return <Crown className="w-3 h-3 text-pink-300 fill-pink-300" />; // QUEEN CROWN
+     if (lower.includes('chloe')) return <Crown className="w-3 h-3 text-pink-300 fill-pink-300" />; // QUEEN CROWN for Chloe
+     if (lower.includes('ia') || lower.includes('system') || lower.includes('gemini')) return <Sparkles className="w-3 h-3 text-cyan-300 fill-cyan-300" />; // AI Queen Icon
      if (lower.includes('fabio')) return <Star className="w-3 h-3 text-white fill-white" />;
      return <User className="w-3 h-3 text-white" />;
   };
@@ -238,7 +236,8 @@ function App() {
       // 3. Calculate Collectors Stats for THIS continent
       const collectorMap: Record<string, number> = {};
       items.forEach(item => {
-          let name = (item.collector || 'Desconhecido').trim();
+          let name = (item.collector || 'Arquivo Geral').trim();
+          if (name === '') name = 'Arquivo Geral';
           
           // --- Reuse Normalization Logic ---
           const lowerName = name.toLowerCase();
@@ -248,6 +247,10 @@ function App() {
              name = 'Fabio Pagni';
           } else if (lowerName.includes('chloe')) {
              name = 'Chloe';
+          } else if (lowerName.includes('ia') || lowerName.includes('system') || lowerName.includes('gemini')) {
+             name = 'IA Guardiã';
+          } else if (name === 'Arquivo Geral') {
+             name = 'Arquivo Geral';
           } else {
              name = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
           }
@@ -598,7 +601,7 @@ function App() {
                                 {/* Progress Bar */}
                                 <div className="h-1.5 w-full bg-black/40 rounded-full overflow-hidden">
                                    <div 
-                                      className={`h-full rounded-full ${col.name.toLowerCase().includes('jorge') ? 'bg-blue-400' : col.name.toLowerCase().includes('fabio') ? 'bg-green-400' : 'bg-white'}`} 
+                                      className={`h-full rounded-full ${col.name.toLowerCase().includes('jorge') ? 'bg-blue-400' : col.name.toLowerCase().includes('fabio') ? 'bg-green-400' : col.name.toLowerCase().includes('chloe') ? 'bg-pink-400' : 'bg-slate-400'}`} 
                                       style={{ width: `${col.percent}%` }}
                                    ></div>
                                 </div>

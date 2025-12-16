@@ -74,6 +74,37 @@ class StorageService {
     });
   }
 
+  // Forces updates of the initial constant data into the DB to fix missing fields (like collector)
+  async syncInitialItems(initialItems: ScratchcardData[]): Promise<void> {
+    if (!this.db) await this.init();
+
+    return new Promise((resolve, reject) => {
+      if (!this.db) return reject("Database not initialized");
+
+      const transaction = this.db.transaction([STORE_ITEMS], 'readwrite');
+      const store = transaction.objectStore(STORE_ITEMS);
+
+      let processed = 0;
+      
+      // Iterate through initial items and put them (overwrite if key exists)
+      // This ensures that if we update code constants, the DB reflects it for those specific IDs
+      initialItems.forEach(item => {
+         store.put(item);
+         processed++;
+      });
+
+      transaction.oncomplete = () => {
+         console.log(`Synced ${processed} initial items.`);
+         resolve();
+      };
+      
+      transaction.onerror = (e) => {
+         console.error("Sync error", e);
+         resolve(); // Resolve anyway to not block app
+      };
+    });
+  }
+
   async getRecent(limit: number, offset: number = 0): Promise<ScratchcardData[]> {
     if (!this.db) await this.init();
 
@@ -233,37 +264,45 @@ class StorageService {
           stateStats[state] = (stateStats[state] || 0) + 1;
 
           // Collector Stats - Advanced Normalization for Jorge, Fabio & Chloe
-          if (img.collector && img.collector.trim() !== '') {
-             const rawName = img.collector.trim().toLowerCase();
-             let finalName = rawName;
+          let rawName = (img.collector || 'Arquivo Geral').trim();
+          if (rawName === '') rawName = 'Arquivo Geral';
+          
+          const lowerName = rawName.toLowerCase();
+          let finalName = rawName;
 
-             // Logic for Vovô Jorge (Agrupa 'Jorge', 'Mesquita', 'JM', 'J.M.', 'J', 'JJM', 'JN')
-             if (rawName.includes('jorge') || 
-                 rawName.includes('mesquita') || 
-                 rawName === 'jm' || 
-                 rawName === 'j.m.' || 
-                 rawName === 'j' || 
-                 rawName === 'jjm' || 
-                 rawName === 'jn') {
-                 finalName = 'Jorge Mesquita';
-             }
-             // Logic for Fabio (Agrupa 'Fabio', 'Pagni', 'FP')
-             else if (rawName.includes('fabio') || rawName.includes('pagni') || rawName === 'fp') {
-                 finalName = 'Fabio Pagni';
-             }
-             // Logic for Chloe
-             else if (rawName.includes('chloe')) {
-                 finalName = 'Chloe';
-             }
-             else {
-                 // Standard Title Case for others
-                 finalName = rawName.split(' ')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(' ');
-             }
-             
-             collectorStats[finalName] = (collectorStats[finalName] || 0) + 1;
+          // Logic for Vovô Jorge
+          if (lowerName.includes('jorge') || 
+              lowerName.includes('mesquita') || 
+              lowerName === 'jm' || 
+              lowerName === 'j.m.' || 
+              lowerName === 'j' || 
+              lowerName === 'jjm' || 
+              lowerName === 'jn') {
+              finalName = 'Jorge Mesquita';
           }
+          // Logic for Fabio
+          else if (lowerName.includes('fabio') || lowerName.includes('pagni') || lowerName === 'fp') {
+              finalName = 'Fabio Pagni';
+          }
+          // Logic for Chloe
+          else if (lowerName.includes('chloe')) {
+              finalName = 'Chloe';
+          }
+          // Logic for AI / System (The Queen)
+          else if (lowerName.includes('ia') || lowerName.includes('system') || lowerName.includes('gemini') || lowerName.includes('bot')) {
+              finalName = 'IA Guardiã';
+          }
+          else if (rawName === 'Arquivo Geral') {
+              finalName = 'Arquivo Geral';
+          }
+          else {
+              // Standard Title Case for others
+              finalName = rawName.split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+          }
+          
+          collectorStats[finalName] = (collectorStats[finalName] || 0) + 1;
 
           cursor.continue();
         } else {
