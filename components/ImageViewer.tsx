@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify, Gem, Gift, Eraser, Sliders, Sun, Contrast, Palette, RotateCcw, ClipboardList, Package } from 'lucide-react';
+import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify, Gem, Gift, Eraser, Sliders, Sun, Contrast, Palette, RotateCcw, ClipboardList, Package, ZoomIn, ZoomOut } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
 
 interface ImageViewerProps {
@@ -24,10 +24,15 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   const [contrast, setContrast] = useState(100);
   const [saturation, setSaturation] = useState(100);
   
+  // Zoom/Loupe State
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 }); // Percentage
+  
   // Scratch Simulation State
   const [isScratchMode, setIsScratchMode] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
 
   useEffect(() => {
@@ -37,12 +42,19 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
     setShowingBack(false);
     setShowCopied(false);
     setIsScratchMode(false);
+    setIsZoomed(false);
     // Reset filters
     setBrightness(100);
     setContrast(100);
     setSaturation(100);
     setShowFilters(false);
   }, [image]);
+
+  // Reset states when switching sides
+  useEffect(() => {
+     setIsZoomed(false);
+     setIsScratchMode(false);
+  }, [showingBack]);
 
   // Initialize Scratch Canvas
   useEffect(() => {
@@ -82,6 +94,22 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
       }
     }
   }, [isScratchMode, showingBack]);
+
+  // Handle Zoom Pan movement
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isZoomed || isScratchMode || !imageRef.current) return;
+    
+    const { left, top, width, height } = imageRef.current.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+
+    setZoomPosition({ x, y });
+  };
+
+  const toggleZoom = () => {
+    if (isScratchMode) setIsScratchMode(false); // Disable scratch if zooming
+    setIsZoomed(!isZoomed);
+  };
 
   const handleScratchStart = (e: React.MouseEvent | React.TouchEvent) => {
     setIsDrawing(true);
@@ -197,22 +225,29 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
       <div className="flex flex-col lg:flex-row w-full h-full lg:max-w-7xl lg:max-h-[85vh] bg-gray-900 rounded-none lg:rounded-2xl overflow-hidden border border-gray-800 shadow-2xl">
         
         {/* Image Section */}
-        <div className="flex-1 bg-black flex flex-col items-center justify-center relative overflow-hidden group select-none">
+        <div 
+           className="flex-1 bg-black flex flex-col items-center justify-center relative overflow-hidden group select-none"
+           onMouseMove={handleMouseMove}
+           ref={containerRef}
+        >
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
           
-          <div className="relative max-w-full max-h-[calc(100%-4rem)] p-4 flex items-center justify-center">
+          <div className="relative max-w-full max-h-[calc(100%-4rem)] p-4 flex items-center justify-center w-full h-full">
              <img 
                ref={imageRef}
                src={showingBack ? (image.backUrl || image.frontUrl) : image.frontUrl} 
                alt={image.gameName} 
-               className="max-w-full max-h-full object-contain transition-transform duration-300 pointer-events-none select-none" 
+               onClick={toggleZoom}
+               className={`max-w-full max-h-full object-contain transition-transform duration-200 pointer-events-auto select-none ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
                style={{ 
-                 maxHeight: '70vh',
-                 filter: `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`
+                 maxHeight: isZoomed ? 'none' : '70vh',
+                 filter: `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`,
+                 transform: isZoomed ? 'scale(2.5)' : 'scale(1)',
+                 transformOrigin: isZoomed ? `${zoomPosition.x}% ${zoomPosition.y}%` : 'center center'
                }}
              />
              
-             {isScratchMode && (
+             {isScratchMode && !isZoomed && (
                 <canvas
                   ref={canvasRef}
                   className="absolute top-4 left-4 cursor-crosshair touch-none"
@@ -272,20 +307,32 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                 <>
                 <button 
                     type="button"
-                    onClick={() => { setShowingBack(false); setIsScratchMode(false); }}
+                    onClick={() => { setShowingBack(false); setIsScratchMode(false); setIsZoomed(false); }}
                     className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${!showingBack ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/50' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
                 >
                     {t.front}
                 </button>
                 <button 
                     type="button"
-                    onClick={() => { setShowingBack(true); setIsScratchMode(false); }}
+                    onClick={() => { setShowingBack(true); setIsScratchMode(false); setIsZoomed(false); }}
                     className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${showingBack ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/50' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
                 >
                     {t.back}
                 </button>
                 </>
             )}
+            
+            <div className="w-px h-6 bg-gray-700 mx-1"></div>
+
+            {/* Zoom Toggle */}
+            <button
+               type="button"
+               onClick={toggleZoom}
+               className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${isZoomed ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+               title="Zoom / Lupa"
+            >
+               {isZoomed ? <ZoomOut className="w-3 h-3" /> : <ZoomIn className="w-3 h-3" />}
+            </button>
             
             {/* Filter Toggle */}
             <button
@@ -300,7 +347,10 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
             {/* Scratch Toggle Button */}
             <button
                type="button"
-               onClick={() => setIsScratchMode(!isScratchMode)}
+               onClick={() => {
+                  if(isZoomed) setIsZoomed(false);
+                  setIsScratchMode(!isScratchMode);
+               }}
                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${isScratchMode ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/50 animate-pulse' : 'bg-gray-800 text-yellow-500 border border-yellow-600/30 hover:bg-gray-700'}`}
                title="Simular Raspadinha"
             >
