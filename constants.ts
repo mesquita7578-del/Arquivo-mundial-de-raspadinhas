@@ -104,9 +104,13 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
   }
 ];
 
-// Based on European Lotteries Members & World Lotteries
+// Based on European Lotteries Members, World Lotteries & ALEA (Argentina)
 export const EUROPEAN_LOTTERIES: Partial<WebsiteLink>[] = [
+  // Global & Associations
   { name: "World Lottery Association (WLA)", url: "https://www.world-lotteries.org", country: "Mundo", category: "Global Organization" },
+  { name: "ALEA (Argentina)", url: "https://www.alea.org.ar", country: "Argentina", category: "Association" },
+  
+  // Europe
   { name: "Santa Casa (SCML)", url: "https://jogossantacasa.pt", country: "Portugal", category: "Regular Member" },
   { name: "FDJ (La Française des Jeux)", url: "https://www.fdj.fr", country: "França", category: "Regular Member" },
   { name: "SELAE (Loterías y Apuestas)", url: "https://www.loteriasyapuestas.es", country: "Espanha", category: "Regular Member" },
@@ -126,5 +130,16 @@ export const EUROPEAN_LOTTERIES: Partial<WebsiteLink>[] = [
   { name: "Österreichische Lotterien", url: "https://www.lotterien.at", country: "Áustria", category: "Regular Member" },
   { name: "Sazka", url: "https://www.sazka.cz", country: "Rep. Checa", category: "Regular Member" },
   { name: "Szerencsejáték Zrt.", url: "https://www.szerencsejatek.hu", country: "Hungria", category: "Regular Member" },
-  { name: "Totalizator Sportowy", url: "https://www.lotto.pl", country: "Polónia", category: "Regular Member" }
+  { name: "Totalizator Sportowy", url: "https://www.lotto.pl", country: "Polónia", category: "Regular Member" },
+  
+  // Argentina (ALEA Members)
+  { name: "Lotería de la Ciudad (LOTBA)", url: "https://www.loteriadelaciudad.gob.ar", country: "Argentina", category: "ALEA Member" },
+  { name: "Lotería de la Provincia (Buenos Aires)", url: "https://www.loteria.gba.gov.ar", country: "Argentina", category: "ALEA Member" },
+  { name: "Lotería de Córdoba", url: "https://www.loteriadecordoba.com.ar", country: "Argentina", category: "ALEA Member" },
+  { name: "Lotería de Santa Fe", url: "https://www.loteriasantafe.gov.ar", country: "Argentina", category: "ALEA Member" },
+  { name: "IAFAS (Entre Ríos)", url: "https://www.iafas.gov.ar", country: "Argentina", category: "ALEA Member" },
+  { name: "IPLyC (Misiones)", url: "https://www.loteriademisiones.com.ar", country: "Argentina", category: "ALEA Member" },
+  { name: "IPJyC (Mendoza)", url: "https://www.juegosymendoza.gov.ar", country: "Argentina", category: "ALEA Member" },
+  { name: "Lotería de Río Negro", url: "https://www.loteriaderionegro.gov.ar", country: "Argentina", category: "ALEA Member" },
+  { name: "Lotería del Chubut", url: "https://iss.chubut.gov.ar", country: "Argentina", category: "ALEA Member" }
 ];
