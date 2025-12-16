@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Globe, Plus, Trash2, ExternalLink, Building2, Link, Tag, DownloadCloud, Check } from 'lucide-react';
+import { X, Globe, Plus, Trash2, ExternalLink, Building2, Link, Tag, DownloadCloud, Check, RefreshCw } from 'lucide-react';
 import { WebsiteLink } from '../types';
 import { storageService } from '../services/storage';
 import { EUROPEAN_LOTTERIES } from '../constants';
@@ -26,7 +26,8 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
       
       // AUTO-FIX: Check if MUSL is missing and inject it silently
       const musl = EUROPEAN_LOTTERIES.find(s => s.name?.includes("Multi-State Lottery Association"));
-      const muslExists = data.some(s => s.url === musl?.url || s.name.includes("MUSL"));
+      // We check broadly to ensure we catch it
+      const muslExists = data.some(s => s.url === musl?.url || s.name.includes("MUSL") || s.name.includes("Multi-State"));
 
       if (musl && !muslExists && musl.name && musl.url && musl.country) {
          const autoSite: WebsiteLink = {
@@ -80,17 +81,41 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
      setIsImporting(true);
      try {
         let addedCount = 0;
+        let updatedCount = 0;
+
+        // Fetch latest data to ensure no sync issues
+        const currentSites = await storageService.getWebsites();
+
         for (const el of EUROPEAN_LOTTERIES) {
-           // Check if similar site already exists to avoid dupes
-           const exists = sites.some(s => s.name.toLowerCase() === el.name?.toLowerCase() || s.url === el.url);
-           
-           if (!exists && el.name && el.url && el.country) {
+           if (!el.name || !el.url) continue;
+
+           // Find if this official site already exists in DB
+           const existingIndex = currentSites.findIndex(s => 
+              s.url === el.url || 
+              s.name.toLowerCase() === el.name?.toLowerCase() ||
+              (el.name?.includes("MUSL") && s.name.includes("MUSL")) // Specific check for MUSL
+           );
+
+           if (existingIndex >= 0) {
+              // UPDATE (Upsert): Fix broken/outdated records
+              const existing = currentSites[existingIndex];
+              const updated: WebsiteLink = {
+                 ...existing,
+                 name: el.name, // Enforce official name
+                 url: el.url,   // Enforce official URL
+                 country: el.country || existing.country,
+                 category: el.category || existing.category
+              };
+              await storageService.saveWebsite(updated);
+              updatedCount++;
+           } else {
+              // CREATE NEW
               const site: WebsiteLink = {
                  id: Math.random().toString(36).substr(2, 9),
                  name: el.name,
                  url: el.url,
-                 country: el.country,
-                 category: el.category || "European Lotteries"
+                 country: el.country || "Mundo",
+                 category: el.category || "Official"
               };
               await storageService.saveWebsite(site);
               addedCount++;
@@ -98,11 +123,7 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
         }
         
         await loadSites();
-        if(addedCount > 0) {
-           alert(`${addedCount} novos sites importados (EL, WLA, ALEA, MUSL) com sucesso!`);
-        } else {
-           alert("A lista já está atualizada.");
-        }
+        alert(`Sincronização concluída!\n${addedCount} novos sites adicionados.\n${updatedCount} sites atualizados/corrigidos.`);
 
      } catch (e) {
         console.error(e);
@@ -165,8 +186,8 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
                   disabled={isImporting}
                   className="w-full py-4 bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/30 rounded-xl flex items-center justify-center gap-3 text-blue-100 hover:text-white hover:from-blue-900/60 hover:to-indigo-900/60 transition-all shadow-lg group"
                >
-                  {isImporting ? <DownloadCloud className="w-5 h-5 animate-bounce" /> : <Globe className="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" />}
-                  <span className="font-bold">{isImporting ? "Importando..." : "Importar Lista Oficial (EL / WLA / ALEA / MUSL)"}</span>
+                  {isImporting ? <DownloadCloud className="w-5 h-5 animate-bounce" /> : <RefreshCw className="w-5 h-5 text-blue-400 group-hover:rotate-180 transition-transform" />}
+                  <span className="font-bold">{isImporting ? "A Sincronizar..." : "Sincronizar Lista Oficial (Corrigir & Adicionar)"}</span>
               </button>
 
               <div className="bg-gray-900 border border-dashed border-gray-700 rounded-xl p-6 shadow-lg">
