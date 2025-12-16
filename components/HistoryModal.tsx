@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, BookOpen, Scroll, FileText, UploadCloud, Trash2, ArrowLeft, Loader2, Download, Maximize2 } from 'lucide-react';
+import { X, BookOpen, Scroll, FileText, UploadCloud, Trash2, ArrowLeft, Loader2, Download, Maximize2, Library, ExternalLink, UserCheck, Star } from 'lucide-react';
 import { storageService } from '../services/storage';
 import { DocumentItem } from '../types';
 
@@ -10,7 +10,7 @@ interface HistoryModalProps {
 }
 
 export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t }) => {
-  const [activeTab, setActiveTab] = useState<'articles' | 'documents'>('articles');
+  const [activeTab, setActiveTab] = useState<'articles' | 'documents' | 'catalogs'>('articles');
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<DocumentItem | null>(null);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
@@ -150,20 +150,27 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
 
         {/* Tabs - Only show when not viewing a specific document */}
         {!selectedDoc && (
-          <div className="flex border-b border-gray-800 px-4 md:px-6 bg-gray-900 shrink-0">
+          <div className="flex border-b border-gray-800 px-4 md:px-6 bg-gray-900 shrink-0 overflow-x-auto scrollbar-hide">
              <button
                onClick={() => setActiveTab('articles')}
-               className={`py-3 md:py-4 px-4 md:px-6 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'articles' ? 'border-brand-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+               className={`py-3 md:py-4 px-4 md:px-6 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'articles' ? 'border-brand-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
              >
                <Scroll className="w-4 h-4" />
                {t.tabArticles}
              </button>
              <button
                onClick={() => setActiveTab('documents')}
-               className={`py-3 md:py-4 px-4 md:px-6 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'documents' ? 'border-brand-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+               className={`py-3 md:py-4 px-4 md:px-6 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'documents' ? 'border-brand-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
              >
                <FileText className="w-4 h-4" />
                {t.tabDocs}
+             </button>
+             <button
+               onClick={() => setActiveTab('catalogs')}
+               className={`py-3 md:py-4 px-4 md:px-6 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'catalogs' ? 'border-brand-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+             >
+               <Library className="w-4 h-4" />
+               {t.tabCatalogs}
              </button>
           </div>
         )}
@@ -233,7 +240,48 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
              // LIST / TABS MODE
              <div className="h-full overflow-y-auto p-4 md:p-10 scroll-smooth">
                
-               {activeTab === 'articles' ? (
+               {activeTab === 'catalogs' ? (
+                  <div className="max-w-4xl mx-auto pb-20 animate-fade-in">
+                     <div className="bg-gradient-to-br from-brand-900/20 to-slate-900 border border-brand-800/30 rounded-2xl p-8 shadow-xl relative overflow-hidden group hover:border-brand-500/50 transition-colors">
+                        <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
+                           <Library className="w-48 h-48 text-white" />
+                        </div>
+                        
+                        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                           <div className="bg-white/10 p-6 rounded-2xl border border-white/10 shadow-inner">
+                              <BookOpen className="w-16 h-16 text-brand-400" />
+                           </div>
+                           <div className="flex-1 text-center md:text-left">
+                              <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                                 <h3 className="text-2xl md:text-3xl font-bold text-white">{t.catalogTitle}</h3>
+                                 <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 animate-pulse" />
+                              </div>
+                              <p className="text-slate-300 text-lg mb-4 leading-relaxed">
+                                 {t.catalogSubtitle}
+                              </p>
+                              
+                              <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700 mb-6 inline-flex items-center gap-3">
+                                 <UserCheck className="w-5 h-5 text-blue-400" />
+                                 <p className="text-sm text-slate-300">
+                                    {t.catalogDavid}
+                                 </p>
+                              </div>
+
+                              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                                 <a 
+                                    href="https://anyflip.com/bookcase/bidzw" 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    className="inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white px-8 py-3 rounded-xl font-bold text-lg shadow-lg shadow-brand-900/50 hover:scale-105 transition-all"
+                                 >
+                                    {t.openCatalog} <ExternalLink className="w-5 h-5" />
+                                 </a>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               ) : activeTab === 'articles' ? (
                  <div className="space-y-12 max-w-3xl mx-auto pb-20">
                     {/* Article 1 */}
                     <article className="prose prose-invert max-w-none">
