@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, BookOpen, Scroll, FileText, UploadCloud, Trash2, ArrowLeft, Loader2, Download, Maximize2, Library, ExternalLink, UserCheck, Star } from 'lucide-react';
+import { X, BookOpen, Scroll, FileText, UploadCloud, Trash2, ArrowLeft, Loader2, Download, Maximize2, Library, ExternalLink, UserCheck, Star, AlignLeft } from 'lucide-react';
 import { storageService } from '../services/storage';
 import { DocumentItem } from '../types';
 
@@ -16,6 +16,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [docTitle, setDocTitle] = useState('');
+  const [docDescription, setDocDescription] = useState('');
   
   // Load documents on mount
   useEffect(() => {
@@ -88,6 +89,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
       const newDoc: DocumentItem = {
         id: Math.random().toString(36).substr(2, 9),
         title: docTitle,
+        description: docDescription, // Save description
         fileName: file.name,
         fileUrl: base64,
         createdAt: Date.now()
@@ -97,6 +99,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
         await storageService.saveDocument(newDoc);
         setDocuments(prev => [newDoc, ...prev]);
         setDocTitle(''); // Reset title
+        setDocDescription(''); // Reset description
         alert(t.addDocSuccess);
       } catch (err) {
         console.error("Erro ao salvar documento", err);
@@ -182,7 +185,12 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
                  >
                    <ArrowLeft className="w-4 h-4" /> {t.backToList}
                  </button>
-                 <span className="text-white font-bold truncate">{selectedDoc.title}</span>
+                 <div className="flex flex-col">
+                    <span className="text-white font-bold truncate">{selectedDoc.title}</span>
+                    {selectedDoc.description && (
+                       <span className="text-[10px] text-gray-400 truncate max-w-xs">{selectedDoc.description}</span>
+                    )}
+                 </div>
                </div>
                
                <div className="flex-1 bg-gray-800 relative w-full h-full">
@@ -288,21 +296,32 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
                              <h3 className="text-lg font-bold text-white">Adicionar Novo Documento (PDF)</h3>
                           </div>
                           
-                          <div className="flex flex-col md:flex-row items-center gap-4">
-                              <div className="flex-1 w-full">
-                                 <input 
-                                    type="text" 
-                                    value={docTitle}
-                                    onChange={(e) => setDocTitle(e.target.value)}
-                                    placeholder={t.docTitlePlaceholder}
-                                    className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl px-4 py-3 focus:border-brand-500 outline-none text-sm shadow-inner transition-all"
-                                 />
+                          <div className="space-y-3">
+                              <div className="flex flex-col md:flex-row items-center gap-4">
+                                  <div className="flex-1 w-full space-y-3">
+                                      <input 
+                                          type="text" 
+                                          value={docTitle}
+                                          onChange={(e) => setDocTitle(e.target.value)}
+                                          placeholder={t.docTitlePlaceholder}
+                                          className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl px-4 py-3 focus:border-brand-500 outline-none text-sm shadow-inner transition-all"
+                                      />
+                                  </div>
+                                  
+                                  <label className={`flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl cursor-pointer transition-all shadow-lg hover:shadow-blue-900/50 hover:scale-105 whitespace-nowrap active:scale-95 h-full ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                                      {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <UploadCloud className="w-5 h-5" />}
+                                      <span className="font-bold">{isUploading ? "A carregar..." : "Selecionar PDF & Guardar"}</span>
+                                      <input type="file" accept="application/pdf" className="hidden" onChange={handleFileUpload} disabled={!docTitle.trim()} />
+                                  </label>
                               </div>
-                              <label className={`flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl cursor-pointer transition-all shadow-lg hover:shadow-blue-900/50 hover:scale-105 whitespace-nowrap active:scale-95 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
-                                 {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <UploadCloud className="w-5 h-5" />}
-                                 <span className="font-bold">{isUploading ? "A carregar..." : "Selecionar PDF"}</span>
-                                 <input type="file" accept="application/pdf" className="hidden" onChange={handleFileUpload} disabled={!docTitle.trim()} />
-                              </label>
+                              
+                              {/* DESCRIPTION FIELD */}
+                              <textarea
+                                  value={docDescription}
+                                  onChange={(e) => setDocDescription(e.target.value)}
+                                  placeholder={t.docDescPlaceholder}
+                                  className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl px-4 py-3 focus:border-brand-500 outline-none text-sm shadow-inner transition-all h-20 resize-none"
+                              />
                            </div>
                            <p className="text-[10px] text-gray-500 mt-2 ml-1 text-center md:text-left">Máximo 50MB. O título é obrigatório.</p>
                        </div>
@@ -339,12 +358,20 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
                                           </button>
                                        )}
                                     </div>
-                                    <h4 className="text-sm font-bold text-gray-200 mb-1 group-hover:text-white line-clamp-2">{doc.title}</h4>
-                                    <p className="text-[10px] text-gray-500 mb-4">{new Date(doc.createdAt).toLocaleDateString()}</p>
+                                    <h4 className="text-sm font-bold text-gray-200 mb-1 group-hover:text-white line-clamp-2 leading-tight">{doc.title}</h4>
+                                    
+                                    {/* Description Display */}
+                                    {doc.description && (
+                                       <p className="text-xs text-gray-400 mb-3 line-clamp-2 bg-gray-800/50 p-2 rounded border border-gray-800">
+                                          {doc.description}
+                                       </p>
+                                    )}
+
+                                    <p className="text-[10px] text-gray-500 mb-4 mt-auto">{new Date(doc.createdAt).toLocaleDateString()}</p>
                                     
                                     <button 
                                        onClick={() => setSelectedDoc(doc)}
-                                       className="mt-auto w-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white py-2 rounded-lg text-xs font-bold transition-colors border border-gray-700 uppercase tracking-wide"
+                                       className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white py-2 rounded-lg text-xs font-bold transition-colors border border-gray-700 uppercase tracking-wide"
                                     >
                                        {t.viewPdf}
                                     </button>
