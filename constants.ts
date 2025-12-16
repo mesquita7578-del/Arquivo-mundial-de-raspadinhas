@@ -86,7 +86,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     country: 'Japão',
     continent: 'Ásia',
     category: 'raspadinha',
-    collector: 'Arquivo Geral',
+    collector: 'Fabio Pagni',
     aiGenerated: true,
     createdAt: Date.now() - 50000,
   },
@@ -108,7 +108,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     aiGenerated: true,
     createdAt: Date.now() - 10000,
   },
-  // China Card moved to General Archive
+  // China Card moved to Fabio Pagni (as requested by Jorge)
   {
     id: '7',
     customId: 'RASP-CN-088',
@@ -123,7 +123,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     country: 'China',
     continent: 'Ásia',
     category: 'raspadinha',
-    collector: 'Arquivo Geral',
+    collector: 'Fabio Pagni',
     aiGenerated: false,
     createdAt: Date.now(),
   },
