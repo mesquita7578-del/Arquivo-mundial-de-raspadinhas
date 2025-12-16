@@ -53,6 +53,7 @@ function App() {
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
+  const [showChloeMessage, setShowChloeMessage] = useState(false);
   
   // Filter States (Lifted)
   const [showRarities, setShowRarities] = useState(false);
@@ -411,6 +412,11 @@ function App() {
       setDroppedFile(file);
       setIsUploadModalOpen(true);
     }
+  };
+
+  const handleChloeClick = () => {
+    setShowChloeMessage(true);
+    setTimeout(() => setShowChloeMessage(false), 3000);
   };
 
   const continents: (Continent | 'Mundo')[] = ['Mundo', 'Europa', 'América', 'Ásia', 'África', 'Oceania'];
@@ -816,9 +822,19 @@ function App() {
               </div>
 
               {/* Right: Delicate Chloe Badge */}
-              <div className="flex items-center gap-1.5 bg-pink-900/5 border border-pink-500/10 px-3 py-1 rounded-full hover:border-pink-500/20 transition-colors group cursor-default">
-                 <Heart className="w-2.5 h-2.5 text-pink-500/50 group-hover:text-pink-400 group-hover:fill-pink-400 transition-colors" />
-                 <span className="text-pink-200/40 group-hover:text-pink-300/80 italic font-serif transition-colors">Futura guardiã Chloe</span>
+              <div className="relative">
+                {showChloeMessage && (
+                  <div className="absolute bottom-full right-0 mb-3 whitespace-nowrap bg-pink-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl rounded-br-none shadow-lg animate-bounce-in flex items-center gap-1">
+                    Está perfeito, Vovô! 💖
+                  </div>
+                )}
+                <button 
+                  onClick={handleChloeClick}
+                  className="flex items-center gap-1.5 bg-pink-900/5 border border-pink-500/10 px-3 py-1 rounded-full hover:border-pink-500/20 hover:bg-pink-900/20 transition-all group cursor-pointer"
+                >
+                   <Heart className={`w-2.5 h-2.5 text-pink-500/50 group-hover:text-pink-400 transition-colors ${showChloeMessage ? 'fill-pink-400 scale-125' : 'group-hover:fill-pink-400'}`} />
+                   <span className="text-pink-200/40 group-hover:text-pink-300/80 italic font-serif transition-colors">Futura guardiã Chloe</span>
+                </button>
               </div>
           </div>
       </footer>
