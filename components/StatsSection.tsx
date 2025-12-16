@@ -38,13 +38,30 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
   // State Distribution Data (Donut)
   // Casting values to number to avoid 'unknown' errors
   const totalStateCount = (Object.values(stateStats) as number[]).reduce((a, b) => a + b, 0);
-  const mintCount = ((stateStats['MINT'] as number) || 0) + ((stateStats['SC'] as number) || 0); 
-  const usedCount = ((stateStats['CS'] as number) || 0) + ((stateStats['VOID'] as number) || 0) + ((stateStats['AMOSTRA'] as number) || 0) + ((stateStats['MUESTRA'] as number) || 0); 
-  const otherCount = totalStateCount - mintCount - usedCount;
   
-  const mintPct = totalStateCount > 0 ? (mintCount / totalStateCount) * 100 : 0;
-  const usedPct = totalStateCount > 0 ? (usedCount / totalStateCount) * 100 : 0;
-  const otherPct = totalStateCount > 0 ? (otherCount / totalStateCount) * 100 : 0;
+  // Group 1: MINT
+  const countMint = (stateStats['MINT'] as number) || 0;
+  // Group 2: SC
+  const countSC = (stateStats['SC'] as number) || 0;
+  // Group 3: CS
+  const countCS = (stateStats['CS'] as number) || 0;
+  // Group 4: AMOSTRAS (Samples/Specimens/Void)
+  const countAmostra = ((stateStats['AMOSTRA'] as number) || 0) + 
+                       ((stateStats['MUESTRA'] as number) || 0) + 
+                       ((stateStats['CAMPIONE'] as number) || 0) + 
+                       ((stateStats['VOID'] as number) || 0);
+
+  // Calculate Percentages
+  const pctMint = totalStateCount > 0 ? (countMint / totalStateCount) * 100 : 0;
+  const pctSC = totalStateCount > 0 ? (countSC / totalStateCount) * 100 : 0;
+  const pctCS = totalStateCount > 0 ? (countCS / totalStateCount) * 100 : 0;
+  const pctAmostra = totalStateCount > 0 ? (countAmostra / totalStateCount) * 100 : 0;
+
+  // Calculate Stops for Conic Gradient
+  const stopMint = pctMint;
+  const stopSC = stopMint + pctSC;
+  const stopCS = stopSC + pctCS;
+  // Remaining is Amostra/Other
 
   return (
     <div className="w-full bg-slate-950 border-t border-slate-900 py-12 pb-32 animate-fade-in relative overflow-hidden">
@@ -206,7 +223,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                 </div>
              </div>
 
-             {/* State Distribution (Donut Chart representation) */}
+             {/* State Distribution (Specific Breakdown) */}
              <div className="flex-1 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col justify-center relative overflow-hidden">
                 <div className="flex justify-between items-center mb-6">
                    <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
@@ -216,40 +233,54 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                 </div>
                 
                 <div className="flex items-center justify-between gap-4">
-                   {/* CSS Conic Gradient Donut */}
+                   {/* CSS Conic Gradient Donut for 4 Segments */}
                    <div 
-                     className="w-24 h-24 rounded-full relative flex items-center justify-center shrink-0"
+                     className="w-28 h-28 rounded-full relative flex items-center justify-center shrink-0"
                      style={{ 
                         background: `conic-gradient(
-                           #22c55e 0% ${mintPct}%, 
-                           #ef4444 ${mintPct}% ${mintPct + usedPct}%, 
-                           #64748b ${mintPct + usedPct}% 100%
+                           #22c55e 0% ${stopMint}%, 
+                           #3b82f6 ${stopMint}% ${stopSC}%,
+                           #f59e0b ${stopSC}% ${stopCS}%,
+                           #ec4899 ${stopCS}% 100%
                         )` 
                      }}
                    >
-                      <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center border border-slate-800">
+                      <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center border border-slate-800">
                          <span className="text-[10px] font-bold text-slate-500">Estado</span>
                       </div>
                    </div>
 
-                   <div className="flex-1 space-y-3">
-                      <div className="flex items-center justify-between text-xs">
+                   <div className="flex-1 space-y-2">
+                      {/* MINT */}
+                      <div className="flex items-center justify-between text-[10px]">
                          <span className="flex items-center gap-2 text-slate-300">
-                            <span className="w-2 h-2 rounded-full bg-green-500"></span> MINT / SC
+                            <span className="w-2 h-2 rounded-full bg-green-500"></span> MINT
                          </span>
-                         <span className="font-mono text-white">{Math.round(mintPct)}%</span>
+                         <span className="font-mono text-white font-bold">{Math.round(pctMint)}%</span>
                       </div>
-                      <div className="flex items-center justify-between text-xs">
+                      
+                      {/* SC */}
+                      <div className="flex items-center justify-between text-[10px]">
                          <span className="flex items-center gap-2 text-slate-300">
-                            <span className="w-2 h-2 rounded-full bg-red-500"></span> Raspa / Void
+                            <span className="w-2 h-2 rounded-full bg-blue-500"></span> SC
                          </span>
-                         <span className="font-mono text-white">{Math.round(usedPct)}%</span>
+                         <span className="font-mono text-white font-bold">{Math.round(pctSC)}%</span>
                       </div>
-                      <div className="flex items-center justify-between text-xs">
+
+                      {/* CS */}
+                      <div className="flex items-center justify-between text-[10px]">
                          <span className="flex items-center gap-2 text-slate-300">
-                            <span className="w-2 h-2 rounded-full bg-slate-500"></span> Outro
+                            <span className="w-2 h-2 rounded-full bg-orange-500"></span> CS
                          </span>
-                         <span className="font-mono text-white">{Math.round(otherPct)}%</span>
+                         <span className="font-mono text-white font-bold">{Math.round(pctCS)}%</span>
+                      </div>
+
+                      {/* AMOSTRAS */}
+                      <div className="flex items-center justify-between text-[10px]">
+                         <span className="flex items-center gap-2 text-slate-300">
+                            <span className="w-2 h-2 rounded-full bg-pink-500"></span> Amostras
+                         </span>
+                         <span className="font-mono text-white font-bold">{Math.round(pctAmostra)}%</span>
                       </div>
                    </div>
                 </div>
