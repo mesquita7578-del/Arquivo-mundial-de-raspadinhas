@@ -16,7 +16,19 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
         }
       },
       {
-        text: "Analise esta imagem de colecionismo. Determine a CATEGORIA (raspadinha ou lotaria). Extraia: Nome do Jogo, Número do Jogo, Data, Tamanho, Valores, Estado, País e Continente. IMPORTANTE: Se o país tiver regiões específicas (ex: Alemanha tem 'Baviera', 'Saxónia'; Portugal tem 'Açores'; Espanha tem 'Catalunha'), identifique a 'Região/Cantão' através de brasões ou texto. Identifique Emissão e Gráfica."
+        text: `Analise esta imagem de colecionismo. Determine a CATEGORIA (raspadinha ou lotaria). 
+        Extraia: Nome do Jogo, Número do Jogo, Data, Tamanho, Valores, Estado, País e Continente.
+        
+        IMPORTANTE - DETEÇÃO DE GRÁFICA (PRINTER) VIA FSC:
+        Procure atentamente por logotipos FSC (Forest Stewardship Council) e o respetivo código de licença (ex: FSC® C108706).
+        Use este código para identificar a "Gráfica" (Printer) se o nome não estiver explícito.
+        - FSC C108706, C016391, C105807 -> Scientific Games (SG)
+        - FSC C014168 -> Pollard Banknote
+        - FSC C005483 -> IGT
+        - FSC C112248 -> Eagle Press
+        
+        IMPORTANTE - REGIÃO:
+        Se o país tiver regiões específicas (ex: Alemanha tem 'Baviera', 'Saxónia'; Portugal tem 'Açores'; Espanha tem 'Catalunha'), identifique a 'Região/Cantão' através de brasões ou texto.`
       }
     ];
 
@@ -28,7 +40,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
         }
       });
       // Update text prompt if back is included
-      parts[parts.length - 1].text += " Use o verso para confirmar a região/cantão, gráfica e tiragem.";
+      parts[parts.length - 1].text += " Use o verso para confirmar a região/cantão, e procure códigos FSC no verso para identificar a Gráfica.";
     }
 
     const response = await ai.models.generateContent({
@@ -68,7 +80,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
               description: "Continente"
             },
             emission: { type: Type.STRING, description: "Emissão total" },
-            printer: { type: Type.STRING, description: "Gráfica" }
+            printer: { type: Type.STRING, description: "Gráfica (Identificada via nome ou código FSC)" }
           },
           required: ["category", "gameName", "gameNumber", "state", "country", "continent"]
         }
