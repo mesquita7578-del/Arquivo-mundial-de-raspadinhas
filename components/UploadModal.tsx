@@ -111,7 +111,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       collectors: Array.from(collectors).sort(),
       emissions: Array.from(emissions).sort(),
       sizes: Array.from(sizes).sort(),
-      states: ['MINT', 'VOID', 'AMOSTRA', 'MUESTRA', 'CAMPIONE', 'SC', 'CS']
+      states: ['MINT', 'VOID', 'AMOSTRA', 'MUESTRA', 'CAMPIONE', 'SPECIMEN', 'SC', 'CS']
     };
   }, [existingImages]);
 
@@ -811,7 +811,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                        list="list-states"
                        value={formData?.state || ''}
                        onChange={e => updateField('state', e.target.value as ScratchcardState)}
-                       placeholder="Ex: MINT"
+                       placeholder="Ex: MINT, SPECIMEN..."
                        className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2.5 text-white focus:border-brand-500 focus:outline-none text-sm"
                      />
                    </div>

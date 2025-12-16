@@ -1,5 +1,5 @@
 
-export type ScratchcardState = 'AMOSTRA' | 'VOID' | 'MUESTRA' | 'CAMPIONE' | 'MINT' | 'CS' | 'SC';
+export type ScratchcardState = 'AMOSTRA' | 'VOID' | 'MUESTRA' | 'CAMPIONE' | 'SPECIMEN' | 'MINT' | 'CS' | 'SC';
 
 export type Continent = 'Europa' | 'América' | 'Ásia' | 'África' | 'Oceania' | 'Mundo';
 

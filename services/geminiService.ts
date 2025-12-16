@@ -19,6 +19,9 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
         text: `Analise esta imagem de colecionismo. Determine a CATEGORIA (raspadinha ou lotaria). 
         Extraia: Nome do Jogo, Número do Jogo, Data, Tamanho, Valores, Estado, País e Continente.
         
+        IMPORTANTE - ESTADO (STATE):
+        Identifique se é uma amostra. Procure por textos como "AMOSTRA" (PT), "MUESTRA" (ES), "CAMPIONE" (IT), "VOID" ou "SPECIMEN" (EN).
+        
         IMPORTANTE - DETEÇÃO DE GRÁFICA (PRINTER) VIA FSC:
         Procure atentamente por logotipos FSC (Forest Stewardship Council) e o respetivo código de licença (ex: FSC® C108706).
         Use este código para identificar a "Gráfica" (Printer) se o nome não estiver explícito.
@@ -69,8 +72,8 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
             price: { type: Type.STRING, description: "Preço" },
             state: { 
               type: Type.STRING, 
-              enum: ["AMOSTRA", "VOID", "MUESTRA", "CAMPIONE", "MINT", "CS", "SC"],
-              description: "Estado"
+              enum: ["AMOSTRA", "VOID", "MUESTRA", "CAMPIONE", "SPECIMEN", "MINT", "CS", "SC"],
+              description: "Estado (incluindo Specimen)"
             },
             country: { type: Type.STRING, description: "País" },
             region: { type: Type.STRING, description: "Região, Cantão, Estado ou Ilha (ex: Baviera, Açores)" },
