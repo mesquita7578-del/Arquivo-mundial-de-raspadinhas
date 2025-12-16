@@ -1,5 +1,5 @@
-import React from 'react';
-import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen, FileSpreadsheet, Home, BarChart2, Info, ChevronDown, Coins, Star, ArrowRight, Globe, Map } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen, FileSpreadsheet, Home, BarChart2, Info, ChevronDown, Coins, Star, ArrowRight, Globe, Map, UploadCloud } from 'lucide-react';
 import { Language } from '../translations';
 
 interface HeaderProps {
@@ -11,6 +11,7 @@ interface HeaderProps {
   onLogout: () => void;
   onExport: () => void;
   onExportCSV: () => void;
+  onImport: (file: File) => void; // New Prop
   onHistoryClick: () => void;
   language: Language;
   setLanguage: (lang: Language) => void;
@@ -29,6 +30,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
   onExport,
   onExportCSV,
+  onImport,
   onHistoryClick,
   language,
   setLanguage,
@@ -37,6 +39,21 @@ export const Header: React.FC<HeaderProps> = ({
   stats,
   t
 }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onImport(file);
+    }
+    // Reset to allow selecting same file again
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   return (
     <header className="flex items-center justify-between px-3 md:px-6 py-3 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50 shadow-lg h-[60px]">
       
@@ -231,6 +248,24 @@ export const Header: React.FC<HeaderProps> = ({
         {isAdmin ? (
           <>
             <div className="hidden lg:flex items-center bg-slate-800 rounded-full p-0.5 border border-slate-700">
+                {/* IMPORT BUTTON */}
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileChange} 
+                  accept=".json" 
+                  className="hidden" 
+                />
+                <button
+                  onClick={handleImportClick}
+                  className="flex items-center gap-2 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/20 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                  title={t.importTitle}
+                >
+                  <UploadCloud className="w-3 h-3" /> {t.import}
+                </button>
+
+                <div className="w-px h-4 bg-slate-700 mx-1"></div>
+
                 <button
                   onClick={onExport}
                   className="flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-medium transition-all"

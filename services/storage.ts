@@ -274,6 +274,36 @@ class StorageService {
     return JSON.stringify(items, null, 2);
   }
 
+  async importData(jsonString: string): Promise<number> {
+    if (!this.db) await this.init();
+    
+    return new Promise((resolve, reject) => {
+       try {
+          const items = JSON.parse(jsonString);
+          if (!Array.isArray(items)) throw new Error("Formato inválido");
+          
+          if (!this.db) return reject("Database not initialized");
+          const transaction = this.db.transaction([STORE_ITEMS], 'readwrite');
+          const store = transaction.objectStore(STORE_ITEMS);
+          
+          let count = 0;
+          items.forEach((item: ScratchcardData) => {
+             // Basic validation
+             if (item.id && item.gameName) {
+                store.put(item);
+                count++;
+             }
+          });
+          
+          transaction.oncomplete = () => resolve(count);
+          transaction.onerror = () => reject("Erro na transação de importação");
+
+       } catch (e) {
+          reject(e);
+       }
+    });
+  }
+
   // --- DOCUMENTS / PDF METHODS ---
 
   async getDocuments(): Promise<DocumentItem[]> {

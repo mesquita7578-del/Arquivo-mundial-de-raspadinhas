@@ -392,6 +392,24 @@ function App() {
     }
   };
 
+  const handleImportJSON = async (file: File) => {
+     if (!isAdmin) return;
+     
+     const reader = new FileReader();
+     reader.onload = async (e) => {
+        try {
+           const json = e.target?.result as string;
+           const count = await storageService.importData(json);
+           alert(`Sucesso! ${count} registos importados/atualizados.`);
+           loadInitialData(); // Refresh UI
+        } catch (err) {
+           console.error(err);
+           alert("Erro ao importar ficheiro. Verifique se é um backup JSON válido.");
+        }
+     };
+     reader.readAsText(file);
+  };
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault(); e.stopPropagation(); setIsDragging(true);
   };
@@ -403,6 +421,20 @@ function App() {
     e.preventDefault(); e.stopPropagation(); setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
+      
+      // JSON IMPORT via Drop
+      if (file.type === 'application/json' || file.name.endsWith('.json')) {
+         if(!isAdmin) {
+            alert(t.home.restrictedAccess);
+            return;
+         }
+         if(confirm("Detetado ficheiro de Backup (JSON). Deseja importar estes dados para o arquivo?")) {
+            handleImportJSON(file);
+         }
+         return;
+      }
+
+      // IMAGE UPLOAD via Drop
       if (!file.type.startsWith('image/')) {
         alert(t.upload.errorImage);
         return;
@@ -526,6 +558,7 @@ function App() {
         onLogout={handleLogout}
         onExport={handleExportData}
         onExportCSV={handleExportCSV}
+        onImport={handleImportJSON}
         onHistoryClick={() => setIsHistoryModalOpen(true)}
         language={language}
         setLanguage={setLanguage}

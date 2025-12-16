@@ -17,7 +17,9 @@ export const translations = {
       addTitle: "Adicionar Novo Item",
       loginRequired: "Faça login para adicionar",
       backup: "Dados",
-      backupTitle: "GUARDAR ARQUIVO COMPLETO (Backup JSON)", // Updated for emphasis
+      backupTitle: "GUARDAR ARQUIVO COMPLETO (Backup JSON)", 
+      import: "Importar",
+      importTitle: "Carregar ficheiro de Backup (JSON)",
       rarities: "Raridades",
       promos: "Promocionais", 
       websites: "Sites Oficiais"
@@ -213,6 +215,8 @@ export const translations = {
       loginRequired: "Accedi per aggiungere",
       backup: "Dati",
       backupTitle: "SALVA ARCHIVIO (Backup JSON)",
+      import: "Importa",
+      importTitle: "Carica Backup (JSON)",
       rarities: "Rarità",
       promos: "Promo", 
       websites: "Siti Ufficiali"
