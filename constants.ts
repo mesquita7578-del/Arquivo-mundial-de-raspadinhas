@@ -16,6 +16,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     region: 'Continente', // Added region
     continent: 'Europa',
     category: 'raspadinha',
+    collector: 'Jorge Mesquita',
     aiGenerated: false,
     createdAt: Date.now() - 100000,
   },
@@ -34,6 +35,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     region: 'Nacional', // Added region
     continent: 'Europa',
     category: 'raspadinha',
+    collector: 'Jorge Mesquita',
     aiGenerated: true,
     createdAt: Date.now() - 200000,
   },
@@ -50,6 +52,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     country: 'EUA',
     continent: 'América',
     category: 'raspadinha',
+    collector: 'Fabio Pagni',
     aiGenerated: true,
     createdAt: Date.now() - 300000,
   },
@@ -66,6 +69,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     country: 'Itália',
     continent: 'Europa',
     category: 'raspadinha',
+    collector: 'Fabio Pagni',
     aiGenerated: true,
     createdAt: Date.now() - 400000,
   },
@@ -82,6 +86,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     country: 'Japão',
     continent: 'Ásia',
     category: 'raspadinha',
+    collector: 'Jorge Mesquita',
     aiGenerated: true,
     createdAt: Date.now() - 50000,
   },
@@ -99,6 +104,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     region: 'Baviera',
     continent: 'Europa',
     category: 'raspadinha',
+    collector: 'Jorge Mesquita',
     aiGenerated: true,
     createdAt: Date.now() - 10000,
   }
