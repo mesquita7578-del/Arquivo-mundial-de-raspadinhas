@@ -10,7 +10,7 @@ interface HistoryModalProps {
 }
 
 export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t }) => {
-  const [activeTab, setActiveTab] = useState<'articles' | 'documents' | 'catalogs'>('articles');
+  const [activeTab, setActiveTab] = useState<'collection' | 'catalogs'>('collection');
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<DocumentItem | null>(null);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
@@ -153,18 +153,11 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
         {!selectedDoc && (
           <div className="flex border-b border-gray-800 px-4 md:px-6 bg-gray-900 shrink-0 overflow-x-auto scrollbar-hide">
              <button
-               onClick={() => setActiveTab('articles')}
-               className={`py-3 md:py-4 px-4 md:px-6 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'articles' ? 'border-brand-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+               onClick={() => setActiveTab('collection')}
+               className={`py-3 md:py-4 px-4 md:px-6 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'collection' ? 'border-brand-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
              >
                <Scroll className="w-4 h-4" />
-               {t.tabArticles}
-             </button>
-             <button
-               onClick={() => setActiveTab('documents')}
-               className={`py-3 md:py-4 px-4 md:px-6 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'documents' ? 'border-brand-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
-             >
-               <FileText className="w-4 h-4" />
-               {t.tabDocs}
+               {t.tabCollection}
              </button>
              <button
                onClick={() => setActiveTab('catalogs')}
@@ -282,103 +275,97 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
                         </div>
                      </div>
                   </div>
-               ) : activeTab === 'articles' ? (
-                 <div className="space-y-12 max-w-3xl mx-auto pb-20">
-                    {/* Article 1 */}
-                    <article className="prose prose-invert max-w-none">
-                      <div className="flex items-center gap-2 text-brand-400 mb-4">
-                        <Scroll className="w-5 h-5" />
-                        <span className="text-sm font-bold uppercase tracking-widest">Capítulo 1</span>
-                      </div>
-                      <h3 className="text-2xl md:text-3xl font-bold text-gray-100 mb-4">A Origem das Raspadinhas</h3>
-                      <div className="text-gray-300 space-y-4 text-base md:text-lg leading-relaxed">
-                        <p>
-                          A história das raspadinhas modernas remonta a 1974, nos Estados Unidos, quando a empresa Scientific Games Corporation (liderada pelo cientista John Koza e pelo especialista em marketing Daniel Bower) criou o primeiro bilhete de lotaria instantânea seguro e gerado por computador.
-                        </p>
-                        <p>
-                          Antes disso, as lotarias dependiam de sorteios semanais ou mensais. A inovação de Koza e Bower permitiu que os jogadores soubessem instantaneamente se tinham ganho, revolucionando a indústria do jogo.
-                        </p>
-                      </div>
-                    </article>
-
-                    <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
-
-                    {/* Article 2 */}
-                    <article className="prose prose-invert max-w-none">
-                      <div className="flex items-center gap-2 text-brand-400 mb-4">
-                        <Scroll className="w-5 h-5" />
-                        <span className="text-sm font-bold uppercase tracking-widest">Capítulo 2</span>
-                      </div>
-                      <h3 className="text-2xl md:text-3xl font-bold text-gray-100 mb-4">O Colecionismo e o Estado "MINT"</h3>
-                      <div className="text-gray-300 space-y-4 text-base md:text-lg leading-relaxed">
-                        <p>
-                          Para um colecionador, o estado de conservação é tudo. Enquanto a maioria das pessoas raspa o bilhete inteiro e o deita fora, os colecionadores procuram bilhetes "MINT" (novos, sem raspar) ou amostras ("SPECIMEN" / "VOID").
-                        </p>
-                        <p>
-                          As raspadinhas "VOID" ou "AMOSTRA" são particularmente valiosas porque nunca entraram em circulação para venda. São produzidas pelas gráficas para testes de qualidade ou para demonstração aos revendedores.
-                        </p>
-                      </div>
-                    </article>
-                 </div>
                ) : (
-                 <div className="max-w-4xl mx-auto pb-20">
-                    {/* Upload Section (Admin Only) */}
-                    {isAdmin && (
-                      <div className="mb-10 bg-gray-900 border border-dashed border-gray-700 rounded-xl p-4 md:p-6 flex flex-col md:flex-row items-center gap-6">
-                         <div className="flex-1 w-full">
-                           <label className="block text-xs uppercase text-gray-500 font-bold mb-2">1. {t.docTitlePlaceholder}</label>
-                           <input 
-                             type="text" 
-                             value={docTitle}
-                             onChange={(e) => setDocTitle(e.target.value)}
-                             placeholder={t.docTitlePlaceholder}
-                             className="w-full bg-gray-800 border border-gray-700 text-white rounded px-4 py-2 focus:border-brand-500 outline-none"
-                           />
-                         </div>
-                         <div className="w-full md:w-auto flex flex-col gap-2">
-                           <label className="block text-xs uppercase text-gray-500 font-bold">2. {t.uploadPdf}</label>
-                           <label className={`flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white px-6 py-2 rounded-lg cursor-pointer transition-colors shadow-lg ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
-                             {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
-                             <span className="text-sm font-bold">{isUploading ? "Enviando..." : t.uploadPdf}</span>
-                             <input type="file" accept="application/pdf" className="hidden" onChange={handleFileUpload} disabled={!docTitle.trim()} />
-                           </label>
-                         </div>
-                      </div>
-                    )}
+                 <div className="max-w-4xl mx-auto pb-20 space-y-12 animate-fade-in">
+                    
+                    {/* SECTION 1: STATIC HISTORY */}
+                    <div className="space-y-8">
+                        <div className="flex items-center gap-3 border-b border-gray-800 pb-4">
+                           <Scroll className="w-6 h-6 text-brand-500" />
+                           <h3 className="text-2xl font-bold text-white">{t.articlesTitle}</h3>
+                        </div>
+                        
+                        <article className="prose prose-invert max-w-none bg-gray-900/50 p-6 rounded-2xl border border-gray-800">
+                           <h3 className="text-xl font-bold text-gray-100 mb-3">A Origem das Raspadinhas</h3>
+                           <p className="text-gray-400 leading-relaxed text-sm">
+                              A história das raspadinhas modernas remonta a 1974, nos Estados Unidos, quando a empresa Scientific Games Corporation (liderada pelo cientista John Koza e pelo especialista em marketing Daniel Bower) criou o primeiro bilhete de lotaria instantânea seguro e gerado por computador.
+                           </p>
+                        </article>
 
-                    {/* Documents Grid */}
-                    {documents.length === 0 ? (
-                      <div className="text-center py-20 text-gray-500">
-                        <FileText className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                        <p>{t.noDocs}</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                         {documents.map(doc => (
-                           <div key={doc.id} className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-brand-500/50 transition-all group flex flex-col h-full">
-                              <div className="flex items-start justify-between mb-4">
-                                <div className="bg-gray-800 p-3 rounded-lg text-brand-500 group-hover:bg-brand-500 group-hover:text-white transition-colors">
-                                  <FileText className="w-6 h-6" />
-                                </div>
-                                {isAdmin && (
-                                  <button onClick={() => handleDelete(doc.id)} className="text-gray-600 hover:text-red-500 p-1">
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                )}
-                              </div>
-                              <h4 className="text-lg font-bold text-gray-200 mb-1 group-hover:text-white line-clamp-2">{doc.title}</h4>
-                              <p className="text-xs text-gray-500 mb-4">{new Date(doc.createdAt).toLocaleDateString()} • PDF</p>
-                              
-                              <button 
-                                onClick={() => setSelectedDoc(doc)}
-                                className="mt-auto w-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white py-2 rounded-lg text-sm font-bold transition-colors border border-gray-700"
-                              >
-                                {t.viewPdf}
-                              </button>
+                        <article className="prose prose-invert max-w-none bg-gray-900/50 p-6 rounded-2xl border border-gray-800">
+                           <h3 className="text-xl font-bold text-gray-100 mb-3">O Colecionismo e o Estado "MINT"</h3>
+                           <p className="text-gray-400 leading-relaxed text-sm">
+                              Para um colecionador, o estado de conservação é tudo. Enquanto a maioria das pessoas raspa o bilhete inteiro e o deita fora, os colecionadores procuram bilhetes "MINT" (novos, sem raspar) ou amostras ("SPECIMEN" / "VOID").
+                           </p>
+                        </article>
+                    </div>
+
+                    {/* SECTION 2: UPLOADED DOCUMENTS */}
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+                           <div className="flex items-center gap-3">
+                              <FileText className="w-6 h-6 text-blue-500" />
+                              <h3 className="text-2xl font-bold text-white">{t.documentsTitle}</h3>
                            </div>
-                         ))}
-                      </div>
-                    )}
+                           <span className="text-xs font-bold bg-gray-800 px-2 py-1 rounded text-gray-400">{documents.length} Docs</span>
+                        </div>
+
+                        {/* Upload Form (Admin) */}
+                        {isAdmin && (
+                           <div className="bg-blue-900/10 border border-dashed border-blue-500/30 rounded-xl p-4 flex flex-col md:flex-row items-center gap-4">
+                              <div className="flex-1 w-full">
+                                 <input 
+                                    type="text" 
+                                    value={docTitle}
+                                    onChange={(e) => setDocTitle(e.target.value)}
+                                    placeholder={t.docTitlePlaceholder}
+                                    className="w-full bg-gray-900 border border-gray-700 text-white rounded px-4 py-2 focus:border-brand-500 outline-none text-sm"
+                                 />
+                              </div>
+                              <label className={`flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-lg cursor-pointer transition-colors shadow-lg whitespace-nowrap ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                                 {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
+                                 <span className="text-xs font-bold">{isUploading ? "Enviando..." : t.uploadPdf}</span>
+                                 <input type="file" accept="application/pdf" className="hidden" onChange={handleFileUpload} disabled={!docTitle.trim()} />
+                              </label>
+                           </div>
+                        )}
+
+                        {/* Documents Grid */}
+                        {documents.length === 0 ? (
+                           <div className="text-center py-10 text-gray-600 italic border border-gray-800 rounded-xl">
+                              {t.noDocs}
+                           </div>
+                        ) : (
+                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {documents.map(doc => (
+                                 <div key={doc.id} className="bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-brand-500/50 transition-all group flex flex-col relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-brand-500/10 to-transparent rounded-bl-full pointer-events-none"></div>
+                                    
+                                    <div className="flex items-start justify-between mb-3">
+                                       <div className="bg-gray-800 p-2 rounded-lg text-brand-500">
+                                          <FileText className="w-5 h-5" />
+                                       </div>
+                                       {isAdmin && (
+                                          <button onClick={() => handleDelete(doc.id)} className="text-gray-600 hover:text-red-500 p-1 transition-colors">
+                                             <Trash2 className="w-4 h-4" />
+                                          </button>
+                                       )}
+                                    </div>
+                                    <h4 className="text-sm font-bold text-gray-200 mb-1 group-hover:text-white line-clamp-2">{doc.title}</h4>
+                                    <p className="text-[10px] text-gray-500 mb-4">{new Date(doc.createdAt).toLocaleDateString()}</p>
+                                    
+                                    <button 
+                                       onClick={() => setSelectedDoc(doc)}
+                                       className="mt-auto w-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white py-2 rounded-lg text-xs font-bold transition-colors border border-gray-700 uppercase tracking-wide"
+                                    >
+                                       {t.viewPdf}
+                                    </button>
+                                 </div>
+                              ))}
+                           </div>
+                        )}
+                    </div>
+
                  </div>
                )}
              </div>
