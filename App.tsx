@@ -11,7 +11,7 @@ import { WebsitesModal } from './components/WebsitesModal';
 import { AboutPage } from './components/AboutPage'; 
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
@@ -35,6 +35,7 @@ function App() {
   
   const [isLoadingDB, setIsLoadingDB] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   // Routing State
   const [currentPage, setCurrentPage] = useState<PageType>('home');
@@ -101,6 +102,23 @@ function App() {
   useEffect(() => {
     loadInitialData();
   }, []);
+
+  // Handle Scroll to show/hide "Back to Top" button
+  useEffect(() => {
+    const handleScroll = () => {
+       if (window.scrollY > 300) {
+          setShowScrollTop(true);
+       } else {
+          setShowScrollTop(false);
+       }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Reset SubPage filters when page changes
   useEffect(() => {
@@ -770,6 +788,17 @@ function App() {
         )}
 
       </main>
+      
+      {/* SCROLL TO TOP BUTTON */}
+      {showScrollTop && (
+         <button
+            onClick={scrollToTop}
+            className="fixed bottom-20 right-6 z-40 bg-brand-600 text-white p-3 rounded-full shadow-xl shadow-brand-900/50 hover:bg-brand-500 transition-all animate-bounce-in border-2 border-slate-900"
+            title="Voltar ao Topo"
+         >
+            <ArrowUp className="w-5 h-5" />
+         </button>
+      )}
 
       {/* Footer / Copyright (Always visible at very bottom) */}
       <footer className="bg-slate-950 border-t border-slate-900/50 py-4 z-10 relative">
@@ -838,6 +867,8 @@ function App() {
           onUpdate={handleUpdateImage}
           onDelete={handleDeleteImage}
           isAdmin={isAdmin}
+          contextImages={displayedImages}
+          onImageSelect={setSelectedImage}
           t={t.viewer}
         />
       )}

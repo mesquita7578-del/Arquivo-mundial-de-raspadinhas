@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify, Gem, Gift, Eraser, Sliders, Sun, Contrast, Palette, RotateCcw, ClipboardList, Package, ZoomIn, ZoomOut } from 'lucide-react';
+import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify, Gem, Gift, Eraser, Sliders, Sun, Contrast, Palette, RotateCcw, ClipboardList, Package, ZoomIn, ZoomOut, ArrowRight } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
 
 interface ImageViewerProps {
@@ -8,10 +8,12 @@ interface ImageViewerProps {
   onUpdate: (updatedImage: ScratchcardData) => void;
   onDelete: (id: string) => void;
   isAdmin: boolean;
+  contextImages?: ScratchcardData[]; // New: passed for related items navigation
+  onImageSelect?: (img: ScratchcardData) => void; // New: to switch image
   t: any;
 }
 
-export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpdate, onDelete, isAdmin, t }) => {
+export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpdate, onDelete, isAdmin, contextImages = [], onImageSelect, t }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState<ScratchcardData | null>(null);
@@ -94,6 +96,18 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
       }
     }
   }, [isScratchMode, showingBack]);
+
+  // Find related items (Same country OR Same Name)
+  const relatedItems = React.useMemo(() => {
+    if (!image || contextImages.length === 0) return [];
+    
+    return contextImages
+      .filter(img => 
+        img.id !== image.id && // Not current
+        (img.country === image.country || img.category === image.category)
+      )
+      .slice(0, 4); // Limit to 4
+  }, [image, contextImages]);
 
   // Handle Zoom Pan movement
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -779,6 +793,31 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                 )}
               </div>
             </div>
+            
+            {/* RELATED ITEMS NAVIGATION */}
+            {relatedItems.length > 0 && (
+               <div className="mt-8 pt-4 border-t border-gray-800/50">
+                  <h4 className="text-xs uppercase text-gray-500 font-bold mb-3 flex items-center gap-2">
+                     <Share2 className="w-3 h-3" />
+                     Mais de {image.country}
+                  </h4>
+                  <div className="grid grid-cols-4 gap-2">
+                     {relatedItems.map(item => (
+                        <div 
+                           key={item.id} 
+                           onClick={() => onImageSelect && onImageSelect(item)}
+                           className="group cursor-pointer relative aspect-square bg-gray-800 rounded-lg overflow-hidden border border-gray-700 hover:border-brand-500 transition-all"
+                        >
+                           <img src={item.frontUrl} alt={item.gameName} className="w-full h-full object-contain p-1" />
+                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                              <ArrowRight className="w-4 h-4 text-white" />
+                           </div>
+                           {item.isRarity && <div className="absolute top-1 right-1 w-2 h-2 bg-gold-500 rounded-full" />}
+                        </div>
+                     ))}
+                  </div>
+               </div>
+            )}
           </div>
 
           <div className="p-6 border-t border-gray-800 bg-gray-900/50">
