@@ -58,7 +58,7 @@ export const translations = {
       backToList: "Voltar à Lista",
       docTitlePlaceholder: "Título do Documento (Ex: Regulamento 2024)",
       addDocSuccess: "Documento adicionado com sucesso!",
-      fileTooBig: "O arquivo é muito grande. Tente arquivos menores que 5MB."
+      fileTooBig: "O arquivo é muito grande. Tente arquivos menores que 50MB."
     },
     grid: {
       filters: "Filtros",
@@ -171,9 +171,9 @@ export const translations = {
       emission: "Emissione",
       printer: "Stampa",
       values: "Nota",
-      rarityInfo: "Informação Histórica",
+      rarityInfo: "Informazione Storica",
       promoInfo: "Item Promo", 
-      winnerInfo: "Item Premiado",
+      winnerInfo: "Item Vincente",
       lines: "Linee", 
       linesBlue: "Blu",
       linesRed: "Rosse",
@@ -259,7 +259,7 @@ export const translations = {
       backToList: "Indietro",
       docTitlePlaceholder: "Titolo",
       addDocSuccess: "Fatto!",
-      fileTooBig: "File troppo grande."
+      fileTooBig: "File troppo grande (Max 50MB)."
     },
     grid: {
       filters: "Filtri",

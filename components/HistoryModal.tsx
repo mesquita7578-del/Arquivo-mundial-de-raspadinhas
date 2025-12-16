@@ -68,7 +68,8 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit check
+    // INCREASED LIMIT: 50MB
+    if (file.size > 50 * 1024 * 1024) { 
       alert(t.fileTooBig);
       return;
     }
@@ -99,7 +100,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
         alert(t.addDocSuccess);
       } catch (err) {
         console.error("Erro ao salvar documento", err);
-        alert("Erro ao salvar documento.");
+        alert("Erro ao salvar documento. Pode ser muito grande para o armazenamento local.");
       } finally {
         setIsUploading(false);
       }
