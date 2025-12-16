@@ -106,9 +106,9 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
 
 // Based on European Lotteries Members, World Lotteries & ALEA (Argentina) & MUSL (USA)
 export const EUROPEAN_LOTTERIES: Partial<WebsiteLink>[] = [
-  // Global & Associations
-  { name: "World Lottery Association (WLA)", url: "https://www.world-lotteries.org", country: "Mundo", category: "Global Organization" },
+  // Global & Associations (MUSL Priority)
   { name: "Multi-State Lottery Association (MUSL)", url: "https://www.musl.com", country: "EUA", category: "Association" },
+  { name: "World Lottery Association (WLA)", url: "https://www.world-lotteries.org", country: "Mundo", category: "Global Organization" },
   { name: "ALEA (Argentina)", url: "https://www.alea.org.ar", country: "Argentina", category: "Association" },
   
   // Europe

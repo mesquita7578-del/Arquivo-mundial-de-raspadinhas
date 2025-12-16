@@ -23,6 +23,23 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
   const loadSites = async () => {
     try {
       const data = await storageService.getWebsites();
+      
+      // AUTO-FIX: Check if MUSL is missing and inject it silently
+      const musl = EUROPEAN_LOTTERIES.find(s => s.name?.includes("Multi-State Lottery Association"));
+      const muslExists = data.some(s => s.url === musl?.url || s.name.includes("MUSL"));
+
+      if (musl && !muslExists && musl.name && musl.url && musl.country) {
+         const autoSite: WebsiteLink = {
+            id: Math.random().toString(36).substr(2, 9),
+            name: musl.name,
+            url: musl.url,
+            country: musl.country,
+            category: musl.category || "Association"
+         };
+         await storageService.saveWebsite(autoSite);
+         data.push(autoSite);
+      }
+
       // Sort alphabetically by Country then Name
       data.sort((a, b) => a.country.localeCompare(b.country) || a.name.localeCompare(b.name));
       setSites(data);
@@ -82,7 +99,7 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
         
         await loadSites();
         if(addedCount > 0) {
-           alert(`${addedCount} novos sites importados (EL, WLA, ALEA) com sucesso!`);
+           alert(`${addedCount} novos sites importados (EL, WLA, ALEA, MUSL) com sucesso!`);
         } else {
            alert("A lista já está atualizada.");
         }
@@ -149,7 +166,7 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
                   className="w-full py-4 bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/30 rounded-xl flex items-center justify-center gap-3 text-blue-100 hover:text-white hover:from-blue-900/60 hover:to-indigo-900/60 transition-all shadow-lg group"
                >
                   {isImporting ? <DownloadCloud className="w-5 h-5 animate-bounce" /> : <Globe className="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" />}
-                  <span className="font-bold">{isImporting ? "Importando..." : "Importar Lista Oficial (EL / WLA / ALEA)"}</span>
+                  <span className="font-bold">{isImporting ? "Importando..." : "Importar Lista Oficial (EL / WLA / ALEA / MUSL)"}</span>
               </button>
 
               <div className="bg-gray-900 border border-dashed border-gray-700 rounded-xl p-6 shadow-lg">
