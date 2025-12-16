@@ -178,7 +178,13 @@ class StorageService {
     });
   }
 
-  async getStats(): Promise<{ stats: Record<string, number>, total: number, categoryStats: { scratch: number, lottery: number } }> {
+  async getStats(): Promise<{ 
+    stats: Record<string, number>, 
+    total: number, 
+    categoryStats: { scratch: number, lottery: number },
+    countryStats: Record<string, number>,
+    stateStats: Record<string, number>
+  }> {
      if (!this.db) await this.init();
 
      return new Promise((resolve, reject) => {
@@ -192,10 +198,9 @@ class StorageService {
         'Europa': 0, 'América': 0, 'Ásia': 0, 'África': 0, 'Oceania': 0
       };
       
-      const categoryStats = {
-        scratch: 0,
-        lottery: 0
-      };
+      const categoryStats = { scratch: 0, lottery: 0 };
+      const countryStats: Record<string, number> = {};
+      const stateStats: Record<string, number> = {};
 
       let total = 0;
 
@@ -217,9 +222,17 @@ class StorageService {
             categoryStats.scratch++;
           }
 
+          // Country Stats
+          const country = img.country || 'Desconhecido';
+          countryStats[country] = (countryStats[country] || 0) + 1;
+
+          // State Stats
+          const state = img.state || 'Outro';
+          stateStats[state] = (stateStats[state] || 0) + 1;
+
           cursor.continue();
         } else {
-          resolve({ stats, total, categoryStats });
+          resolve({ stats, total, categoryStats, countryStats, stateStats });
         }
       };
       request.onerror = () => reject("Erro stats");

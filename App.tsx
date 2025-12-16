@@ -27,7 +27,9 @@ function App() {
   const [totalStats, setTotalStats] = useState({ 
     total: 0, 
     stats: {} as Record<string, number>,
-    categoryStats: { scratch: 0, lottery: 0 } 
+    categoryStats: { scratch: 0, lottery: 0 },
+    countryStats: {} as Record<string, number>,
+    stateStats: {} as Record<string, number>
   });
   
   const [mapData, setMapData] = useState<ScratchcardData[]>([]);
@@ -784,7 +786,14 @@ function App() {
         {/* --- PAGE: STATS --- */}
         {currentPage === 'stats' && (
            <div className="animate-fade-in min-h-full">
-             <StatsSection stats={totalStats.stats} categoryStats={totalStats.categoryStats} totalRecords={totalStats.total} t={t.stats} />
+             <StatsSection 
+                stats={totalStats.stats} 
+                categoryStats={totalStats.categoryStats} 
+                countryStats={totalStats.countryStats} 
+                stateStats={totalStats.stateStats}
+                totalRecords={totalStats.total} 
+                t={t.stats} 
+             />
            </div>
         )}
 
