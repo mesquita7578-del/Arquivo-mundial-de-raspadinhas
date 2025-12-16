@@ -183,7 +183,8 @@ class StorageService {
     total: number, 
     categoryStats: { scratch: number, lottery: number },
     countryStats: Record<string, number>,
-    stateStats: Record<string, number>
+    stateStats: Record<string, number>,
+    collectorStats: Record<string, number>
   }> {
      if (!this.db) await this.init();
 
@@ -201,6 +202,7 @@ class StorageService {
       const categoryStats = { scratch: 0, lottery: 0 };
       const countryStats: Record<string, number> = {};
       const stateStats: Record<string, number> = {};
+      const collectorStats: Record<string, number> = {};
 
       let total = 0;
 
@@ -230,9 +232,15 @@ class StorageService {
           const state = img.state || 'Outro';
           stateStats[state] = (stateStats[state] || 0) + 1;
 
+          // Collector Stats
+          if (img.collector && img.collector.trim() !== '') {
+             const name = img.collector.trim();
+             collectorStats[name] = (collectorStats[name] || 0) + 1;
+          }
+
           cursor.continue();
         } else {
-          resolve({ stats, total, categoryStats, countryStats, stateStats });
+          resolve({ stats, total, categoryStats, countryStats, stateStats, collectorStats });
         }
       };
       request.onerror = () => reject("Erro stats");

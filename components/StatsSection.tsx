@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Continent } from '../types';
-import { BarChart3, Database, Globe, Mail, Ticket, Coins, TrendingUp, Award, Map, PieChart } from 'lucide-react';
+import { BarChart3, Database, Globe, Mail, Ticket, Coins, TrendingUp, Award, Map, PieChart, Users, Star, Crown, Heart, Flag } from 'lucide-react';
 
 interface StatsSectionProps {
   stats: Record<string, number>;
   categoryStats: { scratch: number; lottery: number };
   countryStats: Record<string, number>;
   stateStats: Record<string, number>;
+  collectorStats: Record<string, number>;
   totalRecords: number;
   t: any;
 }
 
-export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats, countryStats, stateStats, totalRecords, t }) => {
+export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats, countryStats, stateStats, collectorStats, totalRecords, t }) => {
   const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
@@ -34,6 +35,18 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
     .sort((a, b) => (b[1] as number) - (a[1] as number))
     .slice(0, 5);
   const maxCountryCount = topCountries.length > 0 ? (topCountries[0][1] as number) : 1;
+
+  // Collector Leaderboard Logic
+  const guardians = Object.entries(collectorStats)
+    .sort((a, b) => b[1] - a[1]);
+
+  const getCollectorBadge = (name: string) => {
+     const lower = name.toLowerCase();
+     if (lower.includes('jorge')) return { color: 'bg-blue-500', text: 'JM', icon: <Crown className="w-3 h-3 text-yellow-400" /> };
+     if (lower.includes('fabio') || lower.includes('fábio')) return { color: 'bg-green-500', text: 'FP', icon: <Star className="w-3 h-3 text-white" /> };
+     if (lower.includes('chloe')) return { color: 'bg-pink-500', text: 'CH', icon: <Heart className="w-3 h-3 text-white" /> };
+     return { color: 'bg-slate-600', text: name.substring(0, 2).toUpperCase(), icon: null };
+  };
 
   // State Distribution Data (Donut)
   // Casting values to number to avoid 'unknown' errors
@@ -202,10 +215,59 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
           {/* Side Column: Leaderboard & Status */}
           <div className="flex flex-col gap-6">
              
+             {/* GUARDIANS OF THE ARCHIVE (New Widget) */}
+             <div className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700/50 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                   <Users className="w-32 h-32 text-white" />
+                </div>
+                
+                <h3 className="text-sm font-bold text-white mb-6 flex items-center gap-2 uppercase tracking-wider relative z-10">
+                   <Award className="w-4 h-4 text-yellow-500" />
+                   Guardiões do Arquivo
+                </h3>
+
+                <div className="space-y-4 relative z-10">
+                   {guardians.length > 0 ? guardians.map(([name, count], index) => {
+                      const badge = getCollectorBadge(name);
+                      const percentage = (count / totalRecords) * 100;
+                      
+                      return (
+                         <div key={name} className="group">
+                            <div className="flex items-center justify-between mb-2">
+                               <div className="flex items-center gap-3">
+                                  <div className={`w-8 h-8 rounded-full ${badge.color} flex items-center justify-center text-xs font-bold text-white shadow-lg border border-white/10`}>
+                                     {badge.icon ? badge.icon : badge.text}
+                                  </div>
+                                  <div>
+                                     <div className="text-xs font-bold text-white flex items-center gap-1">
+                                        {name}
+                                        {index === 0 && <Crown className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
+                                     </div>
+                                     <div className="text-[10px] text-slate-400 font-mono">{count} registos</div>
+                                  </div>
+                               </div>
+                               <span className="text-xs font-bold text-slate-500">{Math.round(percentage)}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                               <div 
+                                  className={`h-full rounded-full ${badge.color.replace('bg-', 'bg-gradient-to-r from-').replace('500', '400')} to-white/50 transition-all duration-1000`} 
+                                  style={{ width: `${animate ? percentage : 0}%` }}
+                               ></div>
+                            </div>
+                         </div>
+                      );
+                   }) : (
+                      <div className="text-center py-4 text-xs text-slate-500 italic">
+                         Nenhum guardião detetado ancora.
+                      </div>
+                   )}
+                </div>
+             </div>
+
              {/* Top 5 Countries */}
              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
                 <h3 className="text-sm font-bold text-white mb-6 flex items-center gap-2 uppercase tracking-wider">
-                   <Award className="w-4 h-4 text-yellow-500" />
+                   <Flag className="w-4 h-4 text-blue-500" />
                    Top 5 Países
                 </h3>
                 <div className="space-y-5">
@@ -232,7 +294,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
              </div>
 
              {/* State Distribution (Specific Breakdown) */}
-             <div className="flex-1 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col justify-center relative overflow-hidden">
+             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col justify-center relative overflow-hidden">
                 <div className="flex justify-between items-center mb-6">
                    <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
                       <PieChart className="w-4 h-4 text-brand-500" />
@@ -243,7 +305,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                 <div className="flex items-center justify-between gap-4">
                    {/* CSS Conic Gradient Donut for 4 Segments */}
                    <div 
-                     className="w-28 h-28 rounded-full relative flex items-center justify-center shrink-0"
+                     className="w-24 h-24 rounded-full relative flex items-center justify-center shrink-0"
                      style={{ 
                         background: `conic-gradient(
                            #22c55e 0% ${stopMint}%, 
@@ -253,7 +315,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                         )` 
                      }}
                    >
-                      <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center border border-slate-800">
+                      <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center border border-slate-800">
                          <span className="text-[10px] font-bold text-slate-500">Estado</span>
                       </div>
                    </div>

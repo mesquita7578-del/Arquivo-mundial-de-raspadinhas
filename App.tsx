@@ -29,7 +29,8 @@ function App() {
     stats: {} as Record<string, number>,
     categoryStats: { scratch: 0, lottery: 0 },
     countryStats: {} as Record<string, number>,
-    stateStats: {} as Record<string, number>
+    stateStats: {} as Record<string, number>,
+    collectorStats: {} as Record<string, number>
   });
   
   const [mapData, setMapData] = useState<ScratchcardData[]>([]);
@@ -872,6 +873,7 @@ function App() {
                 categoryStats={totalStats.categoryStats} 
                 countryStats={totalStats.countryStats} 
                 stateStats={totalStats.stateStats}
+                collectorStats={totalStats.collectorStats}
                 totalRecords={totalStats.total} 
                 t={t.stats} 
              />
