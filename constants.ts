@@ -86,7 +86,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     country: 'Japão',
     continent: 'Ásia',
     category: 'raspadinha',
-    collector: 'Jorge Mesquita',
+    collector: 'Arquivo Geral',
     aiGenerated: true,
     createdAt: Date.now() - 50000,
   },
@@ -108,7 +108,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     aiGenerated: true,
     createdAt: Date.now() - 10000,
   },
-  // Added requested China Card
+  // China Card moved to General Archive
   {
     id: '7',
     customId: 'RASP-CN-088',
@@ -123,11 +123,11 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     country: 'China',
     continent: 'Ásia',
     category: 'raspadinha',
-    collector: 'Jorge Mesquita',
+    collector: 'Arquivo Geral',
     aiGenerated: false,
     createdAt: Date.now(),
   },
-  // Added Chloe's first item to display her Queen Crown
+  // Chloe's Collection
   {
     id: '8',
     customId: 'RASP-PT-CHLOE',
