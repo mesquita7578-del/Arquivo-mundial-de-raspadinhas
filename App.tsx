@@ -78,6 +78,38 @@ function App() {
     finally { setIsLoadingDB(false); }
   };
 
+  // Fix: Added handleInstallApp to manage PWA installation prompt
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    }
+  };
+
+  // Mapeamento dinâmico de países por continente para o Header
+  const countriesByContinent = useMemo(() => {
+    const mapping: Record<string, string[]> = {
+      'Europa': [], 'América': [], 'Ásia': [], 'África': [], 'Oceania': []
+    };
+    allImagesCache.forEach(img => {
+      if (mapping[img.continent] && !mapping[img.continent].includes(img.country)) {
+        mapping[img.continent].push(img.country);
+      }
+    });
+    // Ordenar países alfabeticamente
+    Object.keys(mapping).forEach(key => mapping[key].sort());
+    return mapping;
+  }, [allImagesCache]);
+
+  const handleCountrySelectFromHeader = (continent: Continent, country: string) => {
+    setCurrentPage('home');
+    setActiveContinent(continent);
+    setCountrySearch(country);
+  };
+
   const handleExportJSON = async () => {
     const data = await storageService.exportData();
     const blob = new Blob([data], { type: 'application/json' });
@@ -156,23 +188,6 @@ function App() {
     });
   }, [allImagesCache, activeContinent, activeCategory, filterRarity, filterPromo, filterWinners, countrySearch, searchTerm, currentPage, currentUser]);
 
-  const registeredCountries = useMemo(() => {
-     return Object.keys(totalStats.countryStats).sort();
-  }, [totalStats.countryStats]);
-
-  // Handle PWA installation
-  const handleInstallApp = async () => {
-    if (!deferredPrompt) {
-      alert("Para instalar:\n1. Clique nos 3 pontos ou botão Partilhar do navegador.\n2. Selecione 'Instalar Aplicação' ou 'Adicionar ao Ecrã Principal'.");
-      return;
-    }
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null);
-    }
-  };
-
   const handleNavigate = (p: PageType) => {
     setCurrentPage(p);
     setCountrySearch('');
@@ -206,6 +221,8 @@ function App() {
         onNavigate={handleNavigate} 
         t={t.header}
         onInstall={handleInstallApp}
+        countriesByContinent={countriesByContinent}
+        onCountrySelect={handleCountrySelectFromHeader}
       />
 
       <main className="flex-1 overflow-y-auto bg-slate-950 scroll-smooth custom-scrollbar flex flex-col">

@@ -13,7 +13,7 @@ interface ImageGridProps {
   t: any;
 }
 
-const ITEMS_PER_PAGE = 100; // Aumentado para condizer com o tamanho menor
+const ITEMS_PER_PAGE = 100;
 
 const StateBadge = ({ state }: { state: string }) => {
   const colors: Record<string, string> = {
@@ -49,6 +49,11 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
     return images.slice(start, start + ITEMS_PER_PAGE);
   }, [images, currentPage]);
 
+  const isRecent = (createdAt: number) => {
+    const fortyEightHoursInMs = 48 * 60 * 60 * 1000;
+    return (Date.now() - createdAt) < fortyEightHoursInMs;
+  };
+
   if (images.length === 0) {
      return (
         <div className="flex flex-col items-center justify-center py-20 text-slate-600 border border-dashed border-slate-800 rounded-2xl">
@@ -60,61 +65,68 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 
   return (
     <div className="space-y-8">
-      {/* Grelha ajustada para itens MAIS PEQUENOS: grid-cols-3 em mobile até grid-cols-12 em 2xl */}
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-2 md:gap-3">
-        {displayedImages.map((item) => (
-          <div
-            key={item.id}
-            className="group bg-slate-900 border border-slate-800 hover:border-blue-500 transition-all cursor-pointer flex flex-col rounded-md overflow-hidden shadow-sm hover:shadow-blue-900/20"
-            onClick={() => onImageClick(item)}
-          >
-            {/* CABEÇALHO TÉCNICO COMPACTO */}
-            <div className="px-1.5 py-1 bg-slate-950 border-b border-slate-800 flex justify-between items-center text-[7px] font-mono text-slate-500">
-               <div className="flex items-center gap-0.5">
-                  <span className="text-blue-500 font-bold">Nº</span> {item.gameNumber}
-               </div>
-               <span>{item.releaseDate.split('-')[0]}</span>
-            </div>
-
-            {/* Content Container - Perfeitamente uniforme */}
-            <div className="relative aspect-[3/4] bg-slate-800 flex items-center justify-center overflow-hidden">
-              <SafeImage 
-                src={item.frontUrl} 
-                alt={item.gameName} 
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
-              />
-              
-              <div className="absolute top-1 left-1 flex flex-col gap-0.5 z-20">
-                 <div className="bg-slate-950/80 backdrop-blur text-white text-[7px] font-mono px-1 py-0.5 rounded border border-slate-700 leading-none">
-                    {item.customId}
+        {displayedImages.map((item) => {
+          const itemIsRecent = isRecent(item.createdAt);
+          
+          return (
+            <div
+              key={item.id}
+              className="group bg-slate-900 border border-slate-800 hover:border-blue-500 transition-all cursor-pointer flex flex-col rounded-md overflow-hidden shadow-sm hover:shadow-blue-900/20"
+              onClick={() => onImageClick(item)}
+            >
+              <div className="px-1.5 py-1 bg-slate-950 border-b border-slate-800 flex justify-between items-center text-[7px] font-mono text-slate-500">
+                 <div className="flex items-center gap-0.5">
+                    <span className="text-blue-500 font-bold">Nº</span> {item.gameNumber}
                  </div>
+                 <span>{item.releaseDate.split('-')[0]}</span>
               </div>
 
-               <div className="absolute top-1 right-1 flex flex-col gap-0.5 items-end z-20">
-                  {currentUser && item.owners?.includes(currentUser) && (
-                     <div className="bg-blue-600 text-white p-0.5 rounded-full shadow-lg border border-blue-400">
-                        <CheckCircle2 className="w-2.5 h-2.5" />
-                     </div>
-                  )}
-                  {item.isWinner && <div className="bg-green-600 text-white p-0.5 rounded-full shadow-lg"><Trophy className="w-2.5 h-2.5" /></div>}
-               </div>
-               
-               <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-slate-950/60 to-transparent pointer-events-none"></div>
-            </div>
-
-            <div className="p-1.5 bg-slate-900 flex flex-col flex-1">
-              <div className="flex justify-between items-start mb-0.5 gap-1">
-                <h3 className="font-bold text-slate-200 text-[9px] leading-tight truncate flex-1 uppercase tracking-tighter" title={item.gameName}>{item.gameName}</h3>
-              </div>
-              <div className="mt-auto flex items-center justify-between">
-                <div className="flex items-center gap-0.5 text-[8px] text-slate-500 font-bold uppercase tracking-tighter">
-                  <MapPin className="w-2 h-2" /> <span className="truncate max-w-[40px]">{item.country}</span>
+              <div className="relative aspect-[3/4] bg-slate-800 flex items-center justify-center overflow-hidden">
+                <SafeImage 
+                  src={item.frontUrl} 
+                  alt={item.gameName} 
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                />
+                
+                <div className="absolute top-1 left-1 flex flex-col gap-0.5 z-20">
+                   <div className="bg-slate-950/80 backdrop-blur text-white text-[7px] font-mono px-1 py-0.5 rounded border border-slate-700 leading-none">
+                      {item.customId}
+                   </div>
                 </div>
-                <StateBadge state={item.state} />
+
+                 <div className="absolute top-1 right-1 flex flex-col gap-0.5 items-end z-20">
+                    {/* FLASH / NOVO INDICATOR */}
+                    {itemIsRecent && (
+                       <div className="bg-yellow-500 text-black p-0.5 rounded-full shadow-lg animate-pulse border border-yellow-300 ring-1 ring-yellow-500/50" title="Recentemente adicionado!">
+                          <Zap className="w-2.5 h-2.5 fill-current" />
+                       </div>
+                    )}
+                    {currentUser && item.owners?.includes(currentUser) && (
+                       <div className="bg-blue-600 text-white p-0.5 rounded-full shadow-lg border border-blue-400">
+                          <CheckCircle2 className="w-2.5 h-2.5" />
+                       </div>
+                    )}
+                    {item.isWinner && <div className="bg-green-600 text-white p-0.5 rounded-full shadow-lg"><Trophy className="w-2.5 h-2.5" /></div>}
+                 </div>
+                 
+                 <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-slate-950/60 to-transparent pointer-events-none"></div>
+              </div>
+
+              <div className="p-1.5 bg-slate-900 flex flex-col flex-1">
+                <div className="flex justify-between items-start mb-0.5 gap-1">
+                  <h3 className="font-bold text-slate-200 text-[9px] leading-tight truncate flex-1 uppercase tracking-tighter" title={item.gameName}>{item.gameName}</h3>
+                </div>
+                <div className="mt-auto flex items-center justify-between">
+                  <div className="flex items-center gap-0.5 text-[8px] text-slate-500 font-bold uppercase tracking-tighter">
+                    <MapPin className="w-2 h-2" /> <span className="truncate max-w-[40px]">{item.country}</span>
+                  </div>
+                  <StateBadge state={item.state} />
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {totalPages > 1 && (

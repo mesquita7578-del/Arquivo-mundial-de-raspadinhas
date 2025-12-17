@@ -1,10 +1,12 @@
+
 import React, { useRef, useState } from 'react';
 import { 
   Ticket, Lock, LogOut, BookOpen, Home, 
   BarChart2, ChevronDown, Globe, User, Smartphone, 
-  Info, Database, FileJson, FileSpreadsheet, ClipboardList, UploadCloud
+  Info, Database, FileJson, FileSpreadsheet, ClipboardList, UploadCloud, ChevronRight, MapPin
 } from 'lucide-react';
 import { Language } from '../translations';
+import { Continent } from '../types';
 
 interface HeaderProps {
   isAdmin: boolean;
@@ -22,15 +24,20 @@ interface HeaderProps {
   onNavigate: (page: any) => void;
   t: any;
   onInstall?: () => void;
+  countriesByContinent?: Record<string, string[]>;
+  onCountrySelect?: (continent: Continent, country: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
   isAdmin, currentUser, onAdminToggle, onLogout, 
   onHistoryClick, onExport, onExportCSV, onExportTXT, onImport,
   language, setLanguage,
-  currentPage, onNavigate, t, onInstall
+  currentPage, onNavigate, t, onInstall,
+  countriesByContinent = {},
+  onCountrySelect
 }) => {
   const [showTools, setShowTools] = useState(false);
+  const [activeSubMenu, setActiveSubMenu] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImportClick = () => {
@@ -75,12 +82,51 @@ export const Header: React.FC<HeaderProps> = ({
             <button className="px-4 py-2 rounded-full text-sm font-bold text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-2 transition-all">
               <Globe className="w-4 h-4" /> Explorar <ChevronDown className="w-3 h-3 transition-transform group-hover:rotate-180" />
             </button>
-            <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all p-2 z-[60]">
-               {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => (
-                 <button key={cont} onClick={() => onNavigate(cont.toLowerCase().replace('é', 'e').replace('á', 'a'))} className="w-full text-left px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
-                   {cont}
-                 </button>
-               ))}
+            
+            {/* Dropdown de Continentes (Pai) */}
+            <div className="absolute top-full left-0 mt-2 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all p-2 z-[60]">
+               {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => {
+                 const countries = countriesByContinent[cont] || [];
+                 const hasCountries = countries.length > 0;
+
+                 return (
+                   <div 
+                      key={cont} 
+                      className="relative group/sub"
+                      onMouseEnter={() => setActiveSubMenu(cont)}
+                      onMouseLeave={() => setActiveSubMenu(null)}
+                   >
+                     <button 
+                        onClick={() => onNavigate(cont.toLowerCase().replace('é', 'e').replace('á', 'a') as any)} 
+                        className="w-full text-left px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all flex items-center justify-between font-bold"
+                     >
+                       {cont}
+                       {hasCountries && <ChevronRight className="w-3 h-3 opacity-50" />}
+                     </button>
+
+                     {/* Submenu de Países (Filho) - Estilo Botão JSON */}
+                     {hasCountries && (
+                        <div className="absolute left-full top-0 ml-1 w-64 bg-slate-900/95 backdrop-blur-xl border border-slate-700 rounded-xl shadow-2xl opacity-0 invisible group-hover/sub:opacity-100 group-hover/sub:visible transition-all p-2 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                           <div className="px-3 py-2 border-b border-slate-800 mb-2">
+                              <span className="text-[10px] font-black text-brand-500 uppercase tracking-widest flex items-center gap-2">
+                                 <MapPin className="w-3 h-3" /> Países em {cont}
+                              </span>
+                           </div>
+                           {countries.map(country => (
+                              <button 
+                                 key={country}
+                                 onClick={() => onCountrySelect?.(cont as Continent, country)}
+                                 className="w-full text-left px-4 py-2 text-xs font-bold text-slate-300 hover:text-white hover:bg-blue-600 rounded-lg transition-all flex items-center gap-3"
+                              >
+                                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                 {country}
+                              </button>
+                           ))}
+                        </div>
+                     )}
+                   </div>
+                 );
+               })}
             </div>
          </div>
 
