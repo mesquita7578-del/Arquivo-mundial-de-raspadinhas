@@ -1,595 +1,244 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify, Gem, Gift, Eraser, Sliders, Sun, Contrast, Palette, RotateCcw, ClipboardList, Package, ZoomIn, ZoomOut, ArrowRight, Trophy, ChevronDown } from 'lucide-react';
-import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
+import React, { useState, useEffect } from 'react';
+import { X, ChevronLeft, ChevronRight, Share2, ZoomIn, ZoomOut, Edit2, Trash2, Save, RotateCcw, Check, MapPin, Printer, Layers, Trophy, Gift, Gem } from 'lucide-react';
+import { ScratchcardData, Category } from '../types';
 
 interface ImageViewerProps {
-  image: ScratchcardData | null;
+  image: ScratchcardData;
   onClose: () => void;
-  onUpdate: (updatedImage: ScratchcardData) => void;
+  onUpdate: (data: ScratchcardData) => void;
   onDelete: (id: string) => void;
   isAdmin: boolean;
-  contextImages?: ScratchcardData[]; // New: passed for related items navigation
-  onImageSelect?: (img: ScratchcardData) => void; // New: to switch image
+  contextImages: ScratchcardData[];
+  onImageSelect: (data: ScratchcardData) => void;
   t: any;
 }
 
-export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpdate, onDelete, isAdmin, contextImages = [], onImageSelect, t }) => {
+export const ImageViewer: React.FC<ImageViewerProps> = ({ 
+  image, 
+  onClose, 
+  onUpdate, 
+  onDelete, 
+  isAdmin, 
+  contextImages, 
+  onImageSelect,
+  t 
+}) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [formData, setFormData] = useState<ScratchcardData | null>(null);
-  const [showingBack, setShowingBack] = useState(false);
-  const [showCopied, setShowCopied] = useState(false);
-  
-  // Image Filters State
-  const [showFilters, setShowFilters] = useState(false);
-  const [brightness, setBrightness] = useState(100);
-  const [contrast, setContrast] = useState(100);
-  const [saturation, setSaturation] = useState(100);
-  
-  // Zoom/Loupe State
-  const [isZoomed, setIsZoomed] = useState(false);
-  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 }); // Percentage
-  
-  // Scratch Simulation State
-  const [isScratchMode, setIsScratchMode] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-
-  // Generate unique collectors list for Autocomplete
-  const collectorsList = useMemo(() => {
-    const unique = new Set<string>();
-    contextImages.forEach(img => {
-      if (img.collector) unique.add(img.collector);
-    });
-    return Array.from(unique).sort();
-  }, [contextImages]);
+  const [formData, setFormData] = useState<ScratchcardData>(image);
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [showBack, setShowBack] = useState(false);
 
   useEffect(() => {
     setFormData(image);
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
     setIsEditing(false);
-    setIsDeleting(false);
-    setShowingBack(false);
-    setShowCopied(false);
-    setIsScratchMode(false);
-    setIsZoomed(false);
-    // Reset filters
-    setBrightness(100);
-    setContrast(100);
-    setSaturation(100);
-    setShowFilters(false);
+    setShowBack(false);
   }, [image]);
 
-  // Reset states when switching sides
-  useEffect(() => {
-     setIsZoomed(false);
-     setIsScratchMode(false);
-  }, [showingBack]);
-
-  // Initialize Scratch Canvas
-  useEffect(() => {
-    if (isScratchMode && canvasRef.current && imageRef.current) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      const img = imageRef.current;
-
-      if (ctx) {
-        // Set canvas size to match displayed image
-        canvas.width = img.clientWidth;
-        canvas.height = img.clientHeight;
-
-        // Draw silver overlay
-        ctx.fillStyle = '#C0C0C0'; // Silver color
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Add some noise/texture to look like latex
-        for (let i = 0; i < 5000; i++) {
-            ctx.fillStyle = Math.random() > 0.5 ? '#A9A9A9' : '#D3D3D3';
-            ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 2, 2);
-        }
-        
-        // Add text "RASPE AQUI"
-        ctx.font = 'bold 24px monospace';
-        ctx.fillStyle = '#808080';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.save();
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate(-Math.PI / 6);
-        ctx.fillText("RASPE AQUI / SCRATCH HERE", 0, 0);
-        ctx.restore();
-
-        // Setup composite operation for erasing
-        ctx.globalCompositeOperation = 'destination-out';
-      }
-    }
-  }, [isScratchMode, showingBack]);
-
-  // Find related items (Same country OR Same Name)
-  const relatedItems = React.useMemo(() => {
-    if (!image || contextImages.length === 0) return [];
-    
-    return contextImages
-      .filter(img => 
-        img.id !== image.id && // Not current
-        (img.country === image.country || img.category === image.category)
-      )
-      .slice(0, 4); // Limit to 4
-  }, [image, contextImages]);
-
-  // Handle Zoom Pan movement
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isZoomed || isScratchMode || !imageRef.current) return;
-    
-    const { left, top, width, height } = imageRef.current.getBoundingClientRect();
-    const x = ((e.clientX - left) / width) * 100;
-    const y = ((e.clientY - top) / height) * 100;
-
-    setZoomPosition({ x, y });
-  };
-
-  const toggleZoom = () => {
-    if (isScratchMode) setIsScratchMode(false); // Disable scratch if zooming
-    setIsZoomed(!isZoomed);
-  };
-
-  const handleScratchStart = (e: React.MouseEvent | React.TouchEvent) => {
-    setIsDrawing(true);
-    scratch(e);
-  };
-
-  const handleScratchEnd = () => {
-    setIsDrawing(false);
-  };
-
-  const scratch = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing || !canvasRef.current) return;
-    
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const rect = canvas.getBoundingClientRect();
-    
-    let clientX, clientY;
-    
-    if ('touches' in e) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      clientX = (e as React.MouseEvent).clientX;
-      clientY = (e as React.MouseEvent).clientY;
-    }
-
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
-
-    if (ctx) {
-      ctx.beginPath();
-      ctx.arc(x, y, 20, 0, 2 * Math.PI); // Brush size 20
-      ctx.fill();
-    }
-  };
-
-  if (!image || !formData) return null;
-
   const handleSave = () => {
-    if (formData) {
-      onUpdate(formData);
-      setIsEditing(false);
+    onUpdate(formData);
+    setIsEditing(false);
+  };
+
+  const handleChange = (field: keyof ScratchcardData, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleDeleteClick = () => {
+    if (confirm(t.deleteConfirm)) {
+      onDelete(image.id);
+      onClose();
     }
   };
 
-  const handleConfirmDelete = () => {
-    onDelete(image.id);
-  };
-
-  const handleShare = async () => {
-    const shareUrl = `${window.location.origin}?id=${image.customId}`;
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setShowCopied(true);
-      setTimeout(() => setShowCopied(false), 2000);
-    } catch (err) {
-      console.error("Falha ao copiar link", err);
+  const handleNext = () => {
+    const idx = contextImages.findIndex(img => img.id === image.id);
+    if (idx < contextImages.length - 1) {
+      onImageSelect(contextImages[idx + 1]);
     }
   };
 
-  const handleChange = (field: keyof ScratchcardData, value: string | boolean) => {
-    setFormData(prev => prev ? { ...prev, [field]: value } : null);
+  const handlePrev = () => {
+    const idx = contextImages.findIndex(img => img.id === image.id);
+    if (idx > 0) {
+      onImageSelect(contextImages[idx - 1]);
+    }
   };
 
-  const getCategoryIcon = (cat: Category | undefined) => {
-     switch (cat) {
-      case 'lotaria': return <Ticket className="w-4 h-4 text-purple-400" />;
-      case 'boletim': return <ClipboardList className="w-4 h-4 text-green-400" />;
-      case 'objeto': return <Package className="w-4 h-4 text-orange-400" />;
-      default: return <Coins className="w-4 h-4 text-brand-400" />;
-     }
+  const handleWheel = (e: React.WheelEvent) => {
+    e.stopPropagation();
+    if (e.deltaY < 0) {
+      setScale(s => Math.min(s + 0.1, 4));
+    } else {
+      setScale(s => Math.max(s - 0.1, 0.5));
+    }
   };
 
-  const getCategoryLabel = (cat: Category | undefined) => {
-     switch (cat) {
-       case 'lotaria': return t.category + ": Lotaria";
-       case 'boletim': return t.category + ": Boletim";
-       case 'objeto': return t.category + ": Objeto";
-       default: return t.category + ": Raspadinha";
-     }
+  const startDrag = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
   };
-  
-  const getLineLabel = (line: LineType | undefined) => {
-     switch(line) {
-         case 'blue': return t.linesBlue;
-         case 'red': return t.linesRed;
-         case 'multicolor': return t.linesMulti;
-         case 'none': return t.linesNone;
-         default: return t.linesNone;
-     }
+
+  const onDrag = (e: React.MouseEvent) => {
+    if (isDragging) {
+      setPosition({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y
+      });
+    }
   };
-  
-  const getLineColor = (line: LineType | undefined) => {
-      switch(line) {
-         case 'blue': return 'text-blue-400 border-blue-500/30 bg-blue-500/10';
-         case 'red': return 'text-red-400 border-red-500/30 bg-red-500/10';
-         case 'multicolor': return 'text-purple-400 border-purple-500/30 bg-purple-500/10';
-         default: return 'text-gray-400 border-gray-700 bg-gray-800';
-     }
-  };
+
+  const stopDrag = () => setIsDragging(false);
+
+  const currentImageSrc = showBack && image.backUrl ? image.backUrl : image.frontUrl;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center p-0 sm:p-4 bg-black/95 animate-fade-in backdrop-blur-xl">
-      {/* Collectors Datalist for Autocomplete */}
-      <datalist id="viewer-collectors-list">
-         {collectorsList.map(c => <option key={c} value={c} />)}
-      </datalist>
-
-      <button 
-        type="button"
-        onClick={onClose}
-        className="absolute top-4 right-4 z-50 text-gray-400 hover:text-white bg-black/50 p-2 rounded-full backdrop-blur-md transition-colors"
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl animate-fade-in">
+      <button onClick={onClose} className="absolute top-4 right-4 z-50 p-2 bg-gray-800/50 hover:bg-gray-700 text-white rounded-full transition-colors">
         <X className="w-6 h-6" />
       </button>
 
-      <div className="flex flex-col lg:flex-row w-full h-full lg:max-w-7xl lg:max-h-[85vh] bg-gray-900 rounded-none lg:rounded-2xl overflow-hidden border border-gray-800 shadow-2xl">
-        
-        {/* Image Section */}
+      <div className="flex w-full h-full relative">
+        {/* Left Navigation */}
+        <button onClick={handlePrev} className="absolute left-4 top-1/2 -translate-y-1/2 z-40 p-3 bg-gray-800/50 hover:bg-gray-700 text-white rounded-full transition-colors disabled:opacity-30" disabled={contextImages.findIndex(i => i.id === image.id) === 0}>
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+
+        {/* Right Navigation */}
+        <button onClick={handleNext} className="absolute right-4 top-1/2 -translate-y-1/2 z-40 p-3 bg-gray-800/50 hover:bg-gray-700 text-white rounded-full transition-colors disabled:opacity-30" disabled={contextImages.findIndex(i => i.id === image.id) === contextImages.length - 1}>
+          <ChevronRight className="w-6 h-6" />
+        </button>
+
+        {/* Main Image Area */}
         <div 
-           className="flex-1 bg-black flex flex-col items-center justify-center relative overflow-hidden group select-none"
-           onMouseMove={handleMouseMove}
-           ref={containerRef}
+          className="flex-1 relative overflow-hidden flex items-center justify-center cursor-move select-none"
+          onWheel={handleWheel}
+          onMouseDown={startDrag}
+          onMouseMove={onDrag}
+          onMouseUp={stopDrag}
+          onMouseLeave={stopDrag}
         >
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-          
-          <div className="relative max-w-full max-h-[calc(100%-4rem)] p-4 flex items-center justify-center w-full h-full">
-             <img 
-               ref={imageRef}
-               src={showingBack ? (image.backUrl || image.frontUrl) : image.frontUrl} 
-               alt={image.gameName} 
-               onClick={toggleZoom}
-               className={`max-w-full max-h-full object-contain transition-transform duration-200 pointer-events-auto select-none ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
-               style={{ 
-                 maxHeight: isZoomed ? 'none' : '70vh',
-                 filter: `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`,
-                 transform: isZoomed ? 'scale(2.5)' : 'scale(1)',
-                 transformOrigin: isZoomed ? `${zoomPosition.x}% ${zoomPosition.y}%` : 'center center'
-               }}
-             />
-             
-             {isScratchMode && !isZoomed && (
-                <canvas
-                  ref={canvasRef}
-                  className="absolute top-4 left-4 cursor-crosshair touch-none"
-                  onMouseDown={handleScratchStart}
-                  onMouseMove={scratch}
-                  onMouseUp={handleScratchEnd}
-                  onMouseLeave={handleScratchEnd}
-                  onTouchStart={handleScratchStart}
-                  onTouchMove={scratch}
-                  onTouchEnd={handleScratchEnd}
-                  style={{ 
-                    width: imageRef.current?.clientWidth, 
-                    height: imageRef.current?.clientHeight,
-                    top: imageRef.current?.offsetTop,
-                    left: imageRef.current?.offsetLeft
-                  }}
-                />
-             )}
-          </div>
+           <div 
+             style={{ 
+               transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, 
+               transition: isDragging ? 'none' : 'transform 0.2s ease-out' 
+             }}
+             className="relative"
+           >
+              <img 
+                src={currentImageSrc} 
+                alt={image.gameName} 
+                className="max-h-[90vh] max-w-[90vw] object-contain drop-shadow-2xl"
+                draggable={false}
+              />
+           </div>
 
-          {/* Floating Filter Controls */}
-          {showFilters && (
-             <div className="absolute top-4 left-4 z-30 bg-black/80 backdrop-blur-md border border-gray-700 p-4 rounded-xl shadow-2xl w-64 animate-fade-in space-y-4">
-                <div className="flex justify-between items-center mb-2">
-                   <h4 className="text-xs font-bold text-white uppercase flex items-center gap-2"><Sliders className="w-3 h-3 text-brand-500" /> Ajustar Imagem</h4>
-                   <button onClick={() => { setBrightness(100); setContrast(100); setSaturation(100); }} className="text-[10px] text-gray-400 hover:text-white flex items-center gap-1"><RotateCcw className="w-3 h-3"/> Reset</button>
-                </div>
-                
-                <div className="space-y-1">
-                   <div className="flex justify-between text-[10px] text-gray-400 uppercase">
-                      <span>Brilho</span>
-                      <span>{brightness}%</span>
-                   </div>
-                   <input type="range" min="50" max="200" value={brightness} onChange={(e) => setBrightness(Number(e.target.value))} className="w-full accent-brand-500 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
-                </div>
-
-                <div className="space-y-1">
-                   <div className="flex justify-between text-[10px] text-gray-400 uppercase">
-                      <span>Contraste</span>
-                      <span>{contrast}%</span>
-                   </div>
-                   <input type="range" min="50" max="200" value={contrast} onChange={(e) => setContrast(Number(e.target.value))} className="w-full accent-blue-500 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
-                </div>
-
-                <div className="space-y-1">
-                   <div className="flex justify-between text-[10px] text-gray-400 uppercase">
-                      <span>Saturação</span>
-                      <span>{saturation}%</span>
-                   </div>
-                   <input type="range" min="0" max="200" value={saturation} onChange={(e) => setSaturation(Number(e.target.value))} className="w-full accent-purple-500 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
-                </div>
-             </div>
-          )}
-
-          <div className="absolute bottom-4 z-10 flex gap-2">
-            {!image.backUrl ? null : (
-                <>
-                <button 
-                    type="button"
-                    onClick={() => { setShowingBack(false); setIsScratchMode(false); setIsZoomed(false); }}
-                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${!showingBack ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/50' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
-                >
-                    {t.front}
-                </button>
-                <button 
-                    type="button"
-                    onClick={() => { setShowingBack(true); setIsScratchMode(false); setIsZoomed(false); }}
-                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${showingBack ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/50' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
-                >
-                    {t.back}
-                </button>
-                </>
-            )}
-            
-            <div className="w-px h-6 bg-gray-700 mx-1"></div>
-
-            {/* Zoom Toggle */}
-            <button
-               type="button"
-               onClick={toggleZoom}
-               className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${isZoomed ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
-               title="Zoom / Lupa"
-            >
-               {isZoomed ? <ZoomOut className="w-3 h-3" /> : <ZoomIn className="w-3 h-3" />}
-            </button>
-            
-            {/* Filter Toggle */}
-            <button
-               type="button"
-               onClick={() => setShowFilters(!showFilters)}
-               className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${showFilters ? 'bg-white text-black' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
-               title="Ajustar Imagem"
-            >
-               <Sliders className="w-3 h-3" />
-            </button>
-
-            {/* Scratch Toggle Button */}
-            <button
-               type="button"
-               onClick={() => {
-                  if(isZoomed) setIsZoomed(false);
-                  setIsScratchMode(!isScratchMode);
-               }}
-               className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${isScratchMode ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/50 animate-pulse' : 'bg-gray-800 text-yellow-500 border border-yellow-600/30 hover:bg-gray-700'}`}
-               title="Simular Raspadinha"
-            >
-               <Eraser className="w-3 h-3" />
-               {isScratchMode ? "A Raspar..." : "Raspar!"}
-            </button>
-          </div>
+           {/* Image Controls */}
+           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-gray-900/80 backdrop-blur px-4 py-2 rounded-full border border-gray-700 shadow-xl z-50">
+              <button onClick={() => setScale(s => Math.max(s - 0.5, 0.5))} className="p-2 hover:bg-white/10 rounded-full transition-colors"><ZoomOut className="w-4 h-4 text-white" /></button>
+              <span className="text-xs font-mono text-gray-400 w-12 text-center">{Math.round(scale * 100)}%</span>
+              <button onClick={() => setScale(s => Math.min(s + 0.5, 4))} className="p-2 hover:bg-white/10 rounded-full transition-colors"><ZoomIn className="w-4 h-4 text-white" /></button>
+              
+              <div className="w-px h-4 bg-gray-700 mx-2"></div>
+              
+              {image.backUrl && (
+                 <button 
+                   onClick={() => setShowBack(!showBack)} 
+                   className={`p-2 rounded-full transition-colors ${showBack ? 'bg-brand-600 text-white' : 'hover:bg-white/10 text-gray-300'}`}
+                   title={t.front + " / " + t.back}
+                 >
+                   <RotateCcw className="w-4 h-4" />
+                 </button>
+              )}
+           </div>
         </div>
 
-        {/* Info Section */}
-        <div className="w-full lg:w-96 bg-gray-900 border-l border-gray-800 flex flex-col h-[40vh] lg:h-auto overflow-hidden">
-          
-          {/* Toolbar */}
-          <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/50">
-             {isEditing ? (
-               <div className="flex gap-2 w-full">
-                 <button type="button" onClick={() => setIsEditing(false)} className="flex-1 bg-gray-800 hover:bg-gray-700 text-white py-2 rounded-lg text-xs font-bold transition-colors">
-                   {t.cancel}
-                 </button>
-                 <button type="button" onClick={handleSave} className="flex-1 bg-green-600 hover:bg-green-500 text-white py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1">
-                   <Save className="w-3 h-3" /> {t.save}
-                 </button>
-               </div>
-             ) : (
-               <div className="flex gap-2 w-full items-center">
-                  <button 
-                    type="button"
-                    onClick={handleShare}
-                    className={`flex-1 border py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-                      showCopied 
-                      ? "bg-green-900/30 text-green-400 border-green-800/50" 
-                      : "bg-blue-900/20 hover:bg-blue-900/40 text-blue-400 border-blue-800/30"
-                    }`}
-                  >
-                    {showCopied ? <Check className="w-3 h-3" /> : <Share2 className="w-3 h-3" />}
-                    {showCopied ? t.copied : t.share}
-                  </button>
-
-                  {isAdmin && (
-                    <button 
-                      type="button"
-                      onClick={() => setIsEditing(true)} 
-                      className="flex-1 bg-brand-900/30 hover:bg-brand-900/50 text-brand-400 border border-brand-800/50 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Edit2 className="w-3 h-3" /> {t.edit}
-                    </button>
-                  )}
-                  
-                  {isAdmin && (
-                    !isDeleting ? (
-                      <button 
-                        type="button"
-                        onClick={() => setIsDeleting(true)}
-                        className="px-3 py-2 bg-red-900/20 hover:bg-red-900/40 text-red-500 border border-red-900/50 rounded-lg transition-colors flex items-center justify-center"
-                        title={t.delete}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    ) : (
-                      <div className="flex gap-2 animate-fade-in ml-2">
-                        <button
-                            type="button"
-                            onClick={() => setIsDeleting(false)}
-                            className="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 rounded-lg text-xs font-bold"
-                            title={t.cancel}
-                        >
-                          <X className="w-4 h-4" />
+        {/* Sidebar Info */}
+        <div className={`w-96 bg-gray-900 border-l border-gray-800 h-full flex flex-col transition-all duration-300 transform ${false ? 'translate-x-full' : 'translate-x-0'} absolute right-0 top-0 z-40 shadow-2xl overflow-hidden`}>
+           {/* Top Bar Actions */}
+           <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/95 backdrop-blur shrink-0">
+              <div className="flex gap-2">
+                 {isAdmin && (
+                   isEditing ? (
+                     <>
+                        <button onClick={handleSave} className="p-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors" title={t.save}>
+                           <Save className="w-4 h-4" />
                         </button>
-                        <button
-                            type="button"
-                            onClick={handleConfirmDelete}
-                            className="px-3 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold shadow-lg shadow-red-900/50 whitespace-nowrap"
-                        >
-                          {t.delete}?
+                        <button onClick={() => setIsEditing(false)} className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors" title={t.cancel}>
+                           <X className="w-4 h-4" />
                         </button>
-                      </div>
-                    )
-                  )}
-               </div>
-             )}
-          </div>
+                     </>
+                   ) : (
+                     <>
+                        <button onClick={() => setIsEditing(true)} className="p-2 bg-brand-600 hover:bg-brand-500 text-white rounded-lg transition-colors" title={t.edit}>
+                           <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={handleDeleteClick} className="p-2 bg-red-900/50 hover:bg-red-600 text-red-200 hover:text-white rounded-lg transition-colors" title={t.delete}>
+                           <Trash2 className="w-4 h-4" />
+                        </button>
+                     </>
+                   )
+                 )}
+              </div>
+              
+              <div className="flex gap-2">
+                 <button className="p-2 text-gray-400 hover:text-white transition-colors" title={t.share}>
+                    <Share2 className="w-4 h-4" />
+                 </button>
+              </div>
+           </div>
 
-          <div className="p-6 flex-1 overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-               {isEditing ? (
-                 <input 
-                    type="text" 
-                    value={formData.customId}
-                    onChange={(e) => handleChange('customId', e.target.value)}
-                    className="bg-gray-800 border border-gray-700 text-white text-sm rounded px-2 py-1 w-32 focus:border-brand-500 outline-none"
-                    placeholder="ID"
-                 />
-               ) : (
-                 <span className="font-mono text-brand-500 bg-brand-900/20 border border-brand-500/30 px-3 py-1 rounded text-sm tracking-wider">
-                   {image.customId}
-                 </span>
-               )}
-               
-               {!isEditing && (
-                 <div className="flex gap-2">
-                   {image.isRarity && (
-                      <span className="text-gold-400 bg-gold-900/30 border border-gold-500/50 px-2 py-0.5 rounded text-xs flex items-center gap-1 font-bold animate-pulse" title="Raridade">
-                        <Gem className="w-3 h-3" />
-                      </span>
-                   )}
-                   {image.isPromotional && (
-                      <span className="text-pink-400 bg-pink-900/30 border border-pink-500/50 px-2 py-0.5 rounded text-xs flex items-center gap-1 font-bold" title="Promocional">
-                        <Gift className="w-3 h-3" />
-                      </span>
-                   )}
-                   {image.isWinner && (
-                      <span className="text-green-400 bg-green-900/30 border border-green-500/50 px-2 py-0.5 rounded text-xs flex items-center gap-1 font-bold" title={image.prizeAmount || "Premiada"}>
-                        <Trophy className="w-3 h-3" /> {image.prizeAmount}
-                      </span>
-                   )}
-
-                   <div 
-                     className="text-gray-400 bg-gray-800 border border-gray-700 px-2 py-0.5 rounded text-xs flex items-center gap-1"
-                     title={getCategoryLabel(image.category)}
-                   >
-                     {getCategoryIcon(image.category)}
-                   </div>
-
-                   {image.isSeries && (
-                     <span className="text-brand-400 bg-brand-900/30 border border-brand-800 px-2 py-0.5 rounded text-xs flex items-center gap-1" title="SET / Serie">
-                       <Layers className="w-3 h-3" /> SET {image.seriesDetails ? `(${image.seriesDetails})` : ''}
-                     </span>
-                   )}
-                   {image.aiGenerated && (
-                    <span className="text-blue-400 bg-blue-900/30 border border-blue-800 px-2 py-0.5 rounded text-xs flex items-center gap-1 cursor-help" title="AI Generated">
-                      <Sparkles className="w-3 h-3" /> IA
-                    </span>
-                   )}
-                 </div>
-               )}
-            </div>
-
-            {isEditing ? (
-              <div className="mb-4 space-y-2">
-                <input 
-                  type="text" 
-                  value={formData.gameName}
-                  onChange={(e) => handleChange('gameName', e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 text-white text-xl font-bold rounded px-3 py-2 focus:border-brand-500 outline-none"
-                />
-                <input 
-                  type="text" 
-                  value={formData.country}
-                  onChange={(e) => handleChange('country', e.target.value)}
-                  placeholder="País"
-                  className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded px-3 py-1 focus:border-brand-500 outline-none"
-                />
-                {/* Region Edit */}
-                <input 
-                  type="text" 
-                  value={formData.region || ''}
-                  onChange={(e) => handleChange('region', e.target.value)}
-                  placeholder="Região (ex: Baviera)"
-                  className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded px-3 py-1 focus:border-brand-500 outline-none"
-                />
-
-                <div className="flex flex-col gap-2 mt-2 bg-gray-800/50 p-3 rounded-lg border border-gray-700">
-                   {/* Raridade Toggle */}
-                   <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-700">
-                       <div 
-                         className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer ${formData.isRarity ? 'bg-gold-500 border-gold-500' : 'border-gray-500'}`}
-                         onClick={() => handleChange('isRarity', !formData.isRarity)}
-                       >
-                         {formData.isRarity && <Gem className="w-3 h-3 text-white" />}
+           {/* Content */}
+           <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+              {isEditing ? (
+                 <div className="space-y-4 animate-fade-in">
+                    {/* EDIT MODE */}
+                    <div>
+                       <label className="text-[10px] uppercase text-gray-500 font-bold mb-1 block">{t.gameName}</label>
+                       <input 
+                         className="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-brand-500 outline-none"
+                         value={formData.gameName}
+                         onChange={e => handleChange('gameName', e.target.value)}
+                       />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                       <div>
+                          <label className="text-[10px] uppercase text-gray-500 font-bold mb-1 block">{t.gameNo}</label>
+                          <input 
+                            className="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-brand-500 outline-none text-xs"
+                            value={formData.gameNumber}
+                            onChange={e => handleChange('gameNumber', e.target.value)}
+                          />
                        </div>
-                       <label className={`text-xs cursor-pointer font-bold ${formData.isRarity ? 'text-gold-400' : 'text-gray-400'}`} onClick={() => handleChange('isRarity', !formData.isRarity)}>
-                          {formData.isRarity ? 'Item Raro!' : 'Marcar como Raridade'}
-                       </label>
-                   </div>
-
-                   {/* Promotional Toggle */}
-                   <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-700">
-                       <div 
-                         className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer ${formData.isPromotional ? 'bg-pink-500 border-pink-500' : 'border-gray-500'}`}
-                         onClick={() => handleChange('isPromotional', !formData.isPromotional)}
-                       >
-                         {formData.isPromotional && <Gift className="w-3 h-3 text-white" />}
+                       <div>
+                          <label className="text-[10px] uppercase text-gray-500 font-bold mb-1 block">{t.release}</label>
+                          <input 
+                            className="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-brand-500 outline-none text-xs"
+                            value={formData.releaseDate}
+                            onChange={e => handleChange('releaseDate', e.target.value)}
+                          />
                        </div>
-                       <label className={`text-xs cursor-pointer font-bold ${formData.isPromotional ? 'text-pink-400' : 'text-gray-400'}`} onClick={() => handleChange('isPromotional', !formData.isPromotional)}>
-                          {formData.isPromotional ? 'Item Promocional!' : 'Marcar como Promo'}
-                       </label>
-                   </div>
+                    </div>
 
-                   {/* Winner Toggle */}
-                   <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-700">
-                       <div 
-                         className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer ${formData.isWinner ? 'bg-green-500 border-green-500' : 'border-gray-500'}`}
-                         onClick={() => handleChange('isWinner', !formData.isWinner)}
+                    <div>
+                       <label className="text-[10px] uppercase text-gray-500 font-bold mb-1 block">{t.state}</label>
+                       <select 
+                         className="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-brand-500 outline-none text-xs"
+                         value={formData.state}
+                         onChange={e => handleChange('state', e.target.value)}
                        >
-                         {formData.isWinner && <Trophy className="w-3 h-3 text-white" />}
-                       </div>
-                       <label className={`text-xs cursor-pointer font-bold ${formData.isWinner ? 'text-green-400' : 'text-gray-400'}`} onClick={() => handleChange('isWinner', !formData.isWinner)}>
-                          {formData.isWinner ? 'Item Premiado!' : 'Marcar como Premiada'}
-                       </label>
-                   </div>
-                   {formData.isWinner && (
-                      <input 
-                        type="text"
-                        value={formData.prizeAmount || ''}
-                        onChange={(e) => handleChange('prizeAmount', e.target.value)}
-                        placeholder="Valor (ex: 50€)"
-                        className="w-full bg-black/20 border border-green-500/30 text-white text-xs rounded px-2 py-1 focus:border-green-500 outline-none"
-                      />
-                   )}
+                          {['MINT', 'VOID', 'AMOSTRA', 'MUESTRA', 'CAMPIONE', 'SPECIMEN', 'MUSTER', 'ÉCHANTILLON', '견본', 'STEEKPROEF', 'PRØVE', 'PROV', '样本', 'CS', 'SC'].map(s => (
+                             <option key={s} value={s}>{s}</option>
+                          ))}
+                       </select>
+                    </div>
 
-                   <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between">
                      <div className="flex items-center gap-2">
                        <div 
                          className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer ${formData.isSeries ? 'bg-brand-500 border-brand-500' : 'border-gray-500'}`}
@@ -613,267 +262,167 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                      </select>
                    </div>
                    
-                   {/* Manual numbers input for SET - NEWLY ADDED */}
+                   {/* Manual numbers input for SET */}
                    {formData.isSeries && (
-                     <div className="animate-fade-in mt-2">
+                     <div className="animate-fade-in mt-2 p-2 bg-gray-900/50 rounded border border-gray-700">
+                       <label className="block text-[10px] uppercase text-gray-500 font-bold mb-1">{t.seriesDetailsPlaceholder || "Detalhes"}</label>
                        <input
                          type="text"
                          value={formData.seriesDetails || ''}
                          onChange={(e) => handleChange('seriesDetails', e.target.value)}
-                         placeholder={t.seriesDetailsPlaceholder}
-                         className="w-full bg-gray-900 border border-gray-600 text-gray-200 text-xs rounded px-2 py-1.5 focus:border-brand-500 outline-none placeholder-gray-500"
+                         placeholder={t.seriesDetailsPlaceholder || "Ex: 1/4, Coleção Inverno..."}
+                         className="w-full bg-gray-800 border border-gray-600 text-gray-200 text-xs rounded px-2 py-1.5 focus:border-brand-500 outline-none placeholder-gray-500"
                        />
                      </div>
                    )}
-                </div>
-              </div>
-            ) : (
-              <>
-                <h2 className={`text-3xl font-bold mb-1 leading-tight ${image.isRarity ? 'text-gold-400' : image.isPromotional ? 'text-pink-400' : image.isWinner ? 'text-green-400' : 'text-white'}`}>{image.gameName}</h2>
-                <div className="flex items-center gap-2 text-brand-400 text-sm mb-4">
-                  <Globe className="w-4 h-4" />
-                  <span>
-                    {image.country} 
-                    {image.region && <span className="text-gray-400"> • {image.region}</span>}
-                    <span className="text-gray-500 text-xs"> ({image.continent})</span>
-                  </span>
-                </div>
-              </>
-            )}
-            
-            <p className="text-gray-500 text-sm mb-6 flex items-center gap-1">
-              {t.addedOn} {new Date(image.createdAt).toLocaleDateString()}
-              {isAdmin && isEditing && <span className="text-red-400 ml-2 text-xs flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> {t.adminMode}</span>}
-            </p>
+                   
+                   <div>
+                       <label className="text-[10px] uppercase text-gray-500 font-bold mb-1 block">{t.values}</label>
+                       <textarea 
+                         className="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-brand-500 outline-none text-xs h-24"
+                         value={formData.values}
+                         onChange={e => handleChange('values', e.target.value)}
+                       />
+                   </div>
 
-            <div className="space-y-4">
-              {/* Grid of properties */}
-              <div className="grid grid-cols-2 gap-4">
-                
-                {/* Collector Field (Stylized as Dropdown) */}
-                <div className="bg-gradient-to-br from-brand-900/10 to-gray-800/40 p-3 rounded-lg border border-brand-500/20 relative overflow-hidden group-hover:border-brand-500/40 transition-colors">
-                  <span className="flex items-center gap-2 text-xs uppercase text-brand-400 font-bold mb-1">
-                    <User className="w-3 h-3" /> {t.collector}
-                  </span>
-                  {isEditing ? (
-                    <div className="relative group animate-fade-in">
-                      <div className="absolute left-2.5 top-1/2 -translate-y-1/2 bg-brand-500/10 p-1 rounded-md pointer-events-none z-10">
-                         <User className="w-3.5 h-3.5 text-brand-500" />
+                   {/* Other Toggles */}
+                   <div className="space-y-2 pt-2 border-t border-gray-800">
+                      <div className="flex items-center justify-between">
+                         <label className="text-xs text-gray-400 font-bold">{t.isRarity}</label>
+                         <div 
+                           className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${formData.isRarity ? 'bg-gold-500' : 'bg-gray-700'}`}
+                           onClick={() => handleChange('isRarity', !formData.isRarity)}
+                         >
+                            <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${formData.isRarity ? 'left-6' : 'left-1'}`}></div>
+                         </div>
                       </div>
-                      <input 
-                        type="text" 
-                        value={formData.collector || ''}
-                        onChange={(e) => handleChange('collector', e.target.value)}
-                        placeholder="Selecione ou digite..."
-                        list="viewer-collectors-list"
-                        className="w-full bg-gray-900 border border-gray-700 text-white text-sm rounded-lg pl-10 pr-8 py-2 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 outline-none transition-all placeholder-gray-600 font-bold cursor-pointer hover:bg-gray-800"
-                      />
-                      <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-                         <ChevronDown className="w-4 h-4 text-gray-500" />
+                      <div className="flex items-center justify-between">
+                         <label className="text-xs text-gray-400 font-bold">{t.promoInfo}</label>
+                         <div 
+                           className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${formData.isPromotional ? 'bg-pink-500' : 'bg-gray-700'}`}
+                           onClick={() => handleChange('isPromotional', !formData.isPromotional)}
+                         >
+                            <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${formData.isPromotional ? 'left-6' : 'left-1'}`}></div>
+                         </div>
                       </div>
+                      <div className="flex items-center justify-between">
+                         <label className="text-xs text-gray-400 font-bold">{t.winnerInfo}</label>
+                         <div 
+                           className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${formData.isWinner ? 'bg-green-500' : 'bg-gray-700'}`}
+                           onClick={() => handleChange('isWinner', !formData.isWinner)}
+                         >
+                            <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${formData.isWinner ? 'left-6' : 'left-1'}`}></div>
+                         </div>
+                      </div>
+                   </div>
+
+                 </div>
+              ) : (
+                 <div className="space-y-6">
+                    {/* VIEW MODE */}
+                    
+                    {/* Header Info */}
+                    <div>
+                       <div className="flex justify-between items-start mb-2">
+                           <span className="text-[10px] font-mono text-brand-400 border border-brand-900/50 bg-brand-900/20 px-1.5 py-0.5 rounded">{image.customId}</span>
+                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${image.state === 'MINT' ? 'bg-green-900/20 text-green-400 border-green-500/30' : 'bg-slate-700 text-slate-300 border-slate-600'}`}>
+                              {image.state}
+                           </span>
+                       </div>
+                       <h2 className="text-2xl font-black text-white leading-tight mb-2">{image.gameName}</h2>
+                       <div className="flex items-center gap-2 text-sm text-gray-400">
+                          <MapPin className="w-4 h-4 text-brand-500" />
+                          {image.country}
+                          {image.region && <span className="text-gray-500">• {image.region}</span>}
+                       </div>
                     </div>
-                  ) : (
-                    <p className="text-white font-medium flex items-center gap-2">
-                        {image.collector || <span className="text-gray-500 italic text-xs">Sem registo</span>}
-                        {image.collector && <Check className="w-3 h-3 text-brand-500" />}
-                    </p>
-                  )}
-                </div>
 
-                <div className="bg-gray-800/40 p-3 rounded-lg border border-gray-800">
-                  <span className="flex items-center gap-2 text-xs uppercase text-gray-500 mb-1">
-                    <Hash className="w-3 h-3" /> {t.gameNo}
-                  </span>
-                  {isEditing ? (
-                    <input 
-                      type="text" 
-                      value={formData.gameNumber}
-                      onChange={(e) => handleChange('gameNumber', e.target.value)}
-                      className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-sm rounded px-2 py-1 focus:border-brand-500 outline-none font-mono"
-                    />
-                  ) : (
-                    <p className="font-mono text-gray-200">{image.gameNumber}</p>
-                  )}
-                </div>
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 gap-3">
+                       <div className="bg-gray-800/50 p-3 rounded-xl border border-gray-800">
+                          <span className="text-[10px] uppercase text-gray-500 font-bold block mb-1">{t.gameNo}</span>
+                          <span className="font-mono text-white text-sm">{image.gameNumber}</span>
+                       </div>
+                       <div className="bg-gray-800/50 p-3 rounded-xl border border-gray-800">
+                          <span className="text-[10px] uppercase text-gray-500 font-bold block mb-1">{t.release}</span>
+                          <span className="font-mono text-white text-sm">{image.releaseDate || '---'}</span>
+                       </div>
+                       <div className="bg-gray-800/50 p-3 rounded-xl border border-gray-800">
+                          <span className="text-[10px] uppercase text-gray-500 font-bold block mb-1">{t.price}</span>
+                          <span className="font-mono text-white text-sm">{image.price || '---'}</span>
+                       </div>
+                       <div className="bg-gray-800/50 p-3 rounded-xl border border-gray-800">
+                          <span className="text-[10px] uppercase text-gray-500 font-bold block mb-1">{t.size}</span>
+                          <span className="font-mono text-white text-sm">{image.size || '---'}</span>
+                       </div>
+                    </div>
 
-                {/* Price Field */}
-                <div className="bg-gray-800/40 p-3 rounded-lg border border-gray-800">
-                  <span className="flex items-center gap-2 text-xs uppercase text-gray-500 mb-1">
-                    <DollarSign className="w-3 h-3" /> {t.price}
-                  </span>
-                  {isEditing ? (
-                    <input 
-                      type="text" 
-                      value={formData.price || ''}
-                      onChange={(e) => handleChange('price', e.target.value)}
-                      placeholder="Ex: 5€"
-                      className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-sm rounded px-2 py-1 focus:border-brand-500 outline-none"
-                    />
-                  ) : (
-                    <p className="font-bold text-brand-400">{image.price || 'N/A'}</p>
-                  )}
-                </div>
+                    {/* Badges Area */}
+                    <div className="flex flex-wrap gap-2">
+                       {image.isSeries && (
+                          <div className="inline-flex items-center gap-1.5 bg-brand-900/20 border border-brand-500/30 px-3 py-1.5 rounded-lg">
+                             <Layers className="w-4 h-4 text-brand-500" />
+                             <span className="text-xs font-bold text-brand-300">Série</span>
+                             {image.seriesDetails && <span className="text-xs text-brand-400/70 border-l border-brand-500/30 pl-1.5 ml-1">{image.seriesDetails}</span>}
+                          </div>
+                       )}
+                       {image.isWinner && (
+                          <div className="inline-flex items-center gap-1.5 bg-green-900/20 border border-green-500/30 px-3 py-1.5 rounded-lg">
+                             <Trophy className="w-4 h-4 text-green-500" />
+                             <span className="text-xs font-bold text-green-300">{image.prizeAmount || 'Premiada'}</span>
+                          </div>
+                       )}
+                       {image.isRarity && (
+                          <div className="inline-flex items-center gap-1.5 bg-gold-900/20 border border-gold-500/30 px-3 py-1.5 rounded-lg">
+                             <Gem className="w-4 h-4 text-gold-500" />
+                             <span className="text-xs font-bold text-gold-300">Raridade</span>
+                          </div>
+                       )}
+                       {image.isPromotional && (
+                          <div className="inline-flex items-center gap-1.5 bg-pink-900/20 border border-pink-500/30 px-3 py-1.5 rounded-lg">
+                             <Gift className="w-4 h-4 text-pink-500" />
+                             <span className="text-xs font-bold text-pink-300">Promo</span>
+                          </div>
+                       )}
+                    </div>
 
-                <div className="bg-gray-800/40 p-3 rounded-lg border border-gray-800">
-                  <span className="flex items-center gap-2 text-xs uppercase text-gray-500 mb-1">
-                    <Archive className="w-3 h-3" /> {t.state}
-                  </span>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={formData.state}
-                      onChange={(e) => handleChange('state', e.target.value)}
-                      placeholder="Estado"
-                      className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-sm rounded px-2 py-1 focus:border-brand-500 outline-none"
-                    />
-                  ) : (
-                    <p className="font-bold text-gray-200">{image.state}</p>
-                  )}
-                </div>
+                    {/* Technical Info */}
+                    {(image.emission || image.printer) && (
+                       <div className="bg-gray-800/30 p-4 rounded-xl border border-gray-800 space-y-2">
+                          {image.emission && (
+                             <div className="flex justify-between text-xs">
+                                <span className="text-gray-500">{t.emission}</span>
+                                <span className="text-white font-mono">{image.emission}</span>
+                             </div>
+                          )}
+                          {image.printer && (
+                             <div className="flex justify-between text-xs">
+                                <span className="text-gray-500">{t.printer}</span>
+                                <span className="text-white flex items-center gap-1">
+                                   <Printer className="w-3 h-3 text-gray-400" /> {image.printer}
+                                </span>
+                             </div>
+                          )}
+                       </div>
+                    )}
+                    
+                    {/* Description / Values */}
+                    <div>
+                       <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t.values}</h4>
+                       <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line bg-gray-900 p-3 rounded-lg border border-gray-800">
+                          {image.values || 'Sem informação adicional.'}
+                       </p>
+                    </div>
 
-                <div className="bg-gray-800/40 p-3 rounded-lg border border-gray-800">
-                  <span className="flex items-center gap-2 text-xs uppercase text-gray-500 mb-1">
-                    <Maximize2 className="w-3 h-3" /> {t.size}
-                  </span>
-                  {isEditing ? (
-                    <input 
-                      type="text" 
-                      value={formData.size}
-                      onChange={(e) => handleChange('size', e.target.value)}
-                      className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-sm rounded px-2 py-1 focus:border-brand-500 outline-none"
-                    />
-                  ) : (
-                    <p className="text-gray-200">{image.size}</p>
-                  )}
-                </div>
-
-                <div className="bg-gray-800/40 p-3 rounded-lg border border-gray-800">
-                  <span className="flex items-center gap-2 text-xs uppercase text-gray-500 mb-1">
-                    <Calendar className="w-3 h-3" /> {t.release}
-                  </span>
-                  {isEditing ? (
-                    <input 
-                      type="text" 
-                      value={formData.releaseDate}
-                      onChange={(e) => handleChange('releaseDate', e.target.value)}
-                      className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-sm rounded px-2 py-1 focus:border-brand-500 outline-none"
-                    />
-                  ) : (
-                    <p className="text-gray-200">{image.releaseDate || 'Desc.'}</p>
-                  )}
-                </div>
-
-                <div className="bg-gray-800/40 p-3 rounded-lg border border-gray-800">
-                  <span className="flex items-center gap-2 text-xs uppercase text-gray-500 mb-1">
-                    <BarChart className="w-3 h-3" /> {t.emission}
-                  </span>
-                  {isEditing ? (
-                    <input 
-                      type="text" 
-                      value={formData.emission || ''}
-                      onChange={(e) => handleChange('emission', e.target.value)}
-                      className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-sm rounded px-2 py-1 focus:border-brand-500 outline-none"
-                    />
-                  ) : (
-                    <p className="text-gray-200 text-sm truncate" title={image.emission}>{image.emission || '-'}</p>
-                  )}
-                </div>
-
-                <div className="bg-gray-800/40 p-3 rounded-lg border border-gray-800">
-                  <span className="flex items-center gap-2 text-xs uppercase text-gray-500 mb-1">
-                    <Printer className="w-3 h-3" /> {t.printer}
-                  </span>
-                  {isEditing ? (
-                    <input 
-                      type="text" 
-                      value={formData.printer || ''}
-                      onChange={(e) => handleChange('printer', e.target.value)}
-                      className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-sm rounded px-2 py-1 focus:border-brand-500 outline-none"
-                    />
-                  ) : (
-                    <p className="text-gray-200 text-sm">{image.printer || 'Desconhecido'}</p>
-                  )}
-                </div>
-
-                {/* Lines Field */}
-                <div className="bg-gray-800/40 p-3 rounded-lg border border-gray-800 col-span-2 sm:col-span-1">
-                   <span className="flex items-center gap-2 text-xs uppercase text-gray-500 mb-1">
-                      <AlignJustify className="w-3 h-3" /> {t.lines}
-                   </span>
-                   {isEditing ? (
-                      <select
-                        value={formData.lines || 'none'}
-                        onChange={(e) => handleChange('lines', e.target.value as LineType)}
-                        className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-sm rounded px-2 py-1 focus:border-brand-500 outline-none appearance-none cursor-pointer"
-                      >
-                        <option value="none">{t.linesNone}</option>
-                        <option value="blue">{t.linesBlue}</option>
-                        <option value="red">{t.linesRed}</option>
-                        <option value="multicolor">{t.linesMulti}</option>
-                      </select>
-                   ) : (
-                      <span className={`px-2 py-0.5 rounded text-xs font-bold border ${getLineColor(image.lines)}`}>
-                         {getLineLabel(image.lines)}
-                      </span>
-                   )}
-                </div>
-              </div>
-
-              {/* Full width properties */}
-              <div className={`p-4 rounded-lg border mt-4 ${image.isRarity ? 'bg-gold-900/10 border-gold-500/30' : image.isPromotional ? 'bg-pink-900/10 border-pink-500/30' : image.isWinner ? 'bg-green-900/10 border-green-500/30' : 'bg-gray-800/40 border-gray-800'}`}>
-                <span className={`flex items-center gap-2 text-xs uppercase mb-2 ${image.isRarity ? 'text-gold-500 font-bold' : image.isPromotional ? 'text-pink-400 font-bold' : image.isWinner ? 'text-green-400 font-bold' : 'text-gray-500'}`}>
-                  {image.isRarity ? <Gem className="w-3 h-3" /> : image.isPromotional ? <Gift className="w-3 h-3" /> : image.isWinner ? <Trophy className="w-3 h-3" /> : <Info className="w-3 h-3" />}
-                  {image.isRarity ? t.rarityInfo : image.isPromotional ? t.promoInfo : image.isWinner ? t.winnerInfo : t.values}
-                </span>
-                {isEditing ? (
-                  <textarea 
-                    value={formData.values}
-                    onChange={(e) => handleChange('values', e.target.value)}
-                    className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-sm rounded px-2 py-2 focus:border-brand-500 outline-none min-h-[80px]"
-                  />
-                ) : (
-                  <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
-                    {image.values || (image.isRarity ? 'Sem informação histórica.' : 'Nenhuma nota adicionada.')}
-                  </p>
-                )}
-              </div>
-            </div>
-            
-            {/* RELATED ITEMS NAVIGATION */}
-            {relatedItems.length > 0 && (
-               <div className="mt-8 pt-4 border-t border-gray-800/50">
-                  <h4 className="text-xs uppercase text-gray-500 font-bold mb-3 flex items-center gap-2">
-                     <Share2 className="w-3 h-3" />
-                     Mais de {image.country}
-                  </h4>
-                  <div className="grid grid-cols-4 gap-2">
-                     {relatedItems.map(item => (
-                        <div 
-                           key={item.id} 
-                           onClick={() => onImageSelect && onImageSelect(item)}
-                           className="group cursor-pointer relative aspect-square bg-gray-800 rounded-lg overflow-hidden border border-gray-700 hover:border-brand-500 transition-all"
-                        >
-                           <img src={item.frontUrl} alt={item.gameName} className="w-full h-full object-contain p-1" />
-                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                              <ArrowRight className="w-4 h-4 text-white" />
-                           </div>
-                           {item.isRarity && <div className="absolute top-1 right-1 w-2 h-2 bg-gold-500 rounded-full" />}
-                        </div>
-                     ))}
-                  </div>
-               </div>
-            )}
-          </div>
-
-          <div className="p-6 border-t border-gray-800 bg-gray-900/50">
-            <button 
-              type="button"
-              onClick={onClose}
-              className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 rounded-xl transition-colors"
-            >
-              {t.close}
-            </button>
-          </div>
+                    {/* Meta Footer */}
+                    <div className="pt-6 border-t border-gray-800 text-[10px] text-gray-600 space-y-1">
+                       <p>Adicionado em: {new Date(image.createdAt).toLocaleString()}</p>
+                       <p>Colecionador: <span className="text-brand-500">{image.collector || 'Desconhecido'}</span></p>
+                       <p>ID Sistema: {image.id}</p>
+                    </div>
+                 </div>
+              )}
+           </div>
         </div>
       </div>
     </div>
