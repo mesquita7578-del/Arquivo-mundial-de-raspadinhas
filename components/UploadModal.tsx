@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-/* Added 'Coins' to the lucide-react import list as it was being used on line 249 but not imported */
 import { X, Upload, Sparkles, AlertCircle, Check, Loader2, ArrowLeft, Image as ImageIcon, ScanLine, DollarSign, Calendar, Globe, Printer, Layers, Heart, Hash, Map, Gift, Trophy, Star, Gem, Tag, Ruler, Banknote, Clock, Info, Coins } from 'lucide-react';
 import { ScratchcardData, Category, LineType, ScratchcardState } from '../types';
 import { analyzeImage } from '../services/geminiService';
@@ -75,7 +74,16 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       const mime = frontFile.type || "image/jpeg";
       const result = await analyzeImage(frontBase64, backBase64, mime);
       
-      const countryCode = result.country?.substring(0, 2).toUpperCase() || 'PT';
+      // LÓGICA DE ID COM INICIAIS DO PAÍS
+      const countryStr = result.country || 'Portugal';
+      const initialsMap: Record<string, string> = {
+        'Portugal': 'PT', 'Espanha': 'ES', 'Itália': 'IT', 'França': 'FR',
+        'Brasil': 'BR', 'EUA': 'US', 'EUA (USA)': 'US', 'Estados Unidos': 'US',
+        'Alemanha': 'DE', 'Japão': 'JP', 'Reino Unido': 'UK', 'China': 'CN',
+        'Suíça': 'CH', 'Áustria': 'AT', 'Bélgica': 'BE', 'Luxemburgo': 'LU'
+      };
+      
+      const countryCode = initialsMap[countryStr] || countryStr.substring(0, 2).toUpperCase();
       const randomNum = Math.floor(10000 + Math.random() * 89999);
       let generatedId = `${countryCode}-${randomNum}`;
 
@@ -248,7 +256,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
-                         {/* Added missing Coins icon from lucide-react */}
                          <label className="text-[10px] text-slate-500 font-black uppercase mb-1 flex items-center gap-1"><Coins className="w-3 h-3 text-yellow-500"/> Tiragem</label>
                          <input type="text" value={formData.emission || ''} onChange={e => updateField('emission', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" />
                       </div>
@@ -273,7 +280,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    </div>
 
                    <div>
-                      <label className="text-[10px] text-slate-500 font-black uppercase mb-1 block flex items-center gap-1"><    Info className="w-3 h-3 text-slate-400"/> Observações do Arquivo</label>
+                      <label className="text-[10px] text-slate-500 font-black uppercase mb-1 block flex items-center gap-1"><Info className="w-3 h-3 text-slate-400"/> Observações do Arquivo</label>
                       <textarea value={formData.values || ''} onChange={e => updateField('values', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4 text-white text-sm h-24 focus:border-brand-500 outline-none resize-none leading-relaxed shadow-inner" />
                    </div>
                 </div>

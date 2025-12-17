@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { 
   Filter, Zap, Trophy, CheckCircle2, Image as ImageIcon, ChevronLeft, ChevronRight, MapPin
@@ -66,7 +67,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
             className="group bg-slate-900 border border-slate-800 hover:border-blue-500 transition-all cursor-pointer flex flex-col rounded-lg overflow-hidden shadow-lg"
             onClick={() => onImageClick(item)}
           >
-            {/* CABEÇALHO TÉCNICO (Screenshot Match) */}
+            {/* CABEÇALHO TÉCNICO */}
             <div className="px-2 py-1.5 bg-slate-950 border-b border-slate-800 flex justify-between items-center text-[9px] font-mono text-slate-400">
                <div className="flex items-center gap-1">
                   <span className="text-blue-500 font-bold">Nº</span> {item.gameNumber}
@@ -76,8 +77,13 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                </div>
             </div>
 
-            <div className="relative aspect-[3/4] bg-black flex items-center justify-center p-2">
-              <SafeImage src={item.frontUrl} alt={item.gameName} className="w-full h-full object-contain transition-transform group-hover:scale-105" />
+            {/* Content Container - Uniform Size with object-cover */}
+            <div className="relative aspect-[3/4] bg-slate-800 flex items-center justify-center overflow-hidden">
+              <SafeImage 
+                src={item.frontUrl} 
+                alt={item.gameName} 
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+              />
               
               <div className="absolute top-2 left-2 flex flex-col gap-1 z-20">
                  <div className="bg-slate-950/80 backdrop-blur text-white text-[8px] font-mono px-1.5 py-0.5 rounded border border-slate-700">
@@ -93,6 +99,9 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                   )}
                   {item.isWinner && <div className="bg-green-600 text-white p-1 rounded-full shadow-lg"><Trophy className="w-3 h-3" /></div>}
                </div>
+               
+               {/* Dark gradient overlay at bottom for text readability */}
+               <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-950/80 to-transparent pointer-events-none"></div>
             </div>
 
             <div className="p-3 bg-slate-900 flex flex-col flex-1">

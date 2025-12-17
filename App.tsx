@@ -334,7 +334,11 @@ function App() {
         </div>
       </main>
 
-      <Footer onNavigate={handleNavigate} onWebsitesClick={() => setIsWebsitesModalOpen(true)} />
+      <Footer 
+        onNavigate={handleNavigate} 
+        onWebsitesClick={() => setIsWebsitesModalOpen(true)} 
+        onInstall={deferredPrompt ? handleInstallApp : undefined}
+      />
 
       {isAdmin && (
         <button 
