@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { X, Globe, Plus, Trash2, ExternalLink, Building2, Link, Tag, DownloadCloud, Check, RefreshCw, Search } from 'lucide-react';
 import { WebsiteLink } from '../types';
 import { storageService } from '../services/storage';
-import { EUROPEAN_LOTTERIES } from '../constants';
+import { OFFICIAL_LOTTERIES } from '../constants';
 
 interface WebsitesModalProps {
   onClose: () => void;
@@ -25,20 +26,22 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
     try {
       const data = await storageService.getWebsites();
       
-      // AUTO-FIX: Check if MUSL is missing and inject it silently
-      const musl = EUROPEAN_LOTTERIES.find(s => s.name?.includes("Multi-State Lottery Association"));
-      const muslExists = data.some(s => s.url === musl?.url || s.name.includes("MUSL") || s.name.includes("Multi-State"));
-
-      if (musl && !muslExists && musl.name && musl.url && musl.country) {
-         const autoSite: WebsiteLink = {
-            id: Math.random().toString(36).substr(2, 9),
-            name: musl.name,
-            url: musl.url,
-            country: musl.country,
-            category: musl.category || "Association"
-         };
-         await storageService.saveWebsite(autoSite);
-         data.push(autoSite);
+      // AUTO-FIX: Check if MUSL or ALEA is missing and inject it silently if needed
+      const prioritySites = OFFICIAL_LOTTERIES.filter(s => s.name?.includes("MUSL") || s.name?.includes("ALEA"));
+      
+      for (const pSite of prioritySites) {
+         const exists = data.some(s => s.url === pSite.url || (pSite.name && s.name.includes(pSite.name)));
+         if (!exists && pSite.name && pSite.url && pSite.country) {
+            const autoSite: WebsiteLink = {
+               id: Math.random().toString(36).substr(2, 9),
+               name: pSite.name,
+               url: pSite.url,
+               country: pSite.country,
+               category: pSite.category || "Association"
+            };
+            await storageService.saveWebsite(autoSite);
+            data.push(autoSite);
+         }
       }
 
       // Sort alphabetically by Country then Name
@@ -76,7 +79,7 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
     }
   };
 
-  const handleImportEuropean = async () => {
+  const handleImportOfficial = async () => {
      setIsImporting(true);
      try {
         let addedCount = 0;
@@ -84,13 +87,12 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
 
         const currentSites = await storageService.getWebsites();
 
-        for (const el of EUROPEAN_LOTTERIES) {
+        for (const el of OFFICIAL_LOTTERIES) {
            if (!el.name || !el.url) continue;
 
            const existingIndex = currentSites.findIndex(s => 
               s.url === el.url || 
-              s.name.toLowerCase() === el.name?.toLowerCase() ||
-              (el.name?.includes("MUSL") && s.name.includes("MUSL"))
+              s.name.toLowerCase() === el.name?.toLowerCase()
            );
 
            if (existingIndex >= 0) {
@@ -118,10 +120,6 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
         }
         
         await loadSites();
-        // Set search to MUSL if it was imported/updated so the user sees it immediately
-        if (addedCount > 0 || updatedCount > 0) {
-           setSearchTerm('MUSL'); 
-        }
         alert(`Sincronização concluída!\n${addedCount} novos sites adicionados.\n${updatedCount} sites atualizados/corrigidos.`);
 
      } catch (e) {
@@ -186,7 +184,7 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
           <div className="flex flex-col md:flex-row gap-4 mb-8">
              {isAdmin && (
                 <button 
-                  onClick={handleImportEuropean}
+                  onClick={handleImportOfficial}
                   disabled={isImporting}
                   className="py-3 px-6 bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/30 rounded-xl flex items-center justify-center gap-2 text-blue-100 hover:text-white hover:from-blue-900/60 hover:to-indigo-900/60 transition-all shadow-lg group whitespace-nowrap"
                 >
@@ -195,12 +193,11 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
                 </button>
              )}
              
-             {/* SEARCH BAR - Here it is! */}
              <div className="relative flex-1 group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-brand-500 transition-colors" />
                 <input 
                   type="text"
-                  placeholder="Pesquisar site (ex: MUSL, Santa Casa)..."
+                  placeholder="Pesquisar site (ex: Argentina, MUSL, Santa Casa)..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full bg-gray-900 border border-gray-700 text-white pl-10 pr-4 py-3 rounded-xl focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/20 transition-all shadow-inner"
@@ -295,9 +292,7 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
               {filteredSites.map(site => (
                 <div key={site.id} className="bg-gray-900 border border-gray-800 hover:border-blue-500/50 rounded-2xl p-0 transition-all group relative overflow-hidden flex flex-col h-full shadow-lg hover:shadow-blue-900/10">
                    
-                   {/* Card Content */}
                    <div className="p-5 flex items-start gap-4 flex-1">
-                      {/* Logo Container */}
                       <div className="w-14 h-14 shrink-0 bg-white rounded-xl p-1.5 flex items-center justify-center border border-gray-700 shadow-md group-hover:scale-105 transition-transform">
                          <img 
                            src={getLogo(site) || ''} 
@@ -330,7 +325,6 @@ export const WebsitesModal: React.FC<WebsitesModalProps> = ({ onClose, isAdmin, 
                       </div>
                    </div>
 
-                   {/* Actions Footer */}
                    <div className="bg-gray-800/50 p-3 flex justify-between items-center border-t border-gray-800">
                       <a 
                         href={site.url} 

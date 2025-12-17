@@ -1,6 +1,16 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { AnalysisResult, ScratchcardState, Category } from "../types";
+import { AnalysisResult, ScratchcardState, Category, Continent } from "../types";
+
+const getContinentFromCountry = (country: string): Continent => {
+  const c = country.toLowerCase();
+  if (c.includes('portugal') || c.includes('espanha') || c.includes('itália') || c.includes('italia') || c.includes('frança') || c.includes('alemanha') || c.includes('suíça') || c.includes('reino unido') || c.includes('europa') || c.includes('germany') || c.includes('france') || c.includes('uk') || c.includes('austria') || c.includes('belgium')) return 'Europa';
+  if (c.includes('argentina') || c.includes('brasil') || c.includes('eua') || c.includes('usa') || c.includes('canadá') || c.includes('américa') || c.includes('mexico') || c.includes('chile')) return 'América';
+  if (c.includes('japão') || c.includes('china') || c.includes('índia') || c.includes('ásia') || c.includes('japan') || c.includes('korea')) return 'Ásia';
+  if (c.includes('áfrica') || c.includes('africa') || c.includes('egito') || c.includes('marrocos')) return 'África';
+  if (c.includes('oceania') || c.includes('austrália') || c.includes('australia')) return 'Oceania';
+  return 'Europa'; // Default
+};
 
 export const analyzeImage = async (frontBase64: string, backBase64: string | null, mimeType: string): Promise<AnalysisResult> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -12,16 +22,17 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     
     CAMPOS OBRIGATÓRIOS:
     1. gameName: Nome do jogo.
-    2. country: País de origem.
-    3. region: Estado/Cantão/Região (se aplicável).
-    4. gameNumber: Número do jogo/modelo.
-    5. emission: Tiragem ou série (ex: 1.000.000).
-    6. printer: Gráfica/Impressor.
-    7. price: Preço facial (ex: 5€).
-    8. size: Medidas/Tamanho (ex: 10x15cm).
-    9. releaseDate: Ano de lançamento (apenas o ano).
-    10. state: "SC" (raspada) ou "MINT" (nova).
-    11. lines: Identifique a cor das linhas de segurança ou série (ex: azul, vermelha, multicolor, verde, amarela, castanha, cinza).
+    2. country: País de origem (ex: Argentina, Portugal, Brasil).
+    3. continent: Continente correto (Europa, América, Ásia, África, Oceania). ATENÇÃO: Argentina e Brasil são AMÉRICA.
+    4. region: Estado/Cantão/Região (se aplicável).
+    5. gameNumber: Número do jogo/modelo.
+    6. emission: Tiragem ou série (ex: 1.000.000).
+    7. printer: Gráfica/Impressor.
+    8. price: Preço facial (ex: 5€).
+    9. size: Medidas/Tamanho (ex: 10x15cm).
+    10. releaseDate: Ano de lançamento (apenas o ano).
+    11. state: "SC" (raspada) ou "MINT" (nova).
+    12. lines: Identifique a cor das linhas de segurança ou série (ex: azul, vermelha, multicolor, verde, amarela, castanha, cinza).
     
     Retorne APENAS JSON puro. Se não ler algum campo, deixe vazio.`;
 
@@ -47,6 +58,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
             gameNumber: { type: Type.STRING },
             price: { type: Type.STRING },
             country: { type: Type.STRING },
+            continent: { type: Type.STRING },
             region: { type: Type.STRING },
             state: { type: Type.STRING },
             values: { type: Type.STRING },
@@ -72,7 +84,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       price: data.price || "",
       state: (data.state === "MINT" || data.state === "SC") ? data.state : "SC",
       country: data.country || "Portugal",
-      continent: "Europa",
+      continent: data.continent || getContinentFromCountry(data.country || "Portugal"),
       region: data.region || "",
       emission: data.emission || "",
       printer: data.printer || "",

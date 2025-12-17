@@ -1,3 +1,4 @@
+
 import { ScratchcardData, WebsiteLink } from './types';
 
 export const INITIAL_RASPADINHAS: ScratchcardData[] = [
@@ -13,7 +14,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     values: '5€, 10€, 50€, 1000€',
     state: 'MINT',
     country: 'Portugal',
-    region: 'Continente', // Added region
+    region: 'Continente',
     continent: 'Europa',
     category: 'raspadinha',
     collector: 'Jorge Mesquita',
@@ -32,7 +33,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     values: '10€, 20€, 500€, 1.000.000€',
     state: 'MUESTRA',
     country: 'Espanha',
-    region: 'Nacional', // Added region
+    region: 'Nacional',
     continent: 'Europa',
     category: 'raspadinha',
     collector: 'Jorge Mesquita',
@@ -108,7 +109,6 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     aiGenerated: true,
     createdAt: Date.now() - 10000,
   },
-  // China Card moved to Fabio Pagni (as requested by Jorge)
   {
     id: '7',
     customId: 'RASP-CN-088',
@@ -127,7 +127,6 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     aiGenerated: false,
     createdAt: Date.now(),
   },
-  // Chloe's Collection
   {
     id: '8',
     customId: 'RASP-PT-CHLOE',
@@ -147,8 +146,7 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
   }
 ];
 
-// Based on European Lotteries Members, World Lotteries & ALEA (Argentina) & MUSL (USA)
-export const EUROPEAN_LOTTERIES: Partial<WebsiteLink>[] = [
+export const OFFICIAL_LOTTERIES: Partial<WebsiteLink>[] = [
   // Global & Associations (MUSL Priority)
   { name: "Multi-State Lottery Association (MUSL)", url: "https://www.musl.com", country: "EUA", category: "Association" },
   { name: "World Lottery Association (WLA)", url: "https://www.world-lotteries.org", country: "Mundo", category: "Global Organization" },
