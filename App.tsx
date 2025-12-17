@@ -11,7 +11,7 @@ import { WebsitesModal } from './components/WebsitesModal';
 import { AboutPage } from './components/AboutPage'; 
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy, Crown, Star, User, Bot, Sparkles, Smartphone, Share as ShareIcon, RefreshCw, ChevronRight, CheckSquare, FileText, Zap, Activity } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy, Crown, Star, User, Bot, Sparkles, Smartphone, Share as ShareIcon, RefreshCw, ChevronRight, CheckSquare, FileText, Zap, Activity, ShieldCheck } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
@@ -85,7 +85,7 @@ function App() {
   const [showUpdateBtn, setShowUpdateBtn] = useState(false);
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
 
-  // New State for "App Updated" Badge
+  // New State for "App Updated" Badge - Defaults to true to show immediately
   const [showUpdateBadge, setShowUpdateBadge] = useState(true);
 
   const loadInitialData = async () => {
@@ -1343,7 +1343,7 @@ function App() {
 
       </main>
       
-      {/* UPDATE ALERT BADGE (Bottom Left) */}
+      {/* SYSTEM UPDATE ALERT BADGE (Bottom Left) */}
       {showUpdateBadge && (
          <div className="fixed bottom-4 left-4 z-50 animate-slide-up cursor-default">
             <div className="bg-gradient-to-r from-red-600 to-red-700 text-white pl-3 pr-4 py-2 rounded-full shadow-[0_0_20px_rgba(220,38,38,0.6)] border border-red-500/50 flex items-center gap-3 backdrop-blur-md hover:scale-105 transition-transform duration-300">
