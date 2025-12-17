@@ -11,7 +11,7 @@ import { WebsitesModal } from './components/WebsitesModal';
 import { AboutPage } from './components/AboutPage'; 
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy, Crown, Star, User, Bot, Sparkles } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy, Crown, Star, User, Bot, Sparkles, Smartphone } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
@@ -757,6 +757,12 @@ function App() {
          <button onClick={() => setCurrentPage('about')} className={`px-3 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-1 min-w-[60px] ${currentPage === 'about' ? 'bg-slate-800 text-white' : 'text-slate-400'}`}>
            <Info className="w-4 h-4" /> Sobre
          </button>
+
+         {deferredPrompt && (
+            <button onClick={handleInstallClick} className="px-3 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-1 min-w-[60px] bg-gradient-to-br from-pink-600/20 to-rose-600/20 text-pink-400 border border-pink-500/30 animate-pulse">
+               <Smartphone className="w-4 h-4" /> Instalar
+            </button>
+         )}
       </div>
 
       {isDragging && (

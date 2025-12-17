@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Continent } from '../types';
-import { BarChart3, Database, Globe, Mail, Ticket, Coins, TrendingUp, Award, Map, PieChart, Users, Star, Crown, Heart, Flag, Sparkles } from 'lucide-react';
+import { BarChart3, Database, Map, PieChart, Users, Award, Ticket, Coins, Crown, Star, Sparkles, Flag, Globe, Mail } from 'lucide-react';
 
 interface StatsSectionProps {
   stats: Record<string, number>;
@@ -189,7 +189,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
             
             <div className="flex items-end justify-around h-64 gap-2 md:gap-6 relative z-10 px-2 md:px-8">
               {continentsConfig.map((c) => {
-                const count = (stats[c.key as string] as number) || 0;
+                const count = Number(stats[c.key as string]) || 0;
                 const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
                 const height = animate ? Math.max(percentage, 5) : 5; // Min height 5%
                 
@@ -253,7 +253,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                 <div className="space-y-4 relative z-10">
                    {guardians.length > 0 ? guardians.map(([name, count], index) => {
                       const badge = getCollectorBadge(name);
-                      const percentage = (count / totalRecords) * 100;
+                      const percentage = (Number(count) / totalRecords) * 100;
                       
                       return (
                          <div key={name} className="group">

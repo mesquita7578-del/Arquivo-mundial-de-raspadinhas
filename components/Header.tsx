@@ -229,11 +229,11 @@ export const Header: React.FC<HeaderProps> = ({
         {onInstall && (
            <button
              onClick={onInstall}
-             className="hidden lg:flex items-center gap-2 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg shadow-pink-900/30 animate-pulse transition-all"
+             className="flex items-center gap-2 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg shadow-pink-900/30 animate-pulse transition-all"
              title={t.install}
            >
              <Smartphone className="w-3 h-3" />
-             {t.install}
+             <span className="hidden sm:inline">{t.install}</span>
            </button>
         )}
 
