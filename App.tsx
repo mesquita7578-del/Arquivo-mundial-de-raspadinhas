@@ -1343,30 +1343,6 @@ function App() {
 
       </main>
       
-      {/* SYSTEM UPDATE ALERT BADGE (Bottom Left) */}
-      {showUpdateBadge && (
-         <div className="fixed bottom-4 left-4 z-50 animate-slide-up cursor-default">
-            <div className="bg-gradient-to-r from-red-600 to-red-700 text-white pl-3 pr-4 py-2 rounded-full shadow-[0_0_20px_rgba(220,38,38,0.6)] border border-red-500/50 flex items-center gap-3 backdrop-blur-md hover:scale-105 transition-transform duration-300">
-               <div className="relative">
-                  <div className="w-3 h-3 bg-white rounded-full animate-ping absolute inset-0"></div>
-                  <div className="w-3 h-3 bg-white rounded-full relative shadow-sm"></div>
-               </div>
-               <div className="flex flex-col leading-none">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-red-100 flex items-center gap-1">
-                     <Zap className="w-3 h-3 text-yellow-300 fill-yellow-300" /> ALERTA DE SISTEMA
-                  </span>
-                  <span className="text-xs font-bold text-white mt-0.5">APP ATUALIZADA</span>
-               </div>
-               <button 
-                  onClick={(e) => { e.stopPropagation(); setShowUpdateBadge(false); }}
-                  className="ml-2 hover:bg-white/20 p-1 rounded-full transition-colors"
-               >
-                  <X className="w-3 h-3" />
-               </button>
-            </div>
-         </div>
-      )}
-      
       {/* SCROLL TO TOP BUTTON */}
       {showScrollTop && (
          <button
@@ -1393,23 +1369,47 @@ function App() {
                  </div>
               </div>
 
-              {/* Right: Delicate Chloe Badge */}
-              <div className="relative group">
-                {showChloeMessage && (
-                  <div className="absolute bottom-full right-0 mb-3 whitespace-nowrap bg-pink-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl rounded-br-none shadow-lg animate-bounce-in flex items-center gap-1 z-50">
-                    {getGreeting()} 💖
-                  </div>
-                )}
-                <button 
-                  onClick={handleChloeClick}
-                  className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-4 py-2 rounded-full hover:border-pink-500/50 hover:bg-pink-950/30 transition-all group cursor-pointer shadow-sm"
-                >
-                   <div className="relative">
-                      <Heart className="w-3 h-3 text-pink-500 fill-pink-500 animate-pulse" />
-                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-pink-400 rounded-full animate-ping opacity-75"></span>
+              {/* Right: Delicate Chloe Badge + System Alert (Moved here) */}
+              <div className="flex items-center gap-4">
+                
+                {/* SYSTEM ALERT BADGE (Moved from floating to footer) */}
+                {showUpdateBadge && (
+                   <div className="flex items-center gap-2 bg-slate-900 border border-red-900/50 text-red-400 px-3 py-1.5 rounded-full shadow-[0_0_15px_rgba(220,38,38,0.2)] animate-fade-in transition-all hover:bg-slate-800 cursor-default group">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                      </span>
+                      <div className="flex flex-col leading-none">
+                         <span className="text-[9px] font-bold tracking-widest uppercase text-white/90">ALERTA DE SISTEMA</span>
+                         <span className="text-[8px] font-medium text-red-400 mt-0.5">APP ATUALIZADA</span>
+                      </div>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setShowUpdateBadge(false); }}
+                        className="ml-1 hover:text-white transition-colors p-0.5"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
                    </div>
-                   <span className="text-pink-400/80 group-hover:text-pink-300 font-bold tracking-wide text-[10px] uppercase">Futura Guardiã Chloe</span>
-                </button>
+                )}
+
+                {/* Chloe Button */}
+                <div className="relative group">
+                  {showChloeMessage && (
+                    <div className="absolute bottom-full right-0 mb-3 whitespace-nowrap bg-pink-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl rounded-br-none shadow-lg animate-bounce-in flex items-center gap-1 z-50">
+                      {getGreeting()} 💖
+                    </div>
+                  )}
+                  <button 
+                    onClick={handleChloeClick}
+                    className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-4 py-2 rounded-full hover:border-pink-500/50 hover:bg-pink-950/30 transition-all group cursor-pointer shadow-sm"
+                  >
+                     <div className="relative">
+                        <Heart className="w-3 h-3 text-pink-500 fill-pink-500 animate-pulse" />
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-pink-400 rounded-full animate-ping opacity-75"></span>
+                     </div>
+                     <span className="text-pink-400/80 group-hover:text-pink-300 font-bold tracking-wide text-[10px] uppercase">Futura Guardiã Chloe</span>
+                  </button>
+                </div>
               </div>
           </div>
       </footer>
