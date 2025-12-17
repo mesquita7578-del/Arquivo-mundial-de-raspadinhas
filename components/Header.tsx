@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { 
   Ticket, Lock, LogOut, BookOpen, Home, 
   BarChart2, ChevronDown, Globe, User, Smartphone, 
-  Info, LogIn
+  Info, Database, FileJson, FileSpreadsheet, ClipboardList, UploadCloud
 } from 'lucide-react';
 import { Language } from '../translations';
 
@@ -12,6 +12,11 @@ interface HeaderProps {
   onAdminToggle: () => void;
   onLogout: () => void;
   onHistoryClick: () => void;
+  onWebsitesClick?: () => void;
+  onExport: () => void;
+  onExportCSV: () => void;
+  onExportTXT: () => void;
+  onImport: (file: File) => void;
   language: Language;
   setLanguage: (lang: Language) => void;
   currentPage: string;
@@ -22,9 +27,24 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ 
   isAdmin, currentUser, onAdminToggle, onLogout, 
-  onHistoryClick, language, setLanguage,
+  onHistoryClick, onWebsitesClick, onExport, onExportCSV, onExportTXT, onImport,
+  language, setLanguage,
   currentPage, onNavigate, t, onInstall
 }) => {
+  const [showTools, setShowTools] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+    setShowTools(false);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) onImport(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   return (
     <header className="flex items-center justify-between px-4 md:px-8 py-3 bg-slate-900 border-b border-slate-800 sticky top-0 z-50 shadow-md h-[70px]">
       
@@ -34,7 +54,7 @@ export const Header: React.FC<HeaderProps> = ({
           <Ticket className="w-6 h-6 text-white" />
         </div>
         <div className="flex flex-col">
-          <h1 className="text-xl font-black text-white leading-none tracking-tight">
+          <h1 className="text-xl font-black text-white leading-none tracking-tight uppercase italic">
             Arquivo Mundial
           </h1>
           <span className="text-[10px] text-brand-500 font-bold uppercase tracking-[0.1em] mt-1">
@@ -44,7 +64,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Centro: Navegação Principal */}
-      <nav className="hidden lg:flex items-center gap-2">
+      <nav className="hidden lg:flex items-center gap-1">
          <button 
            onClick={() => onNavigate('home')}
            className={`px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all ${currentPage === 'home' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
@@ -54,7 +74,7 @@ export const Header: React.FC<HeaderProps> = ({
          
          <div className="relative group">
             <button className="px-4 py-2 rounded-full text-sm font-bold text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-2 transition-all">
-              <Globe className="w-4 h-4" /> Explorar <ChevronDown className="w-3 h-3" />
+              <Globe className="w-4 h-4" /> Explorar <ChevronDown className="w-3 h-3 transition-transform group-hover:rotate-180" />
             </button>
             <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all p-2 z-[60]">
                {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => (
@@ -83,7 +103,10 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Lado Direito: Ações */}
       <div className="flex items-center gap-3">
         {onInstall && (
-           <button onClick={onInstall} className="hidden sm:flex items-center gap-2 bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-md text-xs font-black border border-brand-500 transition-all uppercase">
+           <button 
+             onClick={onInstall} 
+             className="hidden sm:flex items-center gap-2 bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-md text-xs font-black border border-brand-500 transition-all shadow-lg shadow-brand-900/40"
+           >
              <Smartphone className="w-4 h-4" /> Instalar App
            </button>
         )}
@@ -99,6 +122,40 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <BookOpen className="w-4 h-4" /> Biblioteca
         </button>
+
+        {/* Menu JSON/Backup para Admin */}
+        {isAdmin && (
+           <div className="relative">
+              <button 
+                onClick={() => setShowTools(!showTools)}
+                className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md border border-slate-700 transition-all"
+                title="Backup JSON"
+              >
+                <Database className="w-4 h-4" />
+              </button>
+              {showTools && (
+                 <>
+                    <div className="fixed inset-0 z-[-1]" onClick={() => setShowTools(false)}></div>
+                    <div className="absolute right-0 mt-3 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2 animate-fade-in flex flex-col gap-1 z-[70]">
+                       <button onClick={() => { onExport(); setShowTools(false); }} className="flex items-center gap-3 w-full px-4 py-3 text-xs font-bold text-slate-300 hover:bg-brand-600 hover:text-white rounded-lg transition-all">
+                          <FileJson className="w-4 h-4" /> Exportar Backup (JSON)
+                       </button>
+                       <button onClick={handleImportClick} className="flex items-center gap-3 w-full px-4 py-3 text-xs font-bold text-slate-300 hover:bg-blue-600 hover:text-white rounded-lg transition-all">
+                          <UploadCloud className="w-4 h-4" /> Importar Backup (JSON)
+                       </button>
+                       <button onClick={() => { onExportCSV(); setShowTools(false); }} className="flex items-center gap-3 w-full px-4 py-3 text-xs font-bold text-slate-300 hover:bg-emerald-600 hover:text-white rounded-lg transition-all">
+                          <FileSpreadsheet className="w-4 h-4" /> Exportar Tabela (CSV)
+                       </button>
+                       <button onClick={() => { onExportTXT(); setShowTools(false); }} className="flex items-center gap-3 w-full px-4 py-3 text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-white rounded-lg transition-all">
+                          <ClipboardList className="w-4 h-4" /> Minha Checklist (TXT)
+                       </button>
+                    </div>
+                 </>
+              )}
+           </div>
+        )}
+
+        <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileChange} />
 
         {currentUser ? (
           <button onClick={onLogout} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-md transition-all text-xs font-bold uppercase">
