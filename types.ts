@@ -5,7 +5,7 @@ export type Continent = 'Europa' | 'América' | 'Ásia' | 'África' | 'Oceania' 
 
 export type Category = 'raspadinha' | 'lotaria' | 'boletim' | 'objeto';
 
-export type LineType = 'blue' | 'red' | 'multicolor' | 'none';
+export type LineType = 'blue' | 'red' | 'multicolor' | 'none' | 'green' | 'brown' | 'pink' | 'purple' | 'yellow';
 
 export interface ScratchcardData {
   id: string; // Internal unique ID

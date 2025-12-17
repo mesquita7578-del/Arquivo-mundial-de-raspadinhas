@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
 import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff, MapPin, LayoutGrid, List, ClipboardList, Package, Trophy, Map, Zap, CheckCircle2 } from 'lucide-react';
@@ -63,6 +64,26 @@ const LineIndicator: React.FC<{ type?: LineType; t: any }> = ({ type, t }) => {
     case 'red':
       colorClass = 'bg-red-500';
       label = t.linesRed || 'Vermelhas';
+      break;
+    case 'green':
+      colorClass = 'bg-green-500';
+      label = t.linesGreen || 'Verdes';
+      break;
+    case 'brown':
+      colorClass = 'bg-amber-800';
+      label = t.linesBrown || 'Castanhas';
+      break;
+    case 'pink':
+      colorClass = 'bg-pink-500';
+      label = t.linesPink || 'Rosa';
+      break;
+    case 'purple':
+      colorClass = 'bg-purple-500';
+      label = t.linesPurple || 'Violeta';
+      break;
+    case 'yellow':
+      colorClass = 'bg-yellow-400';
+      label = t.linesYellow || 'Amarelas';
       break;
     case 'multicolor':
       colorClass = 'bg-gradient-to-r from-blue-400 via-yellow-400 to-red-400';
