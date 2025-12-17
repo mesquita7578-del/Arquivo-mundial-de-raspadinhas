@@ -28,11 +28,12 @@ export interface ScratchcardData {
   printer?: string;
   isSeries?: boolean;
   seriesDetails?: string;
+  seriesGroupId?: string; // NOVO: Para agrupar membros da mesma série
   lines?: LineType;
   
   isRarity?: boolean;
   isPromotional?: boolean;
-  isFeatured?: boolean; // NOVO: Campo para a Montra Digital
+  isFeatured?: boolean;
   
   isWinner?: boolean;
   prizeAmount?: string;

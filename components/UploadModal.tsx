@@ -74,10 +74,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       
       const result = await analyzeImage(frontBase64, backBase64, mime);
       
-      // Geração de ID Automática Padrão PT-00000 (Solicitado pelo Jorge)
+      // Geração de ID Automática Padrão PT-00000
       const countryCode = result.country?.substring(0, 2).toUpperCase() || 'PT';
       const randomNum = Math.floor(10000 + Math.random() * 89999);
-      const generatedId = `${countryCode}-${randomNum}`;
+      let generatedId = `${countryCode}-${randomNum}`;
 
       setAiStatus(result.gameName === "" ? 'failed' : 'success');
 
@@ -98,7 +98,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
   };
 
   const updateField = (field: keyof ScratchcardData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // Se ligar o modo série e o ID não tiver sufixo, adiciona um
+    if (field === 'isSeries' && value === true && !formData.customId?.includes('-0')) {
+       setFormData(prev => ({ ...prev, [field]: value, customId: `${prev.customId}-01` }));
+    } else {
+       setFormData(prev => ({ ...prev, [field]: value }));
+    }
   };
 
   const handleSave = async () => {
@@ -176,7 +181,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
              {isAnalyzing ? <Loader2 className="animate-spin w-5 h-5"/> : <Sparkles className="w-5 h-5"/>}
              {isAnalyzing ? "A Chloe está a ler..." : "Análise Inteligente da Chloe"}
            </button>
-           <p className="mt-4 text-[10px] text-slate-500 text-center uppercase tracking-widest font-bold">A Chloe preenche os dados automaticamente</p>
         </div>
       </div>
     );
@@ -194,16 +198,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
           </div>
 
           <div className="flex-1 overflow-y-auto p-6">
-             {aiStatus === 'failed' && (
-                <div className="mb-6 bg-blue-900/20 border border-blue-500/30 p-4 rounded-2xl flex items-center gap-4 animate-bounce-in">
-                   <div className="bg-blue-500 p-2 rounded-full"><Heart className="w-4 h-4 text-white fill-white"/></div>
-                   <div>
-                      <p className="text-white font-bold text-sm">Olá Jorge! A Chloe identificou um novo item.</p>
-                      <p className="text-blue-300 text-xs">O ID automático já foi gerado. Completa os dados em falta abaixo.</p>
-                   </div>
-                </div>
-             )}
-
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 <div className="lg:col-span-3 space-y-4">
                    <div className="bg-slate-950 p-2 rounded-2xl border border-slate-800 shadow-inner">
@@ -221,114 +215,62 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                 <div className="lg:col-span-9 space-y-6">
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Layers className="w-3 h-3"/> ID do Arquivo (Padrão Jorge)</label>
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Hash className="w-3 h-3"/> ID Arquivo</label>
                          <input type="text" value={formData.customId || ''} onChange={e => updateField('customId', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-brand-400 font-mono text-sm focus:border-brand-500 outline-none font-bold" />
                       </div>
                       <div className="md:col-span-2">
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Star className="w-3 h-3 text-yellow-500"/> Nome do Jogo / Título *</label>
-                         <input type="text" value={formData.gameName || ''} onChange={e => updateField('gameName', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:border-brand-500 outline-none" placeholder="Ex: Pé de Meia" />
-                      </div>
-                   </div>
-
-                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Globe className="w-3 h-3"/> País</label>
-                         <input type="text" value={formData.country || ''} onChange={e => updateField('country', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" />
-                      </div>
-                      <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Map className="w-3 h-3"/> Região / Cantão</label>
-                         <input type="text" value={formData.region || ''} onChange={e => updateField('region', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" placeholder="Ex: Algarve..." />
-                      </div>
-                      <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Tag className="w-3 h-3"/> Categoria</label>
-                         <select value={formData.category || 'raspadinha'} onChange={e => updateField('category', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm">
-                            <option value="raspadinha">Raspadinha</option>
-                            <option value="lotaria">Lotaria</option>
-                            <option value="boletim">Boletim</option>
-                            <option value="objeto">Objeto</option>
-                         </select>
-                      </div>
-                      <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Hash className="w-3 h-3"/> Linhas de Cores</label>
-                         <select value={formData.lines || 'none'} onChange={e => updateField('lines', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm">
-                            <option value="none">Nenhuma</option>
-                            <option value="blue">Azul</option>
-                            <option value="red">Vermelha</option>
-                            <option value="green">Verde</option>
-                            <option value="yellow">Amarela</option>
-                            <option value="multicolor">Multicolor</option>
-                         </select>
-                      </div>
-                   </div>
-
-                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                      <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><ScanLine className="w-3 h-3"/> Nº Jogo</label>
-                         <input type="text" value={formData.gameNumber || ''} onChange={e => updateField('gameNumber', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm font-mono" />
-                      </div>
-                      <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><DollarSign className="w-3 h-3"/> Preço</label>
-                         <input type="text" value={formData.price || ''} onChange={e => updateField('price', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" />
-                      </div>
-                      <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Printer className="w-3 h-3"/> Gráfica / Impressor</label>
-                         <input type="text" value={formData.printer || ''} onChange={e => updateField('printer', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" placeholder="Scientific Games" />
-                      </div>
-                      <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Tiragem</label>
-                         <input type="text" value={formData.emission || ''} onChange={e => updateField('emission', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" />
-                      </div>
-                      <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Data / Lançamento</label>
-                         <input type="text" value={formData.releaseDate || ''} onChange={e => updateField('releaseDate', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" />
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Star className="w-3 h-3 text-yellow-500"/> Nome do Jogo *</label>
+                         <input type="text" value={formData.gameName || ''} onChange={e => updateField('gameName', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:border-brand-500 outline-none" />
                       </div>
                    </div>
 
                    <div className="bg-slate-800/30 p-4 rounded-2xl border border-slate-800">
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-                         <div>
-                            <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Estado</label>
-                            <select value={formData.state || 'SC'} onChange={e => updateField('state', e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-white text-xs">
-                               <option value="MINT">MINT (Nova)</option>
-                               <option value="SC">SC (Raspada)</option>
-                               <option value="AMOSTRA">AMOSTRA / VOID</option>
-                            </select>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                         <div className="flex flex-col gap-2">
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                               <input type="checkbox" checked={formData.isSeries} onChange={e => updateField('isSeries', e.target.checked)} className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-indigo-600" />
+                               <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1"><Layers className="w-3 h-3 text-indigo-500"/> Esta raspadinha é de Série?</span>
+                            </label>
+                            {formData.isSeries && <p className="text-[8px] text-indigo-400 uppercase font-black">Modo Panorama Ativado para este Jogo</p>}
                          </div>
+                         {/* Outros checkboxes... */}
                          <div className="flex flex-col gap-2">
                             <label className="flex items-center gap-2 cursor-pointer group">
                                <input type="checkbox" checked={formData.isRarity} onChange={e => updateField('isRarity', e.target.checked)} className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-brand-600" />
                                <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1"><Gem className="w-3 h-3 text-gold-500"/> Raridade</span>
                             </label>
                          </div>
-                         <div className="flex flex-col gap-2">
-                            <label className="flex items-center gap-2 cursor-pointer group">
-                               <input type="checkbox" checked={formData.isWinner} onChange={e => updateField('isWinner', e.target.checked)} className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-green-600" />
-                               <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1"><Trophy className="w-3 h-3 text-green-500"/> Premiada</span>
-                            </label>
-                         </div>
-                         <div className="flex flex-col gap-2 col-span-2">
-                            <label className="flex items-center gap-2 cursor-pointer group">
-                               <input type="checkbox" checked={formData.isSeries} onChange={e => updateField('isSeries', e.target.checked)} className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-blue-600" />
-                               <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1"><Layers className="w-3 h-3 text-blue-500"/> Série / SET</span>
-                            </label>
-                         </div>
+                      </div>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div>
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">País</label>
+                         <input type="text" value={formData.country || ''} onChange={e => updateField('country', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" />
+                      </div>
+                      <div>
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Nº Jogo</label>
+                         <input type="text" value={formData.gameNumber || ''} onChange={e => updateField('gameNumber', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm font-mono" />
+                      </div>
+                      <div className="md:col-span-2">
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Gráfica</label>
+                         <input type="text" value={formData.printer || ''} onChange={e => updateField('printer', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" />
                       </div>
                    </div>
 
                    <div>
-                      <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">Observações do Verso / Nota Curta</label>
-                      <textarea value={formData.values || ''} onChange={e => updateField('values', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4 text-white text-sm h-24 focus:border-brand-500 outline-none resize-none" placeholder="..." />
+                      <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">Observações</label>
+                      <textarea value={formData.values || ''} onChange={e => updateField('values', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4 text-white text-sm h-24 focus:border-brand-500 outline-none resize-none" />
                    </div>
                 </div>
              </div>
           </div>
 
           <div className="p-4 border-t border-slate-800 bg-slate-900 flex justify-end gap-3 shrink-0">
-             {error && <div className="mr-auto text-red-400 text-xs flex items-center gap-2 font-bold animate-pulse"><AlertCircle className="w-4 h-4"/>{error}</div>}
-             <button onClick={onClose} className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all">Cancelar</button>
-             <button onClick={handleSave} disabled={isSaving} className="px-8 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-brand-900/30 active:scale-95 transition-all">
+             <button onClick={onClose} className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold">Cancelar</button>
+             <button onClick={handleSave} disabled={isSaving} className="px-8 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg active:scale-95 transition-all">
                 {isSaving ? <Loader2 className="animate-spin w-4 h-4"/> : <Check className="w-4 h-4"/>}
-                Confirmar Registo no Arquivo
+                Confirmar Registo
              </button>
           </div>
        </div>
