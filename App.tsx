@@ -11,7 +11,7 @@ import { WebsitesModal } from './components/WebsitesModal';
 import { AboutPage } from './components/AboutPage'; 
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy, Crown, Star, User, Bot, Sparkles, Smartphone } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy, Crown, Star, User, Bot, Sparkles, Smartphone, Share as ShareIcon } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
@@ -76,6 +76,8 @@ function App() {
 
   // PWA Install Prompt State
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   const loadInitialData = async () => {
     setIsLoadingDB(true);
@@ -109,6 +111,15 @@ function App() {
 
   useEffect(() => {
     loadInitialData();
+    // Detect iOS
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
+    setIsIOS(isIosDevice);
+
+    // Detect if already installed (Standalone mode)
+    const isStandAlone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    setIsStandalone(isStandAlone);
+
   }, []);
 
   // Handle Scroll to show/hide "Back to Top" button
@@ -139,16 +150,19 @@ function App() {
   }, []);
 
   const handleInstallClick = () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then((choiceResult: any) => {
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-      } else {
-        console.log('User dismissed the install prompt');
-      }
-      setDeferredPrompt(null);
-    });
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult: any) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+          } else {
+            console.log('User dismissed the install prompt');
+          }
+          setDeferredPrompt(null);
+        });
+    } else if (isIOS) {
+        alert("Para instalar no iPhone/iPad:\n\n1. Toque no botão Partilhar (quadrado com seta em baixo)\n2. Escolha 'Adicionar ao Ecrã Principal' (+)");
+    }
   };
 
   const scrollToTop = () => {
@@ -738,7 +752,7 @@ function App() {
         onNavigate={setCurrentPage}
         stats={totalStats.stats} // Pass stats to Header
         t={t.header}
-        onInstall={deferredPrompt ? handleInstallClick : undefined} // Pass install handler only if prompt is available
+        onInstall={(!isStandalone && (deferredPrompt || isIOS)) ? handleInstallClick : undefined} // Logic for iOS or Android
       />
 
       {/* MOBILE NAVIGATION BAR (Updated for Continents) */}
@@ -758,7 +772,7 @@ function App() {
            <Info className="w-4 h-4" /> Sobre
          </button>
 
-         {deferredPrompt && (
+         {!isStandalone && (deferredPrompt || isIOS) && (
             <button onClick={handleInstallClick} className="px-3 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-1 min-w-[60px] bg-gradient-to-br from-pink-600/20 to-rose-600/20 text-pink-400 border border-pink-500/30 animate-pulse">
                <Smartphone className="w-4 h-4" /> Instalar
             </button>
