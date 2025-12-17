@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
-import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff, MapPin, LayoutGrid, List, ClipboardList, Package, Trophy, Map } from 'lucide-react';
+import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff, MapPin, LayoutGrid, List, ClipboardList, Package, Trophy, Map, Zap } from 'lucide-react';
 
 interface ImageGridProps {
   images: ScratchcardData[];
@@ -110,6 +110,13 @@ const getCategoryIcon = (category: Category) => {
       case 'objeto': return <Package className="w-3 h-3 text-orange-400" />;
       default: return <Coins className="w-3 h-3 text-brand-400" />;
    }
+};
+
+// Helper to check if item is recent (last 48 hours)
+const isRecentItem = (createdAt: number) => {
+  if (!createdAt) return false;
+  const twoDaysAgo = Date.now() - (48 * 60 * 60 * 1000);
+  return createdAt > twoDaysAgo;
 };
 
 export const ImageGrid: React.FC<ImageGridProps> = ({ 
@@ -346,6 +353,11 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 {/* Thumbnail */}
                 <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 bg-slate-950/50 border border-slate-700">
                    <SafeImage src={item.frontUrl} alt={item.gameName} className="w-full h-full object-contain" />
+                   {isRecentItem(item.createdAt) && (
+                      <div className="absolute top-0 right-0 bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-bl-lg shadow-sm z-10 flex items-center gap-0.5 animate-pulse">
+                         <Zap className="w-2 h-2 fill-white" /> NOVO
+                      </div>
+                   )}
                 </div>
                 
                 {/* Info */}
@@ -418,6 +430,12 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                   </div>
 
                    <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-20">
+                      {isRecentItem(item.createdAt) && (
+                         <div className="bg-blue-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1 animate-pulse border border-blue-400/50" title="Adicionado recentemente">
+                            <Zap className="w-3 h-3 fill-white" /> NOVO
+                         </div>
+                      )}
+
                       {item.isWinner && (
                         <div className="bg-green-600/90 text-white p-1 rounded-full shadow-lg animate-bounce" title={`Premiada: ${item.prizeAmount || '?'}`}>
                            <Trophy className="w-3 h-3" />

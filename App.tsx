@@ -632,6 +632,13 @@ function App() {
 
   const continents: (Continent | 'Mundo')[] = ['Mundo', 'Europa', 'América', 'Ásia', 'África', 'Oceania'];
 
+  const getGreeting = () => {
+     const hour = new Date().getHours();
+     if (hour < 12) return "Bom dia, Vovô Jorge! ☀️";
+     if (hour < 18) return "Boa tarde, Guardiões! 🌤️";
+     return "Boa noite! O Arquivo está seguro. 🌙";
+  };
+
   if (isLoadingDB) {
     return (
       <div className="h-[100dvh] w-screen bg-slate-950 flex flex-col items-center justify-center text-white">
@@ -1145,7 +1152,7 @@ function App() {
               <div className="relative group">
                 {showChloeMessage && (
                   <div className="absolute bottom-full right-0 mb-3 whitespace-nowrap bg-pink-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl rounded-br-none shadow-lg animate-bounce-in flex items-center gap-1 z-50">
-                    Estou aqui, Vovô! 💖
+                    {getGreeting()} 💖
                   </div>
                 )}
                 <button 
