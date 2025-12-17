@@ -13,7 +13,7 @@ import { ScratchcardData, Continent, Category } from './types';
 import { 
   Globe, Ticket, Coins, Heart, Gem, Gift, Trophy, 
   Building2, Database, Loader2, Sparkles, X, 
-  ClipboardList, Package, Search, Filter, MapPin
+  ClipboardList, Package, Search, Filter, MapPin, PlusCircle
 } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
@@ -29,10 +29,8 @@ function App() {
   const [isLoadingDB, setIsLoadingDB] = useState(true);
   const [currentPage, setCurrentPage] = useState<PageType>('home');
   
-  // PWA Install logic
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
-  // State for Filters
   const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
   const [activeContinent, setActiveContinent] = useState<Continent | 'Mundo'>('Mundo');
   const [filterRarity, setFilterRarity] = useState(false);
@@ -160,6 +158,11 @@ function App() {
     }).sort((a, b) => b.createdAt - a.createdAt);
   }, [allImagesCache, activeContinent, activeCategory, filterRarity, filterPromo, filterWinners, countrySearch, searchTerm, currentPage, currentUser]);
 
+  // Lista de países únicos com registos
+  const registeredCountries = useMemo(() => {
+     return Object.keys(totalStats.countryStats).sort();
+  }, [totalStats.countryStats]);
+
   return (
     <div className="flex flex-col h-[100dvh] bg-slate-950 text-slate-100 overflow-hidden font-sans">
       <Header 
@@ -231,7 +234,7 @@ function App() {
                    <Globe className="w-5 h-5 text-blue-500" /> Explorar
                 </div>
                 
-                <div className="flex flex-wrap gap-4 mb-6">
+                <div className="flex flex-wrap gap-4 mb-8">
                    <button onClick={() => setActiveContinent('Mundo')} className={`px-6 py-3 rounded-full text-sm font-bold flex items-center gap-2 border transition-all ${activeContinent === 'Mundo' ? 'bg-blue-600 border-blue-500 text-white shadow-xl' : 'bg-slate-900 border-slate-800 text-slate-500'}`}>
                       Mundo <span className="bg-slate-800 text-[10px] px-1.5 rounded">{totalStats.total}</span>
                    </button>
@@ -242,22 +245,41 @@ function App() {
                    ))}
                 </div>
 
-                <div className="flex items-center gap-4">
-                   <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase">
-                      <MapPin className="w-4 h-4" /> Países:
-                   </div>
-                   <div className="relative group min-w-[200px]">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
-                      <input 
-                        type="text" placeholder="Pesquisar País..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)}
-                        className="bg-slate-900 border border-slate-800 rounded-lg pl-10 pr-4 py-2 text-sm text-white focus:border-blue-500 outline-none w-full"
-                      />
-                   </div>
-                   {countrySearch && (
-                      <div className="flex items-center gap-2 bg-orange-600 text-white px-3 py-1 rounded-md text-xs font-bold">
-                         {countrySearch} <button onClick={() => setCountrySearch('')}><X className="w-3.5 h-3.5" /></button>
+                <div className="flex flex-col gap-4">
+                   <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase">
+                         <MapPin className="w-4 h-4" /> Países Registados:
                       </div>
-                   )}
+                      <div className="relative group min-w-[200px]">
+                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                         <input 
+                           type="text" placeholder="Pesquisar País..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)}
+                           className="bg-slate-900 border border-slate-800 rounded-lg pl-10 pr-4 py-2 text-sm text-white focus:border-blue-500 outline-none w-full"
+                         />
+                      </div>
+                   </div>
+                   
+                   {/* LISTA DINÂMICA DE PAÍSES */}
+                   <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1 custom-scrollbar">
+                      {registeredCountries.length === 0 ? (
+                         <span className="text-xs text-slate-600 italic">Nenhum país com registos ainda.</span>
+                      ) : (
+                         registeredCountries.map(country => (
+                            <button 
+                              key={country} 
+                              onClick={() => setCountrySearch(country)}
+                              className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase border transition-all ${countrySearch === country ? 'bg-brand-600 border-brand-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`}
+                            >
+                               {country} <span className="opacity-50 ml-1">({totalStats.countryStats[country]})</span>
+                            </button>
+                         ))
+                      )}
+                      {countrySearch && (
+                        <button onClick={() => setCountrySearch('')} className="px-3 py-1 rounded-md text-[10px] font-bold uppercase bg-slate-700 text-white flex items-center gap-1">
+                           Limpar Filtro <X className="w-3 h-3" />
+                        </button>
+                      )}
+                   </div>
                 </div>
              </div>
 
@@ -313,7 +335,5 @@ function App() {
     </div>
   );
 }
-
-import { PlusCircle } from 'lucide-react';
 
 export default App;

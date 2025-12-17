@@ -12,7 +12,6 @@ interface HeaderProps {
   onAdminToggle: () => void;
   onLogout: () => void;
   onHistoryClick: () => void;
-  onWebsitesClick?: () => void;
   onExport: () => void;
   onExportCSV: () => void;
   onExportTXT: () => void;
@@ -27,7 +26,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ 
   isAdmin, currentUser, onAdminToggle, onLogout, 
-  onHistoryClick, onWebsitesClick, onExport, onExportCSV, onExportTXT, onImport,
+  onHistoryClick, onExport, onExportCSV, onExportTXT, onImport,
   language, setLanguage,
   currentPage, onNavigate, t, onInstall
 }) => {
@@ -128,10 +127,11 @@ export const Header: React.FC<HeaderProps> = ({
            <div className="relative">
               <button 
                 onClick={() => setShowTools(!showTools)}
-                className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md border border-slate-700 transition-all"
+                className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md border border-slate-700 transition-all flex items-center gap-2"
                 title="Backup JSON"
               >
                 <Database className="w-4 h-4" />
+                <span className="hidden xl:inline text-[10px] font-black uppercase">JSON</span>
               </button>
               {showTools && (
                  <>
