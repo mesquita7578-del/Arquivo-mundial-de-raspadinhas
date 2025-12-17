@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify, Gem, MapPin, Gift, Image as ImageIcon, FileSearch, ClipboardList, Package, Calendar, Trophy, Lock, ScanLine, Wand2 } from 'lucide-react';
+import { X, UploadCloud, Loader2, Sparkles, AlertCircle, Ticket, ArrowLeft, Check, CheckCircle, User, Printer, Layers, BarChart, DollarSign, RefreshCw, Coins, Search, Globe, AlignJustify, Gem, MapPin, Gift, Image as ImageIcon, FileSearch, ClipboardList, Package, Calendar, Trophy, Lock, ScanLine, Wand2, Cpu, Eye, Fingerprint, Zap } from 'lucide-react';
 import { analyzeImage, searchScratchcardInfo } from '../services/geminiService';
 import { ScratchcardData, ScratchcardState, Continent, Category, LineType } from '../types';
 
@@ -8,7 +8,7 @@ interface UploadModalProps {
   onUploadComplete: (image: ScratchcardData) => void;
   existingImages?: ScratchcardData[];
   initialFile?: File | null;
-  currentUser?: string | null; // New Prop
+  currentUser?: string | null;
   t: any;
 }
 
@@ -24,14 +24,12 @@ const resizeAndCompressImage = (file: File): Promise<string> => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         
-        // Max dimensions (1024px is enough for web viewing and keeps size small)
-        const MAX_WIDTH = 1024;
-        const MAX_HEIGHT = 1024;
+        const MAX_WIDTH = 1200; // Increased for better quality OCR
+        const MAX_HEIGHT = 1200;
         
         let width = img.width;
         let height = img.height;
 
-        // Calculate new dimensions maintaining aspect ratio
         if (width > height) {
           if (width > MAX_WIDTH) {
             height *= MAX_WIDTH / width;
@@ -49,8 +47,7 @@ const resizeAndCompressImage = (file: File): Promise<string> => {
 
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          // Compress to JPEG at 70% quality
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85); // Slightly better quality
           resolve(dataUrl);
         } else {
           reject(new Error("Failed to get canvas context"));
@@ -81,8 +78,9 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
   const [simpleDate, setSimpleDate] = useState(new Date().toISOString().split('T')[0]);
 
   const [isProcessing, setIsProcessing] = useState(false);
-  // AI Feedback State
-  const [aiStep, setAiStep] = useState(0);
+  
+  // Enhanced AI Feedback State
+  const [aiStepIndex, setAiStepIndex] = useState(0);
   
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -90,17 +88,16 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
   
   const [formData, setFormData] = useState<ScratchcardData | null>(null);
 
-  // AI Processing Steps Messages
+  // AI Processing Steps - Cinematic Messages
   const aiMessages = [
-    "A inicializar visão computacional...",
-    "A detetar textos e números...",
-    "A identificar país e moeda...",
-    "A analisar padrões de jogo...",
-    "A verificar estado de conservação...",
-    "A compilar ficha técnica..."
+    { text: "A inicializar visão computacional...", icon: Eye },
+    { text: "A detetar textos e números (OCR)...", icon: ScanLine },
+    { text: "A identificar país e moeda...", icon: Globe },
+    { text: "A analisar padrões de jogo...", icon: Cpu },
+    { text: "A verificar estado de conservação...", icon: Fingerprint },
+    { text: "A compilar ficha técnica final...", icon: Database }
   ];
 
-  // Generate unique lists for autocomplete from existing data
   const suggestions = useMemo(() => {
     const countries = new Set<string>();
     const regions = new Set<string>();
@@ -133,21 +130,24 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     };
   }, [existingImages]);
 
-  // Handle Initial File from Drag and Drop
+  // Handle Initial File
   useEffect(() => {
     if (initialFile) {
       processFile(initialFile, true);
     }
   }, [initialFile]);
 
-  // AI Feedback Loop
+  // AI Feedback Loop Animation
   useEffect(() => {
     let interval: any;
     if (isProcessing) {
-      setAiStep(0);
+      setAiStepIndex(0);
       interval = setInterval(() => {
-        setAiStep(prev => (prev + 1) % aiMessages.length);
-      }, 1200);
+        setAiStepIndex(prev => {
+           if (prev < aiMessages.length - 1) return prev + 1;
+           return prev;
+        });
+      }, 1500); // Change message every 1.5s
     }
     return () => clearInterval(interval);
   }, [isProcessing]);
@@ -216,11 +216,9 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     return `${prefix}${nextNum}`;
   };
 
-  // Modified to return data and allow custom image override
   const createFormData = (analysis: any): ScratchcardData => {
     const smartId = generateNextId(analysis.country || 'Desconhecido');
     
-    // Dynamic placeholder based on category if no image provided
     let defaultImage = 'https://placehold.co/600x400/1f2937/white?text=Sem+Imagem';
     if (analysis.category === 'boletim') defaultImage = 'https://placehold.co/600x800/064e3b/ffffff?text=BOLETIM';
     if (analysis.category === 'objeto') defaultImage = 'https://placehold.co/600x600/7c2d12/ffffff?text=OBJETO';
@@ -240,7 +238,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       country: analysis.country || 'Portugal',
       region: analysis.region || '',
       continent: analysis.continent || 'Europa',
-      collector: currentUser || '', // Auto-fill with current user name
+      collector: currentUser || '',
       emission: analysis.emission || '',
       printer: analysis.printer || '',
       isSeries: false,
@@ -248,7 +246,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       lines: 'none', 
       isRarity: false,
       isPromotional: false,
-      isWinner: false, // Default false
+      isWinner: false,
       prizeAmount: '', 
       category: analysis.category || 'raspadinha',
       createdAt: Date.now(),
@@ -269,7 +267,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       const backBase64 = backPreview ? backPreview.split(',')[1] : null;
       const analysis = await analyzeImage(frontBase64, backBase64, frontFile.type);
       createFormData(analysis);
-      setStep('review'); // Standard flow goes to review
+      setStep('review');
     } catch (err) {
       console.error(err);
       setError(t.errorAnalyze);
@@ -285,7 +283,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     try {
       const results = await searchScratchcardInfo(searchQuery);
       createFormData(results);
-      setStep('review'); // Web search goes to review
+      setStep('review');
     } catch (err) {
       console.error(err);
       setError("Não foi possível encontrar informações online. Tente ser mais específico.");
@@ -310,20 +308,14 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
         gameNumber: '---',
      };
      
-     // INSTANT SAVE: Create data and skip review
      const finalData = createFormData(dummyAnalysis);
-     
-     // Explicitly use the generated data to save immediately
      onUploadComplete(finalData);
      setShowSuccess(true);
-     setTimeout(() => {
-       onClose();
-     }, 1500);
+     setTimeout(() => onClose(), 1500);
   };
 
   const handleSave = () => {
     if (formData) {
-      // Ensure we use the latest image previews if they exist (important for Web Search flow where image is added late)
       const finalData = {
         ...formData,
         frontUrl: frontPreview || formData.frontUrl,
@@ -332,9 +324,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
       onUploadComplete(finalData);
       setShowSuccess(true);
-      setTimeout(() => {
-        onClose();
-      }, 1500);
+      setTimeout(() => onClose(), 1500);
     }
   };
 
@@ -351,14 +341,15 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     }
   };
 
+  // Upload Box Component
   const UploadBox = ({ label, preview, isFront, icon: CustomIcon }: { label: string, preview: string | null, isFront: boolean, icon?: React.ElementType }) => (
     <div className="flex-1 group">
-       <label className="block text-xs uppercase text-gray-400 font-bold mb-3 tracking-wider flex items-center gap-2">
-          {isFront ? <ScanLine className="w-3 h-3 text-brand-500" /> : <RefreshCw className="w-3 h-3 text-gray-500" />}
+       <label className="block text-xs uppercase text-gray-400 font-bold mb-3 tracking-wider flex items-center gap-2 pl-1">
+          {isFront ? <ScanLine className="w-3.5 h-3.5 text-brand-500" /> : <RefreshCw className="w-3.5 h-3.5 text-gray-500" />}
           {label}
        </label>
        {!preview ? (
-          <div className={`relative border-2 border-dashed rounded-2xl h-64 flex flex-col items-center justify-center transition-all duration-300 cursor-pointer overflow-hidden ${isCompressing ? 'border-brand-500/50 bg-brand-900/5' : 'border-gray-700 bg-gray-900/30 hover:border-brand-500 hover:bg-gray-800/50 hover:shadow-lg hover:shadow-brand-500/10'}`}>
+          <div className={`relative border-2 border-dashed rounded-3xl h-72 flex flex-col items-center justify-center transition-all duration-300 cursor-pointer overflow-hidden ${isCompressing ? 'border-brand-500/50 bg-brand-900/5' : 'border-gray-700 bg-gray-900/30 hover:border-brand-500 hover:bg-gray-800/50 hover:shadow-2xl hover:shadow-brand-500/10'}`}>
             <input
               type="file"
               className="absolute inset-0 opacity-0 cursor-pointer z-10"
@@ -373,27 +364,27 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
               </div>
             ) : (
               <div className="flex flex-col items-center text-gray-500 group-hover:text-brand-400 transition-colors transform group-hover:scale-105 duration-300">
-                <div className="p-5 rounded-full bg-gray-800 border border-gray-700 group-hover:bg-brand-500/20 group-hover:border-brand-500/50 mb-4 transition-all shadow-lg">
-                  {CustomIcon ? <CustomIcon className="w-8 h-8" /> : <UploadCloud className="w-8 h-8" />}
+                <div className="p-6 rounded-full bg-gray-800 border border-gray-700 group-hover:bg-brand-500/20 group-hover:border-brand-500/50 mb-4 transition-all shadow-lg group-hover:shadow-brand-500/20">
+                  {CustomIcon ? <CustomIcon className="w-10 h-10" /> : <UploadCloud className="w-10 h-10" />}
                 </div>
-                <span className="text-sm font-bold text-white mb-1">{t.clickDrag}</span>
-                <span className="text-[10px] uppercase tracking-wide opacity-50">JPG, PNG, WEBP</span>
+                <span className="text-sm font-bold text-white mb-1 tracking-wide">{t.clickDrag}</span>
+                <span className="text-[10px] uppercase tracking-wide opacity-50 font-mono">JPG, PNG, WEBP</span>
               </div>
             )}
           </div>
        ) : (
-         <div className="relative h-64 rounded-2xl overflow-hidden bg-black/40 border border-gray-700 group ring-0 hover:ring-2 ring-brand-500/50 transition-all shadow-xl">
+         <div className="relative h-72 rounded-3xl overflow-hidden bg-black/40 border border-gray-700 group ring-0 hover:ring-2 ring-brand-500/50 transition-all shadow-xl">
            <img src={preview} alt={label} className="w-full h-full object-contain p-4" />
            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-sm">
               <button 
                 onClick={() => isFront ? (setFrontPreview(null), setFrontFile(null)) : (setBackPreview(null), setBackFile(null))}
-                className="bg-red-600 hover:bg-red-500 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all flex items-center gap-2"
+                className="bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-2xl font-bold shadow-xl transform translate-y-4 group-hover:translate-y-0 transition-all flex items-center gap-2"
               >
-                <RefreshCw className="w-4 h-4" /> Trocar Imagem
+                <RefreshCw className="w-4 h-4" /> Trocar
               </button>
            </div>
-           <div className="absolute top-3 right-3 animate-bounce-in">
-             <div className="bg-green-500 text-white p-1.5 rounded-full shadow-lg shadow-green-900/50">
+           <div className="absolute top-4 right-4 animate-bounce-in">
+             <div className="bg-green-500 text-white p-2 rounded-full shadow-lg shadow-green-900/50">
                <Check className="w-4 h-4" />
              </div>
            </div>
@@ -402,89 +393,89 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     </div>
   );
 
+  const CurrentAiIcon = aiMessages[aiStepIndex].icon;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/95 backdrop-blur-xl animate-fade-in">
       
       {/* Hidden Datalists for Autocomplete */}
-      <datalist id="list-countries">
-        {suggestions.countries.map(v => <option key={v} value={v} />)}
-      </datalist>
-      <datalist id="list-regions">
-        {suggestions.regions.map(v => <option key={v} value={v} />)}
-      </datalist>
-      <datalist id="list-printers">
-        {suggestions.printers.map(v => <option key={v} value={v} />)}
-      </datalist>
-      <datalist id="list-collectors">
-        {suggestions.collectors.map(v => <option key={v} value={v} />)}
-      </datalist>
-      <datalist id="list-emissions">
-        {suggestions.emissions.map(v => <option key={v} value={v} />)}
-      </datalist>
-      <datalist id="list-sizes">
-        {suggestions.sizes.map(v => <option key={v} value={v} />)}
-      </datalist>
-      <datalist id="list-states">
-        {suggestions.states.map(v => <option key={v} value={v} />)}
-      </datalist>
+      <div className="hidden">
+          <datalist id="list-countries">{suggestions.countries.map(v => <option key={v} value={v} />)}</datalist>
+          <datalist id="list-regions">{suggestions.regions.map(v => <option key={v} value={v} />)}</datalist>
+          <datalist id="list-printers">{suggestions.printers.map(v => <option key={v} value={v} />)}</datalist>
+          <datalist id="list-collectors">{suggestions.collectors.map(v => <option key={v} value={v} />)}</datalist>
+          <datalist id="list-emissions">{suggestions.emissions.map(v => <option key={v} value={v} />)}</datalist>
+          <datalist id="list-sizes">{suggestions.sizes.map(v => <option key={v} value={v} />)}</datalist>
+          <datalist id="list-states">{suggestions.states.map(v => <option key={v} value={v} />)}</datalist>
+      </div>
 
-      {/* Container */}
-      <div className={`bg-gray-900/80 backdrop-blur-2xl border border-white/10 rounded-3xl w-full ${step === 'review' ? 'max-w-6xl' : 'max-w-3xl'} shadow-2xl flex flex-col max-h-[90vh] transition-all duration-500 relative overflow-hidden`}>
+      {/* Main Modal Container */}
+      <div className={`bg-gray-900/90 backdrop-blur-2xl border border-white/10 rounded-[2rem] w-full ${step === 'review' ? 'max-w-[90vw] h-[90vh]' : 'max-w-4xl h-auto max-h-[90vh]'} shadow-2xl flex flex-col transition-all duration-500 relative overflow-hidden`}>
         
-        {/* Decorative Top Line */}
+        {/* Top Gradient Line */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-600 via-purple-600 to-blue-600 z-20"></div>
 
-        {/* PROCESSING OVERLAY (AI Thinking) */}
+        {/* --- AI PROCESSING OVERLAY (Immersive) --- */}
         {isProcessing && (
-           <div className="absolute inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center animate-fade-in">
-              <div className="relative mb-12">
-                 {/* Glowing Orb */}
-                 <div className="absolute inset-0 bg-brand-500/30 blur-[60px] rounded-full animate-pulse-slow"></div>
-                 <div className="relative bg-slate-900 p-6 rounded-full border border-brand-500/30 shadow-2xl shadow-brand-500/20 animate-bounce">
-                    <Sparkles className="w-16 h-16 text-brand-400" />
+           <div className="absolute inset-0 z-[60] bg-slate-950 flex flex-col items-center justify-center animate-fade-in">
+              <div className="relative mb-16">
+                 {/* Glowing Core */}
+                 <div className="absolute inset-0 bg-brand-500/20 blur-[100px] rounded-full animate-pulse-slow"></div>
+                 <div className="relative bg-slate-900 p-8 rounded-full border border-brand-500/30 shadow-[0_0_50px_rgba(244,63,94,0.3)] animate-bounce">
+                    <CurrentAiIcon className="w-20 h-20 text-brand-400 animate-pulse" />
+                 </div>
+                 
+                 {/* Orbiting Particles */}
+                 <div className="absolute top-1/2 left-1/2 w-[200px] h-[200px] border border-white/5 rounded-full -translate-x-1/2 -translate-y-1/2 animate-spin-slow">
+                    <div className="absolute top-0 left-1/2 w-3 h-3 bg-blue-500 rounded-full shadow-[0_0_15px_#3b82f6]"></div>
+                 </div>
+                 <div className="absolute top-1/2 left-1/2 w-[300px] h-[300px] border border-white/5 rounded-full -translate-x-1/2 -translate-y-1/2 animate-spin-reverse-slow opacity-50">
+                    <div className="absolute bottom-0 left-1/2 w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_15px_#a855f7]"></div>
                  </div>
               </div>
               
-              <div className="text-center space-y-4 max-w-sm">
-                 <h3 className="text-3xl font-black text-white tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-brand-200 to-brand-500">
+              <div className="text-center space-y-6 max-w-md px-6">
+                 <h3 className="text-4xl font-black text-white tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-brand-200 to-brand-500">
                     IA a Analisar
                  </h3>
                  
-                 {/* Dynamic Feedback Text */}
-                 <div className="h-8 relative overflow-hidden">
+                 {/* Animated Text Feed */}
+                 <div className="h-12 relative overflow-hidden w-full">
                     {aiMessages.map((msg, idx) => (
                        <p 
                          key={idx} 
-                         className={`absolute inset-0 flex items-center justify-center text-sm font-medium text-brand-300 transition-all duration-500 transform ${idx === aiStep ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                         className={`absolute inset-0 flex items-center justify-center text-lg font-medium text-brand-200 transition-all duration-500 transform ${idx === aiStepIndex ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95'}`}
                        >
-                          {msg}
+                          {msg.text}
                        </p>
                     ))}
                  </div>
 
-                 {/* Progress Bar */}
-                 <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden mt-6">
-                    <div className="h-full bg-gradient-to-r from-brand-600 to-purple-600 animate-pulse w-full origin-left transform scale-x-0 transition-transform duration-[8000ms] ease-out" style={{ transform: 'scaleX(1)' }}></div>
+                 {/* High-tech Progress Bar */}
+                 <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden mt-8 relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                    <div 
+                        className="h-full bg-gradient-to-r from-brand-600 to-purple-600 transition-all duration-300 ease-out shadow-[0_0_20px_rgba(244,63,94,0.5)]" 
+                        style={{ width: `${((aiStepIndex + 1) / aiMessages.length) * 100}%` }}
+                    ></div>
                  </div>
               </div>
            </div>
         )}
 
-        {/* Success Toast */}
+        {/* Success Toast Overlay */}
         {showSuccess && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 animate-bounce-in bg-green-600/90 backdrop-blur-xl text-white px-10 py-8 rounded-3xl shadow-2xl flex flex-col items-center gap-6 border border-green-400/30 ring-4 ring-green-500/20">
-            <div className="bg-white p-4 rounded-full shadow-lg">
-              <CheckCircle className="w-16 h-16 text-green-600" />
-            </div>
-            <div className="text-center">
-              <p className="font-black text-3xl mb-2">{t.success}</p>
-              <p className="text-green-100 text-lg font-medium">{t.saved}</p>
-            </div>
+          <div className="absolute inset-0 z-[70] bg-green-900/90 backdrop-blur-xl flex flex-col items-center justify-center animate-fade-in">
+             <div className="bg-white p-6 rounded-full shadow-[0_0_50px_rgba(34,197,94,0.5)] mb-8 animate-bounce-in">
+               <CheckCircle className="w-24 h-24 text-green-600" />
+             </div>
+             <h2 className="text-5xl font-black text-white mb-2 tracking-tight">{t.success}</h2>
+             <p className="text-green-200 text-xl font-medium">{t.saved}</p>
           </div>
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between px-8 py-6 border-b border-white/5 bg-white/5">
+        <div className="flex items-center justify-between px-8 py-6 border-b border-white/5 bg-white/5 shrink-0">
           <div className="flex items-center gap-4">
              <div className="bg-gradient-to-br from-brand-600 to-brand-900 p-3 rounded-2xl shadow-lg shadow-brand-900/30 border border-white/10">
                 <Wand2 className="w-6 h-6 text-white" />
@@ -512,7 +503,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
         {/* Tabs (Only in Upload Step) */}
         {step === 'upload' && (
-          <div className="px-8 pt-6">
+          <div className="px-8 pt-6 pb-2 shrink-0">
              <div className="p-1.5 bg-gray-950/50 rounded-2xl border border-white/5 flex gap-1 relative">
                <button
                  onClick={() => setActiveTab('image')}
@@ -539,10 +530,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
           </div>
         )}
 
-        {/* Content Area */}
+        {/* Main Content Area */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
           {step === 'upload' ? (
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto h-full flex flex-col justify-center">
               {error && (
                 <div className="mb-8 bg-red-500/10 border border-red-500/30 text-red-200 p-4 rounded-2xl flex items-center gap-3 text-sm animate-fade-in shadow-lg shadow-red-900/10">
                   <div className="bg-red-500/20 p-2 rounded-full">
@@ -559,15 +550,15 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                     <UploadBox label={t.back} preview={backPreview} isFront={false} />
                   </div>
                   
-                  {/* AI Info Card */}
-                  <div className="bg-gradient-to-r from-brand-900/20 to-purple-900/20 border border-white/5 p-5 rounded-2xl flex items-center gap-5 backdrop-blur-sm relative overflow-hidden">
+                  {/* Info Card */}
+                  <div className="bg-gradient-to-r from-brand-900/20 to-purple-900/20 border border-white/5 p-6 rounded-2xl flex items-center gap-5 backdrop-blur-sm relative overflow-hidden">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-brand-500/10 rounded-full blur-[40px]"></div>
-                      <div className="bg-gray-900/80 p-3 rounded-xl border border-white/10 shadow-lg">
+                      <div className="bg-gray-900/80 p-4 rounded-xl border border-white/10 shadow-lg">
                         <Sparkles className="w-6 h-6 text-brand-400 animate-pulse" />
                       </div>
                       <div>
-                        <h4 className="text-white font-bold text-base mb-1">IA Pronta a Analisar</h4>
-                        <p className="text-gray-400 text-sm leading-relaxed">Carregue a frente (e verso opcional). O nosso sistema irá extrair automaticamente o nome, número, emissão e muito mais.</p>
+                        <h4 className="text-white font-bold text-lg mb-1">IA Pronta a Analisar</h4>
+                        <p className="text-gray-400 text-sm leading-relaxed max-w-lg">Carregue a frente (e verso opcional). O nosso sistema irá extrair automaticamente o nome, número, emissão, gráfica e muito mais.</p>
                       </div>
                   </div>
                 </div>
@@ -578,17 +569,17 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                   <div className="bg-blue-900/10 border border-blue-500/20 p-8 rounded-3xl flex flex-col items-center text-center gap-4 relative overflow-hidden group">
                     <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     <div className="bg-blue-500/20 p-4 rounded-2xl shadow-xl shadow-blue-900/20 mb-2">
-                       <FileSearch className="w-10 h-10 text-blue-400" />
+                       <FileSearch className="w-12 h-12 text-blue-400" />
                     </div>
                     <div>
-                      <h4 className="text-blue-100 font-bold text-xl mb-2">Base de Dados SCML & Web</h4>
-                      <p className="text-blue-200/60 text-sm leading-relaxed max-w-md mx-auto">
+                      <h4 className="text-blue-100 font-bold text-2xl mb-2">Base de Dados SCML & Web</h4>
+                      <p className="text-blue-200/60 text-base leading-relaxed max-w-lg mx-auto">
                         Pesquise por "Novas raspadinhas Santa Casa" ou o nome específico do jogo. A IA irá cruzar dados técnicos oficiais para preencher a ficha.
                       </p>
                     </div>
                   </div>
                   
-                  <div className="relative group max-w-xl mx-auto">
+                  <div className="relative group max-w-2xl mx-auto">
                     <div className="absolute -inset-1 bg-gradient-to-r from-brand-500 to-blue-500 rounded-2xl opacity-30 group-focus-within:opacity-100 transition duration-500 blur-md"></div>
                     <div className="relative bg-gray-900 rounded-2xl flex items-center p-2 border border-white/10">
                        <Search className="ml-4 w-6 h-6 text-gray-500" />
@@ -597,13 +588,13 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Ex: Nova Raspadinha Pé de Meia"
-                        className="w-full bg-transparent border-none text-white px-4 py-4 focus:ring-0 focus:outline-none text-lg placeholder-gray-600 font-medium"
+                        className="w-full bg-transparent border-none text-white px-4 py-5 focus:ring-0 focus:outline-none text-xl placeholder-gray-600 font-medium"
                         onKeyDown={(e) => e.key === 'Enter' && handleWebSearch()}
                        />
                        <button 
                          onClick={handleWebSearch}
                          disabled={!searchQuery.trim()}
-                         className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:scale-105 active:scale-95"
+                         className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-xl text-base font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:scale-105 active:scale-95"
                        >
                          Buscar
                        </button>
@@ -617,32 +608,31 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    <div className="flex gap-6">
                       <button 
                         onClick={() => setSimpleCategory('boletim')}
-                        className={`flex-1 p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-4 group ${simpleCategory === 'boletim' ? 'bg-green-900/10 border-green-500/50 shadow-xl shadow-green-900/10' : 'bg-gray-900/30 border-gray-800 hover:border-gray-600 hover:bg-gray-800/50'}`}
+                        className={`flex-1 p-8 rounded-3xl border-2 transition-all flex flex-col items-center gap-4 group ${simpleCategory === 'boletim' ? 'bg-green-900/10 border-green-500/50 shadow-xl shadow-green-900/10 scale-[1.02]' : 'bg-gray-900/30 border-gray-800 hover:border-gray-600 hover:bg-gray-800/50'}`}
                       >
-                         <div className={`p-4 rounded-2xl ${simpleCategory === 'boletim' ? 'bg-green-500 text-white shadow-lg' : 'bg-gray-800 text-gray-500 group-hover:text-gray-300'}`}>
-                            <ClipboardList className="w-8 h-8" />
+                         <div className={`p-5 rounded-2xl ${simpleCategory === 'boletim' ? 'bg-green-500 text-white shadow-lg' : 'bg-gray-800 text-gray-500 group-hover:text-gray-300'}`}>
+                            <ClipboardList className="w-10 h-10" />
                          </div>
                          <div className="text-center">
-                            <span className={`text-base font-bold block ${simpleCategory === 'boletim' ? 'text-green-400' : 'text-gray-400'}`}>Registar Boletim</span>
-                            <span className="text-xs text-gray-500 mt-1 block">Euromilhões, Totoloto...</span>
+                            <span className={`text-lg font-bold block ${simpleCategory === 'boletim' ? 'text-green-400' : 'text-gray-400'}`}>Registar Boletim</span>
+                            <span className="text-sm text-gray-500 mt-1 block">Euromilhões, Totoloto...</span>
                          </div>
                       </button>
                       <button 
                         onClick={() => setSimpleCategory('objeto')}
-                        className={`flex-1 p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-4 group ${simpleCategory === 'objeto' ? 'bg-orange-900/10 border-orange-500/50 shadow-xl shadow-orange-900/10' : 'bg-gray-900/30 border-gray-800 hover:border-gray-600 hover:bg-gray-800/50'}`}
+                        className={`flex-1 p-8 rounded-3xl border-2 transition-all flex flex-col items-center gap-4 group ${simpleCategory === 'objeto' ? 'bg-orange-900/10 border-orange-500/50 shadow-xl shadow-orange-900/10 scale-[1.02]' : 'bg-gray-900/30 border-gray-800 hover:border-gray-600 hover:bg-gray-800/50'}`}
                       >
-                         <div className={`p-4 rounded-2xl ${simpleCategory === 'objeto' ? 'bg-orange-500 text-white shadow-lg' : 'bg-gray-800 text-gray-500 group-hover:text-gray-300'}`}>
-                            <Package className="w-8 h-8" />
+                         <div className={`p-5 rounded-2xl ${simpleCategory === 'objeto' ? 'bg-orange-500 text-white shadow-lg' : 'bg-gray-800 text-gray-500 group-hover:text-gray-300'}`}>
+                            <Package className="w-10 h-10" />
                          </div>
                          <div className="text-center">
-                            <span className={`text-base font-bold block ${simpleCategory === 'objeto' ? 'text-orange-400' : 'text-gray-400'}`}>Registar Objeto</span>
-                            <span className="text-xs text-gray-500 mt-1 block">Catálogos, Brindes, Moedas...</span>
+                            <span className={`text-lg font-bold block ${simpleCategory === 'objeto' ? 'text-orange-400' : 'text-gray-400'}`}>Registar Objeto</span>
+                            <span className="text-sm text-gray-500 mt-1 block">Catálogos, Brindes, Moedas...</span>
                          </div>
                       </button>
                    </div>
 
                    <div className="bg-gray-900/50 border border-gray-800 rounded-3xl p-8 space-y-6 relative overflow-hidden backdrop-blur-sm">
-                      {/* Decorative background based on selection */}
                       <div className={`absolute -top-10 -right-10 w-48 h-48 blur-[80px] rounded-full pointer-events-none opacity-20 transition-colors duration-500 ${simpleCategory === 'boletim' ? 'bg-green-500' : 'bg-orange-500'}`}></div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
@@ -651,7 +641,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                             <input 
                               type="text"
                               placeholder={`Ex: ${simpleCategory === 'boletim' ? 'Boletim Euromilhões 2024' : 'Catálogo de Natal'}`}
-                              className="w-full bg-gray-950/50 border border-gray-700 rounded-xl px-5 py-4 text-white focus:border-brand-500 outline-none text-lg font-bold shadow-inner focus:ring-1 focus:ring-brand-500/30 transition-all"
+                              className="w-full bg-gray-950/50 border border-gray-700 rounded-xl px-5 py-4 text-white focus:border-brand-500 outline-none text-xl font-bold shadow-inner focus:ring-1 focus:ring-brand-500/30 transition-all"
                               value={simpleName}
                               onChange={(e) => setSimpleName(e.target.value)}
                               autoFocus
@@ -684,7 +674,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                             </div>
                         </div>
                         
-                        {/* Optional Image Upload in Simple Mode with Contextual Icon */}
                         <div className="md:col-span-2 pt-2">
                             <label className="block text-xs uppercase text-gray-400 font-bold mb-3 ml-1">Imagem (Opcional)</label>
                             <div className="flex gap-4">
@@ -703,42 +692,42 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
             </div>
           ) : (
             // REVIEW STEP
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 animate-fade-in h-full">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in h-full">
               
-              {/* Left Column: Image & Basic Flags */}
-              <div className="md:col-span-4 space-y-6 flex flex-col">
-                <div className="bg-black/20 rounded-3xl border border-white/5 overflow-hidden relative group flex items-center justify-center flex-1 min-h-[300px] shadow-inner">
+              {/* Left Column: Image & Basic Flags (Sticky) */}
+              <div className="lg:col-span-4 space-y-6 flex flex-col h-full overflow-y-auto pr-2 custom-scrollbar">
+                <div className="bg-black/20 rounded-3xl border border-white/5 overflow-hidden relative group flex items-center justify-center min-h-[400px] shadow-inner">
                   <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                   <img src={frontPreview || formData?.frontUrl || ''} className="w-full h-full object-contain p-4 relative z-10 drop-shadow-2xl" alt="Frente" />
                   <label className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer backdrop-blur-sm z-20">
-                    <UploadCloud className="w-10 h-10 text-white mb-3" />
-                    <span className="text-sm text-white font-bold bg-white/10 px-4 py-2 rounded-full backdrop-blur-md">Alterar Imagem</span>
+                    <UploadCloud className="w-12 h-12 text-white mb-3" />
+                    <span className="text-base text-white font-bold bg-white/10 px-6 py-3 rounded-full backdrop-blur-md">Alterar Imagem</span>
                     <input type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && processFile(e.target.files[0], true)} />
                   </label>
                 </div>
                 
-                {/* Visual Category Selector */}
+                {/* Visual Category Selector Cards */}
                 <div className="grid grid-cols-2 gap-3">
                     {['raspadinha', 'lotaria', 'boletim', 'objeto'].map((cat) => (
                        <button
                          key={cat}
                          onClick={() => updateField('category', cat)}
-                         className={`relative p-3 rounded-2xl border transition-all flex flex-col items-center gap-2 group ${formData?.category === cat ? 'bg-gray-800 border-brand-500/50 ring-1 ring-brand-500/20' : 'bg-gray-900/50 border-gray-800 hover:bg-gray-800 hover:border-gray-700'}`}
+                         className={`relative p-4 rounded-2xl border transition-all flex flex-col items-center gap-3 group ${formData?.category === cat ? 'bg-gray-800 border-brand-500/50 ring-1 ring-brand-500/20 shadow-lg' : 'bg-gray-900/50 border-gray-800 hover:bg-gray-800 hover:border-gray-700'}`}
                        >
-                         {cat === 'raspadinha' && <Coins className={`w-5 h-5 ${formData?.category === cat ? 'text-brand-400' : 'text-gray-600 group-hover:text-gray-400'}`} />}
-                         {cat === 'lotaria' && <Ticket className={`w-5 h-5 ${formData?.category === cat ? 'text-purple-400' : 'text-gray-600 group-hover:text-gray-400'}`} />}
-                         {cat === 'boletim' && <ClipboardList className={`w-5 h-5 ${formData?.category === cat ? 'text-green-400' : 'text-gray-600 group-hover:text-gray-400'}`} />}
-                         {cat === 'objeto' && <Package className={`w-5 h-5 ${formData?.category === cat ? 'text-orange-400' : 'text-gray-600 group-hover:text-gray-400'}`} />}
+                         {cat === 'raspadinha' && <Coins className={`w-6 h-6 ${formData?.category === cat ? 'text-brand-400' : 'text-gray-600 group-hover:text-gray-400'}`} />}
+                         {cat === 'lotaria' && <Ticket className={`w-6 h-6 ${formData?.category === cat ? 'text-purple-400' : 'text-gray-600 group-hover:text-gray-400'}`} />}
+                         {cat === 'boletim' && <ClipboardList className={`w-6 h-6 ${formData?.category === cat ? 'text-green-400' : 'text-gray-600 group-hover:text-gray-400'}`} />}
+                         {cat === 'objeto' && <Package className={`w-6 h-6 ${formData?.category === cat ? 'text-orange-400' : 'text-gray-600 group-hover:text-gray-400'}`} />}
                          
-                         <span className={`text-[10px] font-bold uppercase tracking-wider ${formData?.category === cat ? 'text-white' : 'text-gray-600'}`}>
+                         <span className={`text-xs font-bold uppercase tracking-wider ${formData?.category === cat ? 'text-white' : 'text-gray-600'}`}>
                             {cat === 'raspadinha' ? t.typeScratch : cat === 'lotaria' ? t.typeLottery : cat === 'boletim' ? t.typeBulletin : t.typeObject}
                          </span>
-                         {formData?.category === cat && <div className="absolute top-2 right-2 w-2 h-2 bg-brand-500 rounded-full shadow-lg shadow-brand-500/50"></div>}
+                         {formData?.category === cat && <div className="absolute top-3 right-3 w-2 h-2 bg-brand-500 rounded-full shadow-lg shadow-brand-500/50 animate-pulse"></div>}
                        </button>
                     ))}
                 </div>
 
-                 {/* Attribute Cards */}
+                 {/* Attribute Toggles */}
                  <div className="space-y-3">
                    {/* Series Toggle */}
                    <div 
@@ -747,14 +736,14 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    >
                       <div className="flex items-center gap-3">
                          <div className={`p-2 rounded-xl ${formData?.isSeries ? 'bg-brand-500 text-white shadow-lg shadow-brand-900/20' : 'bg-gray-800 text-gray-500'}`}>
-                           <Layers className="w-4 h-4" />
+                           <Layers className="w-5 h-5" />
                          </div>
                          <div className="flex flex-col">
-                           <span className={`text-xs font-bold uppercase tracking-wide ${formData?.isSeries ? 'text-white' : 'text-gray-400'}`}>{t.isSeries}</span>
+                           <span className={`text-sm font-bold uppercase tracking-wide ${formData?.isSeries ? 'text-white' : 'text-gray-400'}`}>{t.isSeries}</span>
                          </div>
                       </div>
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${formData?.isSeries ? 'bg-brand-500 border-brand-500' : 'border-gray-700'}`}>
-                        {formData?.isSeries && <Check className="w-3 h-3 text-white" />}
+                      <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${formData?.isSeries ? 'bg-brand-500 border-brand-500' : 'border-gray-700'}`}>
+                        {formData?.isSeries && <Check className="w-4 h-4 text-white" />}
                       </div>
                    </div>
                    {formData?.isSeries && (
@@ -776,12 +765,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    >
                       <div className="flex items-center gap-3">
                          <div className={`p-2 rounded-xl ${formData?.isRarity ? 'bg-gold-500 text-white shadow-lg shadow-gold-900/20' : 'bg-gray-800 text-gray-500'}`}>
-                           <Gem className="w-4 h-4" />
+                           <Gem className="w-5 h-5" />
                          </div>
-                         <span className={`text-xs font-bold uppercase tracking-wide ${formData?.isRarity ? 'text-gold-200' : 'text-gray-400'}`}>{t.isRarity}</span>
+                         <span className={`text-sm font-bold uppercase tracking-wide ${formData?.isRarity ? 'text-gold-200' : 'text-gray-400'}`}>{t.isRarity}</span>
                       </div>
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${formData?.isRarity ? 'bg-gold-500 border-gold-500' : 'border-gray-700'}`}>
-                        {formData?.isRarity && <Check className="w-3 h-3 text-white" />}
+                      <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${formData?.isRarity ? 'bg-gold-500 border-gold-500' : 'border-gray-700'}`}>
+                        {formData?.isRarity && <Check className="w-4 h-4 text-white" />}
                       </div>
                    </div>
 
@@ -792,12 +781,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    >
                       <div className="flex items-center gap-3">
                          <div className={`p-2 rounded-xl ${formData?.isPromotional ? 'bg-pink-500 text-white shadow-lg shadow-pink-900/20' : 'bg-gray-800 text-gray-500'}`}>
-                           <Gift className="w-4 h-4" />
+                           <Gift className="w-5 h-5" />
                          </div>
-                         <span className={`text-xs font-bold uppercase tracking-wide ${formData?.isPromotional ? 'text-pink-200' : 'text-gray-400'}`}>{t.isPromotional}</span>
+                         <span className={`text-sm font-bold uppercase tracking-wide ${formData?.isPromotional ? 'text-pink-200' : 'text-gray-400'}`}>{t.isPromotional}</span>
                       </div>
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${formData?.isPromotional ? 'bg-pink-500 border-pink-500' : 'border-gray-700'}`}>
-                        {formData?.isPromotional && <Check className="w-3 h-3 text-white" />}
+                      <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${formData?.isPromotional ? 'bg-pink-500 border-pink-500' : 'border-gray-700'}`}>
+                        {formData?.isPromotional && <Check className="w-4 h-4 text-white" />}
                       </div>
                    </div>
 
@@ -808,12 +797,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    >
                       <div className="flex items-center gap-3">
                          <div className={`p-2 rounded-xl ${formData?.isWinner ? 'bg-green-500 text-white shadow-lg shadow-green-900/20' : 'bg-gray-800 text-gray-500'}`}>
-                           <Trophy className="w-4 h-4" />
+                           <Trophy className="w-5 h-5" />
                          </div>
-                         <span className={`text-xs font-bold uppercase tracking-wide ${formData?.isWinner ? 'text-green-300' : 'text-gray-400'}`}>{t.isWinner}</span>
+                         <span className={`text-sm font-bold uppercase tracking-wide ${formData?.isWinner ? 'text-green-300' : 'text-gray-400'}`}>{t.isWinner}</span>
                       </div>
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${formData?.isWinner ? 'bg-green-500 border-green-500' : 'border-gray-700'}`}>
-                        {formData?.isWinner && <Check className="w-3 h-3 text-white" />}
+                      <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${formData?.isWinner ? 'bg-green-500 border-green-500' : 'border-gray-700'}`}>
+                        {formData?.isWinner && <Check className="w-4 h-4 text-white" />}
                       </div>
                    </div>
                    {formData?.isWinner && (
@@ -823,7 +812,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                              value={formData.prizeAmount || ''}
                              onChange={(e) => updateField('prizeAmount', e.target.value)}
                              placeholder={t.prizeAmountPlaceholder}
-                             className="w-full bg-gray-900/80 border border-green-500/30 text-white text-sm rounded-xl px-4 py-3 focus:border-green-500 outline-none placeholder-gray-600 shadow-inner"
+                             className="w-full bg-gray-900/80 border border-green-500/30 text-white text-sm rounded-xl px-4 py-3 focus:border-green-500 outline-none placeholder-gray-600 shadow-inner font-bold text-lg"
                            />
                         </div>
                    )}
@@ -831,20 +820,20 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
               </div>
 
               {/* Right: Detailed Form */}
-              <div className="md:col-span-8 bg-gray-900/40 p-8 rounded-3xl border border-white/5 backdrop-blur-md">
+              <div className="lg:col-span-8 bg-gray-900/40 p-8 rounded-[2.5rem] border border-white/5 backdrop-blur-md overflow-y-auto custom-scrollbar h-full">
                 <div className="grid grid-cols-2 gap-6">
                    <div className="col-span-2">
-                     <label className="block text-[10px] uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.gameName}</label>
+                     <label className="block text-xs uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.gameName}</label>
                      <input 
                        type="text" 
                        value={formData?.gameName || ''}
                        onChange={e => updateField('gameName', e.target.value)}
-                       className="w-full bg-gray-950/50 border border-gray-700 rounded-xl px-5 py-4 text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 focus:outline-none text-xl font-bold shadow-inner"
+                       className="w-full bg-gray-950/50 border border-gray-700 rounded-xl px-5 py-4 text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 focus:outline-none text-2xl font-black shadow-inner"
                      />
                    </div>
                    
                    <div>
-                     <label className="block text-[10px] uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.country}</label>
+                     <label className="block text-xs uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.country}</label>
                      <div className="relative group">
                        <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-brand-500 transition-colors" />
                        <input 
@@ -865,7 +854,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    </div>
 
                    <div>
-                     <label className="block text-[10px] uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.region}</label>
+                     <label className="block text-xs uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.region}</label>
                      <div className="relative group">
                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-brand-500 transition-colors" />
                        <input 
@@ -880,7 +869,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    </div>
 
                    <div>
-                     <label className="block text-[10px] uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.continent}</label>
+                     <label className="block text-xs uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.continent}</label>
                      <div className="relative">
                         <select 
                           value={formData?.continent || ''}
@@ -898,7 +887,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    </div>
 
                    <div>
-                     <label className="block text-[10px] uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.state}</label>
+                     <label className="block text-xs uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.state}</label>
                      <input
                        type="text"
                        list="list-states"
@@ -910,7 +899,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    </div>
 
                    <div>
-                     <label className="block text-[10px] uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.customId}</label>
+                     <label className="block text-xs uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.customId}</label>
                      <div className="relative">
                        <input 
                          type="text" 
@@ -923,7 +912,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    </div>
 
                    <div>
-                     <label className="block text-[10px] uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.collector}</label>
+                     <label className="block text-xs uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.collector}</label>
                      <div className="relative group">
                        {currentUser && formData?.collector === currentUser ? (
                           <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center">
@@ -952,7 +941,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    </div>
 
                    <div>
-                     <label className="block text-[10px] uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.releaseDate}</label>
+                     <label className="block text-xs uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.releaseDate}</label>
                      <input 
                        type="text" 
                        value={formData?.releaseDate || ''}
@@ -963,7 +952,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    </div>
 
                    <div>
-                     <label className="block text-[10px] uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.size}</label>
+                     <label className="block text-xs uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.size}</label>
                      <input 
                        type="text" 
                        list="list-sizes"
@@ -975,7 +964,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    </div>
 
                    <div>
-                     <label className="block text-[10px] uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.price}</label>
+                     <label className="block text-xs uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.price}</label>
                      <div className="relative group">
                        <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-green-500" />
                        <input 
@@ -989,7 +978,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    </div>
 
                    <div>
-                     <label className="block text-[10px] uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.emission}</label>
+                     <label className="block text-xs uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.emission}</label>
                      <div className="relative group">
                        <BarChart className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-blue-500" />
                        <input 
@@ -1004,7 +993,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    </div>
 
                    <div className="col-span-2">
-                     <label className="block text-[10px] uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.printer}</label>
+                     <label className="block text-xs uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.printer}</label>
                      <div className="relative group">
                        <Printer className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-brand-500" />
                        <input 
@@ -1020,7 +1009,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
                    {/* Line Type Selector */}
                    <div className="col-span-2">
-                      <label className="block text-[10px] uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.lines}</label>
+                      <label className="block text-xs uppercase text-gray-400 font-bold mb-2 tracking-widest pl-1">{t.lines}</label>
                       <div className="relative group">
                         <AlignJustify className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-brand-500" />
                         <select
@@ -1037,7 +1026,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    </div>
                    
                    <div className="col-span-2">
-                     <label className={`block text-[10px] uppercase font-bold mb-2 tracking-widest pl-1 ${formData?.isRarity ? 'text-gold-400' : 'text-gray-400'}`}>
+                     <label className={`block text-xs uppercase font-bold mb-2 tracking-widest pl-1 ${formData?.isRarity ? 'text-gold-400' : 'text-gray-400'}`}>
                         {formData?.isRarity ? t.rarityInfo : t.values}
                      </label>
                      <textarea 
@@ -1057,14 +1046,14 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
           {step === 'review' ? (
              <button
                onClick={() => setStep('upload')}
-               className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-bold px-5 py-3 hover:bg-white/5 rounded-xl"
+               className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-bold px-6 py-4 hover:bg-white/5 rounded-2xl"
              >
-               <ArrowLeft className="w-4 h-4" /> {t.backBtn}
+               <ArrowLeft className="w-5 h-5" /> {t.backBtn}
              </button>
           ) : (
             <button
                onClick={onClose}
-               className="text-gray-400 hover:text-white transition-colors text-sm font-bold px-5 py-3 hover:bg-white/5 rounded-xl"
+               className="text-gray-400 hover:text-white transition-colors text-sm font-bold px-6 py-4 hover:bg-white/5 rounded-2xl"
                disabled={isProcessing || isCompressing}
             >
               {t.cancel}
@@ -1077,7 +1066,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                   <button
                     onClick={handleAnalyzeImage}
                     disabled={!frontFile || isProcessing || isCompressing}
-                    className={`flex items-center gap-2 px-8 py-4 rounded-2xl text-sm font-bold shadow-xl transition-all hover:scale-[1.02] active:scale-95 ${
+                    className={`flex items-center gap-3 px-10 py-5 rounded-2xl text-base font-bold shadow-xl transition-all hover:scale-[1.02] active:scale-95 ${
                       !frontFile || isProcessing || isCompressing
                         ? "bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700"
                         : "bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white shadow-brand-900/40 border border-brand-400/20"
@@ -1085,8 +1074,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                   >
                     {isProcessing ? (
                       <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Processando...
+                        <Zap className="w-5 h-5 animate-pulse" />
+                        Digitalizando...
                       </>
                     ) : (
                       <>
@@ -1099,7 +1088,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                   <button
                     onClick={handleWebSearch}
                     disabled={!searchQuery.trim() || isProcessing}
-                    className={`flex items-center gap-2 px-8 py-4 rounded-2xl text-sm font-bold shadow-xl transition-all hover:scale-[1.02] active:scale-95 ${
+                    className={`flex items-center gap-3 px-10 py-5 rounded-2xl text-base font-bold shadow-xl transition-all hover:scale-[1.02] active:scale-95 ${
                       !searchQuery.trim() || isProcessing
                         ? "bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700"
                         : "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white shadow-blue-900/40 border border-blue-400/20"
@@ -1120,7 +1109,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                 ) : (
                   <button
                     onClick={handleSimpleCreate}
-                    className={`flex items-center gap-2 px-8 py-4 rounded-2xl text-sm font-bold shadow-xl transition-all hover:scale-[1.02] active:scale-95 ${
+                    className={`flex items-center gap-3 px-10 py-5 rounded-2xl text-base font-bold shadow-xl transition-all hover:scale-[1.02] active:scale-95 ${
                        !simpleName || !simpleCountry 
                          ? "bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700"
                          : simpleCategory === 'boletim' 
@@ -1136,7 +1125,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                <button
                   onClick={handleSave}
                   disabled={showSuccess}
-                  className={`flex items-center gap-2 px-10 py-4 rounded-2xl text-sm font-bold shadow-xl transition-all hover:scale-[1.02] active:scale-95 ${
+                  className={`flex items-center gap-3 px-12 py-5 rounded-2xl text-base font-bold shadow-xl transition-all hover:scale-[1.02] active:scale-95 ${
                     showSuccess 
                       ? "bg-green-700 text-white cursor-default" 
                       : "bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white shadow-green-900/40 border border-green-400/20"
@@ -1144,8 +1133,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                 >
                   {showSuccess ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      {t.saving}
+                      <CheckCircle className="w-5 h-5 animate-bounce" />
+                      {t.saved}
                     </>
                   ) : (
                     <>
