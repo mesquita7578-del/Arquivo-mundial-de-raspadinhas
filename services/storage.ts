@@ -288,6 +288,10 @@ class StorageService {
           else if (lowerName.includes('chloe')) {
               finalName = 'Chloe';
           }
+          // Logic for Pedro Rodrigo (Encarregado Geral)
+          else if (lowerName.includes('pedro') || lowerName.includes('rodrigo')) {
+              finalName = 'Pedro Rodrigo';
+          }
           // Logic for AI / System (The Queen)
           else if (lowerName.includes('ia') || lowerName.includes('system') || lowerName.includes('gemini') || lowerName.includes('bot')) {
               finalName = 'IA Guardiã';

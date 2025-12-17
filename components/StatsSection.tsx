@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Continent } from '../types';
-import { BarChart3, Database, Map, PieChart, Users, Award, Ticket, Coins, Crown, Star, Sparkles, Flag, Globe, Mail } from 'lucide-react';
+import { BarChart3, Database, Map, PieChart, Users, Award, Ticket, Coins, Crown, Star, Sparkles, Flag, Globe, Mail, ShieldCheck } from 'lucide-react';
 
 interface StatsSectionProps {
   stats: Record<string, number>;
@@ -45,6 +45,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
      if (lower.includes('jorge')) return { color: 'bg-blue-500', text: 'JM', icon: <Crown className="w-3 h-3 text-yellow-400 fill-yellow-400" /> };
      if (lower.includes('fabio') || lower.includes('fábio')) return { color: 'bg-green-500', text: 'FP', icon: <Star className="w-3 h-3 text-white fill-white" /> };
      if (lower.includes('chloe')) return { color: 'bg-pink-500', text: 'CH', icon: <Crown className="w-3 h-3 text-pink-200 fill-pink-200" /> };
+     if (lower.includes('pedro') || lower.includes('rodrigo')) return { color: 'bg-orange-500', text: 'PR', icon: <ShieldCheck className="w-3 h-3 text-white fill-white" /> };
      if (lower.includes('ia') || lower.includes('system') || lower.includes('guardiã')) return { color: 'bg-purple-600', text: 'IA', icon: <Sparkles className="w-3 h-3 text-cyan-300 fill-cyan-300" /> };
      return { color: 'bg-slate-600', text: name.substring(0, 2).toUpperCase(), icon: null };
   };

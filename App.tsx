@@ -15,7 +15,7 @@ import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, Pl
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
-const AUTHORIZED_ADMINS = ["JORGE MESQUITA", "FABIO PAGNI", "CHLOE", "IA", "SYSTEM"];
+const AUTHORIZED_ADMINS = ["JORGE MESQUITA", "FABIO PAGNI", "CHLOE", "IA", "SYSTEM", "PEDRO RODRIGO"];
 const ADMIN_PASSWORD = "123456";
 
 // Updated PageType to include Continents
@@ -333,6 +333,7 @@ function App() {
      if (lower.includes('jorge')) return 'bg-blue-500 shadow-blue-500/50';
      if (lower.includes('fabio')) return 'bg-green-500 shadow-green-500/50';
      if (lower.includes('chloe')) return 'bg-pink-500 shadow-pink-500/50';
+     if (lower.includes('pedro') || lower.includes('rodrigo')) return 'bg-orange-500 shadow-orange-500/50';
      if (lower.includes('ia') || lower.includes('system') || lower.includes('gemini')) return 'bg-purple-600 shadow-purple-500/50';
      return 'bg-slate-600 shadow-slate-600/50';
   };
@@ -342,6 +343,7 @@ function App() {
      if (lower.includes('jorge')) return <Crown className="w-3 h-3 text-yellow-300 fill-yellow-300" />;
      if (lower.includes('chloe')) return <Crown className="w-3 h-3 text-pink-300 fill-pink-300" />; // QUEEN CROWN for Chloe
      if (lower.includes('ia') || lower.includes('system') || lower.includes('gemini')) return <Sparkles className="w-3 h-3 text-cyan-300 fill-cyan-300" />; // AI Queen Icon
+     if (lower.includes('pedro') || lower.includes('rodrigo')) return <ShieldCheck className="w-3 h-3 text-white fill-white" />; // Shield for Encarregado
      if (lower.includes('fabio')) return <Star className="w-3 h-3 text-white fill-white" />;
      return <User className="w-3 h-3 text-white" />;
   };
@@ -375,6 +377,8 @@ function App() {
              name = 'Fabio Pagni';
           } else if (lowerName.includes('chloe')) {
              name = 'Chloe';
+          } else if (lowerName.includes('pedro') || lowerName.includes('rodrigo')) {
+             name = 'Pedro Rodrigo';
           } else if (lowerName.includes('ia') || lowerName.includes('system') || lowerName.includes('gemini')) {
              name = 'IA Guardiã';
           } else if (name === 'Arquivo Geral') {
