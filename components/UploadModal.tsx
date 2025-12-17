@@ -78,6 +78,11 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     
     setIsAnalyzing(true);
     setError(null);
+
+    // 1. GERAR ID IMEDIATAMENTE (Segurança contra falhas da IA)
+    const rnd = Math.floor(Math.random() * 10000);
+    // Assumimos PT por defeito, se a IA detetar outro país, corrige depois.
+    const fallbackId = `RASP-PT-${rnd}`; 
     
     try {
       const frontBase64 = frontPreview.split(',')[1];
@@ -87,30 +92,36 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       // CALL GEMINI
       const result = await analyzeImage(frontBase64, backBase64, mime);
       
-      // GENERATE ID IMMEDIATELY
-      const countryCode = (result.country && result.country !== 'Desconhecido') 
-        ? result.country.substring(0, 2).toUpperCase() 
-        : 'PT';
-      const rnd = Math.floor(Math.random() * 10000);
-      const generatedId = `RASP-${countryCode}-${rnd}`;
+      // Se a IA devolver país, atualizamos o ID com o código correto
+      let finalId = fallbackId;
+      if (result.country && result.country !== 'Desconhecido') {
+         const code = result.country.substring(0, 2).toUpperCase();
+         finalId = `RASP-${code}-${rnd}`;
+      }
 
       setFormData(prev => ({
         ...prev,
         ...result,
-        customId: generatedId, // Pre-fill ID so user sees it
+        customId: finalId, 
         aiGenerated: true
       }));
 
-      setStep(2);
     } catch (err) {
-      console.error(err);
-      setError(t.errorAnalyze);
-      // Even on error, go to manual step with ID generated
-      const generatedId = `RASP-XX-${Math.floor(Math.random() * 10000)}`;
-      setFormData(prev => ({ ...prev, customId: generatedId }));
-      setStep(2);
+      console.error("Erro na IA:", err);
+      // SILENT FAIL: Se a IA falhar, não chateia o utilizador.
+      // Preenche com dados manuais básicos e deixa o utilizador seguir.
+      setFormData(prev => ({
+        ...prev,
+        gameName: "",
+        country: "Portugal", // Assumir Portugal por defeito
+        state: "SC",
+        customId: fallbackId,
+        aiGenerated: false
+      }));
+      setError(null); // Não mostramos erro, mostramos o formulário para preencher manual
     } finally {
       setIsAnalyzing(false);
+      setStep(2); // Avança SEMPRE para o passo 2
     }
   };
 
@@ -128,7 +139,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     
     const timestamp = Date.now();
     const id = timestamp.toString();
-    // Use the customId from form (which was pre-filled) or fallback
     const customId = formData.customId || `RASP-XX-${Math.floor(Math.random() * 1000)}`;
 
     const validExtras = extraPreviews.filter(img => img !== null) as string[];

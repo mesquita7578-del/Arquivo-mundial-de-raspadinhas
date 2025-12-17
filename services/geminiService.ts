@@ -19,37 +19,18 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
         }
       },
       {
-        text: `You are an expert archivist for Scratchcards (Raspadinhas) and Lottery tickets.
+        text: `You are an expert OCR for Lottery tickets.
+        Extract the following data in JSON format:
         
-        TASK: Extract technical data from this image.
-        
-        CRITICAL RULES:
-        1. If you are unsure, GUESS based on context. Do not return empty strings.
-        2. COUNTRY: Infer from language/currency. 
-           - "Santa Casa", "Misericórdia", "Prémio" -> Portugal.
-           - "Loterías y Apuestas", "Premio" -> Espanha.
-           - "Gratta e Vinci" -> Itália.
-           - "Lottery", "£" -> Reino Unido.
-           - "$" -> EUA.
-        3. STATE: 
-           - If scratch area is silver/gray and intact -> "MINT".
-           - If scratched/revealed -> "SC".
-           - If it has "VOID", "SPECIMEN", "00000" -> "AMOSTRA".
-        4. NAME: The largest text on the card.
-        
-        OUTPUT FORMAT:
-        Return ONLY a raw JSON object (no markdown, no backticks) with these keys:
         {
-          "gameName": "string",
-          "gameNumber": "string (look for small numbers like Mod. 502 or No. 100)",
-          "price": "string (e.g. 5€)",
-          "country": "string",
-          "printer": "string (look for small logos like SG, Pollard, IGT)",
-          "emission": "string (if visible)",
-          "state": "MINT" or "SC" or "AMOSTRA",
-          "releaseDate": "YYYY",
-          "values": "string (list max prizes)"
-        }`
+          "gameName": "BIG BOLD TEXT AT TOP",
+          "country": "Portugal" (Guess based on language: SCML/Misericordia = Portugal, Gratta e Vinci = Italy),
+          "gameNumber": "123" (Look for Mod. or N.),
+          "price": "5€",
+          "state": "SC" (If scratched) or "MINT" (If clean)
+        }
+        
+        Return ONLY valid JSON. No markdown.`
       }
     ];
 
@@ -60,7 +41,6 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
           data: backBase64
         }
       });
-      parts[parts.length - 1].text += " Use the back image to read the Barcode numbers, Printer name and Regulations.";
     }
 
     const response = await ai.models.generateContent({
@@ -71,12 +51,9 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
           parts: parts
         }
       ]
-      // REMOVED responseSchema and responseMimeType to allow the model to be more flexible/creative
-      // and prevent "empty object" errors when validation fails.
     });
 
     if (response.text) {
-      // Robust Cleaning Logic
       let cleanJson = response.text.trim();
       // Remove markdown code blocks if present
       cleanJson = cleanJson.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -85,18 +62,17 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       try {
         data = JSON.parse(cleanJson);
       } catch (e) {
-        console.error("JSON Parse Error, attempting manual extraction", cleanJson);
-        // Fallback: If JSON fails, returns basic defaults
+        // Fallback: simple text analysis if JSON fails
         return {
            category: "raspadinha",
-           gameName: "Nome Não Detetado",
+           gameName: "",
            gameNumber: "",
            releaseDate: new Date().getFullYear().toString(),
            size: "",
            values: "",
            price: "",
            state: "SC",
-           country: "Desconhecido",
+           country: "Portugal",
            continent: "Europa",
            region: "",
            emission: "",
@@ -106,36 +82,36 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
 
       // Normalization
       return {
-        category: "raspadinha", // Default
-        gameName: data.gameName || "Sem Nome",
+        category: "raspadinha",
+        gameName: data.gameName || "",
         gameNumber: data.gameNumber || "",
-        releaseDate: data.releaseDate || new Date().getFullYear().toString(),
+        releaseDate: new Date().getFullYear().toString(),
         size: "",
-        values: data.values || "",
+        values: "",
         price: data.price || "",
-        state: (data.state && ["MINT", "SC", "AMOSTRA", "VOID"].includes(data.state.toUpperCase())) ? data.state.toUpperCase() : "SC",
-        country: data.country || "Desconhecido",
+        state: (data.state && ["MINT", "SC", "AMOSTRA"].includes(data.state)) ? data.state : "SC",
+        country: data.country || "Portugal",
         region: "",
-        continent: "Europa", // We let the UI default this or user change it
-        emission: data.emission || "",
-        printer: data.printer || ""
+        continent: "Europa",
+        emission: "",
+        printer: ""
       } as AnalysisResult;
     }
     
     throw new Error("No response text");
   } catch (error) {
     console.error("Gemini Error:", error);
-    // Return empty structure so UI doesn't crash
+    // Return safe default so UI doesn't crash
     return {
       category: "raspadinha",
-      gameName: "Erro na Leitura",
+      gameName: "",
       gameNumber: "",
-      releaseDate: "",
+      releaseDate: new Date().toISOString().split('T')[0],
       size: "",
       values: "",
       price: "",
       state: "SC",
-      country: "Desconhecido",
+      country: "Portugal",
       continent: "Europa",
       region: "",
       emission: "",
@@ -145,30 +121,9 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
 };
 
 export const searchScratchcardInfo = async (query: string): Promise<Partial<AnalysisResult>> => {
-  // Keep existing search logic but add safety
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Search technical info for scratchcard: "${query}". Return JSON with gameName, price, country, printer.`,
-      config: {
-        tools: [{ googleSearch: {} }]
-      }
-    });
-
-    let text = response.text || "{}";
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    
-    try {
-        return JSON.parse(text);
-    } catch {
-        return {};
-    }
-  } catch (error) {
-    return {};
-  }
+  return {};
 };
 
 export const generateDocumentMetadata = async (fileName: string, title: string): Promise<string> => {
-    // Keep existing
     return "Documento arquivado.";
 };
