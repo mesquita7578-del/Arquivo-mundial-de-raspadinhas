@@ -18,7 +18,7 @@ export const translations = {
       backupTitle: "Enviar dados para o Fabio / Backup (JSON)", 
       import: "Juntar Coleção",
       importTitle: "Carregar ficheiro recebido do Fabio (JSON)",
-      exportMyList: "Minha Lista (TXT)", // New
+      exportMyList: "Minha Checklist (TXT)", 
       rarities: "Raridades",
       promos: "Promocionais", 
       winners: "Premiadas",
@@ -94,7 +94,11 @@ export const translations = {
       of: "di",
       next: "Próx",
       prev: "Ant",
-      showing: "Mostrando"
+      showing: "Mostrando",
+      // Collection Banner
+      collectionTitle: "A Coleção de",
+      collectionSubtitle: "Itens catalogados e verificados.",
+      downloadList: "Baixar Lista Simplificada (.txt)"
     },
     stats: {
       title: "Estatísticas",
@@ -223,7 +227,7 @@ export const translations = {
       backupTitle: "Invia dati a Jorge / Backup (JSON)",
       import: "Unisci Collezione",
       importTitle: "Carica file ricevuto da Jorge (JSON)",
-      exportMyList: "Mia Lista (TXT)", // New
+      exportMyList: "Mia Lista (TXT)",
       rarities: "Rarità",
       promos: "Promo", 
       winners: "Vincenti",
@@ -299,7 +303,11 @@ export const translations = {
       of: "di",
       next: "Succ",
       prev: "Prec",
-      showing: "Mostrando"
+      showing: "Mostrando",
+      // Collection Banner
+      collectionTitle: "Collezione di",
+      collectionSubtitle: "Articoli catalogati.",
+      downloadList: "Scarica Lista (.txt)"
     },
     stats: {
       title: "Statistiche",

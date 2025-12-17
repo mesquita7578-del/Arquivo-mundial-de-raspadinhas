@@ -11,7 +11,7 @@ import { WebsitesModal } from './components/WebsitesModal';
 import { AboutPage } from './components/AboutPage'; 
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy, Crown, Star, User, Bot, Sparkles, Smartphone, Share as ShareIcon, RefreshCw, ChevronRight, CheckSquare } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy, Crown, Star, User, Bot, Sparkles, Smartphone, Share as ShareIcon, RefreshCw, ChevronRight, CheckSquare, FileText } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
@@ -1200,6 +1200,33 @@ function App() {
                     </h2>
                   </div>
                 </div>
+
+                {/* MY COLLECTION BANNER (NEW) */}
+                {showMyCollection && currentUser && (
+                  <div className="mb-6 bg-gradient-to-r from-blue-900/40 to-blue-800/40 border border-blue-500/30 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 animate-fade-in shadow-xl relative overflow-hidden">
+                     <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                        <CheckSquare className="w-32 h-32 text-blue-400" />
+                     </div>
+                     <div className="flex items-center gap-4 relative z-10">
+                        <div className="bg-blue-500 rounded-full p-3 shadow-lg shadow-blue-900/50">
+                           <CheckSquare className="w-8 h-8 text-white" />
+                        </div>
+                        <div>
+                           <h3 className="text-xl font-bold text-white">{t.grid.collectionTitle} {currentUser}</h3>
+                           <p className="text-blue-200 text-sm">
+                              Você tem <span className="font-bold text-white bg-blue-500/20 px-2 py-0.5 rounded-md mx-1 border border-blue-400/30">{displayedImages.length}</span> {t.grid.collectionSubtitle}
+                           </p>
+                        </div>
+                     </div>
+                     <button
+                        onClick={handleExportPersonalList}
+                        className="bg-white text-blue-900 hover:bg-blue-50 px-6 py-3 rounded-xl font-bold shadow-xl transition-all flex items-center gap-2 whitespace-nowrap transform hover:scale-105 active:scale-95 relative z-10"
+                     >
+                        <FileText className="w-5 h-5" />
+                        {t.grid.downloadList}
+                     </button>
+                  </div>
+                )}
 
                 {/* Continent Filters */}
                 <div className="flex overflow-x-auto pb-2 gap-2 mb-4 scrollbar-hide">
