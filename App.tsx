@@ -11,7 +11,7 @@ import { WebsitesModal } from './components/WebsitesModal';
 import { AboutPage } from './components/AboutPage'; 
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy, Crown, Star, User, Bot, Sparkles, Smartphone, Share as ShareIcon } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy, Crown, Star, User, Bot, Sparkles, Smartphone, Share as ShareIcon, RefreshCw } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
@@ -74,10 +74,12 @@ function App() {
   const [language, setLanguage] = useState<Language>('pt');
   const t = translations[language];
 
-  // PWA Install Prompt State
+  // PWA Install Prompt & Updates State
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [showUpdateBtn, setShowUpdateBtn] = useState(false);
+  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
 
   const loadInitialData = async () => {
     setIsLoadingDB(true);
@@ -126,9 +128,50 @@ function App() {
        const hideTimer = setTimeout(() => setShowChloeMessage(false), 5000);
        return () => clearTimeout(hideTimer);
     }, 2000);
+
+    // SERVICE WORKER REGISTRATION & UPDATE DETECTION
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then((registration) => {
+        // Check if there's already a waiting worker (update ready)
+        if (registration.waiting) {
+          setWaitingWorker(registration.waiting);
+          setShowUpdateBtn(true);
+        }
+
+        // Listen for new updates
+        registration.onupdatefound = () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.onstatechange = () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                setWaitingWorker(newWorker);
+                setShowUpdateBtn(true);
+              }
+            };
+          }
+        };
+      });
+
+      // Handle controller change (reload page)
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          window.location.reload();
+          refreshing = true;
+        }
+      });
+    }
+
     return () => clearTimeout(timer);
 
   }, []);
+
+  const handleUpdateApp = () => {
+    if (waitingWorker) {
+      waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+      setShowUpdateBtn(false);
+    }
+  };
 
   // Handle Scroll to show/hide "Back to Top" button
   useEffect(() => {
@@ -767,6 +810,17 @@ function App() {
         t={t.header}
         onInstall={!isStandalone ? handleInstallClick : undefined} // Logic for iOS or Android
       />
+
+      {/* UPDATE NOTIFICATION BANNER */}
+      {showUpdateBtn && (
+        <button
+          onClick={handleUpdateApp}
+          className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-bold py-3 px-6 text-center animate-bounce-in shadow-xl hover:shadow-blue-500/20 z-50 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01]"
+        >
+          <RefreshCw className="w-5 h-5 animate-spin" />
+          <span>Nova Versão Disponível! Clique aqui para atualizar a App.</span>
+        </button>
+      )}
 
       {/* MOBILE NAVIGATION BAR (Updated for Continents) */}
       <div className="md:hidden sticky top-[60px] z-40 bg-slate-900 border-b border-slate-800 flex justify-between px-2 py-2 overflow-x-auto scrollbar-hide">

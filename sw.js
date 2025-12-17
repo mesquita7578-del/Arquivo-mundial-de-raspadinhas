@@ -1,4 +1,4 @@
-const CACHE_NAME = 'raspadinhas-arquivo-v1';
+const CACHE_NAME = 'raspadinhas-arquivo-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -36,4 +36,11 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
+});
+
+// Allow the web app to trigger skipWaiting via message
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
