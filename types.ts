@@ -51,6 +51,13 @@ export interface DocumentItem {
   fileUrl: string; // Base64 PDF data
   fileName: string;
   createdAt: number;
+  
+  // New Technical Fields for PDF Metadata
+  gameNumber?: string; // Nº do Jogo
+  year?: string; // Ano / Data Lançamento
+  printer?: string; // Emissora / Gráfica
+  measures?: string; // Medidas
+  expiration?: string; // Caducidade
 }
 
 export interface WebsiteLink {

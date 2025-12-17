@@ -171,3 +171,25 @@ export const searchScratchcardInfo = async (query: string): Promise<Partial<Anal
     throw error;
   }
 };
+
+// New function to generate a rich description for PDF documents
+export const generateDocumentMetadata = async (fileName: string, title: string): Promise<string> => {
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `Act as an expert archivist for a Lottery and Scratchcard museum. 
+      The user is uploading a document (PDF) with the following details:
+      File Name: "${fileName}"
+      User Title: "${title}"
+      
+      Please generate a professional, short description (in Portuguese) for this document record. 
+      Hypothesize what is likely inside based on the title (e.g. if it says "Natal 2004", mention it likely contains holiday themes, prize lists, etc).
+      Start with "Este documento contém..." or similar. Keep it under 3 sentences.`,
+    });
+
+    return response.text || "";
+  } catch (error) {
+    console.error("Error generating doc metadata", error);
+    return "Documento arquivado digitalmente. Contém registos históricos.";
+  }
+};

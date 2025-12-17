@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, BookOpen, Scroll, FileText, UploadCloud, Trash2, ArrowLeft, Loader2, Download, Maximize2, Library, ExternalLink, UserCheck, Star, AlignLeft } from 'lucide-react';
+import { X, BookOpen, Scroll, FileText, UploadCloud, Trash2, ArrowLeft, Loader2, Download, Maximize2, Library, ExternalLink, UserCheck, Star, AlignLeft, Sparkles, Hash, Calendar, Printer, Ruler } from 'lucide-react';
 import { storageService } from '../services/storage';
+import { generateDocumentMetadata } from '../services/geminiService';
 import { DocumentItem } from '../types';
 
 interface HistoryModalProps {
@@ -15,8 +16,16 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
   const [selectedDoc, setSelectedDoc] = useState<DocumentItem | null>(null);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isGeneratingInfo, setIsGeneratingInfo] = useState(false);
+  
+  // Form State
   const [docTitle, setDocTitle] = useState('');
   const [docDescription, setDocDescription] = useState('');
+  // New Technical Fields
+  const [docGameNumber, setDocGameNumber] = useState('');
+  const [docYear, setDocYear] = useState('');
+  const [docPrinter, setDocPrinter] = useState('');
+  const [docMeasures, setDocMeasures] = useState('');
   
   // Load documents on mount
   useEffect(() => {
@@ -60,6 +69,22 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
     }
   };
 
+  const handleGenerateDescription = async () => {
+     if (!docTitle) {
+        alert("Escreva um título primeiro para eu saber o que é!");
+        return;
+     }
+     setIsGeneratingInfo(true);
+     try {
+        const desc = await generateDocumentMetadata("document.pdf", docTitle);
+        setDocDescription(desc);
+     } catch (e) {
+        console.error(e);
+     } finally {
+        setIsGeneratingInfo(false);
+     }
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -89,17 +114,28 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
       const newDoc: DocumentItem = {
         id: Math.random().toString(36).substr(2, 9),
         title: docTitle,
-        description: docDescription, // Save description
+        description: docDescription, 
         fileName: file.name,
         fileUrl: base64,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        // Save Technical Details
+        gameNumber: docGameNumber,
+        year: docYear,
+        printer: docPrinter,
+        measures: docMeasures
       };
 
       try {
         await storageService.saveDocument(newDoc);
         setDocuments(prev => [newDoc, ...prev]);
-        setDocTitle(''); // Reset title
-        setDocDescription(''); // Reset description
+        // Reset Form
+        setDocTitle(''); 
+        setDocDescription('');
+        setDocGameNumber('');
+        setDocYear('');
+        setDocPrinter('');
+        setDocMeasures('');
+        
         alert(t.addDocSuccess);
       } catch (err) {
         console.error("Erro ao salvar documento", err);
@@ -187,9 +223,11 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
                  </button>
                  <div className="flex flex-col">
                     <span className="text-white font-bold truncate">{selectedDoc.title}</span>
-                    {selectedDoc.description && (
-                       <span className="text-[10px] text-gray-400 truncate max-w-xs">{selectedDoc.description}</span>
-                    )}
+                    <div className="flex items-center gap-2 text-[10px] text-gray-400">
+                       {selectedDoc.gameNumber && <span className="bg-gray-800 px-1.5 rounded">Nº {selectedDoc.gameNumber}</span>}
+                       {selectedDoc.year && <span className="bg-gray-800 px-1.5 rounded">{selectedDoc.year}</span>}
+                       {selectedDoc.printer && <span className="bg-gray-800 px-1.5 rounded">{selectedDoc.printer}</span>}
+                    </div>
                  </div>
                </div>
                
@@ -217,9 +255,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
                        </div>
                      </object>
 
-                     {/* MOBILE/TABLET FLOATING BUTTON: 
-                         Ensures users can always open the file if the inline viewer is cramped or buggy on iOS/Android 
-                     */}
+                     {/* MOBILE/TABLET FLOATING BUTTON */}
                      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 w-max md:hidden">
                         <a 
                            href={pdfBlobUrl} 
@@ -286,44 +322,108 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
                ) : (
                  <div className="max-w-4xl mx-auto pb-20 space-y-8 animate-fade-in">
                     
-                    {/* UPLOAD SECTION (Moved to Top for Visibility) */}
+                    {/* UPLOAD SECTION (Expanded with Technical Fields) */}
                     {isAdmin && (
                        <div className="bg-gradient-to-r from-blue-900/20 to-brand-900/20 border border-blue-500/30 rounded-2xl p-6 shadow-lg">
                           <div className="flex items-center gap-3 mb-4">
                              <div className="bg-blue-500/20 p-2 rounded-lg">
                                 <UploadCloud className="w-6 h-6 text-blue-400" />
                              </div>
-                             <h3 className="text-lg font-bold text-white">Adicionar Novo Documento (PDF)</h3>
+                             <div>
+                                <h3 className="text-lg font-bold text-white">Adicionar Documento Técnico (PDF)</h3>
+                                <p className="text-xs text-blue-300">Carregue catálogos com dados: Emissora, Medidas, Datas.</p>
+                             </div>
                           </div>
                           
-                          <div className="space-y-3">
-                              <div className="flex flex-col md:flex-row items-center gap-4">
-                                  <div className="flex-1 w-full space-y-3">
-                                      <input 
-                                          type="text" 
-                                          value={docTitle}
-                                          onChange={(e) => setDocTitle(e.target.value)}
-                                          placeholder={t.docTitlePlaceholder}
-                                          className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl px-4 py-3 focus:border-brand-500 outline-none text-sm shadow-inner transition-all"
-                                      />
+                          <div className="space-y-4">
+                              <div className="flex flex-col md:flex-row items-start gap-6">
+                                  <div className="flex-1 w-full space-y-4">
+                                      {/* Main Title */}
+                                      <div className="relative">
+                                        <input 
+                                            type="text" 
+                                            value={docTitle}
+                                            onChange={(e) => setDocTitle(e.target.value)}
+                                            placeholder={t.docTitlePlaceholder}
+                                            className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl px-4 py-3 focus:border-brand-500 outline-none text-sm shadow-inner transition-all font-bold"
+                                        />
+                                        <span className="absolute -top-2 left-3 text-[10px] bg-gray-800 px-1 text-gray-400 font-bold uppercase">Nome do Documento / Jogo</span>
+                                      </div>
+
+                                      {/* Technical Fields Grid */}
+                                      <div className="grid grid-cols-2 gap-3">
+                                         <div className="relative group">
+                                            <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
+                                            <input 
+                                               type="text" 
+                                               value={docGameNumber}
+                                               onChange={(e) => setDocGameNumber(e.target.value)}
+                                               placeholder="Nº Jogo (Ex: 502)"
+                                               className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg pl-9 pr-3 py-2 text-xs focus:border-blue-500 outline-none"
+                                            />
+                                         </div>
+                                         <div className="relative group">
+                                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
+                                            <input 
+                                               type="text" 
+                                               value={docYear}
+                                               onChange={(e) => setDocYear(e.target.value)}
+                                               placeholder="Ano (Ex: 1998)"
+                                               className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg pl-9 pr-3 py-2 text-xs focus:border-blue-500 outline-none"
+                                            />
+                                         </div>
+                                         <div className="relative group">
+                                            <Printer className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
+                                            <input 
+                                               type="text" 
+                                               value={docPrinter}
+                                               onChange={(e) => setDocPrinter(e.target.value)}
+                                               placeholder="Emissora (Ex: SCML)"
+                                               className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg pl-9 pr-3 py-2 text-xs focus:border-blue-500 outline-none"
+                                            />
+                                         </div>
+                                         <div className="relative group">
+                                            <Ruler className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
+                                            <input 
+                                               type="text" 
+                                               value={docMeasures}
+                                               onChange={(e) => setDocMeasures(e.target.value)}
+                                               placeholder="Medidas / Quantidades"
+                                               className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg pl-9 pr-3 py-2 text-xs focus:border-blue-500 outline-none"
+                                            />
+                                         </div>
+                                      </div>
+
+                                      <div className="relative">
+                                         <textarea
+                                            value={docDescription}
+                                            onChange={(e) => setDocDescription(e.target.value)}
+                                            placeholder={t.docDescPlaceholder}
+                                            className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl px-4 py-3 focus:border-brand-500 outline-none text-sm shadow-inner transition-all h-20 resize-none leading-relaxed"
+                                         />
+                                         <span className="absolute -top-2 left-3 text-[10px] bg-gray-800 px-1 text-gray-400 font-bold uppercase">Notas Adicionais / Resumo</span>
+                                         
+                                         {/* AI Helper Button */}
+                                         <button 
+                                            onClick={handleGenerateDescription}
+                                            disabled={!docTitle || isGeneratingInfo}
+                                            className={`absolute bottom-3 right-3 flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-md transition-all border border-brand-500/30 ${!docTitle ? 'opacity-30 cursor-not-allowed text-gray-500' : 'bg-brand-900/30 text-brand-400 hover:bg-brand-900/50 hover:text-white'}`}
+                                            title="A Chloe gera um resumo baseado no título para ti!"
+                                         >
+                                            {isGeneratingInfo ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                                            {isGeneratingInfo ? "A Escrever..." : "Gerar Resumo Automático"}
+                                         </button>
+                                      </div>
                                   </div>
                                   
-                                  <label className={`flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl cursor-pointer transition-all shadow-lg hover:shadow-blue-900/50 hover:scale-105 whitespace-nowrap active:scale-95 h-full ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
-                                      {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <UploadCloud className="w-5 h-5" />}
-                                      <span className="font-bold">{isUploading ? "A carregar..." : "Selecionar PDF & Guardar"}</span>
+                                  <label className={`flex flex-col items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-0 rounded-xl cursor-pointer transition-all shadow-lg hover:shadow-blue-900/50 hover:scale-105 whitespace-nowrap active:scale-95 h-full min-h-[140px] w-full md:w-auto ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                                      {isUploading ? <Loader2 className="w-8 h-8 animate-spin" /> : <UploadCloud className="w-8 h-8" />}
+                                      <span className="font-bold text-sm">{isUploading ? "A Guardar..." : "Carregar PDF"}</span>
+                                      <span className="text-[10px] opacity-70">Max 50MB</span>
                                       <input type="file" accept="application/pdf" className="hidden" onChange={handleFileUpload} disabled={!docTitle.trim()} />
                                   </label>
                               </div>
-                              
-                              {/* DESCRIPTION FIELD */}
-                              <textarea
-                                  value={docDescription}
-                                  onChange={(e) => setDocDescription(e.target.value)}
-                                  placeholder={t.docDescPlaceholder}
-                                  className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl px-4 py-3 focus:border-brand-500 outline-none text-sm shadow-inner transition-all h-20 resize-none"
-                              />
                            </div>
-                           <p className="text-[10px] text-gray-500 mt-2 ml-1 text-center md:text-left">Máximo 50MB. O título é obrigatório.</p>
                        </div>
                     )}
 
@@ -358,22 +458,49 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose, isAdmin, t 
                                           </button>
                                        )}
                                     </div>
-                                    <h4 className="text-sm font-bold text-gray-200 mb-1 group-hover:text-white line-clamp-2 leading-tight">{doc.title}</h4>
+                                    <h4 className="text-sm font-bold text-gray-200 mb-2 group-hover:text-white line-clamp-2 leading-tight">{doc.title}</h4>
                                     
+                                    {/* Technical Badges */}
+                                    <div className="flex flex-wrap gap-1.5 mb-3">
+                                       {doc.gameNumber && (
+                                          <span className="text-[10px] bg-blue-900/30 text-blue-300 px-1.5 py-0.5 rounded border border-blue-500/20 font-mono">
+                                             #{doc.gameNumber}
+                                          </span>
+                                       )}
+                                       {doc.year && (
+                                          <span className="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700">
+                                             {doc.year}
+                                          </span>
+                                       )}
+                                       {doc.printer && (
+                                          <span className="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700 truncate max-w-[80px]">
+                                             {doc.printer}
+                                          </span>
+                                       )}
+                                    </div>
+
                                     {/* Description Display */}
                                     {doc.description && (
-                                       <p className="text-xs text-gray-400 mb-3 line-clamp-2 bg-gray-800/50 p-2 rounded border border-gray-800">
-                                          {doc.description}
+                                       <div className="mb-3 bg-gray-800/50 p-2 rounded border border-gray-800 relative">
+                                          <p className="text-xs text-gray-400 line-clamp-2 italic">
+                                             "{doc.description}"
+                                          </p>
+                                       </div>
+                                    )}
+
+                                    {doc.measures && (
+                                       <p className="text-[9px] text-slate-500 mb-2 font-mono flex items-center gap-1">
+                                          <Ruler className="w-3 h-3" /> {doc.measures}
                                        </p>
                                     )}
 
-                                    <p className="text-[10px] text-gray-500 mb-4 mt-auto">{new Date(doc.createdAt).toLocaleDateString()}</p>
+                                    <p className="text-[10px] text-gray-600 mb-4 mt-auto">Adicionado: {new Date(doc.createdAt).toLocaleDateString()}</p>
                                     
                                     <button 
                                        onClick={() => setSelectedDoc(doc)}
-                                       className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white py-2 rounded-lg text-xs font-bold transition-colors border border-gray-700 uppercase tracking-wide"
+                                       className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white py-2 rounded-lg text-xs font-bold transition-colors border border-gray-700 uppercase tracking-wide flex items-center justify-center gap-2"
                                     >
-                                       {t.viewPdf}
+                                       <AlignLeft className="w-3 h-3" /> {t.viewPdf}
                                     </button>
                                  </div>
                               ))}
