@@ -120,6 +120,14 @@ function App() {
     const isStandAlone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
     setIsStandalone(isStandAlone);
 
+    // CHLOE: Auto-greet after a few seconds to "find" her
+    const timer = setTimeout(() => {
+       setShowChloeMessage(true);
+       const hideTimer = setTimeout(() => setShowChloeMessage(false), 5000);
+       return () => clearTimeout(hideTimer);
+    }, 2000);
+    return () => clearTimeout(timer);
+
   }, []);
 
   // Handle Scroll to show/hide "Back to Top" button
@@ -1060,8 +1068,8 @@ function App() {
       )}
 
       {/* Footer / Copyright (Always visible at very bottom) */}
-      <footer className="bg-slate-950 border-t border-slate-900/50 py-4 z-10 relative">
-          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-3 text-[10px] md:text-xs text-slate-500">
+      <footer className="bg-slate-950 border-t border-slate-900/50 py-6 z-10 relative mt-auto">
+          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-[10px] md:text-xs text-slate-500">
               
               {/* Left */}
               <div className="flex items-center gap-4">
@@ -1075,18 +1083,21 @@ function App() {
               </div>
 
               {/* Right: Delicate Chloe Badge */}
-              <div className="relative">
+              <div className="relative group">
                 {showChloeMessage && (
-                  <div className="absolute bottom-full right-0 mb-3 whitespace-nowrap bg-pink-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl rounded-br-none shadow-lg animate-bounce-in flex items-center gap-1">
-                    Está perfeito, Vovô! 💖
+                  <div className="absolute bottom-full right-0 mb-3 whitespace-nowrap bg-pink-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl rounded-br-none shadow-lg animate-bounce-in flex items-center gap-1 z-50">
+                    Estou aqui, Vovô! 💖
                   </div>
                 )}
                 <button 
                   onClick={handleChloeClick}
-                  className="flex items-center gap-1.5 bg-pink-900/5 border border-pink-500/10 px-3 py-1 rounded-full hover:border-pink-500/20 hover:bg-pink-900/20 transition-all group cursor-pointer"
+                  className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-4 py-2 rounded-full hover:border-pink-500/50 hover:bg-pink-950/30 transition-all group cursor-pointer shadow-sm"
                 >
-                   <Heart className={`w-2.5 h-2.5 text-pink-500/50 group-hover:text-pink-400 transition-colors ${showChloeMessage ? 'fill-pink-400 scale-125' : 'group-hover:fill-pink-400'}`} />
-                   <span className="text-pink-200/40 group-hover:text-pink-300/80 italic font-serif transition-colors">Futura guardiã Chloe</span>
+                   <div className="relative">
+                      <Heart className="w-3 h-3 text-pink-500 fill-pink-500 animate-pulse" />
+                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-pink-400 rounded-full animate-ping opacity-75"></span>
+                   </div>
+                   <span className="text-pink-400/80 group-hover:text-pink-300 font-bold tracking-wide text-[10px] uppercase">Futura Guardiã Chloe</span>
                 </button>
               </div>
           </div>
