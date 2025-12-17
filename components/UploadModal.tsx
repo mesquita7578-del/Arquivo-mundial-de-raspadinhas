@@ -41,7 +41,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
   const frontInputRef = useRef<HTMLInputElement>(null);
   const backInputRef = useRef<HTMLInputElement>(null);
-  // Refs for extra images
   const extraInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -83,22 +82,32 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     try {
       const frontBase64 = frontPreview.split(',')[1];
       const backBase64 = backPreview ? backPreview.split(',')[1] : null;
-      
-      // Safety check on mimetype
       const mime = frontFile.type || "image/jpeg";
       
+      // CALL GEMINI
       const result = await analyzeImage(frontBase64, backBase64, mime);
       
+      // GENERATE ID IMMEDIATELY
+      const countryCode = (result.country && result.country !== 'Desconhecido') 
+        ? result.country.substring(0, 2).toUpperCase() 
+        : 'PT';
+      const rnd = Math.floor(Math.random() * 10000);
+      const generatedId = `RASP-${countryCode}-${rnd}`;
+
       setFormData(prev => ({
         ...prev,
         ...result,
+        customId: generatedId, // Pre-fill ID so user sees it
         aiGenerated: true
       }));
+
       setStep(2);
     } catch (err) {
       console.error(err);
-      // Even on error, we go to step 2 so user can fill manually
       setError(t.errorAnalyze);
+      // Even on error, go to manual step with ID generated
+      const generatedId = `RASP-XX-${Math.floor(Math.random() * 10000)}`;
+      setFormData(prev => ({ ...prev, customId: generatedId }));
       setStep(2);
     } finally {
       setIsAnalyzing(false);
@@ -117,13 +126,11 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
     setIsSaving(true);
     
-    // Generate IDs
     const timestamp = Date.now();
     const id = timestamp.toString();
-    const countryCode = formData.country?.substring(0, 2).toUpperCase() || 'XX';
-    const customId = formData.customId || `RASP-${countryCode}-${Math.floor(Math.random() * 1000)}`;
+    // Use the customId from form (which was pre-filled) or fallback
+    const customId = formData.customId || `RASP-XX-${Math.floor(Math.random() * 1000)}`;
 
-    // Filter out nulls from extra images
     const validExtras = extraPreviews.filter(img => img !== null) as string[];
 
     const newItem: ScratchcardData = {
