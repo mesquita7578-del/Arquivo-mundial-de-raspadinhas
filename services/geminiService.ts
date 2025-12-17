@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult, ScratchcardState, Category } from "../types";
 
@@ -5,7 +6,6 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const analyzeImage = async (frontBase64: string, backBase64: string | null, mimeType: string): Promise<AnalysisResult> => {
   try {
-    const modelId = "gemini-3-flash-preview"; 
     const validMimeType = mimeType || "image/jpeg";
 
     const prompt = `Aja como Chloe, a guardiã do arquivo de Jorge Mesquita.
@@ -22,18 +22,19 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     
     Retorne APENAS JSON puro. Se não ler algum campo, deixe vazio.`;
 
-    const parts = [
-      { inlineData: { mimeType: validMimeType, data: frontBase64 } },
-      { text: prompt }
+    const parts: any[] = [
+      { inlineData: { mimeType: validMimeType, data: frontBase64 } }
     ];
 
     if (backBase64) {
-      parts.splice(1, 0, { inlineData: { mimeType: validMimeType, data: backBase64 } });
+      parts.push({ inlineData: { mimeType: validMimeType, data: backBase64 } });
     }
+    
+    parts.push({ text: prompt });
 
     const response = await ai.models.generateContent({
-      model: modelId,
-      contents: [{ role: "user", parts }],
+      model: 'gemini-3-flash-preview',
+      contents: { parts },
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -91,5 +92,34 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
   }
 };
 
-export const searchScratchcardInfo = async (query: string): Promise<Partial<AnalysisResult>> => { return {}; };
-export const generateDocumentMetadata = async (fileName: string, title: string): Promise<string> => { return "Documento arquivado."; };
+// Implementação da busca externa com Google Search
+export const searchScratchcardInfo = async (query: string): Promise<Partial<AnalysisResult>> => {
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Pesquise informações oficiais sobre esta raspadinha/lotaria: "${query}". Tente encontrar o país, ano de lançamento, gráfica e preço original. Retorne os dados em formato JSON.`,
+      config: {
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+      },
+    });
+    return JSON.parse(response.text || "{}");
+  } catch (error) {
+    console.error("Erro ao pesquisar informações:", error);
+    return {};
+  }
+};
+
+// Implementação da geração de metadados para documentos
+export const generateDocumentMetadata = async (fileName: string, title: string): Promise<string> => {
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Como arquivista especialista, gere um resumo técnico e breve (até 150 caracteres) para um documento PDF intitulado: "${title}". O resumo deve ser formal e em português.`,
+    });
+    return response.text?.trim() || "Documento catalogado no arquivo mundial.";
+  } catch (error) {
+    console.error("Erro ao gerar resumo do documento:", error);
+    return "Documento arquivado.";
+  }
+};

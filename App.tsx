@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
@@ -58,14 +59,6 @@ function App() {
     });
     loadData();
   }, []);
-
-  const handleInstallApp = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') setDeferredPrompt(null);
-    }
-  };
 
   const loadData = async () => {
     setIsLoadingDB(true);
@@ -165,28 +158,30 @@ function App() {
      return Object.keys(totalStats.countryStats).sort();
   }, [totalStats.countryStats]);
 
+  // Handle PWA installation
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
+
   const handleNavigate = (p: PageType) => {
     setCurrentPage(p);
     setCountrySearch('');
     setSearchTerm('');
     
-    // Se não for especificamente para a coleção, garantimos que o filtro de coleção é limpo
-    if (p !== 'my-collection') {
-       // O filtro de coleção já é implícito no 'currentPage'
-       // Mas limpamos outros filtros continentais se for home
-       if (p === 'home') {
-          setActiveContinent('Mundo');
-          setActiveCategory('all');
-       }
-    }
-
+    // CORREÇÃO JORGE: Quando mudamos de página ou continente, desativamos o filtro de coleção se não for essa a página destino
     if (['europe', 'america', 'asia', 'africa', 'oceania'].includes(p as string)) {
        const mapping: Record<string, Continent> = {
          'europe': 'Europa', 'america': 'América', 'asia': 'Ásia', 'africa': 'África', 'oceania': 'Oceania'
        };
        setActiveContinent(mapping[p as string]);
-    } else if (p !== 'my-collection' && p !== 'stats' && p !== 'about') {
+    } else if (p === 'home') {
        setActiveContinent('Mundo');
+       setActiveCategory('all');
     }
   };
 
@@ -214,19 +209,19 @@ function App() {
         {!(currentPage === 'stats' || currentPage === 'about') && (
           <div className="sticky top-0 z-30 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 shadow-xl">
             <div className="bg-slate-900/30 p-2 md:px-8 flex flex-wrap items-center gap-2">
-              <button onClick={() => setFilterRarity(!filterRarity)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${filterRarity ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
+              <button onClick={() => setFilterRarity(!filterRarity)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterRarity ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
                 <Gem className="w-3.5 h-3.5" /> Raridades
               </button>
-              <button onClick={() => setFilterPromo(!filterPromo)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${filterPromo ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
+              <button onClick={() => setFilterPromo(!filterPromo)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterPromo ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
                 <Gift className="w-3.5 h-3.5" /> Promo
               </button>
-              <button onClick={() => setFilterWinners(!filterWinners)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${filterWinners ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
+              <button onClick={() => setFilterWinners(!filterWinners)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterWinners ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
                 <Trophy className="w-3.5 h-3.5" /> Premiadas
               </button>
               
               <button 
                 onClick={() => handleNavigate(currentPage === 'my-collection' ? 'home' : 'my-collection')} 
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${currentPage === 'my-collection' ? 'bg-brand-600 border-brand-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${currentPage === 'my-collection' ? 'bg-brand-600 border-brand-500 text-white shadow-lg shadow-brand-900/20' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}
               >
                 <Heart className={`w-3.5 h-3.5 ${currentPage === 'my-collection' ? 'fill-white' : ''}`} /> Minha Coleção
               </button>
@@ -238,7 +233,7 @@ function App() {
                     <button 
                       key={cat} 
                       onClick={() => setActiveCategory(cat as any)} 
-                      className={`px-3 py-1 rounded text-[10px] font-bold uppercase transition-all ${activeCategory === cat ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+                      className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${activeCategory === cat ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
                     >
                       {cat === 'all' ? 'Tudo' : cat}
                     </button>
@@ -249,11 +244,11 @@ function App() {
             <div className="px-4 md:px-8 py-3 bg-slate-950/40">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex flex-wrap gap-2">
-                    <button onClick={() => { setActiveContinent('Mundo'); handleNavigate('home'); }} className={`px-4 py-2 rounded-full text-[11px] font-bold flex items-center gap-2 border transition-all ${activeContinent === 'Mundo' && currentPage !== 'my-collection' ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'}`}>
+                    <button onClick={() => { setActiveContinent('Mundo'); handleNavigate('home'); }} className={`px-4 py-2 rounded-full text-[11px] font-black flex items-center gap-2 border transition-all ${activeContinent === 'Mundo' && currentPage !== 'my-collection' ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'}`}>
                         Mundo <span className="bg-slate-800 text-[9px] px-1.5 rounded">{totalStats.total}</span>
                     </button>
                     {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => (
-                        <button key={cont} onClick={() => { setActiveContinent(cont as Continent); if(currentPage === 'my-collection') handleNavigate('home'); }} className={`px-4 py-2 rounded-full text-[11px] font-bold flex items-center gap-2 border transition-all ${activeContinent === cont && currentPage !== 'my-collection' ? 'bg-orange-600 border-orange-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'}`}>
+                        <button key={cont} onClick={() => { setActiveContinent(cont as Continent); if(currentPage === 'my-collection') handleNavigate('home'); }} className={`px-4 py-2 rounded-full text-[11px] font-black flex items-center gap-2 border transition-all ${activeContinent === cont && currentPage !== 'my-collection' ? 'bg-orange-600 border-orange-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'}`}>
                           {cont} <span className="bg-slate-800 text-[9px] px-1.5 rounded">{totalStats.stats[cont] || 0}</span>
                         </button>
                     ))}
@@ -263,7 +258,7 @@ function App() {
                     <div className="relative group w-full md:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600" />
                         <input 
-                          type="text" placeholder="Procurar País..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)}
+                          type="text" placeholder="Procurar no Arquivo..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)}
                           className="bg-slate-900/80 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-white focus:border-blue-500 outline-none w-full shadow-inner"
                         />
                     </div>
@@ -275,13 +270,13 @@ function App() {
                       <button 
                         key={country} 
                         onClick={() => { setCountrySearch(country); if(currentPage === 'my-collection') handleNavigate('home'); }}
-                        className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase border transition-all ${countrySearch === country ? 'bg-brand-600 border-brand-500 text-white shadow-md' : 'bg-slate-800/50 border-slate-700 text-slate-500 hover:text-white'}`}
+                        className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase border transition-all ${countrySearch === country ? 'bg-brand-600 border-brand-500 text-white shadow-md' : 'bg-slate-800/50 border-slate-700 text-slate-500 hover:text-white'}`}
                       >
                           {country} <span className="opacity-40 ml-0.5 font-mono">({totalStats.countryStats[country]})</span>
                       </button>
                     ))}
                     {(countrySearch || searchTerm) && (
-                      <button onClick={() => { setCountrySearch(''); setSearchTerm(''); }} className="px-2.5 py-1 rounded-md text-[9px] font-bold uppercase bg-slate-700 text-white flex items-center gap-1 hover:bg-slate-600 transition-colors">
+                      <button onClick={() => { setCountrySearch(''); setSearchTerm(''); }} className="px-2.5 py-1 rounded-md text-[9px] font-black uppercase bg-slate-700 text-white flex items-center gap-1 hover:bg-slate-600 transition-colors">
                           <X className="w-2.5 h-2.5" /> Limpar
                       </button>
                     )}
