@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify, Gem, Gift, Eraser, Sliders, Sun, Contrast, Palette, RotateCcw, ClipboardList, Package, ZoomIn, ZoomOut, ArrowRight, Trophy } from 'lucide-react';
+import { X, Calendar, Tag, Info, Sparkles, Hash, Maximize2, DollarSign, Archive, Edit2, Save, Trash2, Globe, RotateCw, MapPin, AlertTriangle, Share2, Check, User, Printer, BarChart, Layers, Ticket, Coins, AlignJustify, Gem, Gift, Eraser, Sliders, Sun, Contrast, Palette, RotateCcw, ClipboardList, Package, ZoomIn, ZoomOut, ArrowRight, Trophy, ChevronDown } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
 
 interface ImageViewerProps {
@@ -650,24 +650,27 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
               {/* Grid of properties */}
               <div className="grid grid-cols-2 gap-4">
                 
-                {/* Collector Field (Added/Moved here for prominence) */}
+                {/* Collector Field (Stylized as Dropdown) */}
                 <div className="bg-gradient-to-br from-brand-900/10 to-gray-800/40 p-3 rounded-lg border border-brand-500/20 relative overflow-hidden group-hover:border-brand-500/40 transition-colors">
                   <span className="flex items-center gap-2 text-xs uppercase text-brand-400 font-bold mb-1">
                     <User className="w-3 h-3" /> {t.collector}
                   </span>
                   {isEditing ? (
                     <div className="relative group animate-fade-in">
-                      <div className="absolute left-2.5 top-1/2 -translate-y-1/2 bg-brand-500/10 p-1 rounded-md">
+                      <div className="absolute left-2.5 top-1/2 -translate-y-1/2 bg-brand-500/10 p-1 rounded-md pointer-events-none z-10">
                          <User className="w-3.5 h-3.5 text-brand-500" />
                       </div>
                       <input 
                         type="text" 
                         value={formData.collector || ''}
                         onChange={(e) => handleChange('collector', e.target.value)}
-                        placeholder={t.collector}
+                        placeholder="Selecione ou digite..."
                         list="viewer-collectors-list"
-                        className="w-full bg-gray-900 border border-gray-700 text-white text-sm rounded-lg pl-10 pr-3 py-2 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 outline-none transition-all placeholder-gray-600 font-medium"
+                        className="w-full bg-gray-900 border border-gray-700 text-white text-sm rounded-lg pl-10 pr-8 py-2 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 outline-none transition-all placeholder-gray-600 font-bold cursor-pointer hover:bg-gray-800"
                       />
+                      <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                         <ChevronDown className="w-4 h-4 text-gray-500" />
+                      </div>
                     </div>
                   ) : (
                     <p className="text-white font-medium flex items-center gap-2">
