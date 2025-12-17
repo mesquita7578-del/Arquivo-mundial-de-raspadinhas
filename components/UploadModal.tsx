@@ -67,11 +67,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     setError(null);
     setAiStatus('idle');
 
-    const randomNum = Math.floor(1000 + Math.random() * 8999);
-    const generatedId = `RASP-PT-${randomNum}`;
-    
-    setFormData(prev => ({ ...prev, customId: generatedId }));
-
     try {
       const frontBase64 = frontPreview.split(',')[1];
       const backBase64 = backPreview ? backPreview.split(',')[1] : null;
@@ -79,6 +74,11 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       
       const result = await analyzeImage(frontBase64, backBase64, mime);
       
+      // Geração de ID Automática Padrão PT-00000 (Solicitado pelo Jorge)
+      const countryCode = result.country?.substring(0, 2).toUpperCase() || 'PT';
+      const randomNum = Math.floor(10000 + Math.random() * 89999);
+      const generatedId = `${countryCode}-${randomNum}`;
+
       setAiStatus(result.gameName === "" ? 'failed' : 'success');
 
       setFormData(prev => ({
@@ -112,7 +112,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     
     const newItem: ScratchcardData = {
       id: timestamp.toString(),
-      customId: formData.customId || `RASP-PT-${Math.floor(Math.random() * 1000)}`,
+      customId: formData.customId || `ID-${Math.floor(Math.random() * 100000)}`,
       frontUrl: frontPreview || '',
       backUrl: backPreview || undefined,
       gameName: formData.gameName || 'Sem Nome',
@@ -142,7 +142,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     };
 
     try {
-      // CRITICAL FIX: Ensure the item is saved to IndexedDB before updating the UI
       await storageService.save(newItem);
       onUploadComplete(newItem);
       onClose();
@@ -159,7 +158,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
         <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl relative p-6">
            <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white"><X className="w-5 h-5"/></button>
            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-             <Upload className="w-5 h-5 text-brand-500"/> Catalogar Raspadinha
+             <Upload className="w-5 h-5 text-brand-500"/> Catalogar Novo Item
            </h2>
 
            <div className="grid grid-cols-2 gap-4 mb-6">
@@ -177,7 +176,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
              {isAnalyzing ? <Loader2 className="animate-spin w-5 h-5"/> : <Sparkles className="w-5 h-5"/>}
              {isAnalyzing ? "A Chloe está a ler..." : "Análise Inteligente da Chloe"}
            </button>
-           <p className="mt-4 text-[10px] text-slate-500 text-center uppercase tracking-widest font-bold">A Chloe preenche os dados para poupares tempo</p>
+           <p className="mt-4 text-[10px] text-slate-500 text-center uppercase tracking-widest font-bold">A Chloe preenche os dados automaticamente</p>
         </div>
       </div>
     );
@@ -189,7 +188,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
           <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 backdrop-blur">
              <div className="flex items-center gap-3">
                <button onClick={() => setStep(1)} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400"><ArrowLeft className="w-5 h-5"/></button>
-               <h2 className="text-lg font-bold text-white tracking-tight">Revisão do Guardião</h2>
+               <h2 className="text-lg font-bold text-white tracking-tight">Revisão do Registo</h2>
              </div>
              <button onClick={onClose} className="text-slate-400 hover:text-white p-2 hover:bg-slate-800 rounded-full"><X className="w-5 h-5"/></button>
           </div>
@@ -199,14 +198,13 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                 <div className="mb-6 bg-blue-900/20 border border-blue-500/30 p-4 rounded-2xl flex items-center gap-4 animate-bounce-in">
                    <div className="bg-blue-500 p-2 rounded-full"><Heart className="w-4 h-4 text-white fill-white"/></div>
                    <div>
-                      <p className="text-white font-bold text-sm">Olá Jorge! A imagem está difícil de ler...</p>
-                      <p className="text-blue-300 text-xs">Mas o ID já lá está! Só tens de completar os campos abaixo.</p>
+                      <p className="text-white font-bold text-sm">Olá Jorge! A Chloe identificou um novo item.</p>
+                      <p className="text-blue-300 text-xs">O ID automático já foi gerado. Completa os dados em falta abaixo.</p>
                    </div>
                 </div>
              )}
 
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                {/* Lado Esquerdo: Previews */}
                 <div className="lg:col-span-3 space-y-4">
                    <div className="bg-slate-950 p-2 rounded-2xl border border-slate-800 shadow-inner">
                       <p className="text-[10px] font-bold text-slate-600 uppercase mb-2 ml-1">Frente</p>
@@ -220,21 +218,18 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    )}
                 </div>
 
-                {/* Lado Direito: Formulário Completo */}
                 <div className="lg:col-span-9 space-y-6">
-                   {/* Seção 1: Identidade */}
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Layers className="w-3 h-3"/> ID Arquivo</label>
-                         <input type="text" value={formData.customId || ''} onChange={e => updateField('customId', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-mono text-sm focus:border-brand-500 outline-none" />
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Layers className="w-3 h-3"/> ID do Arquivo (Padrão Jorge)</label>
+                         <input type="text" value={formData.customId || ''} onChange={e => updateField('customId', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-brand-400 font-mono text-sm focus:border-brand-500 outline-none font-bold" />
                       </div>
                       <div className="md:col-span-2">
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Star className="w-3 h-3 text-yellow-500"/> Nome do Jogo *</label>
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Star className="w-3 h-3 text-yellow-500"/> Nome do Jogo / Título *</label>
                          <input type="text" value={formData.gameName || ''} onChange={e => updateField('gameName', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:border-brand-500 outline-none" placeholder="Ex: Pé de Meia" />
                       </div>
                    </div>
 
-                   {/* Seção 2: Geografia e Tipo */}
                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div>
                          <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Globe className="w-3 h-3"/> País</label>
@@ -242,11 +237,11 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                       </div>
                       <div>
                          <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Map className="w-3 h-3"/> Região / Cantão</label>
-                         <input type="text" value={formData.region || ''} onChange={e => updateField('region', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" placeholder="Ex: Vaud, Algarve..." />
+                         <input type="text" value={formData.region || ''} onChange={e => updateField('region', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" placeholder="Ex: Algarve..." />
                       </div>
                       <div>
                          <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Tag className="w-3 h-3"/> Categoria</label>
-                         <select value={formData.category || 'raspadinha'} onChange={e => updateField('category', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm appearance-none">
+                         <select value={formData.category || 'raspadinha'} onChange={e => updateField('category', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm">
                             <option value="raspadinha">Raspadinha</option>
                             <option value="lotaria">Lotaria</option>
                             <option value="boletim">Boletim</option>
@@ -255,7 +250,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                       </div>
                       <div>
                          <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Hash className="w-3 h-3"/> Linhas de Cores</label>
-                         <select value={formData.lines || 'none'} onChange={e => updateField('lines', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm appearance-none">
+                         <select value={formData.lines || 'none'} onChange={e => updateField('lines', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm">
                             <option value="none">Nenhuma</option>
                             <option value="blue">Azul</option>
                             <option value="red">Vermelha</option>
@@ -266,34 +261,29 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                       </div>
                    </div>
 
-                   {/* Seção 3: Dados Técnicos */}
                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                       <div>
                          <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><ScanLine className="w-3 h-3"/> Nº Jogo</label>
-                         <input type="text" value={formData.gameNumber || ''} onChange={e => updateField('gameNumber', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" />
+                         <input type="text" value={formData.gameNumber || ''} onChange={e => updateField('gameNumber', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm font-mono" />
                       </div>
                       <div>
                          <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><DollarSign className="w-3 h-3"/> Preço</label>
                          <input type="text" value={formData.price || ''} onChange={e => updateField('price', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" />
                       </div>
                       <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Printer className="w-3 h-3"/> Gráfica</label>
-                         <input type="text" value={formData.printer || ''} onChange={e => updateField('printer', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" placeholder="Ex: Scientific Games" />
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Printer className="w-3 h-3"/> Gráfica / Impressor</label>
+                         <input type="text" value={formData.printer || ''} onChange={e => updateField('printer', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" placeholder="Scientific Games" />
                       </div>
                       <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Tiragem / Emissão</label>
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Tiragem</label>
                          <input type="text" value={formData.emission || ''} onChange={e => updateField('emission', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" />
                       </div>
-                      <div className="col-span-2 md:col-span-1">
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Ano / Lançamento</label>
-                         <div className="relative">
-                            <Calendar className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-                            <input type="text" value={formData.releaseDate || ''} onChange={e => updateField('releaseDate', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm" />
-                         </div>
+                      <div>
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Data / Lançamento</label>
+                         <input type="text" value={formData.releaseDate || ''} onChange={e => updateField('releaseDate', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" />
                       </div>
                    </div>
 
-                   {/* Seção 4: Estado e Marcas Especiais */}
                    <div className="bg-slate-800/30 p-4 rounded-2xl border border-slate-800">
                       <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
                          <div>
@@ -306,12 +296,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                          </div>
                          <div className="flex flex-col gap-2">
                             <label className="flex items-center gap-2 cursor-pointer group">
-                               <input type="checkbox" checked={formData.isRarity} onChange={e => updateField('isRarity', e.target.checked)} className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-brand-600 focus:ring-brand-500" />
+                               <input type="checkbox" checked={formData.isRarity} onChange={e => updateField('isRarity', e.target.checked)} className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-brand-600" />
                                <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1"><Gem className="w-3 h-3 text-gold-500"/> Raridade</span>
-                            </label>
-                            <label className="flex items-center gap-2 cursor-pointer group">
-                               <input type="checkbox" checked={formData.isPromotional} onChange={e => updateField('isPromotional', e.target.checked)} className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-pink-600" />
-                               <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1"><Gift className="w-3 h-3 text-pink-500"/> Promo</span>
                             </label>
                          </div>
                          <div className="flex flex-col gap-2">
@@ -319,25 +305,19 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                                <input type="checkbox" checked={formData.isWinner} onChange={e => updateField('isWinner', e.target.checked)} className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-green-600" />
                                <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1"><Trophy className="w-3 h-3 text-green-500"/> Premiada</span>
                             </label>
-                            {formData.isWinner && (
-                               <input type="text" value={formData.prizeAmount || ''} onChange={e => updateField('prizeAmount', e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-2 py-1 text-[10px] text-white" placeholder="Valor do prémio" />
-                            )}
                          </div>
                          <div className="flex flex-col gap-2 col-span-2">
                             <label className="flex items-center gap-2 cursor-pointer group">
                                <input type="checkbox" checked={formData.isSeries} onChange={e => updateField('isSeries', e.target.checked)} className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-blue-600" />
                                <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1"><Layers className="w-3 h-3 text-blue-500"/> Série / SET</span>
                             </label>
-                            {formData.isSeries && (
-                               <input type="text" value={formData.seriesDetails || ''} onChange={e => updateField('seriesDetails', e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-2 py-1 text-[10px] text-white" placeholder="Detalhes (Ex: 1/4 da coleção)" />
-                            )}
                          </div>
                       </div>
                    </div>
 
                    <div>
-                      <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">Notas / Informação do Verso</label>
-                      <textarea value={formData.values || ''} onChange={e => updateField('values', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4 text-white text-sm h-32 focus:border-brand-500 outline-none resize-none leading-relaxed" placeholder="Ex: Ganhou 10€, raspada na zona superior..." />
+                      <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">Observações do Verso / Nota Curta</label>
+                      <textarea value={formData.values || ''} onChange={e => updateField('values', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4 text-white text-sm h-24 focus:border-brand-500 outline-none resize-none" placeholder="..." />
                    </div>
                 </div>
              </div>
@@ -348,7 +328,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
              <button onClick={onClose} className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all">Cancelar</button>
              <button onClick={handleSave} disabled={isSaving} className="px-8 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-brand-900/30 active:scale-95 transition-all">
                 {isSaving ? <Loader2 className="animate-spin w-4 h-4"/> : <Check className="w-4 h-4"/>}
-                Guardar no Arquivo Mundial
+                Confirmar Registo no Arquivo
              </button>
           </div>
        </div>

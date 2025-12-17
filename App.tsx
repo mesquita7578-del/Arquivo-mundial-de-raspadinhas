@@ -157,8 +157,6 @@ function App() {
       }
       return true;
     }).sort((a, b) => {
-      // Ordenação Natural por Número de Jogo (Ascendente: 1, 2, 10, J01...)
-      // Conforme pedido por Jorge Mesquita
       return a.gameNumber.localeCompare(b.gameNumber, undefined, { numeric: true, sensitivity: 'base' });
     });
   }, [allImagesCache, activeContinent, activeCategory, filterRarity, filterPromo, filterWinners, countrySearch, searchTerm, currentPage, currentUser]);
@@ -169,14 +167,23 @@ function App() {
 
   const handleNavigate = (p: PageType) => {
     setCurrentPage(p);
-    // Reset filters when changing page to avoid confusion
+    // Reset filters and clear search when changing page to ensure the user isn't "stuck"
     setCountrySearch('');
+    setSearchTerm('');
+    
+    // Reset sub-filters if needed when going home
+    if (p === 'home') {
+       setActiveContinent('Mundo');
+       setActiveCategory('all');
+    }
+
     if (['europe', 'america', 'asia', 'africa', 'oceania'].includes(p as string)) {
        const mapping: Record<string, Continent> = {
          'europe': 'Europa', 'america': 'América', 'asia': 'Ásia', 'africa': 'África', 'oceania': 'Oceania'
        };
        setActiveContinent(mapping[p as string]);
-    } else {
+    } else if (p !== 'my-collection') {
+       // Only reset if it's not the collection view being explicitly requested
        setActiveContinent('Mundo');
     }
   };
@@ -187,7 +194,7 @@ function App() {
         isAdmin={isAdmin} 
         currentUser={currentUser} 
         onAdminToggle={() => setIsLoginModalOpen(true)}
-        onLogout={() => { setCurrentUser(null); setUserRole(null); setCurrentPage('home'); }} 
+        onLogout={() => { setCurrentUser(null); setUserRole(null); handleNavigate('home'); }} 
         onHistoryClick={() => setIsHistoryModalOpen(true)} 
         onExport={handleExportJSON}
         onExportCSV={handleExportCSV}
@@ -202,10 +209,8 @@ function App() {
 
       <main className="flex-1 overflow-y-auto bg-slate-950 scroll-smooth custom-scrollbar flex flex-col">
         
-        {/* ÁREA FIXA (Sticky Section) */}
         {!(currentPage === 'stats' || currentPage === 'about') && (
           <div className="sticky top-0 z-30 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 shadow-xl">
-            {/* BARRA DE FILTROS SUPERIOR */}
             <div className="bg-slate-900/30 p-2 md:px-8 flex flex-wrap items-center gap-2">
               <button onClick={() => setFilterRarity(!filterRarity)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${filterRarity ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
                 <Gem className="w-3.5 h-3.5" /> Raridades
@@ -216,9 +221,15 @@ function App() {
               <button onClick={() => setFilterWinners(!filterWinners)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${filterWinners ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
                 <Trophy className="w-3.5 h-3.5" /> Premiadas
               </button>
-              <button onClick={() => handleNavigate('my-collection')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${currentPage === 'my-collection' ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
-                <Heart className="w-3.5 h-3.5" /> Coleção
+              
+              {/* Botão Coleção Pessoal - Agora alterna entre a coleção e a home */}
+              <button 
+                onClick={() => handleNavigate(currentPage === 'my-collection' ? 'home' : 'my-collection')} 
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${currentPage === 'my-collection' ? 'bg-brand-600 border-brand-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}
+              >
+                <Heart className="w-3.5 h-3.5" /> Minha Coleção
               </button>
+
               <button onClick={() => setIsWebsitesModalOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200 text-[10px] font-bold transition-all">
                 <Building2 className="w-3.5 h-3.5" /> Sites
               </button>
@@ -238,22 +249,19 @@ function App() {
               </div>
             </div>
 
-            {/* SEÇÃO EXPLORAR FIXA */}
             <div className="px-4 md:px-8 py-3 bg-slate-950/40">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  {/* Continentes Compactos */}
                   <div className="flex flex-wrap gap-2">
-                    <button onClick={() => setActiveContinent('Mundo')} className={`px-4 py-2 rounded-full text-[11px] font-bold flex items-center gap-2 border transition-all ${activeContinent === 'Mundo' ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'}`}>
+                    <button onClick={() => { setActiveContinent('Mundo'); handleNavigate('home'); }} className={`px-4 py-2 rounded-full text-[11px] font-bold flex items-center gap-2 border transition-all ${activeContinent === 'Mundo' && currentPage !== 'my-collection' ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'}`}>
                         Mundo <span className="bg-slate-800 text-[9px] px-1.5 rounded">{totalStats.total}</span>
                     </button>
                     {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => (
-                        <button key={cont} onClick={() => setActiveContinent(cont as Continent)} className={`px-4 py-2 rounded-full text-[11px] font-bold flex items-center gap-2 border transition-all ${activeContinent === cont ? 'bg-orange-600 border-orange-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'}`}>
+                        <button key={cont} onClick={() => { setActiveContinent(cont as Continent); if(currentPage === 'my-collection') handleNavigate('home'); }} className={`px-4 py-2 rounded-full text-[11px] font-bold flex items-center gap-2 border transition-all ${activeContinent === cont && currentPage !== 'my-collection' ? 'bg-orange-600 border-orange-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'}`}>
                           {cont} <span className="bg-slate-800 text-[9px] px-1.5 rounded">{totalStats.stats[cont] || 0}</span>
                         </button>
                     ))}
                   </div>
 
-                  {/* Pesquisa de País Compacta */}
                   <div className="flex items-center gap-3">
                     <div className="relative group w-full md:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600" />
@@ -265,19 +273,18 @@ function App() {
                   </div>
                 </div>
                 
-                {/* LISTA DINÂMICA DE PAÍSES FIXA */}
                 <div className="mt-3 flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1 custom-scrollbar">
                     {registeredCountries.map(country => (
                       <button 
                         key={country} 
-                        onClick={() => setCountrySearch(country)}
+                        onClick={() => { setCountrySearch(country); if(currentPage === 'my-collection') handleNavigate('home'); }}
                         className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase border transition-all ${countrySearch === country ? 'bg-brand-600 border-brand-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-500 hover:text-white'}`}
                       >
                           {country} <span className="opacity-40 ml-0.5">({totalStats.countryStats[country]})</span>
                       </button>
                     ))}
-                    {countrySearch && (
-                      <button onClick={() => setCountrySearch('')} className="px-2.5 py-1 rounded-md text-[9px] font-bold uppercase bg-slate-700 text-white flex items-center gap-1">
+                    {(countrySearch || searchTerm) && (
+                      <button onClick={() => { setCountrySearch(''); setSearchTerm(''); }} className="px-2.5 py-1 rounded-md text-[9px] font-bold uppercase bg-slate-700 text-white flex items-center gap-1">
                           <X className="w-2.5 h-2.5" /> Limpar
                       </button>
                     )}
@@ -286,7 +293,6 @@ function App() {
           </div>
         )}
 
-        {/* CONTEÚDO PRINCIPAL (Scrollable) */}
         <div className="relative flex-1">
           {currentPage === 'stats' ? (
             <StatsSection stats={totalStats.stats} categoryStats={totalStats.categoryStats} countryStats={totalStats.countryStats} stateStats={totalStats.stateStats} collectorStats={totalStats.collectorStats} totalRecords={totalStats.total} t={t.stats} />
@@ -297,7 +303,7 @@ function App() {
               {isLoadingDB ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-4">
                     <Loader2 className="w-10 h-10 text-brand-500 animate-spin" />
-                    <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">A sincronizar Arquivo...</p>
+                    <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">A sincronizar Arquivo Mundial...</p>
                   </div>
               ) : currentPage === 'my-collection' && (!currentUser || filteredImages.length === 0) ? (
                   <div className="flex flex-col items-center justify-center py-20 text-center max-w-lg mx-auto">
@@ -318,7 +324,7 @@ function App() {
                         </button>
                      ) : (
                         <button onClick={() => handleNavigate('home')} className="bg-slate-800 hover:bg-slate-700 text-white px-8 py-3 rounded-xl font-bold transition-all border border-slate-700">
-                           Explorar Arquivo
+                           Explorar Arquivo Geral
                         </button>
                      )}
                   </div>
@@ -336,13 +342,12 @@ function App() {
         </div>
       </main>
 
-      {/* RODAPÉ FIXO (Fora do main scrollable) */}
       <Footer onNavigate={handleNavigate} onWebsitesClick={() => setIsWebsitesModalOpen(true)} />
 
       {isAdmin && (
         <button 
           onClick={() => setIsUploadModalOpen(true)}
-          className="fixed bottom-20 right-8 w-16 h-16 bg-brand-600 hover:bg-brand-500 text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 z-40 border-4 border-slate-950"
+          className="fixed bottom-24 right-8 w-16 h-16 bg-brand-600 hover:bg-brand-500 text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 z-40 border-4 border-slate-950"
         >
           <PlusCircle className="w-8 h-8" />
         </button>
