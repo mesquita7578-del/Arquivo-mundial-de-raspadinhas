@@ -685,16 +685,29 @@ function App() {
              </div>
            )}
 
-           {/* Grid */}
+           {/* Grid or Map Visualization */}
            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
-              <ImageGrid 
-                images={items} 
-                onImageClick={setSelectedImage} 
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-                isAdmin={isAdmin} 
-                t={t.grid}
-              />
+              {viewMode === 'map' ? (
+                 <div className="p-4 h-[600px]">
+                    <WorldMap 
+                       images={items} 
+                       onCountrySelect={(country) => {
+                          setSubPageCountryFilter(country);
+                          setViewMode('grid');
+                       }}
+                       t={t} 
+                    />
+                 </div>
+              ) : (
+                 <ImageGrid 
+                   images={items} 
+                   onImageClick={setSelectedImage} 
+                   viewMode={viewMode}
+                   onViewModeChange={setViewMode}
+                   isAdmin={isAdmin} 
+                   t={t.grid}
+                 />
+              )}
            </div>
         </div>
      );
