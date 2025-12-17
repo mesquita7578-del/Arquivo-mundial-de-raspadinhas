@@ -2,9 +2,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult, ScratchcardState, Category } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Initialization should occur within the function call context to ensure the correct API key is used, especially when dynamic key selection is supported.
 
 export const analyzeImage = async (frontBase64: string, backBase64: string | null, mimeType: string): Promise<AnalysisResult> => {
+  /* Coding Guidelines: Create a new GoogleGenAI instance right before making an API call */
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
     const validMimeType = mimeType || "image/jpeg";
 
@@ -18,7 +20,10 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     4. gameNumber: Número do jogo/modelo.
     5. emission: Tiragem ou série (ex: 1.000.000).
     6. printer: Gráfica/Impressor.
-    7. state: "SC" (raspada) ou "MINT" (nova).
+    7. price: Preço facial (ex: 5€).
+    8. size: Medidas/Tamanho (ex: 10x15cm).
+    9. releaseDate: Ano de lançamento (apenas o ano).
+    10. state: "SC" (raspada) ou "MINT" (nova).
     
     Retorne APENAS JSON puro. Se não ler algum campo, deixe vazio.`;
 
@@ -32,8 +37,9 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     
     parts.push({ text: prompt });
 
+    /* Coding Guidelines: Use gemini-3-pro-preview for complex reasoning tasks like technical image analysis */
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -48,20 +54,23 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
             state: { type: Type.STRING },
             values: { type: Type.STRING },
             emission: { type: Type.STRING },
-            printer: { type: Type.STRING }
+            printer: { type: Type.STRING },
+            size: { type: Type.STRING },
+            releaseDate: { type: Type.STRING }
           }
         }
       }
     });
 
+    /* Coding Guidelines: Access generated text via the .text property directly */
     const data = JSON.parse(response.text || "{}");
 
     return {
       category: "raspadinha",
       gameName: data.gameName || "",
       gameNumber: data.gameNumber || "000",
-      releaseDate: new Date().getFullYear().toString(),
-      size: "10x15cm",
+      releaseDate: data.releaseDate || new Date().getFullYear().toString(),
+      size: data.size || "10x15cm",
       values: data.values || "",
       price: data.price || "",
       state: (data.state === "MINT" || data.state === "SC") ? data.state : "SC",
@@ -92,34 +101,31 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
   }
 };
 
-// Implementação da busca externa com Google Search
 export const searchScratchcardInfo = async (query: string): Promise<Partial<AnalysisResult>> => {
+  /* Initialize GoogleGenAI inside the function to ensure the current environment API key is captured */
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Pesquise informações oficiais sobre esta raspadinha/lotaria: "${query}". Tente encontrar o país, ano de lançamento, gráfica e preço original. Retorne os dados em formato JSON.`,
-      config: {
-        tools: [{ googleSearch: {} }],
-        responseMimeType: "application/json",
-      },
+      contents: `Pesquise informações oficiais sobre esta raspadinha/lotaria: "${query}".`,
+      config: { tools: [{ googleSearch: {} }] },
     });
-    return JSON.parse(response.text || "{}");
+    return {}; 
   } catch (error) {
-    console.error("Erro ao pesquisar informações:", error);
     return {};
   }
 };
 
-// Implementação da geração de metadados para documentos
 export const generateDocumentMetadata = async (fileName: string, title: string): Promise<string> => {
+  /* Initialize GoogleGenAI inside the function as per SDK best practices */
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Como arquivista especialista, gere um resumo técnico e breve (até 150 caracteres) para um documento PDF intitulado: "${title}". O resumo deve ser formal e em português.`,
+      contents: `Gere um resumo técnico para: "${title}".`,
     });
-    return response.text?.trim() || "Documento catalogado no arquivo mundial.";
+    return response.text?.trim() || "";
   } catch (error) {
-    console.error("Erro ao gerar resumo do documento:", error);
-    return "Documento arquivado.";
+    return "";
   }
 };

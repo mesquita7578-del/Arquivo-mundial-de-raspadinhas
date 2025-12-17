@@ -4,7 +4,7 @@ import {
   ZoomIn, ZoomOut, LayoutTemplate, Star, Trophy, Gem, Gift,
   Hash, Calendar, Printer, Ruler, Globe, MapPin, User, Info, 
   Layers, Tag, Coins, Clock, Flag, Zap, Sparkles, Maximize2, Columns,
-  ExternalLink, FileText, Banknote, History, Box
+  ExternalLink, FileText, Banknote, Box
 } from 'lucide-react';
 import { ScratchcardData, Category, LineType, ScratchcardState } from '../types';
 
@@ -59,18 +59,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
     if (confirm(t.deleteConfirm)) onDelete(image.id);
   };
   
-  const handleNext = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const currentIndex = contextImages.findIndex(img => img.id === image.id);
-    if (currentIndex < contextImages.length - 1) onImageSelect(contextImages[currentIndex + 1]);
-  };
-
-  const handlePrev = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const currentIndex = contextImages.findIndex(img => img.id === image.id);
-    if (currentIndex > 0) onImageSelect(contextImages[currentIndex - 1]);
-  };
-
   const toggleCollection = () => {
     if (!currentUser) return;
     const currentOwners = formData.owners || [];
@@ -88,7 +76,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
          
          {/* ÁREA DA IMAGEM / PANORAMA */}
          <div className="flex-1 bg-black relative flex flex-col overflow-hidden border-b md:border-b-0 md:border-r border-slate-800">
-            {/* CONTROLES SUPERIORES */}
             <div className="absolute top-4 right-4 z-30 flex gap-2">
                {seriesMembers.length > 1 && (
                   <button onClick={() => setViewMode(viewMode === 'single' ? 'panorama' : 'single')} className={`flex items-center gap-2 px-4 py-2 rounded-full border backdrop-blur transition-all font-black text-[10px] tracking-widest ${viewMode === 'panorama' ? 'bg-brand-600 text-white border-brand-400 shadow-lg shadow-brand-900/40' : 'bg-black/50 text-white/50 border-white/10 hover:text-white'}`}>
@@ -119,12 +106,12 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                 </div>
 
                 <div className="h-24 bg-slate-950/90 backdrop-blur border-t border-white/5 p-3 flex items-center gap-4 justify-center shrink-0 z-30">
-                   <button onClick={() => { setActiveImage(image.frontUrl); setActiveLabel('front'); setIsZoomed(false); }} className={`relative h-full aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeLabel === 'front' ? 'border-blue-500 scale-110 shadow-xl shadow-blue-500/20' : 'border-slate-800 opacity-30 hover:opacity-100'}`}><img src={image.frontUrl} className="w-full h-full object-cover" /></button>
-                   {image.backUrl && <button onClick={() => { setActiveImage(image.backUrl!); setActiveLabel('back'); setIsZoomed(false); }} className={`relative h-full aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeLabel === 'back' ? 'border-brand-500 scale-110 shadow-xl shadow-brand-500/20' : 'border-slate-800 opacity-30 hover:opacity-100'}`}><img src={image.backUrl} className="w-full h-full object-cover" /></button>}
+                   <button onClick={() => { setActiveImage(image.frontUrl); setActiveLabel('front'); setIsZoomed(false); }} className={`relative h-full aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeLabel === 'front' ? 'border-blue-500 scale-110 shadow-xl' : 'border-slate-800 opacity-30 hover:opacity-100'}`}><img src={image.frontUrl} className="w-full h-full object-cover" /></button>
+                   {image.backUrl && <button onClick={() => { setActiveImage(image.backUrl!); setActiveLabel('back'); setIsZoomed(false); }} className={`relative h-full aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeLabel === 'back' ? 'border-brand-500 scale-110 shadow-xl' : 'border-slate-800 opacity-30 hover:opacity-100'}`}><img src={image.backUrl} className="w-full h-full object-cover" /></button>}
                 </div>
               </>
             ) : (
-              /* MODO PANORAMA COMPACTO COM TODA A INFORMAÇÃO */
+              /* MODO PANORAMA COMPACTO */
               <div className="flex-1 overflow-y-auto bg-slate-950 p-4 md:p-12 custom-scrollbar">
                 <div className="max-w-6xl mx-auto space-y-6">
                   <div className="flex items-center justify-between mb-8 sticky top-0 z-40 bg-slate-950/95 py-6 border-b border-white/5 backdrop-blur-xl">
@@ -143,7 +130,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                   <div className="grid grid-cols-1 gap-4 pb-20">
                     {seriesMembers.map((member) => (
                       <div key={member.id} className={`group bg-slate-900/40 border rounded-3xl p-4 flex flex-col md:flex-row gap-6 transition-all hover:bg-slate-900/60 ${member.id === image.id ? 'border-brand-500/50 ring-1 ring-brand-500/20' : 'border-white/5'}`}>
-                        
                         <div className="flex gap-2 shrink-0 justify-center md:justify-start">
                            <div className="relative h-44 aspect-[3/4] bg-black rounded-xl overflow-hidden border border-white/10 shadow-xl group-hover:scale-105 transition-transform">
                               <img src={member.frontUrl} className="w-full h-full object-contain" />
@@ -156,7 +142,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                              </div>
                            )}
                         </div>
-
                         <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4 py-2">
                            <div className="space-y-1">
                               <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-1"><Hash className="w-3 h-3 text-brand-500"/> ID Registo</p>
@@ -189,7 +174,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                            <div className="flex items-center justify-end">
                               <button onClick={() => onImageSelect(member)} className="px-4 py-2 bg-slate-800 hover:bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2">Detalhes <Maximize2 className="w-3.5 h-3.5"/></button>
                            </div>
-                           
                            <div className="col-span-2 lg:col-span-4 mt-2 pt-2 border-t border-white/5 flex justify-between items-center">
                               <p className="text-[10px] text-slate-500 italic max-w-lg truncate">"{member.values || 'Sem observações adicionais.'}"</p>
                               <span className={`text-[9px] font-black px-2 py-0.5 rounded border ${member.state === 'MINT' ? 'bg-green-900/30 text-green-400 border-green-500/30' : 'bg-slate-800 text-slate-500 border-slate-700'}`}>{member.state}</span>
@@ -203,7 +187,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
             )}
          </div>
 
-         {/* FICHA TÉCNICA LATERAL (VISTA ÚNICA) */}
+         {/* FICHA TÉCNICA LATERAL */}
          {viewMode === 'single' && (
            <div className="w-full md:w-[450px] bg-slate-900 flex flex-col h-full z-20 shadow-2xl border-l border-slate-800 overflow-hidden">
               <div className="p-6 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center shrink-0">
@@ -211,97 +195,71 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                     {isAdmin && (
                        <>
                           {isEditing ? (
-                             <button onClick={handleSave} className="flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-2xl font-black text-xs transition-all shadow-xl shadow-green-900/20 active:scale-95"><Save className="w-4 h-4"/> GUARDAR</button>
+                             <button onClick={handleSave} className="flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-2xl font-black text-xs transition-all shadow-xl active:scale-95"><Save className="w-4 h-4"/> GUARDAR</button>
                           ) : (
-                             <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xs transition-all active:scale-95"><Edit2 className="w-4 h-4"/> EDITAR FICHA</button>
+                             <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xs transition-all active:scale-95"><Edit2 className="w-4 h-4"/> EDITAR</button>
                           )}
                           <button onClick={handleDelete} className="p-3 bg-slate-800 hover:bg-red-600 text-slate-400 hover:text-white rounded-2xl transition-all border border-slate-700"><Trash2 className="w-4.5 h-4.5"/></button>
                        </>
                     )}
                  </div>
-
                  {currentUser && (
                     <button onClick={toggleCollection} className={`px-5 py-2.5 rounded-2xl text-xs font-black border transition-all flex items-center gap-2 shadow-sm ${formData.owners?.includes(currentUser) ? 'bg-green-500 text-white border-green-400' : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white hover:border-slate-500'}`}>
-                       <Check className="w-4 h-4" /> {formData.owners?.includes(currentUser) ? 'TENHO NO MEU ÁLBUM' : 'MARCAR'}
+                       <Check className="w-4 h-4" /> {formData.owners?.includes(currentUser) ? 'NA COLEÇÃO' : 'MARCAR'}
                     </button>
                  )}
               </div>
 
               <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar bg-slate-900/20">
-                 {/* Nome e Tags Principais */}
                  <div className="space-y-5">
-                    <div>
-                      {isEditing ? (
-                         <div className="space-y-4">
-                            <div>
-                               <label className="text-[10px] font-black text-slate-500 uppercase mb-1 block">Nome do Jogo</label>
-                               <input type="text" value={formData.gameName} onChange={e => handleChange('gameName', e.target.value)} className="w-full bg-slate-800 text-white text-lg font-black rounded-xl p-3 border border-slate-700 focus:border-brand-500 outline-none" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                               <div>
-                                  <label className="text-[10px] font-black text-slate-500 uppercase mb-1 block">ID Arquivo</label>
-                                  <input type="text" value={formData.customId} onChange={e => handleChange('customId', e.target.value)} className="w-full bg-slate-800 text-brand-400 text-sm font-black rounded-xl p-3 border border-slate-700 focus:border-brand-500 outline-none" />
-                               </div>
-                               <div>
-                                  <label className="text-[10px] font-black text-slate-500 uppercase mb-1 block">Tipo de Item</label>
-                                  <select value={formData.category} onChange={e => handleChange('category', e.target.value)} className="w-full bg-slate-800 text-white text-sm font-bold rounded-xl p-3 border border-slate-700">
-                                     <option value="raspadinha">Raspadinha</option>
-                                     <option value="lotaria">Lotaria</option>
-                                     <option value="boletim">Boletim</option>
-                                     <option value="objeto">Objeto</option>
-                                  </select>
-                               </div>
-                            </div>
-                         </div>
-                      ) : (
-                         <h2 className="text-3xl font-black text-white leading-tight uppercase tracking-tighter mb-4">{formData.gameName}</h2>
-                      )}
-                      {!isEditing && (
-                        <div className="flex flex-wrap gap-2">
-                           <span className="px-3 py-1.5 rounded-lg text-[10px] font-black border bg-slate-800 border-slate-700 text-slate-300 flex items-center gap-2 uppercase tracking-widest shadow-sm">
-                             <Tag className="w-3.5 h-3.5 text-blue-500" /> {formData.category}
-                           </span>
-                           <span className="px-3 py-1.5 rounded-lg text-[10px] font-black border bg-slate-800 border-slate-700 text-brand-400 flex items-center gap-2 font-mono shadow-sm">
-                             <Hash className="w-3.5 h-3.5 text-brand-500" /> {formData.customId}
-                           </span>
-                        </div>
-                      )}
-                   </div>
-
-                   <div className="flex flex-wrap gap-2">
-                      <div className="flex items-center gap-2">
-                         {isEditing ? (
-                            <div className="flex flex-col gap-1">
-                               <label className="text-[10px] font-black text-slate-500 uppercase">Estado de Conservação</label>
-                               <select value={formData.state} onChange={e => handleChange('state', e.target.value as ScratchcardState)} className="bg-slate-800 text-white text-xs font-black p-2 rounded-lg border border-slate-700">
-                                  <option value="MINT">MINT (Nova)</option>
-                                  <option value="SC">SC (Raspada)</option>
-                                  <option value="AMOSTRA">AMOSTRA</option>
-                                  <option value="VOID">VOID</option>
-                                  <option value="SPECIMEN">SPECIMEN</option>
-                               </select>
-                            </div>
-                         ) : (
-                            <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black border transition-all ${formData.state === 'MINT' ? 'bg-green-900/30 text-green-400 border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.1)]' : 'bg-slate-800 text-slate-500 border-slate-700'}`}>{formData.state}</span>
-                         )}
+                    {isEditing ? (
+                       <div className="space-y-4">
+                          <div>
+                             <label className="text-[10px] font-black text-slate-500 uppercase mb-1 block">Nome do Jogo</label>
+                             <input type="text" value={formData.gameName} onChange={e => handleChange('gameName', e.target.value)} className="w-full bg-slate-800 text-white text-lg font-black rounded-xl p-3 border border-slate-700 focus:border-brand-500 outline-none" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                             <div>
+                                <label className="text-[10px] font-black text-slate-500 uppercase mb-1 block">ID Arquivo</label>
+                                <input type="text" value={formData.customId} onChange={e => handleChange('customId', e.target.value)} className="w-full bg-slate-800 text-brand-400 text-sm font-black rounded-xl p-3 border border-slate-700 focus:border-brand-500 outline-none" />
+                             </div>
+                             <div>
+                                <label className="text-[10px] font-black text-slate-500 uppercase mb-1 block">Categoria</label>
+                                <select value={formData.category} onChange={e => handleChange('category', e.target.value)} className="w-full bg-slate-800 text-white text-sm font-bold rounded-xl p-3 border border-slate-700">
+                                   <option value="raspadinha">Raspadinha</option>
+                                   <option value="lotaria">Lotaria</option>
+                                   <option value="boletim">Boletim</option>
+                                   <option value="objeto">Objeto</option>
+                                </select>
+                             </div>
+                          </div>
+                       </div>
+                    ) : (
+                       <h2 className="text-3xl font-black text-white leading-tight uppercase tracking-tighter mb-4">{formData.gameName}</h2>
+                    )}
+                    {!isEditing && (
+                      <div className="flex flex-wrap gap-2">
+                         <span className="px-3 py-1.5 rounded-lg text-[10px] font-black border bg-slate-800 border-slate-700 text-slate-300 flex items-center gap-2 uppercase tracking-widest shadow-sm">
+                           <Tag className="w-3.5 h-3.5 text-blue-500" /> {formData.category}
+                         </span>
+                         <span className="px-3 py-1.5 rounded-lg text-[10px] font-black border bg-slate-800 border-slate-700 text-brand-400 flex items-center gap-2 font-mono shadow-sm">
+                           <Hash className="w-3.5 h-3.5 text-brand-500" /> {formData.customId}
+                         </span>
                       </div>
-                      
-                      {!isEditing && formData.isSeries && <span className="px-3 py-1.5 rounded-lg text-[10px] font-black border bg-indigo-900/30 text-indigo-400 border-indigo-500/30 flex items-center gap-2 uppercase tracking-widest"><Layers className="w-3.5 h-3.5" /> Parte de Série</span>}
-                   </div>
+                    )}
                  </div>
 
-                 {/* Grelha Técnica Completa */}
                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800/60 group hover:border-blue-500/30 transition-colors">
-                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Hash className="w-3.5 h-3.5 text-blue-500"/> Nº do Jogo</p>
+                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800 group hover:border-blue-500/30 transition-colors">
+                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Hash className="w-3.5 h-3.5 text-blue-500"/> Nº Jogo</p>
                        {isEditing ? (
                          <input type="text" value={formData.gameNumber} onChange={e => handleChange('gameNumber', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black p-2 rounded-lg border border-slate-700" />
                        ) : (
                          <p className="text-base font-black text-white font-mono tracking-tighter">{formData.gameNumber}</p>
                        )}
                     </div>
-                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800/60 group hover:border-red-500/30 transition-colors">
-                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Globe className="w-3.5 h-3.5 text-red-500"/> País / Origem</p>
+                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800 group hover:border-red-500/30 transition-colors">
+                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Globe className="w-3.5 h-3.5 text-red-500"/> País</p>
                        {isEditing ? (
                          <input type="text" value={formData.country} onChange={e => handleChange('country', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black p-2 rounded-lg border border-slate-700" />
                        ) : (
@@ -309,16 +267,16 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                        )}
                     </div>
                     
-                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800/60 col-span-2 group hover:border-indigo-500/30 transition-colors">
-                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Printer className="w-3.5 h-3.5 text-indigo-400"/> Gráfica / Impressor</p>
+                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800 col-span-2 group hover:border-indigo-500/30 transition-colors">
+                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Printer className="w-3.5 h-3.5 text-indigo-400"/> Gráfica</p>
                        {isEditing ? (
                          <input type="text" value={formData.printer} onChange={e => handleChange('printer', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black p-2 rounded-lg border border-slate-700" />
                        ) : (
-                         <p className="text-sm font-black text-slate-200">{formData.printer || 'Gráfica não catalogada'}</p>
+                         <p className="text-sm font-black text-slate-200">{formData.printer || '-'}</p>
                        )}
                     </div>
 
-                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800/60 group hover:border-emerald-500/30 transition-colors">
+                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800 group hover:border-emerald-500/30 transition-colors">
                        <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Ruler className="w-3.5 h-3.5 text-emerald-400"/> Medidas</p>
                        {isEditing ? (
                          <input type="text" value={formData.size} onChange={e => handleChange('size', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black p-2 rounded-lg border border-slate-700" />
@@ -326,7 +284,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                          <p className="text-sm font-black text-slate-200">{formData.size || '-'}</p>
                        )}
                     </div>
-                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800/60 group hover:border-yellow-500/30 transition-colors">
+                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800 group hover:border-yellow-500/30 transition-colors">
                        <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Coins className="w-3.5 h-3.5 text-yellow-500"/> Tiragem</p>
                        {isEditing ? (
                          <input type="text" value={formData.emission} onChange={e => handleChange('emission', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black p-2 rounded-lg border border-slate-700" />
@@ -335,16 +293,16 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                        )}
                     </div>
 
-                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800/60 group hover:border-green-500/30 transition-colors">
-                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Banknote className="w-3.5 h-3.5 text-green-500"/> Preço Unitário</p>
+                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800 group hover:border-green-500/30 transition-colors">
+                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Banknote className="w-3.5 h-3.5 text-green-500"/> Preço</p>
                        {isEditing ? (
                          <input type="text" value={formData.price} onChange={e => handleChange('price', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black p-2 rounded-lg border border-slate-700" />
                        ) : (
                          <p className="text-sm font-black text-slate-200">{formData.price || '-'}</p>
                        )}
                     </div>
-                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800/60 group hover:border-orange-500/30 transition-colors">
-                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Clock className="w-3.5 h-3.5 text-orange-500"/> Ano Lançamento</p>
+                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800 group hover:border-orange-500/30 transition-colors">
+                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Clock className="w-3.5 h-3.5 text-orange-500"/> Ano</p>
                        {isEditing ? (
                          <input type="text" value={formData.releaseDate} onChange={e => handleChange('releaseDate', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black p-2 rounded-lg border border-slate-700" />
                        ) : (
@@ -353,9 +311,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                     </div>
                  </div>
 
-                 {/* Observações */}
                  <div className="bg-slate-800/30 p-6 rounded-3xl border border-slate-800 shadow-inner">
-                    <span className="text-[10px] text-slate-500 uppercase block mb-3 font-black tracking-widest flex items-center gap-2"><Info className="w-4 h-4 text-brand-500"/> Notas do Arquivista</span>
+                    <span className="text-[10px] text-slate-500 uppercase block mb-3 font-black tracking-widest flex items-center gap-2"><Info className="w-4 h-4 text-brand-500"/> Observações</span>
                     {isEditing ? (
                       <textarea value={formData.values} onChange={e => handleChange('values', e.target.value)} className="w-full bg-slate-900 text-white text-sm p-3 rounded-xl border border-slate-700 h-24 focus:border-brand-500 outline-none resize-none leading-relaxed" />
                     ) : (
@@ -364,11 +321,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                  </div>
 
                  <div className="pt-8 border-t border-slate-800 flex flex-col items-center gap-2 opacity-50">
-                    <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] mb-1">Responsável pelo Registo</p>
-                    <div className="flex items-center gap-2 bg-slate-800 px-4 py-2 rounded-full border border-slate-700">
-                       <User className="w-3.5 h-3.5 text-brand-500" />
-                       <span className="text-[10px] font-black text-white uppercase">{formData.collector || 'Jorge Mesquita'}</span>
-                    </div>
+                    <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] mb-1">Responsável: {formData.collector || 'Jorge Mesquita'}</p>
                  </div>
               </div>
            </div>
