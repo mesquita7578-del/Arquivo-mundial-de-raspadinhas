@@ -1,7 +1,10 @@
-import React, { useState, useMemo } from 'react';
+
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
   Filter, Zap, Layers, Trophy, CheckCircle2, Eye, RotateCcw, Sparkles, 
-  ChevronLeft, ChevronRight, Coins, Ticket, ClipboardList, Package, Image as ImageIcon 
+  ChevronLeft, ChevronRight, Coins, Ticket, ClipboardList, Package, Image as ImageIcon, Search, MapPin, X,
+  // Fix: added missing LayoutGrid and List icon imports
+  LayoutGrid, List
 } from 'lucide-react';
 import { ScratchcardData, Category, LineType } from '../types';
 
@@ -17,7 +20,7 @@ interface ImageGridProps {
   t: any;
 }
 
-const ITEMS_PER_PAGE = 60; // Aumentado para 60 já que os itens são menores
+const ITEMS_PER_PAGE = 60;
 
 const isRecentItem = (createdAt: number) => {
   const twoDays = 48 * 60 * 60 * 1000;
@@ -42,45 +45,16 @@ const StateBadge = ({ state }: { state: string }) => {
     'AMOSTRA': 'bg-purple-500/20 text-purple-400 border-purple-500/50',
     'VOID': 'bg-red-500/20 text-red-400 border-red-500/50',
   };
-  const defaultColor = 'bg-slate-700 text-slate-300 border-slate-600';
-  
   return (
-    <span className={`px-1 py-0.5 rounded text-[8px] font-bold uppercase border ${colors[state] || defaultColor}`}>
+    <span className={`px-1 py-0.5 rounded text-[8px] font-bold uppercase border ${colors[state] || 'bg-slate-700 text-slate-300 border-slate-600'}`}>
       {state}
     </span>
   );
 };
 
-const LineIndicator = ({ type, t }: { type?: LineType, t: any }) => {
-    if (!type || type === 'none') return null;
-    
-    const colors: Record<string, string> = {
-        'blue': 'bg-blue-500',
-        'red': 'bg-red-500',
-        'green': 'bg-green-500',
-        'brown': 'bg-yellow-800',
-        'pink': 'bg-pink-500',
-        'purple': 'bg-purple-500',
-        'yellow': 'bg-yellow-400',
-        'multicolor': 'bg-gradient-to-r from-blue-500 via-red-500 to-yellow-500'
-    };
-
-    return (
-        <div className="flex items-center gap-1 bg-slate-900/80 backdrop-blur px-1.5 py-0.5 rounded-full border border-slate-700" title={`${t.lines}: ${type}`}>
-            <div className={`w-1.5 h-1.5 rounded-full ${colors[type] || 'bg-slate-500'}`}></div>
-        </div>
-    );
-};
-
 const SafeImage = ({ src, alt, className }: { src: string, alt: string, className?: string }) => {
     const [error, setError] = useState(false);
-    if (error || !src) {
-        return (
-            <div className={`flex items-center justify-center bg-slate-800 ${className}`}>
-                <ImageIcon className="w-6 h-6 text-slate-600" />
-            </div>
-        );
-    }
+    if (error || !src) return <div className={`flex items-center justify-center bg-slate-800 ${className}`}><ImageIcon className="w-6 h-6 text-slate-600" /></div>;
     return <img src={src} alt={alt} className={className} onError={() => setError(true)} loading="lazy" />;
 };
 
@@ -96,172 +70,183 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   t 
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const filteredImages = images;
+  const [countryFilter, setCountryFilter] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionRef = useRef<HTMLDivElement>(null);
+
+  // Extract unique countries from currently provided images
+  const uniqueCountries = useMemo(() => {
+    const countries = Array.from(new Set(images.map(img => img.country))).filter(Boolean).sort();
+    return countries;
+  }, [images]);
+
+  // Suggested countries based on input
+  const suggestions = useMemo(() => {
+    if (!countryFilter.trim()) return [];
+    return uniqueCountries.filter(c => c.toLowerCase().includes(countryFilter.toLowerCase()));
+  }, [uniqueCountries, countryFilter]);
+
+  // Filter images by country filter
+  const filteredImages = useMemo(() => {
+    if (!countryFilter.trim()) return images;
+    return images.filter(img => img.country.toLowerCase().includes(countryFilter.toLowerCase()));
+  }, [images, countryFilter]);
+
   const totalPages = Math.ceil(filteredImages.length / ITEMS_PER_PAGE);
 
   const displayedImages = useMemo(() => {
-    if (hideFilters) return filteredImages;
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredImages.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredImages, currentPage, hideFilters]);
+  }, [filteredImages, currentPage]);
 
-  const clearFilters = () => {
-    // In current architecture, filters are mostly external. 
-  };
-  
-  React.useEffect(() => {
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionRef.current && !suggestionRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
     setCurrentPage(1);
-  }, [images]);
+  }, [images, countryFilter]);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className={`${hideFilters ? '' : 'flex-1 overflow-y-auto p-2 md:p-4 pb-24 scroll-smooth'}`}>
-        {!hideFilters && filteredImages.length === 0 ? (
+    <div className="flex flex-col h-full space-y-4">
+      
+      {/* Local Filter Bar */}
+      {!hideFilters && (
+        <div className="flex flex-col md:flex-row items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-800 backdrop-blur-sm">
+           <div className="relative flex-1 w-full" ref={suggestionRef}>
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                 <MapPin className="w-4 h-4" />
+              </div>
+              <input 
+                type="text"
+                placeholder="Filtrar por País..."
+                value={countryFilter}
+                onChange={(e) => {
+                   setCountryFilter(e.target.value);
+                   setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:border-brand-500 outline-none transition-all"
+              />
+              {countryFilter && (
+                <button onClick={() => setCountryFilter('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+                   <X className="w-4 h-4" />
+                </button>
+              )}
+
+              {/* Suggestions Dropdown */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute top-full left-0 w-full mt-2 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-[60] overflow-hidden animate-fade-in max-h-60 overflow-y-auto">
+                   {suggestions.map(country => (
+                      <button 
+                        key={country}
+                        onClick={() => {
+                           setCountryFilter(country);
+                           setShowSuggestions(false);
+                        }}
+                        className="w-full text-left px-4 py-3 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors border-b border-slate-700/50 last:border-none flex items-center justify-between group"
+                      >
+                         <span>{country}</span>
+                         <span className="text-[10px] font-bold text-slate-500 group-hover:text-brand-400">
+                           {images.filter(i => i.country === country).length} itens
+                         </span>
+                      </button>
+                   ))}
+                </div>
+              )}
+           </div>
+           
+           <div className="flex items-center gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+              <button 
+                onClick={() => onViewModeChange?.('grid')}
+                className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => onViewModeChange?.('list')}
+                className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                <List className="w-4 h-4" />
+              </button>
+           </div>
+        </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto p-2 md:p-4 pb-24 scroll-smooth min-h-[400px]">
+        {filteredImages.length === 0 ? (
            <div className="flex flex-col items-center justify-center h-64 text-slate-500">
              <Filter className="w-12 h-12 mb-4 opacity-20" />
              <p>{t.noResults}</p>
-             <button onClick={clearFilters} className="text-brand-500 hover:underline mt-2 text-sm">{t.clearFilters}</button>
+             <button onClick={() => { setCountryFilter(''); }} className="text-brand-500 hover:underline mt-2 text-sm">Ver tudo</button>
            </div>
         ) : viewMode === 'list' ? (
-          // LIST VIEW
-          <div className="flex flex-col space-y-2">
+          <div className="flex flex-col space-y-2 max-w-4xl mx-auto">
             {displayedImages.map((item) => (
               <div 
                 key={item.id}
                 onClick={() => onImageClick(item)}
                 className="group flex items-center gap-4 bg-slate-900 border border-slate-800 hover:border-brand-500/50 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer transition-all"
               >
-                {/* Thumbnail */}
                 <div className="relative w-12 h-12 rounded overflow-hidden flex-shrink-0 bg-slate-950/50 border border-slate-700">
                    <SafeImage src={item.frontUrl} alt={item.gameName} className="w-full h-full object-contain" />
-                   {isRecentItem(item.createdAt) && (
-                      <div className="absolute top-0 right-0 bg-gradient-to-r from-yellow-400 to-orange-500 text-slate-900 text-[6px] font-black px-1 py-0.5 rounded-bl shadow-lg z-20 flex items-center gap-0.5 animate-pulse">
-                         <Zap className="w-1.5 h-1.5 fill-slate-900 stroke-none" /> NOVO
-                      </div>
-                   )}
                 </div>
-                
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-slate-500 bg-slate-800 px-1 rounded">{item.customId}</span>
                     <h3 className="text-sm font-bold text-slate-200 truncate">{item.gameName}</h3>
-                    <div title={item.category}>
-                        {getCategoryIcon(item.category)}
-                    </div>
-                    {item.isSeries && (
-                      <span title={t.series} className="flex items-center gap-1 bg-brand-900/20 px-1 py-0.5 rounded border border-brand-900/30">
-                        <Layers className="w-3 h-3 text-brand-500" />
-                        {item.seriesDetails && <span className="text-[9px] text-brand-400 font-medium">{item.seriesDetails}</span>}
-                      </span>
-                    )}
-                    {item.isWinner && (
-                      <span title={item.prizeAmount} className="flex items-center gap-1 bg-green-900/20 px-1 py-0.5 rounded border border-green-900/30">
-                        <Trophy className="w-3 h-3 text-green-500" />
-                        <span className="text-[9px] text-green-400 font-medium">{item.prizeAmount}</span>
-                      </span>
-                    )}
-                    {currentUser && item.owners && item.owners.includes(currentUser) && (
-                       <span title="Na minha coleção" className="bg-blue-600/30 text-blue-400 p-0.5 rounded-full border border-blue-500/30">
-                          <CheckCircle2 className="w-3 h-3" />
-                       </span>
+                    {getCategoryIcon(item.category)}
+                    {currentUser && item.owners?.includes(currentUser) && (
+                       <CheckCircle2 className="w-3 h-3 text-blue-500" />
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                     <span className="flex items-center gap-1">
-                        <span className="w-1 h-1 rounded-full bg-brand-500"></span>
-                        {item.country}
-                     </span>
-                     <span className="text-slate-700">|</span>
-                     <span className="font-mono">Nº {item.gameNumber}</span>
+                  <div className="text-[10px] text-slate-400">
+                     {item.country} • Nº {item.gameNumber}
                   </div>
                 </div>
-
-                {/* Badge */}
                 <StateBadge state={item.state} />
               </div>
             ))}
           </div>
         ) : (
-          // GRID VIEW (COMPACT MODE)
-          // Increased columns significantly: Mobile 2 -> SM 4 -> MD 5 -> LG 7 -> XL 8
-          <div className={`grid grid-cols-2 sm:grid-cols-4 ${hideFilters ? 'md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-9' : 'md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-8'} gap-2 md:gap-3`}>
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-8 gap-2 md:gap-3">
             {displayedImages.map((item) => (
               <div
                 key={item.id}
                 className="group relative bg-slate-900/80 rounded-lg overflow-hidden border border-slate-700/50 hover:border-brand-500/50 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10 cursor-pointer flex flex-col h-full backdrop-blur-sm"
                 onClick={() => onImageClick(item)}
               >
-                {/* Image Container */}
                 <div className="relative aspect-square overflow-hidden bg-slate-800/50 flex items-center justify-center p-2">
-                  <SafeImage
-                    src={item.frontUrl}
-                    alt={item.gameName}
-                    className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-110"
-                  />
-                  
-                  {/* ID Badge - Minimal */}
-                  <div className="absolute top-1 left-1 bg-slate-950/70 backdrop-blur text-white text-[8px] font-mono px-1.5 py-0.5 rounded border border-slate-700 shadow-sm flex items-center gap-1 z-20 opacity-80 group-hover:opacity-100">
+                  <SafeImage src={item.frontUrl} alt={item.gameName} className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-110" />
+                  <div className="absolute top-1 left-1 bg-slate-950/70 backdrop-blur text-white text-[8px] font-mono px-1.5 py-0.5 rounded border border-slate-700 shadow-sm flex items-center gap-1 z-20">
                      {item.customId}
                   </div>
-
                    <div className="absolute top-1 right-1 flex flex-col gap-1 items-end z-20">
                       {isRecentItem(item.createdAt) && (
                          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-slate-900 text-[8px] font-black px-1.5 py-0.5 rounded-full shadow-sm flex items-center gap-0.5 animate-pulse">
                             <Zap className="w-2 h-2 fill-slate-900 stroke-none" />
-                            NOVO
                          </div>
                       )}
-
-                      {/* My Collection Indicator */}
-                      {currentUser && item.owners && item.owners.includes(currentUser) && (
-                         <div className="bg-blue-600 text-white p-0.5 rounded-full shadow shadow-blue-500/50 border border-blue-400">
+                      {currentUser && item.owners?.includes(currentUser) && (
+                         <div className="bg-blue-600 text-white p-0.5 rounded-full shadow border border-blue-400">
                             <CheckCircle2 className="w-2.5 h-2.5" />
                          </div>
                       )}
-
-                      {item.isWinner && (
-                        <div className="bg-green-600/90 text-white p-0.5 rounded-full shadow animate-bounce">
-                           <Trophy className="w-2.5 h-2.5" />
-                        </div>
-                      )}
-                      
-                      <div className="flex gap-0.5">
-                        {item.isSeries && (
-                            <div className={`backdrop-blur text-white rounded shadow-sm flex items-center justify-center ${item.seriesDetails ? 'bg-brand-600/90 px-1 py-0.5' : 'bg-brand-600/90 p-0.5 rounded-full'}`} title={t.series}>
-                            <Layers className="w-2.5 h-2.5" />
-                            {item.seriesDetails && <span className="text-[7px] font-bold leading-none ml-0.5">{item.seriesDetails}</span>}
-                            </div>
-                        )}
-                        {item.backUrl && (
-                            <div className="bg-slate-800/80 backdrop-blur text-slate-300 p-0.5 rounded-full shadow-sm">
-                            <RotateCcw className="w-2.5 h-2.5" />
-                            </div>
-                        )}
-                      </div>
-                      
-                      <LineIndicator type={item.lines} t={t} />
+                      {item.isWinner && <div className="bg-green-600/90 text-white p-0.5 rounded-full shadow"><Trophy className="w-2.5 h-2.5" /></div>}
                    </div>
                 </div>
-
-                {/* Info Container - Condensed */}
                 <div className="p-2 flex flex-col flex-1 bg-slate-900/50 border-t border-slate-800">
                   <div className="flex justify-between items-start mb-1">
                     <h3 className="font-bold text-slate-200 truncate flex-1 mr-1 text-[10px] md:text-xs leading-tight" title={item.gameName}>{item.gameName}</h3>
                     <StateBadge state={item.state} />
                   </div>
-                  
-                  {/* Flag / Country / Region Info */}
                   <div className="mb-1 flex items-center gap-1 text-[9px] text-slate-500">
-                    <span className="w-1 h-1 rounded-full bg-brand-500 shadow-[0_0_5px_rgba(244,63,94,0.5)]"></span>
-                    <span className="truncate">
-                      {item.country}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-end mt-auto pt-1 border-t border-slate-800/50">
-                    <span className="font-mono text-[9px] text-slate-400 truncate">Nº {item.gameNumber}</span>
-                    <span className="font-mono text-[9px] text-slate-600">{item.releaseDate.split('-')[0] || '?'}</span>
+                    <span className="truncate">{item.country}</span>
                   </div>
                 </div>
               </div>
@@ -269,31 +254,11 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
           </div>
         )}
 
-        {/* Pagination Controls */}
-        {!hideFilters && filteredImages.length > ITEMS_PER_PAGE && (
-          <div className="flex items-center justify-center gap-4 mt-6">
-            <button
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className={`p-1.5 rounded-full border transition-all ${currentPage === 1 ? 'bg-slate-800 text-slate-600 border-slate-800 cursor-not-allowed' : 'bg-slate-800 text-white border-slate-700 hover:bg-slate-700 hover:border-slate-500'}`}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <span>{t.page}</span>
-              <span className="font-bold text-white bg-slate-800 px-2 py-0.5 rounded">{currentPage}</span>
-              <span>{t.of}</span>
-              <span>{totalPages}</span>
-            </div>
-
-            <button
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className={`p-1.5 rounded-full border transition-all ${currentPage === totalPages ? 'bg-slate-800 text-slate-600 border-slate-800 cursor-not-allowed' : 'bg-slate-800 text-white border-slate-700 hover:bg-slate-700 hover:border-slate-500'}`}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+        {filteredImages.length > ITEMS_PER_PAGE && (
+          <div className="flex items-center justify-center gap-4 mt-12 pb-12">
+            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-1.5 rounded-full border bg-slate-800 text-white border-slate-700 hover:bg-slate-700 disabled:opacity-30"><ChevronLeft className="w-4 h-4" /></button>
+            <div className="text-xs text-slate-400">Pág <span className="font-bold text-white bg-slate-800 px-2 py-0.5 rounded">{currentPage}</span> de {totalPages}</div>
+            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-1.5 rounded-full border bg-slate-800 text-white border-slate-700 hover:bg-slate-700 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
           </div>
         )}
       </div>
