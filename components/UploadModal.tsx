@@ -97,15 +97,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       setStep(2);
     } catch (err) {
       console.error(err);
+      // Even on error, we go to step 2 so user can fill manually
       setError(t.errorAnalyze);
+      setStep(2);
     } finally {
       setIsAnalyzing(false);
     }
-  };
-
-  const handleManualEntry = () => {
-    if (!frontFile) return;
-    setStep(2);
   };
 
   const updateField = (field: keyof ScratchcardData, value: any) => {
@@ -243,22 +240,15 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
               {error && <div className="mb-4 text-red-400 text-sm flex items-center gap-2"><AlertCircle className="w-4 h-4"/>{error}</div>}
 
+              {/* ACTION BUTTON - ONLY ANALYZE NOW */}
               <div className="flex gap-3">
                  <button 
                    onClick={processImage}
                    disabled={!frontFile || isAnalyzing}
-                   className={`flex-1 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg ${isAnalyzing ? 'bg-pink-600 shadow-pink-900/30' : 'bg-brand-600 hover:bg-brand-500 shadow-brand-900/20'} disabled:bg-slate-800 disabled:text-slate-500`}
+                   className={`w-full text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg ${isAnalyzing ? 'bg-pink-600 shadow-pink-900/30' : 'bg-brand-600 hover:bg-brand-500 shadow-brand-900/20'} disabled:bg-slate-800 disabled:text-slate-500`}
                  >
-                    {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin"/> : <Sparkles className="w-4 h-4"/>}
+                    {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin"/> : <Sparkles className="w-5 h-5"/>}
                     {isAnalyzing ? t.analyzing : t.analyze}
-                 </button>
-                 
-                 <button 
-                   onClick={handleManualEntry}
-                   disabled={!frontFile}
-                   className="px-4 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white rounded-xl font-bold transition-colors"
-                 >
-                    Manual
                  </button>
               </div>
            </div>

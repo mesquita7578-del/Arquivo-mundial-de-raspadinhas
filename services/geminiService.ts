@@ -19,25 +19,18 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
         }
       },
       {
-        text: `És um especialista em arquivar Raspadinhas e Lotarias.
-        Analise a imagem e extraia os dados técnicos com precisão.
+        text: `You are an expert OCR system for Lottery & Scratchcards.
+        Extract ALL visible text and categorize it.
         
-        INSTRUÇÕES CRÍTICAS DE DEDUÇÃO (NUNCA DEIXE CAMPOS VAZIOS SE PUDER DEDUZIR):
-        1. PAÍS: Se não estiver explícito, DEDUZA pelo idioma ou moeda.
-           - Português + "SCML" ou "Jogos Santa Casa" -> "Portugal"
-           - Português + "Reais" -> "Brasil"
-           - Italiano -> "Itália"
-           - Espanhol -> "Espanha"
-           - Inglês + £ -> "Reino Unido"
-           - Inglês + $ -> "EUA" (ou verifique estado)
-        2. ESTADO:
-           - Se vir marcas de raspagem prateadas removidas -> "SC" (Raspada).
-           - Se estiver limpa -> "MINT" (Nova).
-           - Se tiver carimbos "NULO", "VOID", "SPECIMEN", "00000" -> "AMOSTRA".
-        3. DATA/ANO: Procure copyrights pequenos (ex: ©2023). Se não houver, estime pelo estilo.
-        4. NOME: O texto maior e mais destacado no topo.
+        Fields to Extract:
+        - gameName: The main title (largest text).
+        - gameNumber: Small codes like "Mod. 502" or "N. 105" or "Serie 2".
+        - price: Value with currency (e.g. 5€, $10, 500Yen).
+        - country: Infer from language (Português=Portugal, Italiano=Italia).
+        - state: Check for scratch marks. If scratched -> "SC". If clean -> "MINT".
         
-        Retorne um JSON válido.`
+        If you are unsure of a field, make a best guess based on the image context.
+        `
       }
     ];
 
@@ -48,7 +41,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
           data: backBase64
         }
       });
-      parts[parts.length - 1].text += " Use o verso para ler códigos de barras, regras e confirmar a Gráfica (Printer) no rodapé.";
+      parts[parts.length - 1].text += " Use the back image to confirm Barcodes, Printer Name, and Region.";
     }
 
     const response = await ai.models.generateContent({
