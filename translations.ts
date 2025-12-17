@@ -23,7 +23,8 @@ export const translations = {
       rarities: "Raridades",
       promos: "Promocionais", 
       winners: "Premiadas",
-      websites: "Sites Oficiais"
+      websites: "Sites Oficiais",
+      install: "Instalar App"
     },
     websites: {
       title: "Diretório Oficial",
@@ -226,7 +227,8 @@ export const translations = {
       rarities: "Rarità",
       promos: "Promo", 
       winners: "Vincenti",
-      websites: "Siti Ufficiali"
+      websites: "Siti Ufficiali",
+      install: "Installa App"
     },
     websites: {
       title: "Siti Ufficiali",

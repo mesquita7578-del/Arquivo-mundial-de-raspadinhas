@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen, FileSpreadsheet, Home, BarChart2, Info, ChevronDown, Coins, Star, ArrowRight, Globe, Map, UploadCloud, User } from 'lucide-react';
+import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen, FileSpreadsheet, Home, BarChart2, Info, ChevronDown, Coins, Star, ArrowRight, Globe, Map, UploadCloud, User, Smartphone } from 'lucide-react';
 import { Language } from '../translations';
 
 interface HeaderProps {
@@ -7,7 +7,7 @@ interface HeaderProps {
   onUploadClick: () => void;
   searchTerm: string;
   isAdmin: boolean;
-  currentUser?: string | null; // New Prop
+  currentUser?: string | null;
   onAdminToggle: () => void;
   onLogout: () => void;
   onExport: () => void;
@@ -20,6 +20,7 @@ interface HeaderProps {
   onNavigate: (page: any) => void;
   stats: Record<string, number>;
   t: any;
+  onInstall?: () => void; // New Prop for PWA Installation
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
@@ -39,7 +40,8 @@ export const Header: React.FC<HeaderProps> = ({
   currentPage,
   onNavigate,
   stats,
-  t
+  t,
+  onInstall
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -223,6 +225,18 @@ export const Header: React.FC<HeaderProps> = ({
       {/* RIGHT GROUP: Actions */}
       <div className="flex items-center gap-2">
         
+        {/* INSTALL APP BUTTON (Visible only when installable) */}
+        {onInstall && (
+           <button
+             onClick={onInstall}
+             className="hidden lg:flex items-center gap-2 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg shadow-pink-900/30 animate-pulse transition-all"
+             title={t.install}
+           >
+             <Smartphone className="w-3 h-3" />
+             {t.install}
+           </button>
+        )}
+
         {/* Language Toggles */}
         <div className="flex bg-slate-800 rounded-md p-0.5 border border-slate-700">
           <button 

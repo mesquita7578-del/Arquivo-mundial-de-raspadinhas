@@ -74,6 +74,9 @@ function App() {
   const [language, setLanguage] = useState<Language>('pt');
   const t = translations[language];
 
+  // PWA Install Prompt State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
   const loadInitialData = async () => {
     setIsLoadingDB(true);
     try {
@@ -120,6 +123,33 @@ function App() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Listen for PWA Install Prompt
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult: any) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+      setDeferredPrompt(null);
+    });
+  };
 
   const scrollToTop = () => {
      window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -695,6 +725,7 @@ function App() {
         onNavigate={setCurrentPage}
         stats={totalStats.stats} // Pass stats to Header
         t={t.header}
+        onInstall={deferredPrompt ? handleInstallClick : undefined} // Pass install handler only if prompt is available
       />
 
       {/* MOBILE NAVIGATION BAR (Updated for Continents) */}

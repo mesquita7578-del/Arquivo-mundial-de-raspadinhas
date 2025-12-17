@@ -32,9 +32,9 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
 
   // Top Countries Data
   const topCountries = Object.entries(countryStats)
-    .sort((a, b) => (b[1] as number) - (a[1] as number))
+    .sort((a, b) => Number(b[1]) - Number(a[1]))
     .slice(0, 5);
-  const maxCountryCount = topCountries.length > 0 ? (topCountries[0][1] as number) : 1;
+  const maxCountryCount = topCountries.length > 0 ? Number(topCountries[0][1]) : 1;
 
   // Collector Leaderboard Logic
   const guardians = Object.entries(collectorStats)
