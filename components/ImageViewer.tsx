@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, ChevronLeft, ChevronRight, Edit2, Trash2, Save, Check, 
@@ -169,7 +170,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                            </div>
                            <div className="space-y-1">
                               <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-1"><MapPin className="w-3 h-3 text-red-500"/> Local</p>
-                              <p className="text-xs font-bold text-slate-300 truncate">{member.country}</p>
+                              <p className="text-xs font-bold text-slate-300 truncate">{member.country}{member.region ? ` (${member.region})` : ''}</p>
                            </div>
                            <div className="flex items-center justify-end">
                               <button onClick={() => onImageSelect(member)} className="px-4 py-2 bg-slate-800 hover:bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2">Detalhes <Maximize2 className="w-3.5 h-3.5"/></button>
@@ -266,13 +267,13 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                          <p className="text-base font-black text-white leading-none">{formData.country}</p>
                        )}
                     </div>
-                    
-                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800 col-span-2 group hover:border-indigo-500/30 transition-colors">
-                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Printer className="w-3.5 h-3.5 text-indigo-400"/> Gráfica</p>
+
+                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800 group hover:border-indigo-500/30 transition-colors">
+                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><MapPin className="w-3.5 h-3.5 text-indigo-400"/> Região / Ilha</p>
                        {isEditing ? (
-                         <input type="text" value={formData.printer} onChange={e => handleChange('printer', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black p-2 rounded-lg border border-slate-700" />
+                         <input type="text" value={formData.region} onChange={e => handleChange('region', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black p-2 rounded-lg border border-slate-700" placeholder="Ex: Madeira" />
                        ) : (
-                         <p className="text-sm font-black text-slate-200">{formData.printer || '-'}</p>
+                         <p className="text-sm font-black text-slate-200">{formData.region || '-'}</p>
                        )}
                     </div>
 
@@ -284,6 +285,16 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                          <p className="text-sm font-black text-slate-200">{formData.size || '-'}</p>
                        )}
                     </div>
+                    
+                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800 col-span-2 group hover:border-indigo-500/30 transition-colors">
+                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Printer className="w-3.5 h-3.5 text-indigo-400"/> Gráfica</p>
+                       {isEditing ? (
+                         <input type="text" value={formData.printer} onChange={e => handleChange('printer', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black p-2 rounded-lg border border-slate-700" />
+                       ) : (
+                         <p className="text-sm font-black text-slate-200">{formData.printer || '-'}</p>
+                       )}
+                    </div>
+
                     <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800 group hover:border-yellow-500/30 transition-colors">
                        <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Coins className="w-3.5 h-3.5 text-yellow-500"/> Tiragem</p>
                        {isEditing ? (

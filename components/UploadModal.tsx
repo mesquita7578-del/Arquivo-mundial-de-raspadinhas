@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Upload, Sparkles, AlertCircle, Check, Loader2, ArrowLeft, Image as ImageIcon, ScanLine, DollarSign, Calendar, Globe, Printer, Layers, Heart, Hash, Map, Gift, Trophy, Star, Gem, Tag, Ruler, Banknote, Clock, Info, Coins } from 'lucide-react';
+import { X, Upload, Sparkles, AlertCircle, Check, Loader2, ArrowLeft, Image as ImageIcon, ScanLine, DollarSign, Calendar, Globe, Printer, Layers, Heart, Hash, Map, Gift, Trophy, Star, Gem, Tag, Ruler, Banknote, Clock, Info, Coins, MapPin } from 'lucide-react';
 import { ScratchcardData, Category, LineType, ScratchcardState } from '../types';
 import { analyzeImage } from '../services/geminiService';
 import { storageService } from '../services/storage';
@@ -235,10 +235,14 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                          </label>
                    </div>
 
-                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                       <div>
                          <label className="text-[10px] text-slate-500 font-black uppercase mb-1 flex items-center gap-1"><Globe className="w-3 h-3 text-red-500"/> País</label>
                          <input type="text" value={formData.country || ''} onChange={e => updateField('country', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" />
+                      </div>
+                      <div>
+                         <label className="text-[10px] text-slate-500 font-black uppercase mb-1 flex items-center gap-1"><MapPin className="w-3 h-3 text-indigo-500"/> Região / Ilha</label>
+                         <input type="text" value={formData.region || ''} onChange={e => updateField('region', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" placeholder="Ex: Açores" />
                       </div>
                       <div>
                          <label className="text-[10px] text-slate-500 font-black uppercase mb-1 flex items-center gap-1"><Hash className="w-3 h-3 text-blue-500"/> Nº Jogo</label>
