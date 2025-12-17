@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
 import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff, MapPin, LayoutGrid, List, ClipboardList, Package, Trophy, Map, Zap, CheckCircle2 } from 'lucide-react';
 
@@ -141,6 +141,76 @@ const isRecentItem = (createdAt: number) => {
   return createdAt > twoDaysAgo;
 };
 
+// Improved InputFilter with Autocomplete Support
+const InputFilter = ({ 
+  value, 
+  onChange, 
+  placeholder, 
+  icon: Icon,
+  suggestions = []
+}: { 
+  value: string, 
+  onChange: (val: string) => void, 
+  placeholder: string, 
+  icon: React.ElementType,
+  suggestions?: string[]
+}) => {
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Filter suggestions based on current input
+  const filteredSuggestions = suggestions.filter(item => 
+    item.toLowerCase().includes(value.toLowerCase()) && 
+    item.toLowerCase() !== value.toLowerCase()
+  );
+
+  const handleSelect = (suggestion: string) => {
+    onChange(suggestion);
+    setShowSuggestions(false);
+  };
+
+  return (
+    <div className="relative group min-w-[140px] flex-1" ref={wrapperRef}>
+      <Icon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 group-focus-within:text-brand-500 transition-colors z-10" />
+      <input 
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setShowSuggestions(true)}
+        placeholder={placeholder}
+        className="w-full bg-slate-800 text-slate-200 text-xs rounded-lg border border-slate-700 pl-8 pr-2 py-2 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors placeholder-slate-600 relative z-0"
+      />
+      
+      {/* Suggestions Dropdown */}
+      {showSuggestions && filteredSuggestions.length > 0 && (
+        <div className="absolute top-full left-0 w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto animate-fade-in scrollbar-hide">
+          {filteredSuggestions.map((suggestion, index) => (
+            <div 
+              key={index}
+              onClick={() => handleSelect(suggestion)}
+              className="px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white cursor-pointer transition-colors border-b border-slate-800/50 last:border-0 flex items-center gap-2"
+            >
+              <span className="w-1 h-1 rounded-full bg-slate-500"></span>
+              {suggestion}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const ImageGrid: React.FC<ImageGridProps> = ({ 
   images, 
   onImageClick, 
@@ -173,7 +243,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
     setCurrentPage(1);
   }, [activeCategory, filterCountry, filterState, filterYear, filterSize, filterEmission, filterPrinter, filterSeries, images]);
 
-  // Determine available Regions based on CURRENT images (before applying sub-filters)
+  // Determine available Regions based on CURRENT images
   const availableRegions = useMemo(() => {
     if (hideFilters) return [];
     
@@ -184,6 +254,18 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
       }
     });
     return Array.from(regions).sort();
+  }, [images, hideFilters]);
+
+  // Extract Unique Countries for Autocomplete
+  const uniqueCountries = useMemo(() => {
+    if (hideFilters) return [];
+    const countries = new Set<string>();
+    images.forEach(img => {
+      if (img.country && img.country.trim().length > 0) {
+        countries.add(img.country.trim());
+      }
+    });
+    return Array.from(countries).sort();
   }, [images, hideFilters]);
 
   // Apply filters (Internal filters + Region)
@@ -227,29 +309,6 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   };
 
   const hasFilters = filterCountry || filterState || filterYear || filterSize || filterEmission || filterPrinter || filterSeries || selectedRegion;
-
-  const InputFilter = ({ 
-    value, 
-    onChange, 
-    placeholder, 
-    icon: Icon 
-  }: { 
-    value: string, 
-    onChange: (val: string) => void, 
-    placeholder: string, 
-    icon: React.ElementType 
-  }) => (
-    <div className="relative group min-w-[140px] flex-1">
-      <Icon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 group-focus-within:text-brand-500 transition-colors" />
-      <input 
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full bg-slate-800 text-slate-200 text-xs rounded-lg border border-slate-700 pl-8 pr-2 py-2 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors placeholder-slate-600"
-      />
-    </div>
-  );
 
   return (
     <div className="flex flex-col h-full">
@@ -300,7 +359,13 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <InputFilter value={filterCountry} onChange={setFilterCountry} placeholder={t.country} icon={Globe} />
+            <InputFilter 
+              value={filterCountry} 
+              onChange={setFilterCountry} 
+              placeholder={t.country} 
+              icon={Globe} 
+              suggestions={uniqueCountries} 
+            />
             <InputFilter value={filterState} onChange={setFilterState} placeholder={t.state} icon={Search} />
             <InputFilter value={filterYear} onChange={setFilterYear} placeholder={t.year} icon={Calendar} />
             <InputFilter value={filterSize} onChange={setFilterSize} placeholder={t.size} icon={Maximize2} />
