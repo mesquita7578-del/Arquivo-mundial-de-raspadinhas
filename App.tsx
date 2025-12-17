@@ -159,6 +159,7 @@ function App() {
 
   const handleInstallClick = () => {
     if (deferredPrompt) {
+        // Browser has prepared the install prompt
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then((choiceResult: any) => {
           if (choiceResult.outcome === 'accepted') {
@@ -169,7 +170,11 @@ function App() {
           setDeferredPrompt(null);
         });
     } else if (isIOS) {
+        // iOS Instructions
         alert("Para instalar no iPhone/iPad:\n\n1. Toque no botão Partilhar (quadrado com seta em baixo)\n2. Escolha 'Adicionar ao Ecrã Principal' (+)");
+    } else {
+        // Android/Desktop Fallback (Instructions)
+        alert("Para instalar a App:\n\n1. Abra o menu do navegador (⋮ ou opções)\n2. Escolha 'Instalar Aplicação' ou 'Adicionar ao Ecrã Principal'");
     }
   };
 
@@ -760,7 +765,7 @@ function App() {
         onNavigate={setCurrentPage}
         stats={totalStats.stats} // Pass stats to Header
         t={t.header}
-        onInstall={(!isStandalone && (deferredPrompt || isIOS)) ? handleInstallClick : undefined} // Logic for iOS or Android
+        onInstall={!isStandalone ? handleInstallClick : undefined} // Logic for iOS or Android
       />
 
       {/* MOBILE NAVIGATION BAR (Updated for Continents) */}
@@ -780,7 +785,7 @@ function App() {
            <Info className="w-4 h-4" /> Sobre
          </button>
 
-         {!isStandalone && (deferredPrompt || isIOS) && (
+         {!isStandalone && (
             <button onClick={handleInstallClick} className="px-3 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-1 min-w-[60px] bg-gradient-to-br from-pink-600/20 to-rose-600/20 text-pink-400 border border-pink-500/30 animate-pulse">
                <Smartphone className="w-4 h-4" /> Instalar
             </button>
