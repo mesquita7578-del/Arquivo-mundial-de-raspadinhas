@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Upload, Sparkles, AlertCircle, Check, Loader2, AlignJustify, ArrowLeft, Image as ImageIcon, ScanLine, DollarSign, Calendar, MapPin, Globe, Printer, Layers, Maximize2, Plus } from 'lucide-react';
+import { X, Upload, Sparkles, AlertCircle, Check, Loader2, AlignJustify, ArrowLeft, Image as ImageIcon, ScanLine, DollarSign, Calendar, MapPin, Globe, Printer, Layers, Maximize2, Plus, Heart } from 'lucide-react';
 import { ScratchcardData, Category, LineType, Continent, ScratchcardState } from '../types';
 import { analyzeImage } from '../services/geminiService';
 
@@ -244,7 +245,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                  <button 
                    onClick={processImage}
                    disabled={!frontFile || isAnalyzing}
-                   className="flex-1 bg-brand-600 hover:bg-brand-500 disabled:bg-slate-800 disabled:text-slate-500 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-brand-900/20"
+                   className={`flex-1 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg ${isAnalyzing ? 'bg-pink-600 shadow-pink-900/30' : 'bg-brand-600 hover:bg-brand-500 shadow-brand-900/20'} disabled:bg-slate-800 disabled:text-slate-500`}
                  >
                     {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin"/> : <Sparkles className="w-4 h-4"/>}
                     {isAnalyzing ? t.analyzing : t.analyze}
@@ -274,6 +275,15 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                <button onClick={() => setStep(1)} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400"><ArrowLeft className="w-5 h-5"/></button>
                <h2 className="text-lg font-bold text-white">{t.reviewTitle}</h2>
              </div>
+             
+             {/* CHLOE AI BADGE */}
+             {formData.aiGenerated && (
+                <div className="flex items-center gap-2 bg-pink-500/10 border border-pink-500/30 px-3 py-1 rounded-full">
+                   <Sparkles className="w-3 h-3 text-pink-400" />
+                   <span className="text-xs font-bold text-pink-400 uppercase tracking-widest">{t.aiTitle}</span>
+                </div>
+             )}
+
              <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400"><X className="w-5 h-5"/></button>
           </div>
 
