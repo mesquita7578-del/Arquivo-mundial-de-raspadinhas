@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Heart, ShieldCheck, Zap, X, Smartphone } from 'lucide-react';
+import { Heart, ShieldCheck, Zap, X, Smartphone, Download } from 'lucide-react';
 
 interface FooterProps {
   onNavigate: (page: any) => void;
@@ -10,6 +10,14 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onInstall }) => {
   const currentYear = new Date().getFullYear();
+
+  const handleManualInstallInfo = () => {
+    if (onInstall) {
+      onInstall();
+    } else {
+      alert("Para instalar:\n1. No seu telemóvel, clique no menu do navegador (3 pontos ou Partilhar).\n2. Selecione 'Instalar Aplicação' ou 'Adicionar ao Ecrã Principal'.\n3. Já está! O Arquivo fica como uma App.");
+    }
+  };
 
   return (
     <footer className="bg-slate-950 border-t border-slate-900 px-6 py-4 mt-auto">
@@ -22,27 +30,25 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onI
           <span className="hover:text-slate-300 transition-colors cursor-default">Jorge Mesquita & Fabio Pagni</span>
         </div>
 
-        {/* Lado Direito: Alertas e Chloe */}
+        {/* Lado Direito: Ações e Botão APP */}
         <div className="flex items-center flex-wrap justify-center gap-6">
           
-          {onInstall && (
-            <button 
-              onClick={onInstall}
-              className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95"
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              Descarregar APP
-            </button>
-          )}
+          <button 
+            onClick={handleManualInstallInfo}
+            className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-600 hover:to-blue-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-blue-900/20 active:scale-95 border border-blue-400/30 group"
+          >
+            <Smartphone className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <span className="flex items-center gap-1">DESCARREGAR <span className="hidden sm:inline">APP ARQUIVO</span></span>
+          </button>
 
           {/* Alerta de Sistema */}
           <div className="hidden sm:flex items-center gap-3 bg-slate-900/80 border border-slate-800 rounded-full pl-3 pr-2 py-1 shadow-lg">
              <div className="flex flex-col">
-                <span className="text-[9px] font-black text-white leading-none uppercase tracking-tighter">Alerta de Sistema</span>
-                <span className="text-[8px] font-bold text-brand-500 leading-none uppercase">App Atualizada</span>
+                <span className="text-[9px] font-black text-white leading-none uppercase tracking-tighter">Estado do Arquivo</span>
+                <span className="text-[8px] font-bold text-brand-500 leading-none uppercase">App Otimizada</span>
              </div>
-             <button className="text-slate-600 hover:text-white transition-colors">
-                <X className="w-3 h-3" />
+             <button className="text-slate-600 hover:text-white transition-colors" onClick={() => window.location.reload()}>
+                <RefreshCw className="w-3 h-3" />
              </button>
           </div>
 
@@ -59,3 +65,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onI
     </footer>
   );
 };
+
+// Pequeno helper para o ícone de refresh que não estava no import
+import { RefreshCw } from 'lucide-react';
