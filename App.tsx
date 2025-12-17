@@ -158,7 +158,6 @@ function App() {
     }).sort((a, b) => b.createdAt - a.createdAt);
   }, [allImagesCache, activeContinent, activeCategory, filterRarity, filterPromo, filterWinners, countrySearch, searchTerm, currentPage, currentUser]);
 
-  // Lista de países únicos com registos
   const registeredCountries = useMemo(() => {
      return Object.keys(totalStats.countryStats).sort();
   }, [totalStats.countryStats]);
@@ -179,9 +178,9 @@ function App() {
         currentPage={currentPage} 
         onNavigate={(p) => { 
            setCurrentPage(p); 
-           if (['europa', 'america', 'asia', 'africa', 'oceania'].includes(p)) {
+           if (['europe', 'america', 'asia', 'africa', 'oceania'].includes(p)) {
               const mapping: Record<string, Continent> = {
-                'europa': 'Europa', 'america': 'América', 'asia': 'Ásia', 'africa': 'África', 'oceania': 'Oceania'
+                'europe': 'Europa', 'america': 'América', 'asia': 'Ásia', 'africa': 'África', 'oceania': 'Oceania'
               };
               setActiveContinent(mapping[p]);
            } else {
@@ -192,121 +191,123 @@ function App() {
         onInstall={deferredPrompt ? handleInstallApp : undefined}
       />
 
-      <main className="flex-1 overflow-y-auto bg-slate-950">
+      <main className="flex-1 overflow-y-auto bg-slate-950 scroll-smooth custom-scrollbar">
         
-        {/* BARRA DE FILTROS SUPERIOR */}
-        <div className="bg-slate-900/50 border-b border-slate-800 p-3 md:px-8 flex flex-wrap items-center gap-3">
-           <button onClick={() => setFilterRarity(!filterRarity)} className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-xs font-bold transition-all ${filterRarity ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
-             <Gem className="w-4 h-4" /> Raridades
-           </button>
-           <button onClick={() => setFilterPromo(!filterPromo)} className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-xs font-bold transition-all ${filterPromo ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
-             <Gift className="w-4 h-4" /> Promocionais
-           </button>
-           <button onClick={() => setFilterWinners(!filterWinners)} className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-xs font-bold transition-all ${filterWinners ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
-             <Trophy className="w-4 h-4" /> Premiadas
-           </button>
-           <button onClick={() => setCurrentPage('my-collection')} className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-xs font-bold transition-all ${currentPage === 'my-collection' ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
-             <Heart className="w-4 h-4" /> Minha Coleção
-           </button>
-           <button onClick={() => setIsWebsitesModalOpen(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg border bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200 text-xs font-bold transition-all">
-             <Building2 className="w-4 h-4" /> Sites Oficiais
-           </button>
+        {/* ÁREA FIXA (Sticky Section) */}
+        {!(currentPage === 'stats' || currentPage === 'about') && (
+          <div className="sticky top-0 z-30 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 shadow-xl">
+            {/* BARRA DE FILTROS SUPERIOR */}
+            <div className="bg-slate-900/30 p-2 md:px-8 flex flex-wrap items-center gap-2">
+              <button onClick={() => setFilterRarity(!filterRarity)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${filterRarity ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
+                <Gem className="w-3.5 h-3.5" /> Raridades
+              </button>
+              <button onClick={() => setFilterPromo(!filterPromo)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${filterPromo ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
+                <Gift className="w-3.5 h-3.5" /> Promo
+              </button>
+              <button onClick={() => setFilterWinners(!filterWinners)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${filterWinners ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
+                <Trophy className="w-3.5 h-3.5" /> Premiadas
+              </button>
+              <button onClick={() => setCurrentPage('my-collection')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${currentPage === 'my-collection' ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
+                <Heart className="w-3.5 h-3.5" /> Coleção
+              </button>
+              <button onClick={() => setIsWebsitesModalOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200 text-[10px] font-bold transition-all">
+                <Building2 className="w-3.5 h-3.5" /> Sites
+              </button>
 
-           <div className="h-8 w-px bg-slate-800 mx-2 hidden md:block"></div>
+              <div className="h-6 w-px bg-slate-800 mx-1 hidden md:block"></div>
 
-           <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 p-1 rounded-lg">
-              <button onClick={() => setActiveCategory('all')} className={`px-4 py-1 rounded text-xs font-bold ${activeCategory === 'all' ? 'bg-blue-600 text-white' : 'text-slate-500'}`}>Tudo</button>
-              <button onClick={() => setActiveCategory('raspadinha')} className={`px-4 py-1 rounded text-xs font-bold ${activeCategory === 'raspadinha' ? 'bg-blue-600 text-white' : 'text-slate-500'}`}>Raspadinha</button>
-              <button onClick={() => setActiveCategory('lotaria')} className={`px-4 py-1 rounded text-xs font-bold ${activeCategory === 'lotaria' ? 'bg-blue-600 text-white' : 'text-slate-500'}`}>Lotaria</button>
-              <button onClick={() => setActiveCategory('boletim')} className={`px-4 py-1 rounded text-xs font-bold ${activeCategory === 'boletim' ? 'bg-blue-600 text-white' : 'text-slate-500'}`}>Boletim</button>
-              <button onClick={() => setActiveCategory('objeto')} className={`px-4 py-1 rounded text-xs font-bold ${activeCategory === 'objeto' ? 'bg-blue-600 text-white' : 'text-slate-500'}`}>Objeto</button>
-           </div>
-        </div>
+              <div className="flex items-center gap-1 bg-slate-900/50 border border-slate-800 p-1 rounded-lg">
+                  {['all', 'raspadinha', 'lotaria', 'boletim', 'objeto'].map(cat => (
+                    <button 
+                      key={cat} 
+                      onClick={() => setActiveCategory(cat as any)} 
+                      className={`px-3 py-1 rounded text-[10px] font-bold uppercase ${activeCategory === cat ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                    >
+                      {cat === 'all' ? 'Tudo' : cat}
+                    </button>
+                  ))}
+              </div>
+            </div>
 
-        {currentPage === 'stats' ? (
-           <StatsSection stats={totalStats.stats} categoryStats={totalStats.categoryStats} countryStats={totalStats.countryStats} stateStats={totalStats.stateStats} collectorStats={totalStats.collectorStats} totalRecords={totalStats.total} t={t.stats} />
-        ) : currentPage === 'about' ? (
-           <AboutPage t={t} />
-        ) : (
-          <div className="p-4 md:p-10 animate-fade-in">
-             <div className="mb-10">
-                <div className="flex items-center gap-2 text-white font-black uppercase tracking-widest mb-6">
-                   <Globe className="w-5 h-5 text-blue-500" /> Explorar
+            {/* SEÇÃO EXPLORAR FIXA */}
+            <div className="px-4 md:px-8 py-3 bg-slate-950/40">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  {/* Continentes Compactos */}
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={() => setActiveContinent('Mundo')} className={`px-4 py-2 rounded-full text-[11px] font-bold flex items-center gap-2 border transition-all ${activeContinent === 'Mundo' ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'}`}>
+                        Mundo <span className="bg-slate-800 text-[9px] px-1.5 rounded">{totalStats.total}</span>
+                    </button>
+                    {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => (
+                        <button key={cont} onClick={() => setActiveContinent(cont as Continent)} className={`px-4 py-2 rounded-full text-[11px] font-bold flex items-center gap-2 border transition-all ${activeContinent === cont ? 'bg-orange-600 border-orange-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'}`}>
+                          {cont} <span className="bg-slate-800 text-[9px] px-1.5 rounded">{totalStats.stats[cont] || 0}</span>
+                        </button>
+                    ))}
+                  </div>
+
+                  {/* Pesquisa de País Compacta */}
+                  <div className="flex items-center gap-3">
+                    <div className="relative group w-full md:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600" />
+                        <input 
+                          type="text" placeholder="Procurar País..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)}
+                          className="bg-slate-900/80 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-white focus:border-blue-500 outline-none w-full"
+                        />
+                    </div>
+                  </div>
                 </div>
                 
-                <div className="flex flex-wrap gap-4 mb-8">
-                   <button onClick={() => setActiveContinent('Mundo')} className={`px-6 py-3 rounded-full text-sm font-bold flex items-center gap-2 border transition-all ${activeContinent === 'Mundo' ? 'bg-blue-600 border-blue-500 text-white shadow-xl' : 'bg-slate-900 border-slate-800 text-slate-500'}`}>
-                      Mundo <span className="bg-slate-800 text-[10px] px-1.5 rounded">{totalStats.total}</span>
-                   </button>
-                   {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => (
-                      <button key={cont} onClick={() => setActiveContinent(cont as Continent)} className={`px-6 py-3 rounded-full text-sm font-bold flex items-center gap-2 border transition-all ${activeContinent === cont ? 'bg-orange-600 border-orange-500 text-white shadow-xl' : 'bg-slate-900 border-slate-800 text-slate-500'}`}>
-                         {cont} <span className="bg-slate-800 text-[10px] px-1.5 rounded">{totalStats.stats[cont] || 0}</span>
+                {/* LISTA DINÂMICA DE PAÍSES FIXA (com scroll horizontal se necessário) */}
+                <div className="mt-3 flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1 custom-scrollbar">
+                    {registeredCountries.map(country => (
+                      <button 
+                        key={country} 
+                        onClick={() => setCountrySearch(country)}
+                        className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase border transition-all ${countrySearch === country ? 'bg-brand-600 border-brand-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-500 hover:text-white'}`}
+                      >
+                          {country} <span className="opacity-40 ml-0.5">({totalStats.countryStats[country]})</span>
                       </button>
-                   ))}
+                    ))}
+                    {countrySearch && (
+                      <button onClick={() => setCountrySearch('')} className="px-2.5 py-1 rounded-md text-[9px] font-bold uppercase bg-slate-700 text-white flex items-center gap-1">
+                          <X className="w-2.5 h-2.5" /> Limpar
+                      </button>
+                    )}
                 </div>
-
-                <div className="flex flex-col gap-4">
-                   <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase">
-                         <MapPin className="w-4 h-4" /> Países Registados:
-                      </div>
-                      <div className="relative group min-w-[200px]">
-                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
-                         <input 
-                           type="text" placeholder="Pesquisar País..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)}
-                           className="bg-slate-900 border border-slate-800 rounded-lg pl-10 pr-4 py-2 text-sm text-white focus:border-blue-500 outline-none w-full"
-                         />
-                      </div>
-                   </div>
-                   
-                   {/* LISTA DINÂMICA DE PAÍSES */}
-                   <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1 custom-scrollbar">
-                      {registeredCountries.length === 0 ? (
-                         <span className="text-xs text-slate-600 italic">Nenhum país com registos ainda.</span>
-                      ) : (
-                         registeredCountries.map(country => (
-                            <button 
-                              key={country} 
-                              onClick={() => setCountrySearch(country)}
-                              className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase border transition-all ${countrySearch === country ? 'bg-brand-600 border-brand-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`}
-                            >
-                               {country} <span className="opacity-50 ml-1">({totalStats.countryStats[country]})</span>
-                            </button>
-                         ))
-                      )}
-                      {countrySearch && (
-                        <button onClick={() => setCountrySearch('')} className="px-3 py-1 rounded-md text-[10px] font-bold uppercase bg-slate-700 text-white flex items-center gap-1">
-                           Limpar Filtro <X className="w-3 h-3" />
-                        </button>
-                      )}
-                   </div>
-                </div>
-             </div>
-
-             <div className="h-px bg-slate-800/50 mb-10"></div>
-
-             {isLoadingDB ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-4">
-                   <Loader2 className="w-10 h-10 text-brand-500 animate-spin" />
-                   <p className="text-slate-500 font-bold uppercase tracking-widest">Carregando Arquivo...</p>
-                </div>
-             ) : (
-                <ImageGrid 
-                  images={filteredImages} 
-                  onImageClick={setSelectedImage} 
-                  isAdmin={isAdmin} 
-                  currentUser={currentUser} 
-                  t={t.grid} 
-                />
-             )}
+            </div>
           </div>
         )}
+
+        {/* CONTEÚDO PRINCIPAL (Scrollable) */}
+        <div className="relative">
+          {currentPage === 'stats' ? (
+            <StatsSection stats={totalStats.stats} categoryStats={totalStats.categoryStats} countryStats={totalStats.countryStats} stateStats={totalStats.stateStats} collectorStats={totalStats.collectorStats} totalRecords={totalStats.total} t={t.stats} />
+          ) : currentPage === 'about' ? (
+            <AboutPage t={t} />
+          ) : (
+            <div className="p-4 md:p-8 animate-fade-in">
+              {isLoadingDB ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-4">
+                    <Loader2 className="w-10 h-10 text-brand-500 animate-spin" />
+                    <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">A sincronizar Arquivo...</p>
+                  </div>
+              ) : (
+                  <ImageGrid 
+                    images={filteredImages} 
+                    onImageClick={setSelectedImage} 
+                    isAdmin={isAdmin} 
+                    currentUser={currentUser} 
+                    t={t.grid} 
+                  />
+              )}
+            </div>
+          )}
+        </div>
       </main>
 
       {isAdmin && (
         <button 
           onClick={() => setIsUploadModalOpen(true)}
-          className="fixed bottom-8 right-8 w-16 h-16 bg-brand-600 hover:bg-brand-500 text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 z-40"
+          className="fixed bottom-8 right-8 w-16 h-16 bg-brand-600 hover:bg-brand-500 text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 z-40 border-4 border-slate-950"
         >
           <PlusCircle className="w-8 h-8" />
         </button>
