@@ -17,11 +17,15 @@ interface ImageViewerProps {
 export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpdate, onDelete, isAdmin, currentUser, contextImages, onImageSelect, t }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<ScratchcardData>(image);
-  const [showBack, setShowBack] = useState(false);
+  
+  // Display State
+  const [activeImage, setActiveImage] = useState<string>(image.frontUrl);
+  const [activeLabel, setActiveLabel] = useState<string>('front'); // 'front', 'back', 'extra-0', 'extra-1', etc
 
   useEffect(() => {
     setFormData(image);
-    setShowBack(false);
+    setActiveImage(image.frontUrl);
+    setActiveLabel('front');
     setIsEditing(false);
   }, [image]);
 
@@ -87,22 +91,54 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
 
       <div className="w-full max-w-6xl h-[90vh] flex flex-col md:flex-row bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl" onClick={e => e.stopPropagation()}>
          
-         {/* Left: Image */}
-         <div className="flex-1 bg-black relative flex items-center justify-center p-4">
-            <img 
-               src={showBack && image.backUrl ? image.backUrl : image.frontUrl} 
-               alt={image.gameName}
-               className="max-w-full max-h-full object-contain"
-            />
-            {image.backUrl && (
+         {/* Left: Image Canvas */}
+         <div className="flex-1 bg-black relative flex flex-col">
+            <div className="flex-1 relative flex items-center justify-center p-4">
+               <img 
+                  src={activeImage} 
+                  alt={image.gameName}
+                  className="max-w-full max-h-full object-contain"
+               />
+               <div className="absolute top-4 left-4 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur border border-white/10 uppercase tracking-widest font-bold">
+                  {activeLabel === 'front' && t.front}
+                  {activeLabel === 'back' && t.back}
+                  {activeLabel.startsWith('extra') && "Variante"}
+               </div>
+            </div>
+
+            {/* Thumbnail Gallery */}
+            <div className="h-20 bg-slate-950/80 backdrop-blur border-t border-white/10 p-2 flex items-center gap-2 justify-center overflow-x-auto">
+               
+               {/* Front Thumb */}
                <button 
-                  onClick={() => setShowBack(!showBack)}
-                  className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-800/80 text-white px-4 py-2 rounded-full backdrop-blur-md font-bold text-sm flex items-center gap-2 hover:bg-slate-700 transition-colors"
+                  onClick={() => { setActiveImage(image.frontUrl); setActiveLabel('front'); }}
+                  className={`relative h-full aspect-square rounded overflow-hidden border-2 transition-all ${activeLabel === 'front' ? 'border-brand-500 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
                >
-                  <RotateCcw className="w-4 h-4" />
-                  {showBack ? t.front : t.back}
+                  <img src={image.frontUrl} className="w-full h-full object-cover" />
                </button>
-            )}
+
+               {/* Back Thumb */}
+               {image.backUrl && (
+                  <button 
+                     onClick={() => { setActiveImage(image.backUrl!); setActiveLabel('back'); }}
+                     className={`relative h-full aspect-square rounded overflow-hidden border-2 transition-all ${activeLabel === 'back' ? 'border-brand-500 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                  >
+                     <img src={image.backUrl} className="w-full h-full object-cover" />
+                     <span className="absolute bottom-0 left-0 w-full text-[8px] bg-black/70 text-white text-center font-bold">VERSO</span>
+                  </button>
+               )}
+
+               {/* Extra Images Thumbs */}
+               {image.extraImages && image.extraImages.map((extra, idx) => (
+                  <button 
+                     key={idx}
+                     onClick={() => { setActiveImage(extra); setActiveLabel(`extra-${idx}`); }}
+                     className={`relative h-full aspect-square rounded overflow-hidden border-2 transition-all ${activeLabel === `extra-${idx}` ? 'border-brand-500 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                  >
+                     <img src={extra} className="w-full h-full object-cover" />
+                  </button>
+               ))}
+            </div>
          </div>
 
          {/* Right: Info */}

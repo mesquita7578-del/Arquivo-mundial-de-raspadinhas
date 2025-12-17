@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Upload, Sparkles, AlertCircle, Check, Loader2, AlignJustify, ArrowLeft, Image as ImageIcon, ScanLine, DollarSign, Calendar, MapPin, Globe, Printer, Layers, Maximize2 } from 'lucide-react';
+import { X, Upload, Sparkles, AlertCircle, Check, Loader2, AlignJustify, ArrowLeft, Image as ImageIcon, ScanLine, DollarSign, Calendar, MapPin, Globe, Printer, Layers, Maximize2, Plus } from 'lucide-react';
 import { ScratchcardData, Category, LineType, Continent, ScratchcardState } from '../types';
 import { analyzeImage } from '../services/geminiService';
 
@@ -18,6 +18,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
   const [backFile, setBackFile] = useState<File | null>(null);
   const [frontPreview, setFrontPreview] = useState<string | null>(null);
   const [backPreview, setBackPreview] = useState<string | null>(null);
+  
+  // Extra Images State (Array of 4 slots)
+  const [extraPreviews, setExtraPreviews] = useState<(string | null)[]>([null, null, null, null]);
+
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +41,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
   const frontInputRef = useRef<HTMLInputElement>(null);
   const backInputRef = useRef<HTMLInputElement>(null);
+  // Refs for extra images
+  const extraInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     if (initialFile) {
@@ -55,6 +61,16 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     setBackFile(file);
     const reader = new FileReader();
     reader.onload = (e) => setBackPreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleExtraSelect = (file: File, index: number) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+       const newExtras = [...extraPreviews];
+       newExtras[index] = e.target?.result as string;
+       setExtraPreviews(newExtras);
+    };
     reader.readAsDataURL(file);
   };
 
@@ -107,11 +123,15 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     const countryCode = formData.country?.substring(0, 2).toUpperCase() || 'XX';
     const customId = formData.customId || `RASP-${countryCode}-${Math.floor(Math.random() * 1000)}`;
 
+    // Filter out nulls from extra images
+    const validExtras = extraPreviews.filter(img => img !== null) as string[];
+
     const newItem: ScratchcardData = {
       id,
       customId,
       frontUrl: frontPreview || '',
       backUrl: backPreview || undefined,
+      extraImages: validExtras.length > 0 ? validExtras : undefined,
       gameName: formData.gameName || 'Sem Nome',
       gameNumber: formData.gameNumber || '000',
       releaseDate: formData.releaseDate || new Date().toISOString().split('T')[0],
@@ -156,7 +176,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                 <Upload className="w-5 h-5 text-brand-500"/> {t.title}
               </h2>
 
-              <div className="grid grid-cols-2 gap-4 mb-6">
+              {/* Main Images (Front/Back) */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
                  {/* Front Upload */}
                  <div 
                    className={`border-2 border-dashed rounded-xl aspect-square flex flex-col items-center justify-center cursor-pointer transition-colors relative overflow-hidden ${frontPreview ? 'border-brand-500 bg-slate-800' : 'border-slate-700 hover:border-slate-500 hover:bg-slate-800/50'}`}
@@ -187,6 +208,33 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                       </>
                     )}
                     <input type="file" ref={backInputRef} className="hidden" accept="image/*" onChange={e => e.target.files?.[0] && handleBackSelect(e.target.files[0])} />
+                 </div>
+              </div>
+
+              {/* Extra Images (Variants) */}
+              <div className="mb-6">
+                 <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Detalhes & Variantes (Opcional)</p>
+                 <div className="grid grid-cols-4 gap-2">
+                    {[0, 1, 2, 3].map((index) => (
+                       <div 
+                          key={index}
+                          className={`border border-dashed rounded-lg aspect-square flex items-center justify-center cursor-pointer transition-all relative overflow-hidden group ${extraPreviews[index] ? 'border-brand-500/50 bg-slate-800' : 'border-slate-700 hover:border-slate-500 hover:bg-slate-800/50'}`}
+                          onClick={() => extraInputRefs.current[index]?.click()}
+                       >
+                          {extraPreviews[index] ? (
+                             <img src={extraPreviews[index] || ''} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                          ) : (
+                             <Plus className="w-4 h-4 text-slate-600 group-hover:text-slate-400" />
+                          )}
+                          <input 
+                             type="file" 
+                             ref={(el) => extraInputRefs.current[index] = el} 
+                             className="hidden" 
+                             accept="image/*" 
+                             onChange={e => e.target.files?.[0] && handleExtraSelect(e.target.files[0], index)} 
+                          />
+                       </div>
+                    ))}
                  </div>
               </div>
 
@@ -232,7 +280,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
           <div className="flex-1 overflow-y-auto p-6">
              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
-                {/* Images Preview */}
+                {/* Images Preview Side */}
                 <div className="space-y-4">
                    <div className="bg-slate-950 rounded-xl p-4 border border-slate-800">
                       <p className="text-xs font-bold text-slate-500 uppercase mb-2">{t.front}</p>
@@ -243,6 +291,17 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                         <p className="text-xs font-bold text-slate-500 uppercase mb-2">{t.back}</p>
                         <img src={backPreview} className="w-full object-contain rounded-lg" />
                      </div>
+                   )}
+                   {/* Extra Images Preview Grid */}
+                   {extraPreviews.some(img => img !== null) && (
+                      <div className="bg-slate-950 rounded-xl p-4 border border-slate-800">
+                         <p className="text-xs font-bold text-slate-500 uppercase mb-2">Variantes</p>
+                         <div className="grid grid-cols-4 gap-2">
+                            {extraPreviews.map((img, i) => img && (
+                               <img key={i} src={img} className="w-full aspect-square object-cover rounded border border-slate-800" />
+                            ))}
+                         </div>
+                      </div>
                    )}
                 </div>
 

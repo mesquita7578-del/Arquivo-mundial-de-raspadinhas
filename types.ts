@@ -12,6 +12,7 @@ export interface ScratchcardData {
   customId: string; // "ID feita por ti" (e.g. CAT-001)
   frontUrl: string; // Imagem da frente
   backUrl?: string; // Imagem do verso (opcional)
+  extraImages?: string[]; // Novo: Imagens de detalhe ou variantes (até 4)
   gameName: string; // Nome do jogo
   gameNumber: string; // Nº de jogo
   releaseDate: string; // Data de lançamento
