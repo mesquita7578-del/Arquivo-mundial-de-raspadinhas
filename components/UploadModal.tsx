@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Upload, Sparkles, AlertCircle, Check, Loader2, AlignJustify, ArrowLeft, Image as ImageIcon, ScanLine, DollarSign, Calendar, MapPin, Globe, Printer, Layers, Maximize2, Plus, Heart } from 'lucide-react';
 import { ScratchcardData, Category, LineType, Continent, ScratchcardState } from '../types';
@@ -85,7 +84,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       const frontBase64 = frontPreview.split(',')[1];
       const backBase64 = backPreview ? backPreview.split(',')[1] : null;
       
-      const result = await analyzeImage(frontBase64, backBase64, frontFile.type);
+      // Safety check on mimetype
+      const mime = frontFile.type || "image/jpeg";
+      
+      const result = await analyzeImage(frontBase64, backBase64, mime);
       
       setFormData(prev => ({
         ...prev,
@@ -500,4 +502,4 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
        </div>
     </div>
   );
-};
+}

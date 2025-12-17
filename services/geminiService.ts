@@ -8,53 +8,42 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
   try {
     const modelId = "gemini-2.5-flash"; // Efficient for vision tasks
     
+    // Ensure mimeType is valid, fallback if empty
+    const validMimeType = mimeType || "image/jpeg";
+
     const parts: any[] = [
       {
         inlineData: {
-          mimeType: mimeType,
+          mimeType: validMimeType,
           data: frontBase64
         }
       },
       {
-        text: `Analise esta imagem de colecionismo. Determine a CATEGORIA (raspadinha ou lotaria). 
-        Extraia: Nome do Jogo, Número do Jogo, Data, Tamanho, Valores, Estado, País e Continente.
+        text: `Analise esta imagem de colecionismo (Raspadinha ou Lotaria).
         
-        IMPORTANTE - ESTADO (STATE):
-        Identifique se é uma amostra. Procure por textos como:
-        - "AMOSTRA" (PT)
-        - "MUESTRA" (ES)
-        - "CAMPIONE" (IT)
-        - "VOID" ou "SPECIMEN" (EN)
-        - "MUSTER" (DE)
-        - "ÉCHANTILLON" (FR)
-        - "견본" (KR)
-        - "STEEKPROEF" (NL)
-        - "PRØVE" (DK/NO)
-        - "PROV" (SE)
-        - "样本" (CN)
+        TAREFA: Extraia os dados visuais para preencher a ficha técnica.
         
-        IMPORTANTE - DETEÇÃO DE GRÁFICA (PRINTER) VIA FSC:
-        Procure atentamente por logotipos FSC (Forest Stewardship Council) e o respetivo código de licença (ex: FSC® C108706).
-        Use este código para identificar a "Gráfica" (Printer) se o nome não estiver explícito.
-        - FSC C108706, C016391, C105807 -> Scientific Games (SG)
-        - FSC C014168 -> Pollard Banknote
-        - FSC C005483 -> IGT
-        - FSC C112248 -> Eagle Press
+        REGRAS DE EXTRAÇÃO:
+        1. Categoria: Se tiver "Raspe aqui" ou superfície de raspar, é "raspadinha". Se for bilhete inteiro/fracção com números, é "lotaria".
+        2. Estado:
+           - "MINT" se estiver intacta (nova).
+           - "SC" (Scratched) se estiver raspada.
+           - "AMOSTRA" se tiver carimbos como "VOID", "SPECIMEN", "MUESTRA", "CAMPIONE", "00000".
+        3. Gráfica (Printer): Procure códigos FSC ou logótipos pequenos (ex: SG, IGT, POLLARD, SCIENTIFIC GAMES).
+        4. Região: Se for de Espanha, veja se é "Catalunya", "ONCE" (Nacional) ou "SELAE". Se for Alemanha, veja o estado (ex: Bayern).
         
-        IMPORTANTE - REGIÃO:
-        Se o país tiver regiões específicas (ex: Alemanha tem 'Baviera', 'Saxónia'; Portugal tem 'Açores'; Espanha tem 'Catalunha'), identifique a 'Região/Cantão' através de brasões ou texto.`
+        Retorne JSON puro.`
       }
     ];
 
     if (backBase64) {
       parts.splice(1, 0, {
         inlineData: {
-          mimeType: mimeType,
+          mimeType: validMimeType,
           data: backBase64
         }
       });
-      // Update text prompt if back is included
-      parts[parts.length - 1].text += " Use o verso para confirmar a região/cantão, e procure códigos FSC no verso para identificar a Gráfica.";
+      parts[parts.length - 1].text += " Use o verso para confirmar a região, códigos de barras e a Gráfica (Printer).";
     }
 
     const response = await ai.models.generateContent({
@@ -72,53 +61,68 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
           properties: {
             category: {
               type: Type.STRING,
-              enum: ["raspadinha", "lotaria"],
-              description: "Tipo de item"
+              description: "raspadinha, lotaria, boletim, ou objeto"
             },
-            gameName: { type: Type.STRING, description: "Nome principal" },
-            gameNumber: { type: Type.STRING, description: "Número de série" },
-            releaseDate: { type: Type.STRING, description: "Data/Ano" },
-            size: { type: Type.STRING, description: "Tamanho estimado" },
-            values: { type: Type.STRING, description: "Valores de prêmios" },
-            price: { type: Type.STRING, description: "Preço" },
+            gameName: { type: Type.STRING, description: "Nome do jogo em destaque" },
+            gameNumber: { type: Type.STRING, description: "Número do jogo (ex: 502, 105)" },
+            releaseDate: { type: Type.STRING, description: "Ano ou Data estimada (YYYY-MM-DD)" },
+            size: { type: Type.STRING, description: "Dimensões aproximadas" },
+            values: { type: Type.STRING, description: "Resumo dos prémios ou notas históricas" },
+            price: { type: Type.STRING, description: "Preço facial (ex: 5€, $10)" },
             state: { 
               type: Type.STRING, 
-              enum: ["AMOSTRA", "VOID", "MUESTRA", "CAMPIONE", "SPECIMEN", "MUSTER", "ÉCHANTILLON", "견본", "STEEKPROEF", "PRØVE", "PROV", "样本", "MINT", "CS", "SC"],
-              description: "Estado (International Variants)"
+              description: "Estado da raspadinha (MINT, SC, AMOSTRA, VOID, SPECIMEN)"
             },
-            country: { type: Type.STRING, description: "País" },
-            region: { type: Type.STRING, description: "Região, Cantão, Estado ou Ilha (ex: Baviera, Açores)" },
+            country: { type: Type.STRING, description: "País de origem" },
+            region: { type: Type.STRING, description: "Região, Estado ou Cantão" },
             continent: { 
               type: Type.STRING, 
-              enum: ["Europa", "América", "Ásia", "África", "Oceania"],
-              description: "Continente"
+              description: "Europa, América, Ásia, África, Oceania"
             },
-            emission: { type: Type.STRING, description: "Emissão total" },
-            printer: { type: Type.STRING, description: "Gráfica (Identificada via nome ou código FSC)" }
+            emission: { type: Type.STRING, description: "Tiragem / Emissão total" },
+            printer: { type: Type.STRING, description: "Gráfica (Scientific Games, Pollard, etc)" }
           },
-          required: ["category", "gameName", "gameNumber", "state", "country", "continent"]
+          required: ["category", "gameName", "country"]
         }
       }
     });
 
     if (response.text) {
-      return JSON.parse(response.text) as AnalysisResult;
+      // Cleaning Logic: Remove markdown code blocks if the model adds them despite config
+      let cleanJson = response.text.trim();
+      if (cleanJson.startsWith('```json')) {
+        cleanJson = cleanJson.replace(/^```json/, '').replace(/```$/, '');
+      } else if (cleanJson.startsWith('```')) {
+        cleanJson = cleanJson.replace(/^```/, '').replace(/```$/, '');
+      }
+      
+      const data = JSON.parse(cleanJson);
+
+      // Post-processing normalization
+      return {
+        ...data,
+        continent: data.continent || "Europa", // Default safety
+        state: data.state ? data.state.toUpperCase() : "MINT" // Normalize casing
+      } as AnalysisResult;
     }
     
     throw new Error("Resposta vazia da IA");
   } catch (error) {
     console.error("Erro ao analisar raspadinha com Gemini:", error);
-    // Fallback in case of error
+    // Fallback gracefully so the user can at least fill manually
     return {
       category: "raspadinha",
-      gameName: "Desconhecido",
-      gameNumber: "???",
+      gameName: "Não identificado",
+      gameNumber: "",
       releaseDate: new Date().toISOString().split('T')[0],
-      size: "Padrão",
-      values: "Vários",
+      size: "",
+      values: "",
       state: "SC",
-      country: "Desconhecido",
-      continent: "Europa"
+      country: "",
+      continent: "Europa",
+      printer: "",
+      emission: "",
+      region: ""
     };
   }
 };
@@ -151,20 +155,22 @@ export const searchScratchcardInfo = async (query: string): Promise<Partial<Anal
       }
     });
 
-    const text = response.text || "";
+    let text = response.text || "";
+    // Robust cleanup for search result
     const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```\n([\s\S]*?)\n```/);
-    
     if (jsonMatch && jsonMatch[1]) {
-      const parsed = JSON.parse(jsonMatch[1]);
-      return {
-        ...parsed,
-        state: 'MINT',
-        continent: 'Europa', 
-        size: '10x5cm' 
-      };
+       text = jsonMatch[1];
+    } else {
+       text = text.replace(/^```json/, '').replace(/```$/, '');
     }
     
-    throw new Error("Não foi possível encontrar dados estruturados.");
+    const parsed = JSON.parse(text);
+    return {
+      ...parsed,
+      state: 'MINT',
+      continent: 'Europa', 
+      size: '10x5cm' 
+    };
 
   } catch (error) {
     console.error("Search error:", error);
