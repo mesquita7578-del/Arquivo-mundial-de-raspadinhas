@@ -1,5 +1,3 @@
-
-
 export type Language = 'pt' | 'it';
 
 export const translations = {
@@ -20,6 +18,7 @@ export const translations = {
       backupTitle: "Enviar dados para o Fabio / Backup (JSON)", 
       import: "Juntar Coleção",
       importTitle: "Carregar ficheiro recebido do Fabio (JSON)",
+      exportMyList: "Minha Lista (TXT)", // New
       rarities: "Raridades",
       promos: "Promocionais", 
       winners: "Premiadas",
@@ -196,7 +195,7 @@ export const translations = {
       passLabel: "Senha",
       forgot: "Esqueceu?",
       hint: "Senha padrão: 123456",
-      enter: "Entrar",
+      enter: "Entra",
       restricted: "Acesso restrito."
     },
     home: {
@@ -224,6 +223,7 @@ export const translations = {
       backupTitle: "Invia dati a Jorge / Backup (JSON)",
       import: "Unisci Collezione",
       importTitle: "Carica file ricevuto da Jorge (JSON)",
+      exportMyList: "Mia Lista (TXT)", // New
       rarities: "Rarità",
       promos: "Promo", 
       winners: "Vincenti",

@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen, FileSpreadsheet, Home, BarChart2, Info, ChevronDown, Coins, Star, ArrowRight, Globe, Map, UploadCloud, User, Smartphone } from 'lucide-react';
+import { Search, Upload, Ticket, Lock, LogOut, Download, BookOpen, FileSpreadsheet, Home, BarChart2, Info, ChevronDown, Coins, Star, ArrowRight, Globe, Map, UploadCloud, User, Smartphone, FileText } from 'lucide-react';
 import { Language } from '../translations';
 
 interface HeaderProps {
@@ -14,6 +14,7 @@ interface HeaderProps {
   onExportCSV: () => void;
   onImport: (file: File) => void; 
   onHistoryClick: () => void;
+  onExportPersonalList?: () => void; // New callback
   language: Language;
   setLanguage: (lang: Language) => void;
   currentPage: string;
@@ -35,6 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
   onExportCSV,
   onImport,
   onHistoryClick,
+  onExportPersonalList,
   language,
   setLanguage,
   currentPage,
@@ -305,9 +307,21 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             )}
 
+            {/* DOWNLOAD MY LIST BUTTON (For Everyone Logged In) */}
+            {onExportPersonalList && (
+               <button
+                  onClick={onExportPersonalList}
+                  className="flex items-center justify-center gap-2 w-auto px-3 py-2 bg-blue-900/30 hover:bg-blue-900/50 text-blue-300 hover:text-blue-100 border border-blue-800/50 rounded-full transition-all"
+                  title="Baixar a minha lista de colecionador"
+               >
+                  <FileText className="w-4 h-4" />
+                  <span className="hidden md:inline text-[10px] font-bold uppercase">{t.exportMyList}</span>
+               </button>
+            )}
+
             <button
               onClick={onLogout}
-              className={`flex items-center justify-center gap-2 w-auto px-3 py-2 rounded-full transition-all group border ${isAdmin ? 'bg-red-900/20 hover:bg-red-900/40 text-red-400 border-red-900/50' : 'bg-blue-900/20 hover:bg-blue-900/40 text-blue-400 border-blue-900/50'}`}
+              className={`flex items-center justify-center gap-2 w-auto px-3 py-2 rounded-full transition-all group border ${isAdmin ? 'bg-red-900/20 hover:bg-red-900/40 text-red-400 border-red-900/50' : 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700'}`}
               title={isAdmin ? t.logoutTitle : "Sair do modo Colecionador"}
             >
               <div className="flex items-center gap-2">

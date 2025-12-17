@@ -576,6 +576,63 @@ function App() {
     }
   };
 
+  const handleExportPersonalList = async () => {
+     if (!currentUser) return;
+
+     // Filter items owned by current user
+     const myItems = allImagesCache.filter(img => img.owners && img.owners.includes(currentUser));
+     
+     if (myItems.length === 0) {
+        alert("Ainda não tens itens marcados na tua coleção!");
+        return;
+     }
+
+     // Build Text File Content
+     const date = new Date().toLocaleDateString();
+     let content = `=============================================\n`;
+     content += `   COLEÇÃO DE: ${currentUser.toUpperCase()}\n`;
+     content += `   Data: ${date}\n`;
+     content += `   Total de Itens: ${myItems.length}\n`;
+     content += `=============================================\n\n`;
+
+     // Group by Country for better readability
+     const byCountry: Record<string, ScratchcardData[]> = {};
+     myItems.forEach(item => {
+        const c = item.country || 'Outros';
+        if (!byCountry[c]) byCountry[c] = [];
+        byCountry[c].push(item);
+     });
+
+     Object.keys(byCountry).sort().forEach(country => {
+        content += `\n--- ${country.toUpperCase()} ---\n`;
+        const items = byCountry[country].sort((a,b) => {
+           // Try sort by Number, else by Name
+           const numA = parseInt(a.gameNumber.replace(/\D/g, '')) || 0;
+           const numB = parseInt(b.gameNumber.replace(/\D/g, '')) || 0;
+           return numA - numB || a.gameName.localeCompare(b.gameName);
+        });
+
+        items.forEach(item => {
+           content += `[ ] ${item.gameName} | Nº ${item.gameNumber} | ${item.state}`;
+           if(item.isRarity) content += ` | RARIDADE`;
+           if(item.isSeries) content += ` | SET`;
+           content += `\n`;
+        });
+     });
+
+     content += `\n\nGerado por Arquivo Mundial de Raspadinhas\n`;
+
+     // Download Logic
+     const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+     const url = URL.createObjectURL(blob);
+     const link = document.createElement("a");
+     link.href = url;
+     link.download = `minha-colecao-${currentUser.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.txt`;
+     document.body.appendChild(link);
+     link.click();
+     document.body.removeChild(link);
+  };
+
   const handleExportCSV = async () => {
     try {
         // ... (Existing CSV logic same)
@@ -872,6 +929,7 @@ function App() {
         onExportCSV={handleExportCSV}
         onImport={handleImportJSON}
         onHistoryClick={() => setIsHistoryModalOpen(true)}
+        onExportPersonalList={handleExportPersonalList} // NEW HANDLER
         language={language}
         setLanguage={setLanguage}
         currentPage={currentPage}
