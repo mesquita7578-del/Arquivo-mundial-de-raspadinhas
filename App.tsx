@@ -141,10 +141,12 @@ function App() {
       if (filterPromo && !i.isPromotional) return false;
       if (filterWinners && !i.isWinner) return false;
       if (currentPage === 'my-collection' && (!currentUser || !i.owners?.includes(currentUser))) return false;
+      
       const search = (countrySearch || searchTerm).toLowerCase();
       if (search) {
         return i.gameName.toLowerCase().includes(search) || 
                i.country.toLowerCase().includes(search) || 
+               (i.region && i.region.toLowerCase().includes(search)) ||
                i.gameNumber.toLowerCase().includes(search) ||
                i.customId.toLowerCase().includes(search);
       }
@@ -160,7 +162,10 @@ function App() {
 
   // Handle PWA installation
   const handleInstallApp = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      alert("Para instalar:\n1. Clique nos 3 pontos ou botão Partilhar do navegador.\n2. Selecione 'Instalar Aplicação' ou 'Adicionar ao Ecrã Principal'.");
+      return;
+    }
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
@@ -173,7 +178,6 @@ function App() {
     setCountrySearch('');
     setSearchTerm('');
     
-    // CORREÇÃO JORGE: Quando mudamos de página ou continente, desativamos o filtro de coleção se não for essa a página destino
     if (['europe', 'america', 'asia', 'africa', 'oceania'].includes(p as string)) {
        const mapping: Record<string, Continent> = {
          'europe': 'Europa', 'america': 'América', 'asia': 'Ásia', 'africa': 'África', 'oceania': 'Oceania'
@@ -201,7 +205,7 @@ function App() {
         currentPage={currentPage} 
         onNavigate={handleNavigate} 
         t={t.header}
-        onInstall={deferredPrompt ? handleInstallApp : undefined}
+        onInstall={handleInstallApp}
       />
 
       <main className="flex-1 overflow-y-auto bg-slate-950 scroll-smooth custom-scrollbar flex flex-col">
@@ -258,28 +262,11 @@ function App() {
                     <div className="relative group w-full md:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600" />
                         <input 
-                          type="text" placeholder="Procurar no Arquivo..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)}
+                          type="text" placeholder="Procurar (Nome, País, Região)..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)}
                           className="bg-slate-900/80 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-white focus:border-blue-500 outline-none w-full shadow-inner"
                         />
                     </div>
                   </div>
-                </div>
-                
-                <div className="mt-3 flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1 custom-scrollbar">
-                    {registeredCountries.map(country => (
-                      <button 
-                        key={country} 
-                        onClick={() => { setCountrySearch(country); if(currentPage === 'my-collection') handleNavigate('home'); }}
-                        className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase border transition-all ${countrySearch === country ? 'bg-brand-600 border-brand-500 text-white shadow-md' : 'bg-slate-800/50 border-slate-700 text-slate-500 hover:text-white'}`}
-                      >
-                          {country} <span className="opacity-40 ml-0.5 font-mono">({totalStats.countryStats[country]})</span>
-                      </button>
-                    ))}
-                    {(countrySearch || searchTerm) && (
-                      <button onClick={() => { setCountrySearch(''); setSearchTerm(''); }} className="px-2.5 py-1 rounded-md text-[9px] font-black uppercase bg-slate-700 text-white flex items-center gap-1 hover:bg-slate-600 transition-colors">
-                          <X className="w-2.5 h-2.5" /> Limpar
-                      </button>
-                    )}
                 </div>
             </div>
           </div>
@@ -337,7 +324,7 @@ function App() {
       <Footer 
         onNavigate={handleNavigate} 
         onWebsitesClick={() => setIsWebsitesModalOpen(true)} 
-        onInstall={deferredPrompt ? handleInstallApp : undefined}
+        onInstall={handleInstallApp}
       />
 
       {isAdmin && (

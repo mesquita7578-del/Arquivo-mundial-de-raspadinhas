@@ -2,10 +2,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult, ScratchcardState, Category } from "../types";
 
-// Initialization should occur within the function call context to ensure the correct API key is used, especially when dynamic key selection is supported.
-
 export const analyzeImage = async (frontBase64: string, backBase64: string | null, mimeType: string): Promise<AnalysisResult> => {
-  /* Coding Guidelines: Create a new GoogleGenAI instance right before making an API call */
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
     const validMimeType = mimeType || "image/jpeg";
@@ -24,6 +21,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     8. size: Medidas/Tamanho (ex: 10x15cm).
     9. releaseDate: Ano de lançamento (apenas o ano).
     10. state: "SC" (raspada) ou "MINT" (nova).
+    11. lines: Identifique a cor das linhas de segurança ou série (ex: azul, vermelha, multicolor, verde, amarela, castanha, cinza).
     
     Retorne APENAS JSON puro. Se não ler algum campo, deixe vazio.`;
 
@@ -37,7 +35,6 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     
     parts.push({ text: prompt });
 
-    /* Coding Guidelines: Use gemini-3-pro-preview for complex reasoning tasks like technical image analysis */
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: { parts },
@@ -56,13 +53,13 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
             emission: { type: Type.STRING },
             printer: { type: Type.STRING },
             size: { type: Type.STRING },
-            releaseDate: { type: Type.STRING }
+            releaseDate: { type: Type.STRING },
+            lines: { type: Type.STRING }
           }
         }
       }
     });
 
-    /* Coding Guidelines: Access generated text via the .text property directly */
     const data = JSON.parse(response.text || "{}");
 
     return {
@@ -78,7 +75,8 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       continent: "Europa",
       region: data.region || "",
       emission: data.emission || "",
-      printer: data.printer || ""
+      printer: data.printer || "",
+      lines: data.lines || ""
     } as AnalysisResult;
 
   } catch (error) {
@@ -96,13 +94,13 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       continent: "Europa",
       region: "",
       emission: "",
-      printer: ""
+      printer: "",
+      lines: ""
     };
   }
 };
 
 export const searchScratchcardInfo = async (query: string): Promise<Partial<AnalysisResult>> => {
-  /* Initialize GoogleGenAI inside the function to ensure the current environment API key is captured */
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
     const response = await ai.models.generateContent({
@@ -117,7 +115,6 @@ export const searchScratchcardInfo = async (query: string): Promise<Partial<Anal
 };
 
 export const generateDocumentMetadata = async (fileName: string, title: string): Promise<string> => {
-  /* Initialize GoogleGenAI inside the function as per SDK best practices */
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
     const response = await ai.models.generateContent({

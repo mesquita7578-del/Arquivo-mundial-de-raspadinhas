@@ -30,6 +30,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     continent: 'Europa',
     country: 'Portugal',
     region: '',
+    lines: '',
     aiGenerated: false,
     isRarity: false,
     isSeries: false,
@@ -74,7 +75,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       const mime = frontFile.type || "image/jpeg";
       const result = await analyzeImage(frontBase64, backBase64, mime);
       
-      // LÓGICA DE ID COM INICIAIS DO PAÍS
       const countryStr = result.country || 'Portugal';
       const initialsMap: Record<string, string> = {
         'Portugal': 'PT', 'Espanha': 'ES', 'Itália': 'IT', 'França': 'FR',
@@ -127,6 +127,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       category: formData.category || 'raspadinha',
       emission: formData.emission || '',
       printer: formData.printer || '',
+      lines: formData.lines || '',
       isRarity: formData.isRarity || false,
       isSeries: formData.isSeries || false,
       isPromotional: formData.isPromotional || false,
@@ -146,6 +147,16 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       setIsSaving(false);
     }
   };
+
+  const commonLines = [
+    { label: 'Azul', value: 'blue', color: 'bg-blue-600' },
+    { label: 'Vermelha', value: 'red', color: 'bg-red-600' },
+    { label: 'Multicolor', value: 'multicolor', color: 'bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500' },
+    { label: 'Verde', value: 'green', color: 'bg-green-600' },
+    { label: 'Amarela', value: 'yellow', color: 'bg-yellow-400' },
+    { label: 'Castanha', value: 'brown', color: 'bg-amber-900' },
+    { label: 'Cinza', value: 'gray', color: 'bg-gray-500' },
+  ];
 
   if (step === 1) {
     return (
@@ -256,6 +267,29 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                          <label className="text-[10px] text-slate-500 font-black uppercase mb-1 flex items-center gap-1"><Printer className="w-3 h-3 text-slate-400"/> Gráfica</label>
                          <input type="text" value={formData.printer || ''} onChange={e => updateField('printer', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" />
                       </div>
+                   </div>
+
+                   <div className="bg-slate-800/30 p-5 rounded-2xl border border-slate-800 space-y-4">
+                      <label className="text-[10px] text-slate-500 font-black uppercase mb-1 flex items-center gap-1"><ScanLine className="w-3 h-3 text-cyan-400"/> Linhas (Cor da Série/Segurança)</label>
+                      <div className="flex flex-wrap gap-2">
+                         {commonLines.map((line) => (
+                            <button
+                               key={line.value}
+                               onClick={() => updateField('lines', line.label)}
+                               className={`px-3 py-1.5 rounded-lg border text-[10px] font-bold flex items-center gap-2 transition-all ${formData.lines === line.label ? 'border-white bg-slate-700 text-white' : 'border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-500'}`}
+                            >
+                               <div className={`w-2 h-2 rounded-full ${line.color}`}></div>
+                               {line.label}
+                            </button>
+                         ))}
+                      </div>
+                      <input 
+                         type="text" 
+                         value={formData.lines || ''} 
+                         onChange={e => updateField('lines', e.target.value)} 
+                         placeholder="Outra cor ou detalhe das linhas..." 
+                         className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white text-xs mt-2"
+                      />
                    </div>
 
                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

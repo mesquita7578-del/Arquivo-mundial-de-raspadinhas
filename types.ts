@@ -1,10 +1,11 @@
+
 export type ScratchcardState = 'AMOSTRA' | 'VOID' | 'MUESTRA' | 'CAMPIONE' | 'SPECIMEN' | 'MUSTER' | 'ÉCHANTILLON' | '견본' | 'STEEKPROEF' | 'PRØVE' | 'PROV' | '样本' | 'MINT' | 'CS' | 'SC';
 
 export type Continent = 'Europa' | 'América' | 'Ásia' | 'África' | 'Oceania' | 'Mundo';
 
 export type Category = 'raspadinha' | 'lotaria' | 'boletim' | 'objeto';
 
-export type LineType = 'blue' | 'red' | 'multicolor' | 'none' | 'green' | 'brown' | 'pink' | 'purple' | 'yellow';
+export type LineType = 'blue' | 'red' | 'multicolor' | 'none' | 'green' | 'brown' | 'pink' | 'purple' | 'yellow' | 'gray' | string;
 
 export interface ScratchcardData {
   id: string;
@@ -28,7 +29,7 @@ export interface ScratchcardData {
   printer?: string;
   isSeries?: boolean;
   seriesDetails?: string;
-  seriesGroupId?: string; // NOVO: Para agrupar membros da mesma série
+  seriesGroupId?: string;
   lines?: LineType;
   
   isRarity?: boolean;
@@ -82,4 +83,5 @@ export interface AnalysisResult {
   printer?: string;
   category: Category;
   seriesDetails?: string;
+  lines?: string;
 }

@@ -5,7 +5,7 @@ import {
   ZoomIn, ZoomOut, LayoutTemplate, Star, Trophy, Gem, Gift,
   Hash, Calendar, Printer, Ruler, Globe, MapPin, User, Info, 
   Layers, Tag, Coins, Clock, Flag, Zap, Sparkles, Maximize2, Columns,
-  ExternalLink, FileText, Banknote, Box
+  ExternalLink, FileText, Banknote, Box, ScanLine
 } from 'lucide-react';
 import { ScratchcardData, Category, LineType, ScratchcardState } from '../types';
 
@@ -69,13 +69,24 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
     onUpdate(newData);
   };
 
+  const getLineBadge = (line: string) => {
+     const lower = line.toLowerCase();
+     if (lower.includes('azul')) return 'bg-blue-600';
+     if (lower.includes('vermelha')) return 'bg-red-600';
+     if (lower.includes('multicolor')) return 'bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500';
+     if (lower.includes('verde')) return 'bg-green-600';
+     if (lower.includes('amarela')) return 'bg-yellow-400';
+     if (lower.includes('castanha')) return 'bg-amber-900';
+     if (lower.includes('cinza')) return 'bg-gray-500';
+     return 'bg-slate-600';
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/98 backdrop-blur-3xl animate-fade-in" onClick={onClose}>
       <button className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors z-50 p-2 bg-slate-800/50 rounded-full" onClick={onClose}><X className="w-8 h-8" /></button>
 
       <div className={`w-full ${viewMode === 'panorama' ? 'h-full flex flex-col' : 'max-w-7xl h-[95vh] md:h-[90vh] flex flex-col md:flex-row bg-slate-900 md:rounded-2xl overflow-hidden border border-slate-800 shadow-2xl animate-bounce-in'}`} onClick={e => e.stopPropagation()}>
          
-         {/* ÁREA DA IMAGEM / PANORAMA */}
          <div className="flex-1 bg-black relative flex flex-col overflow-hidden border-b md:border-b-0 md:border-r border-slate-800">
             <div className="absolute top-4 right-4 z-30 flex gap-2">
                {seriesMembers.length > 1 && (
@@ -112,7 +123,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                 </div>
               </>
             ) : (
-              /* MODO PANORAMA COMPACTO */
               <div className="flex-1 overflow-y-auto bg-slate-950 p-4 md:p-12 custom-scrollbar">
                 <div className="max-w-6xl mx-auto space-y-6">
                   <div className="flex items-center justify-between mb-8 sticky top-0 z-40 bg-slate-950/95 py-6 border-b border-white/5 backdrop-blur-xl">
@@ -136,12 +146,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                               <img src={member.frontUrl} className="w-full h-full object-contain" />
                               <div className="absolute top-2 left-2 bg-blue-600 text-white text-[7px] px-1.5 py-0.5 rounded font-black">FRENTE</div>
                            </div>
-                           {member.backUrl && (
-                             <div className="relative h-44 aspect-[3/4] bg-black rounded-xl overflow-hidden border border-white/10 shadow-xl group-hover:scale-105 transition-transform">
-                                <img src={member.backUrl} className="w-full h-full object-contain" />
-                                <div className="absolute top-2 left-2 bg-brand-600 text-white text-[7px] px-1.5 py-0.5 rounded font-black">VERSO</div>
-                             </div>
-                           )}
                         </div>
                         <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4 py-2">
                            <div className="space-y-1">
@@ -153,20 +157,11 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                               <p className="text-xs font-black text-white font-mono">{member.gameNumber}</p>
                            </div>
                            <div className="space-y-1">
-                              <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-1"><Ruler className="w-3 h-3 text-emerald-500"/> Medidas</p>
-                              <p className="text-xs font-bold text-slate-200">{member.size || '-'}</p>
-                           </div>
-                           <div className="space-y-1">
-                              <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-1"><Printer className="w-3 h-3 text-slate-500"/> Gráfica</p>
-                              <p className="text-xs font-bold text-slate-300 truncate">{member.printer || 'Desconhecido'}</p>
-                           </div>
-                           <div className="space-y-1">
-                              <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-1"><Coins className="w-3 h-3 text-yellow-500"/> Tiragem</p>
-                              <p className="text-xs font-bold text-slate-300">{member.emission || 'N/D'}</p>
-                           </div>
-                           <div className="space-y-1">
-                              <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-1"><Banknote className="w-3 h-3 text-green-500"/> Preço</p>
-                              <p className="text-xs font-bold text-slate-200">{member.price || '-'}</p>
+                              <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-1"><ScanLine className="w-3 h-3 text-cyan-500"/> Linhas</p>
+                              <div className="flex items-center gap-1.5">
+                                 {member.lines && <div className={`w-2 h-2 rounded-full ${getLineBadge(member.lines)}`}></div>}
+                                 <p className="text-xs font-bold text-slate-200">{member.lines || '-'}</p>
+                              </div>
                            </div>
                            <div className="space-y-1">
                               <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-1"><MapPin className="w-3 h-3 text-red-500"/> Local</p>
@@ -174,10 +169,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                            </div>
                            <div className="flex items-center justify-end">
                               <button onClick={() => onImageSelect(member)} className="px-4 py-2 bg-slate-800 hover:bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2">Detalhes <Maximize2 className="w-3.5 h-3.5"/></button>
-                           </div>
-                           <div className="col-span-2 lg:col-span-4 mt-2 pt-2 border-t border-white/5 flex justify-between items-center">
-                              <p className="text-[10px] text-slate-500 italic max-w-lg truncate">"{member.values || 'Sem observações adicionais.'}"</p>
-                              <span className={`text-[9px] font-black px-2 py-0.5 rounded border ${member.state === 'MINT' ? 'bg-green-900/30 text-green-400 border-green-500/30' : 'bg-slate-800 text-slate-500 border-slate-700'}`}>{member.state}</span>
                            </div>
                         </div>
                       </div>
@@ -188,7 +179,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
             )}
          </div>
 
-         {/* FICHA TÉCNICA LATERAL */}
          {viewMode === 'single' && (
            <div className="w-full md:w-[450px] bg-slate-900 flex flex-col h-full z-20 shadow-2xl border-l border-slate-800 overflow-hidden">
               <div className="p-6 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center shrink-0">
@@ -268,6 +258,18 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                        )}
                     </div>
 
+                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800 group hover:border-cyan-500/30 transition-colors col-span-2">
+                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><ScanLine className="w-3.5 h-3.5 text-cyan-400"/> Linhas (Série/Segurança)</p>
+                       {isEditing ? (
+                         <input type="text" value={formData.lines || ''} onChange={e => handleChange('lines', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black p-2 rounded-lg border border-slate-700" placeholder="Ex: Azul, Multicolor..." />
+                       ) : (
+                         <div className="flex items-center gap-2">
+                            {formData.lines && <div className={`w-3 h-3 rounded-full ${getLineBadge(formData.lines)}`}></div>}
+                            <p className="text-sm font-black text-slate-200 uppercase">{formData.lines || '-'}</p>
+                         </div>
+                       )}
+                    </div>
+
                     <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800 group hover:border-indigo-500/30 transition-colors">
                        <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><MapPin className="w-3.5 h-3.5 text-indigo-400"/> Região / Ilha</p>
                        {isEditing ? (
@@ -283,41 +285,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                          <input type="text" value={formData.size} onChange={e => handleChange('size', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black p-2 rounded-lg border border-slate-700" />
                        ) : (
                          <p className="text-sm font-black text-slate-200">{formData.size || '-'}</p>
-                       )}
-                    </div>
-                    
-                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800 col-span-2 group hover:border-indigo-500/30 transition-colors">
-                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Printer className="w-3.5 h-3.5 text-indigo-400"/> Gráfica</p>
-                       {isEditing ? (
-                         <input type="text" value={formData.printer} onChange={e => handleChange('printer', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black p-2 rounded-lg border border-slate-700" />
-                       ) : (
-                         <p className="text-sm font-black text-slate-200">{formData.printer || '-'}</p>
-                       )}
-                    </div>
-
-                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800 group hover:border-yellow-500/30 transition-colors">
-                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Coins className="w-3.5 h-3.5 text-yellow-500"/> Tiragem</p>
-                       {isEditing ? (
-                         <input type="text" value={formData.emission} onChange={e => handleChange('emission', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black p-2 rounded-lg border border-slate-700" />
-                       ) : (
-                         <p className="text-sm font-black text-slate-200">{formData.emission || '-'}</p>
-                       )}
-                    </div>
-
-                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800 group hover:border-green-500/30 transition-colors">
-                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Banknote className="w-3.5 h-3.5 text-green-500"/> Preço</p>
-                       {isEditing ? (
-                         <input type="text" value={formData.price} onChange={e => handleChange('price', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black p-2 rounded-lg border border-slate-700" />
-                       ) : (
-                         <p className="text-sm font-black text-slate-200">{formData.price || '-'}</p>
-                       )}
-                    </div>
-                    <div className="bg-slate-800/40 p-4 rounded-2xl border border-slate-800 group hover:border-orange-500/30 transition-colors">
-                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 mb-2 tracking-widest"><Clock className="w-3.5 h-3.5 text-orange-500"/> Ano</p>
-                       {isEditing ? (
-                         <input type="text" value={formData.releaseDate} onChange={e => handleChange('releaseDate', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black p-2 rounded-lg border border-slate-700" />
-                       ) : (
-                         <p className="text-sm font-black text-slate-200">{formData.releaseDate || '-'}</p>
                        )}
                     </div>
                  </div>
