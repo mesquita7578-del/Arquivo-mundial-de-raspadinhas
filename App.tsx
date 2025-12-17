@@ -30,6 +30,7 @@ function App() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); 
+  const [isWebsitesModalOpen, setIsWebsitesModalOpen] = useState(false); 
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<'admin' | 'visitor' | null>(null);
@@ -89,7 +90,6 @@ function App() {
     }
   };
 
-  // Filter images for different pages (Europe, etc)
   const filteredByPage = useMemo(() => {
     if (currentPage === 'europe') return allImagesCache.filter(i => i.continent === 'Europa');
     if (currentPage === 'america') return allImagesCache.filter(i => i.continent === 'América');
@@ -99,14 +99,38 @@ function App() {
     return allImagesCache;
   }, [allImagesCache, currentPage]);
 
+  const finalFilteredImages = useMemo(() => {
+    return filteredByPage.filter(i => {
+       if (!searchTerm) return true;
+       const term = searchTerm.toLowerCase();
+       return i.gameName.toLowerCase().includes(term) || 
+              i.country.toLowerCase().includes(term) || 
+              i.gameNumber.toLowerCase().includes(term) ||
+              i.customId.toLowerCase().includes(term);
+    });
+  }, [filteredByPage, searchTerm]);
+
   return (
     <div className="flex flex-col h-[100dvh] bg-slate-950 text-slate-100 overflow-hidden">
       <Header 
-        searchTerm={searchTerm} onSearch={setSearchTerm} onUploadClick={() => setIsUploadModalOpen(true)}
-        isAdmin={isAdmin} currentUser={currentUser} onAdminToggle={() => setIsLoginModalOpen(true)}
-        onLogout={() => { setCurrentUser(null); setUserRole(null); setCurrentPage('home'); }} onExport={() => {}} onExportCSV={() => {}} onImport={() => {}}
-        onHistoryClick={() => setIsHistoryModalOpen(true)} language={language} setLanguage={setLanguage}
-        currentPage={currentPage} onNavigate={setCurrentPage} stats={totalStats.stats} t={t.header}
+        searchTerm={searchTerm} 
+        onSearch={setSearchTerm} 
+        onUploadClick={() => setIsUploadModalOpen(true)}
+        isAdmin={isAdmin} 
+        currentUser={currentUser} 
+        onAdminToggle={() => setIsLoginModalOpen(true)}
+        onLogout={() => { setCurrentUser(null); setUserRole(null); setCurrentPage('home'); }} 
+        onExport={() => {}} 
+        onExportCSV={() => {}} 
+        onImport={() => {}}
+        onHistoryClick={() => setIsHistoryModalOpen(true)} 
+        onWebsitesClick={() => setIsWebsitesModalOpen(true)}
+        language={language} 
+        setLanguage={setLanguage}
+        currentPage={currentPage} 
+        onNavigate={setCurrentPage} 
+        stats={totalStats.stats} 
+        t={t.header}
       />
 
       <main className="flex-1 overflow-y-auto bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
@@ -178,7 +202,7 @@ function App() {
 
         {(currentPage === 'home' || ['europe', 'america', 'asia', 'africa', 'oceania'].includes(currentPage)) && (
            <div className="animate-fade-in">
-              {currentPage === 'home' && featuredItems.length > 0 && (
+              {currentPage === 'home' && featuredItems.length > 0 && !searchTerm && (
                 <div className="bg-slate-900/50 border-b border-slate-800 p-4 md:p-8 overflow-hidden">
                    <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-6">
                       <div className="shrink-0 text-center md:text-left">
@@ -199,7 +223,7 @@ function App() {
 
               <div className="max-w-7xl mx-auto p-6 space-y-8">
                  <ImageGrid 
-                    images={filteredByPage.filter(i => searchTerm ? i.gameName.toLowerCase().includes(searchTerm.toLowerCase()) || i.country.toLowerCase().includes(searchTerm.toLowerCase()) : true)} 
+                    images={finalFilteredImages} 
                     onImageClick={setSelectedImage} viewMode={viewMode}
                     onViewModeChange={setViewMode} isAdmin={isAdmin} currentUser={currentUser} 
                     activeCategory="all" t={t.grid}
@@ -224,6 +248,8 @@ function App() {
 
       {isLoginModalOpen && <LoginModal onClose={() => setIsLoginModalOpen(false)} onLogin={handleLoginSubmit} t={t.login} />}
       {isUploadModalOpen && <UploadModal onClose={() => setIsUploadModalOpen(false)} onUploadComplete={loadInitialData} existingImages={[]} initialFile={null} currentUser={currentUser} t={t.upload} />}
+      {isHistoryModalOpen && <HistoryModal onClose={() => setIsHistoryModalOpen(false)} isAdmin={isAdmin} t={t.header} />}
+      {isWebsitesModalOpen && <WebsitesModal onClose={() => setIsWebsitesModalOpen(false)} isAdmin={isAdmin} t={t.header} />}
     </div>
   );
 }
