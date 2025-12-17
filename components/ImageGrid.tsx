@@ -1,214 +1,87 @@
-
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
-import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff, MapPin, LayoutGrid, List, ClipboardList, Package, Trophy, Map, Zap, CheckCircle2 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { 
+  Filter, Zap, Layers, Trophy, CheckCircle2, Eye, RotateCcw, Sparkles, 
+  ChevronLeft, ChevronRight, Coins, Ticket, ClipboardList, Package, Image as ImageIcon 
+} from 'lucide-react';
+import { ScratchcardData, Category, LineType } from '../types';
 
 interface ImageGridProps {
   images: ScratchcardData[];
-  onImageClick: (image: ScratchcardData) => void;
+  onImageClick: (item: ScratchcardData) => void;
   hideFilters?: boolean;
   viewMode?: 'grid' | 'list' | 'map';
   onViewModeChange?: (mode: 'grid' | 'list' | 'map') => void;
   isAdmin?: boolean;
-  currentUser?: string | null; // Receive currentUser
+  currentUser?: string | null;
   activeCategory?: Category | 'all';
   t: any;
 }
 
 const ITEMS_PER_PAGE = 48;
 
-const StateBadge: React.FC<{ state: string }> = ({ state }) => {
-  const getColor = (s: string) => {
-    const normalized = s.toUpperCase();
-    if (normalized.includes('MINT')) return 'bg-green-500/20 text-green-400 border-green-500/50';
-    if (normalized.includes('VOID')) return 'bg-red-500/20 text-red-400 border-red-500/50';
-    
-    // Updated to include all international variants for Sample/Specimen
-    if (
-      normalized.includes('AMOSTRA') || 
-      normalized.includes('MUESTRA') || 
-      normalized.includes('CAMPIONE') || 
-      normalized.includes('SPECIMEN') || 
-      normalized.includes('MUSTER') || 
-      normalized.includes('ÉCHANTILLON') || 
-      normalized.includes('견본') || 
-      normalized.includes('STEEKPROEF') || 
-      normalized.includes('PRØVE') || 
-      normalized.includes('PROV') || 
-      normalized.includes('样本')
-    ) {
-      return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
-    }
-    
-    return 'bg-slate-500/20 text-slate-400 border-slate-500/50';
-  };
+const isRecentItem = (createdAt: number) => {
+  const twoDays = 48 * 60 * 60 * 1000;
+  return Date.now() - createdAt < twoDays;
+};
 
+const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case 'raspadinha': return <Coins className="w-3 h-3" />;
+    case 'lotaria': return <Ticket className="w-3 h-3" />;
+    case 'boletim': return <ClipboardList className="w-3 h-3" />;
+    case 'objeto': return <Package className="w-3 h-3" />;
+    default: return <Coins className="w-3 h-3" />;
+  }
+};
+
+const StateBadge = ({ state }: { state: string }) => {
+  const colors: Record<string, string> = {
+    'MINT': 'bg-green-500/20 text-green-400 border-green-500/50',
+    'SC': 'bg-slate-700 text-slate-300 border-slate-600',
+    'CS': 'bg-orange-500/20 text-orange-400 border-orange-500/50',
+    'AMOSTRA': 'bg-purple-500/20 text-purple-400 border-purple-500/50',
+    'VOID': 'bg-red-500/20 text-red-400 border-red-500/50',
+  };
+  const defaultColor = 'bg-slate-700 text-slate-300 border-slate-600';
+  
   return (
-    <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${getColor(state)}`}>
+    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase border ${colors[state] || defaultColor}`}>
       {state}
     </span>
   );
 };
 
-const LineIndicator: React.FC<{ type?: LineType; t: any }> = ({ type, t }) => {
-  if (!type || type === 'none') return null;
+const LineIndicator = ({ type, t }: { type?: LineType, t: any }) => {
+    if (!type || type === 'none') return null;
+    
+    const colors: Record<string, string> = {
+        'blue': 'bg-blue-500',
+        'red': 'bg-red-500',
+        'green': 'bg-green-500',
+        'brown': 'bg-yellow-800',
+        'pink': 'bg-pink-500',
+        'purple': 'bg-purple-500',
+        'yellow': 'bg-yellow-400',
+        'multicolor': 'bg-gradient-to-r from-blue-500 via-red-500 to-yellow-500'
+    };
 
-  let colorClass = '';
-  let label = '';
-
-  switch (type) {
-    case 'blue':
-      colorClass = 'bg-blue-500';
-      label = t.linesBlue || 'Azuis';
-      break;
-    case 'red':
-      colorClass = 'bg-red-500';
-      label = t.linesRed || 'Vermelhas';
-      break;
-    case 'green':
-      colorClass = 'bg-green-500';
-      label = t.linesGreen || 'Verdes';
-      break;
-    case 'brown':
-      colorClass = 'bg-amber-800';
-      label = t.linesBrown || 'Castanhas';
-      break;
-    case 'pink':
-      colorClass = 'bg-pink-500';
-      label = t.linesPink || 'Rosa';
-      break;
-    case 'purple':
-      colorClass = 'bg-purple-500';
-      label = t.linesPurple || 'Violeta';
-      break;
-    case 'yellow':
-      colorClass = 'bg-yellow-400';
-      label = t.linesYellow || 'Amarelas';
-      break;
-    case 'multicolor':
-      colorClass = 'bg-gradient-to-r from-blue-400 via-yellow-400 to-red-400';
-      label = t.linesMulti || 'Multi';
-      break;
-    default:
-      return null;
-  }
-
-  return (
-    <div className="flex items-center gap-1.5 bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700" title={`Linhas: ${label}`}>
-      <div className={`w-2 h-2 rounded-full ${colorClass} shadow-sm`}></div>
-      <span className="text-[9px] text-slate-400 uppercase font-bold hidden sm:inline">{label}</span>
-    </div>
-  );
-};
-
-// Component to safely render images with fallback
-const SafeImage = ({ src, alt, className }: { src: string, alt: string, className: string }) => {
-  const [error, setError] = useState(false);
-
-  if (error || !src) {
     return (
-      <div className={`flex flex-col items-center justify-center bg-slate-800 text-slate-600 ${className}`}>
-        <ImageOff className="w-8 h-8 opacity-50 mb-1" />
-        <span className="text-[10px] font-mono">No Image</span>
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={src}
-      alt={alt}
-      className={className}
-      onError={() => setError(true)}
-      loading="lazy"
-    />
-  );
-};
-
-const getCategoryIcon = (category: Category) => {
-   switch (category) {
-      case 'lotaria': return <Ticket className="w-3 h-3 text-purple-400" />;
-      case 'boletim': return <ClipboardList className="w-3 h-3 text-green-400" />;
-      case 'objeto': return <Package className="w-3 h-3 text-orange-400" />;
-      default: return <Coins className="w-3 h-3 text-brand-400" />;
-   }
-};
-
-// Helper to check if item is recent (last 48 hours)
-const isRecentItem = (createdAt: number) => {
-  if (!createdAt) return false;
-  const twoDaysAgo = Date.now() - (48 * 60 * 60 * 1000);
-  return createdAt > twoDaysAgo;
-};
-
-// Improved InputFilter with Autocomplete Support
-const InputFilter = ({ 
-  value, 
-  onChange, 
-  placeholder, 
-  icon: Icon,
-  suggestions = []
-}: { 
-  value: string, 
-  onChange: (val: string) => void, 
-  placeholder: string, 
-  icon: React.ElementType,
-  suggestions?: string[]
-}) => {
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Filter suggestions based on current input
-  const filteredSuggestions = suggestions.filter(item => 
-    item.toLowerCase().includes(value.toLowerCase()) && 
-    item.toLowerCase() !== value.toLowerCase()
-  );
-
-  const handleSelect = (suggestion: string) => {
-    onChange(suggestion);
-    setShowSuggestions(false);
-  };
-
-  return (
-    <div className="relative group min-w-[140px] flex-1" ref={wrapperRef}>
-      <Icon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 group-focus-within:text-brand-500 transition-colors z-10" />
-      <input 
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={() => setShowSuggestions(true)}
-        placeholder={placeholder}
-        className="w-full bg-slate-800 text-slate-200 text-xs rounded-lg border border-slate-700 pl-8 pr-2 py-2 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors placeholder-slate-600 relative z-0"
-      />
-      
-      {/* Suggestions Dropdown */}
-      {showSuggestions && filteredSuggestions.length > 0 && (
-        <div className="absolute top-full left-0 w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto animate-fade-in scrollbar-hide">
-          {filteredSuggestions.map((suggestion, index) => (
-            <div 
-              key={index}
-              onClick={() => handleSelect(suggestion)}
-              className="px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white cursor-pointer transition-colors border-b border-slate-800/50 last:border-0 flex items-center gap-2"
-            >
-              <span className="w-1 h-1 rounded-full bg-slate-500"></span>
-              {suggestion}
-            </div>
-          ))}
+        <div className="flex items-center gap-1 bg-slate-900/80 backdrop-blur px-1.5 py-0.5 rounded-full border border-slate-700" title={`${t.lines}: ${type}`}>
+            <div className={`w-2 h-2 rounded-full ${colors[type] || 'bg-slate-500'}`}></div>
         </div>
-      )}
-    </div>
-  );
+    );
+};
+
+const SafeImage = ({ src, alt, className }: { src: string, alt: string, className?: string }) => {
+    const [error, setError] = useState(false);
+    if (error || !src) {
+        return (
+            <div className={`flex items-center justify-center bg-slate-800 ${className}`}>
+                <ImageIcon className="w-8 h-8 text-slate-600" />
+            </div>
+        );
+    }
+    return <img src={src} alt={alt} className={className} onError={() => setError(true)} loading="lazy" />;
 };
 
 export const ImageGrid: React.FC<ImageGridProps> = ({ 
@@ -222,75 +95,10 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   activeCategory = 'all', 
   t 
 }) => {
-  
-  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-
-  // Manual text filters
-  const [filterCountry, setFilterCountry] = useState<string>('');
-  const [filterState, setFilterState] = useState<string>('');
-  const [filterYear, setFilterYear] = useState<string>('');
-  const [filterSize, setFilterSize] = useState<string>('');
-  const [filterEmission, setFilterEmission] = useState<string>('');
-  const [filterPrinter, setFilterPrinter] = useState<string>('');
-  const [filterSeries, setFilterSeries] = useState<boolean>(false);
-  
-  // Region Sub-Filter (Dynamic)
-  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
-
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [activeCategory, filterCountry, filterState, filterYear, filterSize, filterEmission, filterPrinter, filterSeries, images]);
-
-  // Determine available Regions based on CURRENT images
-  const availableRegions = useMemo(() => {
-    if (hideFilters) return [];
-    
-    const regions = new Set<string>();
-    images.forEach(img => {
-      if (img.region && img.region.trim().length > 0) {
-        regions.add(img.region.trim());
-      }
-    });
-    return Array.from(regions).sort();
-  }, [images, hideFilters]);
-
-  // Extract Unique Countries for Autocomplete
-  const uniqueCountries = useMemo(() => {
-    if (hideFilters) return [];
-    const countries = new Set<string>();
-    images.forEach(img => {
-      if (img.country && img.country.trim().length > 0) {
-        countries.add(img.country.trim());
-      }
-    });
-    return Array.from(countries).sort();
-  }, [images, hideFilters]);
-
-  // Apply filters (Internal filters + Region)
-  const filteredImages = useMemo(() => {
-    return images.filter(img => {
-      if (activeCategory !== 'all') {
-         const cat = img.category || 'raspadinha';
-         if (cat !== activeCategory) return false;
-      }
-      if (selectedRegion && (!img.region || img.region !== selectedRegion)) return false;
-
-      if (filterCountry && !img.country.toLowerCase().includes(filterCountry.toLowerCase())) return false;
-      if (filterState && !img.state.toLowerCase().includes(filterState.toLowerCase())) return false;
-      if (filterYear && !img.releaseDate.includes(filterYear)) return false;
-      if (filterSize && !img.size.toLowerCase().includes(filterSize.toLowerCase())) return false;
-      if (filterEmission && !img.emission?.toLowerCase().includes(filterEmission.toLowerCase())) return false;
-      if (filterPrinter && !img.printer?.toLowerCase().includes(filterPrinter.toLowerCase())) return false;
-      if (filterSeries && !img.isSeries) return false;
-      
-      return true;
-    });
-  }, [images, activeCategory, filterCountry, filterState, filterYear, filterSize, filterEmission, filterPrinter, filterSeries, selectedRegion]);
-
-  // Apply Pagination
+  const filteredImages = images;
   const totalPages = Math.ceil(filteredImages.length / ITEMS_PER_PAGE);
+
   const displayedImages = useMemo(() => {
     if (hideFilters) return filteredImages;
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -298,130 +106,16 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   }, [filteredImages, currentPage, hideFilters]);
 
   const clearFilters = () => {
-    setFilterCountry('');
-    setFilterState('');
-    setFilterYear('');
-    setFilterSize('');
-    setFilterEmission('');
-    setFilterPrinter('');
-    setFilterSeries(false);
-    setSelectedRegion(null);
+    // In current architecture, filters are mostly external. 
+    // This function is kept for compatibility with the JSX structure if needed.
   };
-
-  const hasFilters = filterCountry || filterState || filterYear || filterSize || filterEmission || filterPrinter || filterSeries || selectedRegion;
+  
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [images]);
 
   return (
     <div className="flex flex-col h-full">
-
-      {/* Public Toolbar (Results Count + View Toggle) */}
-      {!hideFilters && (
-        <div className="px-4 md:px-6 py-2 flex justify-between items-center border-b border-slate-800 bg-slate-900/30">
-           {/* Left side: Toggle (Moved here) */}
-           <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
-             <button 
-                onClick={() => onViewModeChange?.('grid')} 
-                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                title={t.viewGrid}
-             >
-                <LayoutGrid className="w-4 h-4" />
-             </button>
-             <button 
-                onClick={() => onViewModeChange?.('list')} 
-                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                title={t.viewList}
-             >
-                <List className="w-4 h-4" />
-             </button>
-             <button 
-                onClick={() => onViewModeChange?.('map')} 
-                className={`p-1.5 rounded-md transition-all ${viewMode === 'map' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                title={t.viewMap}
-             >
-                <Map className="w-4 h-4" />
-             </button>
-           </div>
-
-           {/* Right side: Count (Moved here) */}
-           <div className="text-xs text-slate-500 font-mono font-bold uppercase tracking-wider">
-             {filteredImages.length} {t.results}
-           </div>
-        </div>
-      )}
-      
-      {/* Filter Bar - Restricted to ADMIN only */}
-      {!hideFilters && isAdmin && (
-        <div className="px-6 py-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm z-10 sticky top-0 space-y-3 animate-fade-in">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-brand-400 text-sm font-medium">
-              <Filter className="w-4 h-4" />
-              <span className="hidden sm:inline">{t.filters} (Admin)</span>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <InputFilter 
-              value={filterCountry} 
-              onChange={setFilterCountry} 
-              placeholder={t.country} 
-              icon={Globe} 
-              suggestions={uniqueCountries} 
-            />
-            <InputFilter value={filterState} onChange={setFilterState} placeholder={t.state} icon={Search} />
-            <InputFilter value={filterYear} onChange={setFilterYear} placeholder={t.year} icon={Calendar} />
-            <InputFilter value={filterSize} onChange={setFilterSize} placeholder={t.size} icon={Maximize2} />
-            <InputFilter value={filterEmission} onChange={setFilterEmission} placeholder={t.emission} icon={BarChart} />
-            <InputFilter value={filterPrinter} onChange={setFilterPrinter} placeholder={t.printer} icon={Printer} />
-            
-            <button 
-              onClick={() => setFilterSeries(!filterSeries)}
-              className={`px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-2 transition-all ${
-                filterSeries 
-                ? 'bg-brand-600 border-brand-500 text-white shadow-lg shadow-brand-900/40' 
-                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              {t.series}
-            </button>
-
-            {hasFilters && (
-              <button 
-                onClick={clearFilters}
-                className="flex items-center gap-1 text-xs text-brand-500 hover:text-brand-400 font-medium transition-colors ml-auto px-2"
-              >
-                <X className="w-3 h-3" /> {t.clear}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Region Sub-Filter Bar (Public & Admin) */}
-      {!hideFilters && availableRegions.length > 0 && (
-        <div className="px-4 md:px-6 py-3 border-b border-slate-800 bg-slate-900/30 overflow-x-auto scrollbar-hide">
-          <div className="flex items-center gap-2">
-             <div className="flex items-center gap-1 text-slate-400 text-xs font-bold uppercase mr-2 shrink-0">
-                <MapPin className="w-3 h-3" />
-                {t.region}:
-             </div>
-             {availableRegions.map(region => (
-                <button
-                  key={region}
-                  onClick={() => setSelectedRegion(selectedRegion === region ? null : region)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-all whitespace-nowrap ${
-                    selectedRegion === region 
-                      ? 'bg-brand-600 text-white border-brand-500 shadow-md' 
-                      : 'bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-slate-200'
-                  }`}
-                >
-                  {region}
-                </button>
-             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Content */}
       <div className={`${hideFilters ? '' : 'flex-1 overflow-y-auto p-4 md:p-6 pb-24 scroll-smooth'}`}>
         {!hideFilters && filteredImages.length === 0 ? (
            <div className="flex flex-col items-center justify-center h-64 text-slate-500">
@@ -493,15 +187,15 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
             ))}
           </div>
         ) : (
-          // GRID VIEW (UPDATED)
-          <div className={`grid grid-cols-2 ${hideFilters ? 'md:grid-cols-4 lg:grid-cols-5' : 'md:grid-cols-3 lg:grid-cols-4'} gap-4 md:gap-6`}>
+          // GRID VIEW
+          <div className={`grid grid-cols-2 sm:grid-cols-3 ${hideFilters ? 'md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7' : 'md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'} gap-3 md:gap-4`}>
             {displayedImages.map((item) => (
               <div
                 key={item.id}
                 className="group relative bg-slate-900/80 rounded-xl overflow-hidden border border-slate-700/50 hover:border-brand-500/50 transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-500/20 hover:scale-[1.02] cursor-pointer flex flex-col h-full backdrop-blur-sm"
                 onClick={() => onImageClick(item)}
               >
-                {/* Image Container - object-contain and square aspect ratio */}
+                {/* Image Container */}
                 <div className="relative aspect-square overflow-hidden bg-slate-800/50 flex items-center justify-center p-2">
                   <SafeImage
                     src={item.frontUrl}
@@ -567,14 +261,14 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 </div>
 
                 {/* Info Container */}
-                <div className="p-3 md:p-4 flex flex-col flex-1 bg-slate-900/50 border-t border-slate-800">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-slate-200 truncate flex-1 mr-2 text-sm md:text-base" title={item.gameName}>{item.gameName}</h3>
+                <div className="p-3 flex flex-col flex-1 bg-slate-900/50 border-t border-slate-800">
+                  <div className="flex justify-between items-start mb-1.5">
+                    <h3 className="font-bold text-slate-200 truncate flex-1 mr-2 text-xs md:text-sm" title={item.gameName}>{item.gameName}</h3>
                     <StateBadge state={item.state} />
                   </div>
                   
                   {/* Flag / Country / Region Info */}
-                  <div className="mb-2 flex items-center gap-1.5 text-xs text-slate-400">
+                  <div className="mb-2 flex items-center gap-1.5 text-[10px] md:text-xs text-slate-400">
                     <span className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]"></span>
                     <span className="truncate">
                       {item.country}
@@ -582,13 +276,13 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 mt-auto text-xs text-slate-400">
-                    <div className="bg-slate-800/50 p-1.5 md:p-2 rounded flex flex-col">
-                      <span className="text-[9px] md:text-[10px] uppercase text-slate-500">{t.gameNo}</span>
-                      <span className="font-mono text-slate-300">{item.gameNumber}</span>
+                  <div className="grid grid-cols-2 gap-1.5 mt-auto text-[10px] text-slate-400">
+                    <div className="bg-slate-800/50 p-1 rounded flex flex-col">
+                      <span className="text-[9px] uppercase text-slate-500">{t.gameNo}</span>
+                      <span className="font-mono text-slate-300 truncate">{item.gameNumber}</span>
                     </div>
-                    <div className="bg-slate-800/50 p-1.5 md:p-2 rounded flex flex-col">
-                      <span className="text-[9px] md:text-[10px] uppercase text-slate-500">{t.year}</span>
+                    <div className="bg-slate-800/50 p-1 rounded flex flex-col">
+                      <span className="text-[9px] uppercase text-slate-500">{t.year}</span>
                       <span className="font-mono text-slate-300">{item.releaseDate.split('-')[0] || '?'}</span>
                     </div>
                   </div>
