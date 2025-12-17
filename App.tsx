@@ -11,7 +11,7 @@ import { WebsitesModal } from './components/WebsitesModal';
 import { AboutPage } from './components/AboutPage'; 
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy, Crown, Star, User, Bot, Sparkles, Smartphone, Share as ShareIcon, RefreshCw, ChevronRight } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy, Crown, Star, User, Bot, Sparkles, Smartphone, Share as ShareIcon, RefreshCw, ChevronRight, CheckSquare } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
@@ -65,7 +65,8 @@ function App() {
   // Filter States (Lifted)
   const [showRarities, setShowRarities] = useState(false);
   const [showPromotional, setShowPromotional] = useState(false); 
-  const [showWinners, setShowWinners] = useState(false); // New Winner Filter
+  const [showWinners, setShowWinners] = useState(false); 
+  const [showMyCollection, setShowMyCollection] = useState(false); // NEW: My Collection Filter
   const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
   
   const [isDragging, setIsDragging] = useState(false);
@@ -259,6 +260,11 @@ function App() {
           results = results.filter(img => img.isWinner === true);
         }
 
+        // 5. Filter by My Collection (NEW)
+        if (showMyCollection && currentUser) {
+           results = results.filter(img => img.owners && img.owners.includes(currentUser));
+        }
+
         setDisplayedImages(results);
         setMapData(results); // Map follows grid on home
 
@@ -274,7 +280,7 @@ function App() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, activeContinent, showRarities, showPromotional, showWinners, activeCategory, isLoadingDB, currentPage]);
+  }, [searchTerm, activeContinent, showRarities, showPromotional, showWinners, showMyCollection, activeCategory, isLoadingDB, currentPage, currentUser]);
 
   // --- SPOTLIGHT LOGIC (HERO ITEM) ---
   const spotlightItem = useMemo(() => {
@@ -398,6 +404,7 @@ function App() {
     if (!showRarities) {
        setShowPromotional(false);
        setShowWinners(false);
+       setShowMyCollection(false);
     }
     setShowRarities(!showRarities);
   };
@@ -406,6 +413,7 @@ function App() {
     if (!showPromotional) {
        setShowRarities(false);
        setShowWinners(false);
+       setShowMyCollection(false);
     }
     setShowPromotional(!showPromotional);
   };
@@ -414,8 +422,23 @@ function App() {
     if (!showWinners) {
        setShowRarities(false);
        setShowPromotional(false);
+       setShowMyCollection(false);
     }
     setShowWinners(!showWinners);
+  };
+
+  const toggleMyCollection = () => {
+     if (!currentUser) {
+        alert("Por favor, entre no modo Admin (Login) para ver a sua coleção.");
+        setIsLoginModalOpen(true);
+        return;
+     }
+     if (!showMyCollection) {
+        setShowRarities(false);
+        setShowPromotional(false);
+        setShowWinners(false);
+     }
+     setShowMyCollection(!showMyCollection);
   };
 
   const handleCountrySelectFromMap = (countryName: string) => {
@@ -433,6 +456,11 @@ function App() {
 
   const handleUploadComplete = async (newImage: ScratchcardData) => {
     try {
+      // Auto-add current user to owners if they create it
+      if (currentUser && (!newImage.owners || newImage.owners.length === 0)) {
+         newImage.owners = [currentUser];
+      }
+
       await storageService.save(newImage);
       // Refresh Full Cache
       const allItems = await storageService.getAll();
@@ -488,7 +516,10 @@ function App() {
     if (!isAdmin) setIsLoginModalOpen(true);
   };
 
-  const handleLogout = () => setCurrentUser(null);
+  const handleLogout = () => {
+     setCurrentUser(null);
+     setShowMyCollection(false); // Disable personal filter on logout
+  };
 
   const handleLoginSubmit = (username: string, pass: string): boolean => {
     const cleanName = username.trim().toUpperCase();
@@ -543,7 +574,7 @@ function App() {
       const headers = [
         "ID", "Nome Jogo", "Numero", "Pais", "Regiao", "Continente", 
         "Ano", "Estado", "Preco", "Tiragem", "Grafica", "Colecionador", 
-        "Categoria", "Raridade", "Promo", "Serie", "Data Registo"
+        "Categoria", "Raridade", "Promo", "Serie", "Data Registo", "Donos (Colecao)"
       ];
 
       const rows = items.map(item => [
@@ -563,7 +594,8 @@ function App() {
         item.isRarity ? "SIM" : "NAO",
         item.isPromotional ? "SIM" : "NAO",
         item.isSeries ? `SIM (${item.seriesDetails || ''})` : "NAO",
-        new Date(item.createdAt).toLocaleDateString()
+        new Date(item.createdAt).toLocaleDateString(),
+        `"${item.owners ? item.owners.join(', ') : ''}"`
       ]);
 
       const csvContent = [
@@ -673,7 +705,7 @@ function App() {
 
      return (
         <div className="animate-fade-in min-h-full max-w-7xl mx-auto px-3 md:px-6 py-4 pb-20">
-           
+           {/* ... (Code truncated for brevity, identical to previous, just context for XML) ... */}
            {/* Compact 3D Animated Banner */}
            <div 
              className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${bannerGradient} shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-t border-white/20 p-6 md:p-8 mb-6 transform hover:scale-[1.01] transition-all duration-500 group`}
@@ -798,6 +830,7 @@ function App() {
                    viewMode={viewMode}
                    onViewModeChange={setViewMode}
                    isAdmin={isAdmin} 
+                   currentUser={currentUser} // Pass currentUser to Grid for Check Icons
                    t={t.grid}
                  />
               )}
@@ -929,6 +962,19 @@ function App() {
                     {t.header.winners}
                   </button>
 
+                  {/* MY COLLECTION Filter Button (New Feature) */}
+                  <button
+                    onClick={toggleMyCollection}
+                    className={`flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${
+                      showMyCollection 
+                        ? "bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/20" 
+                        : "bg-slate-800 text-slate-400 border-slate-700 hover:border-blue-500/50 hover:text-blue-400"
+                    }`}
+                  >
+                    <CheckSquare className="w-3.5 h-3.5" />
+                    Minha Coleção
+                  </button>
+
                   {/* Websites Modal Trigger */}
                   <button
                     onClick={() => setIsWebsitesModalOpen(true)}
@@ -981,7 +1027,7 @@ function App() {
             <div className="max-w-7xl mx-auto py-6 md:py-8 relative z-10 space-y-8 md:space-y-12 animate-fade-in">
               
               {/* --- HERO SPOTLIGHT: "MUSEUM TREASURE" (Only if filtering is off) --- */}
-              {spotlightItem && !showRarities && !showPromotional && !showWinners && (
+              {spotlightItem && !showRarities && !showPromotional && !showWinners && !showMyCollection && (
                  <section className="px-4 md:px-6">
                     <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 border border-gold-500/30 rounded-3xl overflow-hidden relative shadow-[0_0_40px_rgba(234,179,8,0.1)] group cursor-pointer" onClick={() => setSelectedImage(spotlightItem)}>
                        {/* Background FX */}
@@ -1031,7 +1077,7 @@ function App() {
               )}
 
               {/* New Arrivals (Hidden in Filter mode) */}
-              {!showRarities && !showPromotional && !showWinners && (
+              {!showRarities && !showPromotional && !showWinners && !showMyCollection && (
                 <section className="px-4 md:px-6">
                   <div className="flex items-center gap-2 mb-4 text-brand-400">
                     <Clock className="w-5 h-5" />
@@ -1044,7 +1090,8 @@ function App() {
                         onImageClick={setSelectedImage} 
                         hideFilters={true} 
                         isAdmin={isAdmin} 
-                        activeCategory={activeCategory} // Pass active Category
+                        currentUser={currentUser} // Pass currentUser to Grid
+                        activeCategory={activeCategory} 
                         t={t.grid}
                       />
                     </div>
@@ -1061,6 +1108,8 @@ function App() {
                       <Gift className="w-5 h-5 text-pink-500" />
                     ) : showWinners ? (
                       <Trophy className="w-5 h-5 text-green-500" />
+                    ) : showMyCollection ? (
+                      <CheckSquare className="w-5 h-5 text-blue-500" />
                     ) : (
                       <Globe className="w-5 h-5" />
                     )}
@@ -1072,7 +1121,9 @@ function App() {
                           ? t.header.promos
                           : showWinners
                             ? t.header.winners
-                            : t.home.explore
+                            : showMyCollection
+                              ? "Minha Coleção"
+                              : t.home.explore
                       }
                     </h2>
                   </div>
@@ -1136,7 +1187,7 @@ function App() {
                   </div>
                 )}
 
-                <div className={`bg-slate-900/30 border rounded-2xl overflow-hidden min-h-[500px] backdrop-blur-sm ${showRarities ? 'border-gold-500/30 bg-gold-900/5' : showPromotional ? 'border-pink-500/30 bg-pink-900/5' : showWinners ? 'border-green-500/30 bg-green-900/5' : 'border-slate-800/50'}`}>
+                <div className={`bg-slate-900/30 border rounded-2xl overflow-hidden min-h-[500px] backdrop-blur-sm ${showRarities ? 'border-gold-500/30 bg-gold-900/5' : showPromotional ? 'border-pink-500/30 bg-pink-900/5' : showWinners ? 'border-green-500/30 bg-green-900/5' : showMyCollection ? 'border-blue-500/30 bg-blue-900/5' : 'border-slate-800/50'}`}>
                   {viewMode === 'map' ? (
                     <div className="p-4 h-[600px]">
                       <WorldMap 
@@ -1153,6 +1204,7 @@ function App() {
                         viewMode={viewMode}
                         onViewModeChange={setViewMode}
                         isAdmin={isAdmin} 
+                        currentUser={currentUser} // Pass currentUser to Grid for Check Icons
                         activeCategory={activeCategory} // Pass active Category
                         t={t.grid}
                       />
@@ -1281,6 +1333,7 @@ function App() {
           onUpdate={handleUpdateImage}
           onDelete={handleDeleteImage}
           isAdmin={isAdmin}
+          currentUser={currentUser} // Pass currentUser for "My Collection" check
           contextImages={displayedImages}
           onImageSelect={setSelectedImage}
           t={t.viewer}

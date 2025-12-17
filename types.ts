@@ -22,7 +22,7 @@ export interface ScratchcardData {
   country: string; // País de origem
   region?: string; // Novo: Região / Cantão / Estado
   continent: Continent; // Continente
-  collector?: string; // Nome do colecionador
+  collector?: string; // Nome do colecionador (Quem digitalizou/contribuiu)
   
   // New Fields
   emission?: string; // Emissão / Tiragem
@@ -38,6 +38,9 @@ export interface ScratchcardData {
   isWinner?: boolean; // É premiada?
   prizeAmount?: string; // Valor do prémio (ex: 50€)
   
+  // Personal Collection Logic
+  owners?: string[]; // Lista de nomes de quem tem isto na coleção (ex: ["Jorge Mesquita", "Fabio Pagni"])
+
   category: Category; // Categoria
 
   aiGenerated: boolean;

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ScratchcardData, ScratchcardState, Category, LineType } from '../types';
-import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff, MapPin, LayoutGrid, List, ClipboardList, Package, Trophy, Map, Zap } from 'lucide-react';
+import { Sparkles, Eye, Filter, X, RotateCcw, Calendar, Maximize2, Printer, BarChart, Layers, Search, Globe, Ticket, Coins, ChevronLeft, ChevronRight, AlignJustify, ImageOff, MapPin, LayoutGrid, List, ClipboardList, Package, Trophy, Map, Zap, CheckCircle2 } from 'lucide-react';
 
 interface ImageGridProps {
   images: ScratchcardData[];
@@ -9,6 +9,7 @@ interface ImageGridProps {
   viewMode?: 'grid' | 'list' | 'map';
   onViewModeChange?: (mode: 'grid' | 'list' | 'map') => void;
   isAdmin?: boolean;
+  currentUser?: string | null; // Receive currentUser
   activeCategory?: Category | 'all';
   t: any;
 }
@@ -126,6 +127,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   viewMode = 'grid', 
   onViewModeChange,
   isAdmin = false, 
+  currentUser,
   activeCategory = 'all', 
   t 
 }) => {
@@ -380,6 +382,11 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                         <span className="text-[10px] text-green-400 font-medium">{item.prizeAmount}</span>
                       </span>
                     )}
+                    {currentUser && item.owners && item.owners.includes(currentUser) && (
+                       <span title="Na minha coleção" className="bg-blue-600/30 text-blue-400 p-0.5 rounded-full border border-blue-500/30">
+                          <CheckCircle2 className="w-3 h-3" />
+                       </span>
+                    )}
                     {item.lines && item.lines !== 'none' && (
                        <LineIndicator type={item.lines} t={t} />
                     )}
@@ -434,6 +441,13 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-slate-900 text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_15px_rgba(234,179,8,0.6)] flex items-center gap-1 animate-pulse border border-yellow-300 transform hover:scale-105 transition-transform cursor-help" title="Lançamento recente (48h)">
                             <Zap className="w-3 h-3 fill-slate-900 stroke-none" />
                             NOVO
+                         </div>
+                      )}
+
+                      {/* My Collection Indicator */}
+                      {currentUser && item.owners && item.owners.includes(currentUser) && (
+                         <div className="bg-blue-600 text-white p-1 rounded-full shadow-lg shadow-blue-500/50 animate-bounce-in border border-blue-400" title="Item na Minha Coleção">
+                            <CheckCircle2 className="w-3 h-3" />
                          </div>
                       )}
 

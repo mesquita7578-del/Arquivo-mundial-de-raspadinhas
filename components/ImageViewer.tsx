@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, Share2, ZoomIn, ZoomOut, Edit2, Trash2, Save, RotateCcw, Check, MapPin, Printer, Layers, Trophy, Gift, Gem } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Share2, ZoomIn, ZoomOut, Edit2, Trash2, Save, RotateCcw, Check, MapPin, Printer, Layers, Trophy, Gift, Gem, CheckSquare, Square } from 'lucide-react';
 import { ScratchcardData, Category } from '../types';
 
 interface ImageViewerProps {
@@ -8,6 +8,7 @@ interface ImageViewerProps {
   onUpdate: (data: ScratchcardData) => void;
   onDelete: (id: string) => void;
   isAdmin: boolean;
+  currentUser?: string | null; // Pass current user to check ownership
   contextImages: ScratchcardData[];
   onImageSelect: (data: ScratchcardData) => void;
   t: any;
@@ -19,6 +20,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
   onUpdate, 
   onDelete, 
   isAdmin, 
+  currentUser,
   contextImages, 
   onImageSelect,
   t 
@@ -53,6 +55,23 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
       onDelete(image.id);
       onClose();
     }
+  };
+
+  // Ownership Toggle
+  const toggleOwnership = () => {
+     if (!currentUser) return;
+     
+     const currentOwners = image.owners || [];
+     let newOwners: string[];
+
+     if (currentOwners.includes(currentUser)) {
+        newOwners = currentOwners.filter(o => o !== currentUser);
+     } else {
+        newOwners = [...currentOwners, currentUser];
+     }
+
+     // Immediately update via parent callback without going into Edit Mode
+     onUpdate({ ...image, owners: newOwners });
   };
 
   const handleNext = () => {
@@ -95,6 +114,9 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
   const stopDrag = () => setIsDragging(false);
 
   const currentImageSrc = showBack && image.backUrl ? image.backUrl : image.frontUrl;
+  
+  // Check if current user owns this
+  const isOwned = currentUser && image.owners?.includes(currentUser);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl animate-fade-in">
@@ -321,6 +343,21 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
                  <div className="space-y-6">
                     {/* VIEW MODE */}
                     
+                    {/* OWNERSHIP TOGGLE (The "Quadradinho") */}
+                    {currentUser && (
+                       <div className="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4 flex items-center justify-between group cursor-pointer hover:bg-blue-900/30 transition-all" onClick={toggleOwnership}>
+                          <div>
+                             <h4 className="text-sm font-bold text-white mb-1">Minha Coleção</h4>
+                             <p className="text-[10px] text-blue-300">
+                                {isOwned ? "Este item está na tua coleção." : "Marca se tens este item."}
+                             </p>
+                          </div>
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${isOwned ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/50' : 'bg-slate-800 border-2 border-slate-600 text-transparent group-hover:border-blue-400'}`}>
+                             {isOwned ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
+                          </div>
+                       </div>
+                    )}
+
                     {/* Header Info */}
                     <div>
                        <div className="flex justify-between items-start mb-2">
@@ -417,8 +454,19 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
                     {/* Meta Footer */}
                     <div className="pt-6 border-t border-gray-800 text-[10px] text-gray-600 space-y-1">
                        <p>Adicionado em: {new Date(image.createdAt).toLocaleString()}</p>
-                       <p>Colecionador: <span className="text-brand-500">{image.collector || 'Desconhecido'}</span></p>
-                       <p>ID Sistema: {image.id}</p>
+                       <p>Colecionador (Origem): <span className="text-brand-500">{image.collector || 'Desconhecido'}</span></p>
+                       
+                       {/* List of Owners */}
+                       {image.owners && image.owners.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-gray-800">
+                             <p className="mb-1 text-slate-500 uppercase font-bold tracking-widest">Coleções onde existe:</p>
+                             <div className="flex flex-wrap gap-1">
+                                {image.owners.map(owner => (
+                                   <span key={owner} className="bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20">{owner}</span>
+                                ))}
+                             </div>
+                          </div>
+                       )}
                     </div>
                  </div>
               )}
