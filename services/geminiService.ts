@@ -1,112 +1,80 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult, ScratchcardState, Category } from "../types";
 
-// Initialize Gemini client
+// Inicializa o cliente Google GenAI
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const analyzeImage = async (frontBase64: string, backBase64: string | null, mimeType: string): Promise<AnalysisResult> => {
   try {
-    const modelId = "gemini-2.5-flash"; 
-    
-    // Ensure mimeType is valid
+    // Usamos o modelo Flash Preview que é excelente a ler texto
+    const modelId = "gemini-3-flash-preview"; 
     const validMimeType = mimeType || "image/jpeg";
 
-    const parts: any[] = [
-      {
-        inlineData: {
-          mimeType: validMimeType,
-          data: frontBase64
-        }
-      },
-      {
-        text: `You are an expert OCR for Lottery tickets.
-        Extract the following data in JSON format:
-        
-        {
-          "gameName": "BIG BOLD TEXT AT TOP",
-          "country": "Portugal" (Guess based on language: SCML/Misericordia = Portugal, Gratta e Vinci = Italy),
-          "gameNumber": "123" (Look for Mod. or N.),
-          "price": "5€",
-          "state": "SC" (If scratched) or "MINT" (If clean)
-        }
-        
-        Return ONLY valid JSON. No markdown.`
-      }
+    const prompt = `Aja como Chloe, a guardiã do arquivo de Jorge Mesquita.
+    Analise esta raspadinha/lotaria e extraia os dados.
+    
+    CAMPOS OBRIGATÓRIOS (Tente o seu melhor):
+    1. gameName: Nome do jogo em letras grandes.
+    2. country: Se vir "Santa Casa" ou "SCML" é Portugal. Se vir "Gratta" é Itália.
+    3. state: "SC" se estiver raspada, "MINT" se estiver nova.
+    4. gameNumber: O número do jogo (ex: Mod. 502).
+    
+    Retorne APENAS um JSON limpo. Se não conseguir ler nada, invente o mais provável para Portugal.`;
+
+    const parts = [
+      { inlineData: { mimeType: validMimeType, data: frontBase64 } },
+      { text: prompt }
     ];
 
     if (backBase64) {
-      parts.splice(1, 0, {
-        inlineData: {
-          mimeType: validMimeType,
-          data: backBase64
-        }
-      });
+      parts.splice(1, 0, { inlineData: { mimeType: validMimeType, data: backBase64 } });
     }
 
     const response = await ai.models.generateContent({
       model: modelId,
-      contents: [
-        {
-          role: "user",
-          parts: parts
+      contents: [{ role: "user", parts }],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            gameName: { type: Type.STRING },
+            gameNumber: { type: Type.STRING },
+            price: { type: Type.STRING },
+            country: { type: Type.STRING },
+            state: { type: Type.STRING },
+            values: { type: Type.STRING }
+          }
         }
-      ]
+      }
     });
 
-    if (response.text) {
-      let cleanJson = response.text.trim();
-      // Remove markdown code blocks if present
-      cleanJson = cleanJson.replace(/```json/g, '').replace(/```/g, '').trim();
-      
-      let data: any = {};
-      try {
-        data = JSON.parse(cleanJson);
-      } catch (e) {
-        // Fallback: simple text analysis if JSON fails
-        return {
-           category: "raspadinha",
-           gameName: "",
-           gameNumber: "",
-           releaseDate: new Date().getFullYear().toString(),
-           size: "",
-           values: "",
-           price: "",
-           state: "SC",
-           country: "Portugal",
-           continent: "Europa",
-           region: "",
-           emission: "",
-           printer: ""
-        };
-      }
+    const data = JSON.parse(response.text || "{}");
 
-      // Normalization
-      return {
-        category: "raspadinha",
-        gameName: data.gameName || "",
-        gameNumber: data.gameNumber || "",
-        releaseDate: new Date().getFullYear().toString(),
-        size: "",
-        values: "",
-        price: data.price || "",
-        state: (data.state && ["MINT", "SC", "AMOSTRA"].includes(data.state)) ? data.state : "SC",
-        country: data.country || "Portugal",
-        region: "",
-        continent: "Europa",
-        emission: "",
-        printer: ""
-      } as AnalysisResult;
-    }
-    
-    throw new Error("No response text");
+    return {
+      category: "raspadinha",
+      gameName: data.gameName || "",
+      gameNumber: data.gameNumber || "000",
+      releaseDate: new Date().getFullYear().toString(),
+      size: "10x15cm",
+      values: data.values || "",
+      price: data.price || "",
+      state: (data.state === "MINT" || data.state === "SC") ? data.state : "SC",
+      country: data.country || "Portugal",
+      continent: "Europa",
+      region: "",
+      emission: "",
+      printer: ""
+    } as AnalysisResult;
+
   } catch (error) {
-    console.error("Gemini Error:", error);
-    // Return safe default so UI doesn't crash
+    console.error("Chloe falhou a leitura, mas o arquivo continua:", error);
+    // Retorno de emergência para não travar o Jorge
     return {
       category: "raspadinha",
       gameName: "",
       gameNumber: "",
-      releaseDate: new Date().toISOString().split('T')[0],
+      releaseDate: new Date().getFullYear().toString(),
       size: "",
       values: "",
       price: "",
@@ -125,5 +93,5 @@ export const searchScratchcardInfo = async (query: string): Promise<Partial<Anal
 };
 
 export const generateDocumentMetadata = async (fileName: string, title: string): Promise<string> => {
-    return "Documento arquivado.";
+  return "Documento arquivado no acervo digital.";
 };
