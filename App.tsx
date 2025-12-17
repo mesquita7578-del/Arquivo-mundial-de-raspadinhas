@@ -11,7 +11,7 @@ import { WebsitesModal } from './components/WebsitesModal';
 import { AboutPage } from './components/AboutPage'; 
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category } from './types';
-import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy, Crown, Star, User, Bot, Sparkles, Smartphone, Share as ShareIcon, RefreshCw } from 'lucide-react';
+import { Globe, Clock, Map, LayoutGrid, List, UploadCloud, Database, Loader2, PlusCircle, Map as MapIcon, X, Gem, Ticket, Coins, Gift, Building2, ClipboardList, Package, Home, BarChart2, Info, Flag, Heart, ArrowUp, Trophy, Crown, Star, User, Bot, Sparkles, Smartphone, Share as ShareIcon, RefreshCw, ChevronRight } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
 
@@ -275,6 +275,22 @@ function App() {
 
     return () => clearTimeout(timeoutId);
   }, [searchTerm, activeContinent, showRarities, showPromotional, showWinners, activeCategory, isLoadingDB, currentPage]);
+
+  // --- SPOTLIGHT LOGIC (HERO ITEM) ---
+  const spotlightItem = useMemo(() => {
+    // Only calculate if on home and not filtering too heavily
+    if (currentPage !== 'home') return null;
+    
+    const rarities = allImagesCache.filter(img => img.isRarity || img.state === 'MINT' || img.isWinner);
+    if (rarities.length === 0) return null;
+
+    // Pick a "Random" item that is stable for the hour (so it doesn't flicker on re-renders)
+    const hour = new Date().getHours();
+    const day = new Date().getDate();
+    const seed = hour + day; 
+    return rarities[seed % rarities.length];
+  }, [allImagesCache, currentPage]);
+
 
   // --- LOGIC FOR CONTINENT SUBPAGES ---
   
@@ -963,6 +979,57 @@ function App() {
             </div>
 
             <div className="max-w-7xl mx-auto py-6 md:py-8 relative z-10 space-y-8 md:space-y-12 animate-fade-in">
+              
+              {/* --- HERO SPOTLIGHT: "MUSEUM TREASURE" (Only if filtering is off) --- */}
+              {spotlightItem && !showRarities && !showPromotional && !showWinners && (
+                 <section className="px-4 md:px-6">
+                    <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 border border-gold-500/30 rounded-3xl overflow-hidden relative shadow-[0_0_40px_rgba(234,179,8,0.1)] group cursor-pointer" onClick={() => setSelectedImage(spotlightItem)}>
+                       {/* Background FX */}
+                       <div className="absolute top-0 right-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 pointer-events-none"></div>
+                       <div className="absolute -left-20 -bottom-20 w-80 h-80 bg-gold-500/10 rounded-full blur-[100px] group-hover:bg-gold-500/20 transition-colors"></div>
+
+                       <div className="flex flex-col md:flex-row items-center gap-8 p-6 md:p-10 relative z-10">
+                          {/* Image */}
+                          <div className="relative w-full md:w-64 aspect-square shrink-0">
+                             <div className="absolute inset-0 bg-gold-500/20 blur-xl rounded-full animate-pulse-slow"></div>
+                             <img 
+                                src={spotlightItem.frontUrl} 
+                                alt={spotlightItem.gameName}
+                                className="w-full h-full object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-700"
+                             />
+                             <div className="absolute top-0 left-0 bg-gold-500 text-black text-[10px] font-black px-2 py-1 rounded shadow-lg uppercase tracking-widest flex items-center gap-1">
+                                <Gem className="w-3 h-3" /> Tesouro
+                             </div>
+                          </div>
+
+                          {/* Info */}
+                          <div className="flex-1 text-center md:text-left">
+                             <div className="inline-flex items-center gap-2 bg-gold-900/30 text-gold-400 border border-gold-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4 animate-bounce-in">
+                                <Sparkles className="w-3 h-3" /> Destaque do Arquivo
+                             </div>
+                             <h2 className="text-3xl md:text-5xl font-black text-white mb-2 leading-tight">
+                                {spotlightItem.gameName}
+                             </h2>
+                             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-slate-400 mb-6">
+                                <span className="flex items-center gap-1"><Flag className="w-4 h-4 text-brand-500" /> {spotlightItem.country}</span>
+                                <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
+                                <span className="font-mono text-slate-300">Ano {spotlightItem.releaseDate.split('-')[0]}</span>
+                                <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
+                                <span className="font-bold text-gold-400">{spotlightItem.isRarity ? 'RARIDADE' : 'COLEÇÃO'}</span>
+                             </div>
+                             <p className="text-slate-300 max-w-xl leading-relaxed mb-6 line-clamp-2">
+                                {spotlightItem.values || "Um exemplar magnífico preservado no Arquivo Mundial."}
+                             </p>
+                             
+                             <button className="bg-white text-slate-900 hover:bg-slate-200 px-6 py-3 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 mx-auto md:mx-0">
+                                Ver Detalhes <ChevronRight className="w-4 h-4" />
+                             </button>
+                          </div>
+                       </div>
+                    </div>
+                 </section>
+              )}
+
               {/* New Arrivals (Hidden in Filter mode) */}
               {!showRarities && !showPromotional && !showWinners && (
                 <section className="px-4 md:px-6">
