@@ -19,20 +19,25 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
         }
       },
       {
-        text: `Analise esta imagem de colecionismo (Raspadinha ou Lotaria).
+        text: `És um especialista em arquivar Raspadinhas e Lotarias.
+        Analise a imagem e extraia os dados técnicos com precisão.
         
-        TAREFA: Extraia os dados visuais para preencher a ficha técnica.
+        INSTRUÇÕES CRÍTICAS DE DEDUÇÃO (NUNCA DEIXE CAMPOS VAZIOS SE PUDER DEDUZIR):
+        1. PAÍS: Se não estiver explícito, DEDUZA pelo idioma ou moeda.
+           - Português + "SCML" ou "Jogos Santa Casa" -> "Portugal"
+           - Português + "Reais" -> "Brasil"
+           - Italiano -> "Itália"
+           - Espanhol -> "Espanha"
+           - Inglês + £ -> "Reino Unido"
+           - Inglês + $ -> "EUA" (ou verifique estado)
+        2. ESTADO:
+           - Se vir marcas de raspagem prateadas removidas -> "SC" (Raspada).
+           - Se estiver limpa -> "MINT" (Nova).
+           - Se tiver carimbos "NULO", "VOID", "SPECIMEN", "00000" -> "AMOSTRA".
+        3. DATA/ANO: Procure copyrights pequenos (ex: ©2023). Se não houver, estime pelo estilo.
+        4. NOME: O texto maior e mais destacado no topo.
         
-        REGRAS DE EXTRAÇÃO:
-        1. Categoria: Se tiver "Raspe aqui" ou superfície de raspar, é "raspadinha". Se for bilhete inteiro/fracção com números, é "lotaria".
-        2. Estado:
-           - "MINT" se estiver intacta (nova).
-           - "SC" (Scratched) se estiver raspada.
-           - "AMOSTRA" se tiver carimbos como "VOID", "SPECIMEN", "MUESTRA", "CAMPIONE", "00000".
-        3. Gráfica (Printer): Procure códigos FSC ou logótipos pequenos (ex: SG, IGT, POLLARD, SCIENTIFIC GAMES).
-        4. Região: Se for de Espanha, veja se é "Catalunya", "ONCE" (Nacional) ou "SELAE". Se for Alemanha, veja o estado (ex: Bayern).
-        
-        Retorne JSON puro.`
+        Retorne um JSON válido.`
       }
     ];
 
@@ -43,7 +48,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
           data: backBase64
         }
       });
-      parts[parts.length - 1].text += " Use o verso para confirmar a região, códigos de barras e a Gráfica (Printer).";
+      parts[parts.length - 1].text += " Use o verso para ler códigos de barras, regras e confirmar a Gráfica (Printer) no rodapé.";
     }
 
     const response = await ai.models.generateContent({
@@ -63,26 +68,27 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
               type: Type.STRING,
               description: "raspadinha, lotaria, boletim, ou objeto"
             },
-            gameName: { type: Type.STRING, description: "Nome do jogo em destaque" },
-            gameNumber: { type: Type.STRING, description: "Número do jogo (ex: 502, 105)" },
-            releaseDate: { type: Type.STRING, description: "Ano ou Data estimada (YYYY-MM-DD)" },
-            size: { type: Type.STRING, description: "Dimensões aproximadas" },
-            values: { type: Type.STRING, description: "Resumo dos prémios ou notas históricas" },
-            price: { type: Type.STRING, description: "Preço facial (ex: 5€, $10)" },
+            gameName: { type: Type.STRING, description: "Nome principal do jogo" },
+            gameNumber: { type: Type.STRING, description: "Número do jogo/série (ex: 502)" },
+            releaseDate: { type: Type.STRING, description: "Ano aproximado (YYYY)" },
+            size: { type: Type.STRING, description: "Dimensões estimadas (ex: 10x5cm)" },
+            values: { type: Type.STRING, description: "Lista de prémios ou texto de destaque" },
+            price: { type: Type.STRING, description: "Preço facial (ex: 5€)" },
             state: { 
               type: Type.STRING, 
-              description: "Estado da raspadinha (MINT, SC, AMOSTRA, VOID, SPECIMEN)"
+              description: "Estado calculado: MINT, SC, AMOSTRA, VOID"
             },
             country: { type: Type.STRING, description: "País de origem" },
-            region: { type: Type.STRING, description: "Região, Estado ou Cantão" },
+            region: { type: Type.STRING, description: "Região se aplicável (ex: Açores, Baviera)" },
             continent: { 
               type: Type.STRING, 
               description: "Europa, América, Ásia, África, Oceania"
             },
-            emission: { type: Type.STRING, description: "Tiragem / Emissão total" },
-            printer: { type: Type.STRING, description: "Gráfica (Scientific Games, Pollard, etc)" }
+            emission: { type: Type.STRING, description: "Tiragem total se visível" },
+            printer: { type: Type.STRING, description: "Gráfica (Scientific Games, Pollard, Lottomatica)" }
           },
-          required: ["category", "gameName", "country"]
+          // Removi o "required" para evitar que a IA falhe se não tiver a certeza absoluta.
+          // Ela agora vai tentar preencher tudo o que conseguir.
         }
       }
     });
@@ -98,27 +104,37 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       
       const data = JSON.parse(cleanJson);
 
-      // Post-processing normalization
+      // Normalização de Segurança
       return {
-        ...data,
-        continent: data.continent || "Europa", // Default safety
-        state: data.state ? data.state.toUpperCase() : "MINT" // Normalize casing
+        category: data.category || "raspadinha",
+        gameName: data.gameName || "Sem Nome Identificado",
+        gameNumber: data.gameNumber || "",
+        releaseDate: data.releaseDate || new Date().getFullYear().toString(),
+        size: data.size || "",
+        values: data.values || "",
+        price: data.price || "",
+        state: data.state ? data.state.toUpperCase() : "SC",
+        country: data.country || "Desconhecido",
+        region: data.region || "",
+        continent: data.continent || "Europa",
+        emission: data.emission || "",
+        printer: data.printer || ""
       } as AnalysisResult;
     }
     
     throw new Error("Resposta vazia da IA");
   } catch (error) {
     console.error("Erro ao analisar raspadinha com Gemini:", error);
-    // Fallback gracefully so the user can at least fill manually
+    // Fallback gracefully: Preenche com "Desconhecido" em vez de vazio para o utilizador ver que tentámos
     return {
       category: "raspadinha",
-      gameName: "Não identificado",
+      gameName: "Falha na Leitura",
       gameNumber: "",
       releaseDate: new Date().toISOString().split('T')[0],
       size: "",
-      values: "",
+      values: "Tente tirar uma foto mais clara ou com melhor luz.",
       state: "SC",
-      country: "",
+      country: "Desconhecido",
       continent: "Europa",
       printer: "",
       emission: "",
@@ -156,7 +172,6 @@ export const searchScratchcardInfo = async (query: string): Promise<Partial<Anal
     });
 
     let text = response.text || "";
-    // Robust cleanup for search result
     const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```\n([\s\S]*?)\n```/);
     if (jsonMatch && jsonMatch[1]) {
        text = jsonMatch[1];
@@ -178,7 +193,6 @@ export const searchScratchcardInfo = async (query: string): Promise<Partial<Anal
   }
 };
 
-// New function to generate a rich description for PDF documents
 export const generateDocumentMetadata = async (fileName: string, title: string): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
