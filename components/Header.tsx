@@ -263,66 +263,71 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="hidden md:inline text-xs font-medium">{t.history}</span>
         </button>
 
-        {/* Admin Controls */}
-        {isAdmin ? (
+        {/* User Controls (Admin or Visitor) */}
+        {currentUser ? (
           <>
-            <div className="hidden lg:flex items-center bg-slate-800 rounded-full p-0.5 border border-slate-700">
-                {/* IMPORT BUTTON */}
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleFileChange} 
-                  accept=".json" 
-                  className="hidden" 
-                />
-                <button
-                  onClick={handleImportClick}
-                  className="flex items-center gap-2 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/20 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                  title={t.importTitle}
-                >
-                  <UploadCloud className="w-3 h-3" /> {t.import}
-                </button>
+            {/* ONLY SHOW ADMIN TOOLS IF IS ADMIN */}
+            {isAdmin && (
+              <div className="hidden lg:flex items-center bg-slate-800 rounded-full p-0.5 border border-slate-700">
+                  {/* IMPORT BUTTON */}
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleFileChange} 
+                    accept=".json" 
+                    className="hidden" 
+                  />
+                  <button
+                    onClick={handleImportClick}
+                    className="flex items-center gap-2 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/20 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                    title={t.importTitle}
+                  >
+                    <UploadCloud className="w-3 h-3" /> {t.import}
+                  </button>
 
-                <div className="w-px h-4 bg-slate-700 mx-1"></div>
+                  <div className="w-px h-4 bg-slate-700 mx-1"></div>
 
-                <button
-                  onClick={onExport}
-                  className="flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                  title={t.backupTitle}
-                >
-                  <Download className="w-3 h-3" /> JSON
-                </button>
-                <div className="w-px h-4 bg-slate-700 mx-1"></div>
-                <button
-                  onClick={onExportCSV}
-                  className="flex items-center gap-2 text-green-400 hover:text-green-300 hover:bg-green-900/20 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                  title="Exportar Excel (CSV)"
-                >
-                  <FileSpreadsheet className="w-3 h-3" /> Excel
-                </button>
-            </div>
+                  <button
+                    onClick={onExport}
+                    className="flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                    title={t.backupTitle}
+                  >
+                    <Download className="w-3 h-3" /> JSON
+                  </button>
+                  <div className="w-px h-4 bg-slate-700 mx-1"></div>
+                  <button
+                    onClick={onExportCSV}
+                    className="flex items-center gap-2 text-green-400 hover:text-green-300 hover:bg-green-900/20 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                    title="Exportar Excel (CSV)"
+                  >
+                    <FileSpreadsheet className="w-3 h-3" /> Excel
+                  </button>
+              </div>
+            )}
 
             <button
               onClick={onLogout}
-              className="flex items-center justify-center gap-2 w-auto px-3 py-2 bg-red-900/20 hover:bg-red-900/40 text-red-400 hover:text-red-200 border border-red-900/50 rounded-full transition-all group"
-              title={t.logoutTitle}
+              className={`flex items-center justify-center gap-2 w-auto px-3 py-2 rounded-full transition-all group border ${isAdmin ? 'bg-red-900/20 hover:bg-red-900/40 text-red-400 border-red-900/50' : 'bg-blue-900/20 hover:bg-blue-900/40 text-blue-400 border-blue-900/50'}`}
+              title={isAdmin ? t.logoutTitle : "Sair do modo Colecionador"}
             >
               <div className="flex items-center gap-2">
-                 <div className="p-0.5 bg-red-500 rounded-full"><User className="w-3 h-3 text-black" /></div>
+                 <div className={`p-0.5 rounded-full ${isAdmin ? 'bg-red-500' : 'bg-blue-500'}`}><User className="w-3 h-3 text-black" /></div>
                  {currentUser && <span className="text-[10px] font-bold uppercase hidden md:inline">Olá, {currentUser.split(' ')[0]}</span>}
               </div>
               <LogOut className="w-4 h-4" />
             </button>
 
-             {/* Upload Button */}
-            <button
-              onClick={onUploadClick}
-              className="flex items-center justify-center w-8 h-8 md:w-auto md:px-4 md:py-2 rounded-full bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-900/50 transition-all"
-              title={t.addTitle}
-            >
-              <Upload className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline text-xs font-bold">{t.new}</span>
-            </button>
+             {/* Upload Button (ONLY ADMIN) */}
+            {isAdmin && (
+              <button
+                onClick={onUploadClick}
+                className="flex items-center justify-center w-8 h-8 md:w-auto md:px-4 md:py-2 rounded-full bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-900/50 transition-all"
+                title={t.addTitle}
+              >
+                <Upload className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline text-xs font-bold">{t.new}</span>
+              </button>
+            )}
           </>
         ) : (
           <button
@@ -331,7 +336,7 @@ export const Header: React.FC<HeaderProps> = ({
             title={t.loginTitle}
           >
             <Lock className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline text-xs font-medium">{t.admin}</span>
+            <span className="hidden md:inline text-xs font-medium">Entrar / Login</span>
           </button>
         )}
       </div>

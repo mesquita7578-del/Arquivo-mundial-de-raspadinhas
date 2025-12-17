@@ -55,9 +55,12 @@ function App() {
   const [isWebsitesModalOpen, setIsWebsitesModalOpen] = useState(false); 
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
   
-  // Auth State - Changed to store User Name instead of boolean
+  // Auth State
   const [currentUser, setCurrentUser] = useState<string | null>(null);
-  const isAdmin = !!currentUser; // Derived state
+  const [userRole, setUserRole] = useState<'admin' | 'visitor' | null>(null);
+  
+  // isAdmin is now strictly for the 'admin' role
+  const isAdmin = userRole === 'admin';
 
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
   const [showChloeMessage, setShowChloeMessage] = useState(false);
@@ -66,7 +69,7 @@ function App() {
   const [showRarities, setShowRarities] = useState(false);
   const [showPromotional, setShowPromotional] = useState(false); 
   const [showWinners, setShowWinners] = useState(false); 
-  const [showMyCollection, setShowMyCollection] = useState(false); // NEW: My Collection Filter
+  const [showMyCollection, setShowMyCollection] = useState(false); 
   const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
   
   const [isDragging, setIsDragging] = useState(false);
@@ -429,7 +432,7 @@ function App() {
 
   const toggleMyCollection = () => {
      if (!currentUser) {
-        alert("Por favor, entre no modo Admin (Login) para ver a sua coleção.");
+        // If not logged in, prompt the new login modal which allows Visitor mode
         setIsLoginModalOpen(true);
         return;
      }
@@ -513,27 +516,38 @@ function App() {
   };
 
   const handleAdminToggle = () => {
-    if (!isAdmin) setIsLoginModalOpen(true);
+    if (!currentUser) setIsLoginModalOpen(true);
   };
 
   const handleLogout = () => {
      setCurrentUser(null);
+     setUserRole(null);
      setShowMyCollection(false); // Disable personal filter on logout
   };
 
-  const handleLoginSubmit = (username: string, pass: string): boolean => {
-    const cleanName = username.trim().toUpperCase();
-    
-    // Check if the name partially matches any authorized admin (allows "Fabio" or "Fabio Pagni")
-    const match = AUTHORIZED_ADMINS.find(admin => admin.includes(cleanName) || cleanName.includes(admin));
-    
-    if ((match || AUTHORIZED_ADMINS.includes(cleanName)) && pass === ADMIN_PASSWORD) {
-      // Store nice formatted name (Title Case)
-      const formattedName = username.trim().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-      setCurrentUser(formattedName);
-      return true;
+  const handleLoginSubmit = (username: string, pass: string | null, type: 'admin' | 'visitor'): boolean => {
+    const formattedName = username.trim().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+
+    if (type === 'admin') {
+       // Validate Password
+       const cleanName = username.trim().toUpperCase();
+       const match = AUTHORIZED_ADMINS.find(admin => admin.includes(cleanName) || cleanName.includes(admin));
+       
+       if ((match || AUTHORIZED_ADMINS.includes(cleanName)) && pass === ADMIN_PASSWORD) {
+         setCurrentUser(formattedName);
+         setUserRole('admin');
+         return true;
+       }
+       return false;
+    } else {
+       // Visitor - No password needed, just name
+       if (username.trim().length > 0) {
+          setCurrentUser(formattedName);
+          setUserRole('visitor');
+          return true;
+       }
+       return false;
     }
-    return false;
   };
 
   const handleUploadClick = () => {
@@ -705,7 +719,7 @@ function App() {
 
      return (
         <div className="animate-fade-in min-h-full max-w-7xl mx-auto px-3 md:px-6 py-4 pb-20">
-           {/* ... (Code truncated for brevity, identical to previous, just context for XML) ... */}
+           
            {/* Compact 3D Animated Banner */}
            <div 
              className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${bannerGradient} shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-t border-white/20 p-6 md:p-8 mb-6 transform hover:scale-[1.01] transition-all duration-500 group`}
@@ -830,7 +844,7 @@ function App() {
                    viewMode={viewMode}
                    onViewModeChange={setViewMode}
                    isAdmin={isAdmin} 
-                   currentUser={currentUser} // Pass currentUser to Grid for Check Icons
+                   currentUser={currentUser} 
                    t={t.grid}
                  />
               )}
