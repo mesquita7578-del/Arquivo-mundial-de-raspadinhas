@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Continent } from '../types';
-import { BarChart3, Database, Globe, Mail, Ticket, Coins, TrendingUp, Award, Map, PieChart, Users, Star, Crown, Heart, Flag } from 'lucide-react';
+import { BarChart3, Database, Globe, Mail, Ticket, Coins, TrendingUp, Award, Map, PieChart, Users, Star, Crown, Heart, Flag, Sparkles } from 'lucide-react';
 
 interface StatsSectionProps {
   stats: Record<string, number>;
@@ -38,13 +38,14 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
 
   // Collector Leaderboard Logic
   const guardians = Object.entries(collectorStats)
-    .sort((a, b) => b[1] - a[1]);
+    .sort((a, b) => Number(b[1]) - Number(a[1]));
 
   const getCollectorBadge = (name: string) => {
      const lower = name.toLowerCase();
-     if (lower.includes('jorge')) return { color: 'bg-blue-500', text: 'JM', icon: <Crown className="w-3 h-3 text-yellow-400" /> };
-     if (lower.includes('fabio') || lower.includes('fábio')) return { color: 'bg-green-500', text: 'FP', icon: <Star className="w-3 h-3 text-white" /> };
-     if (lower.includes('chloe')) return { color: 'bg-pink-500', text: 'CH', icon: <Heart className="w-3 h-3 text-white" /> };
+     if (lower.includes('jorge')) return { color: 'bg-blue-500', text: 'JM', icon: <Crown className="w-3 h-3 text-yellow-400 fill-yellow-400" /> };
+     if (lower.includes('fabio') || lower.includes('fábio')) return { color: 'bg-green-500', text: 'FP', icon: <Star className="w-3 h-3 text-white fill-white" /> };
+     if (lower.includes('chloe')) return { color: 'bg-pink-500', text: 'CH', icon: <Crown className="w-3 h-3 text-pink-200 fill-pink-200" /> };
+     if (lower.includes('ia') || lower.includes('system') || lower.includes('guardiã')) return { color: 'bg-purple-600', text: 'IA', icon: <Sparkles className="w-3 h-3 text-cyan-300 fill-cyan-300" /> };
      return { color: 'bg-slate-600', text: name.substring(0, 2).toUpperCase(), icon: null };
   };
 
@@ -314,7 +315,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                          <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
                             <div 
                                className={`h-full rounded-full ${index === 0 ? 'bg-yellow-500' : 'bg-slate-600'} transition-all duration-1000`} 
-                               style={{ width: `${animate ? ((count as number) / maxCountryCount) * 100 : 0}%` }}
+                               style={{ width: `${animate ? (Number(count) / maxCountryCount) * 100 : 0}%` }}
                             ></div>
                          </div>
                       </div>
