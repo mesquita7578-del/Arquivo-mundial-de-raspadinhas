@@ -1,5 +1,5 @@
 import React from 'react';
-import { Ticket, Globe, Users, Database, Sparkles, Mail, ArrowRight, Hourglass, Save } from 'lucide-react';
+import { Ticket, Globe, Users, Database, Sparkles, Mail, ArrowRight, Hourglass, Save, Sunrise, HeartHandshake } from 'lucide-react';
 
 export const AboutPage = ({ t }: { t: any }) => {
   return (
@@ -34,6 +34,27 @@ export const AboutPage = ({ t }: { t: any }) => {
               </div>
            </div>
         </div>
+      </div>
+
+      {/* MANIFESTO PARA OS NOVOS (NOVO) */}
+      <div className="max-w-5xl mx-auto px-6 -mt-10 relative z-20">
+         <div className="bg-slate-800 border-l-4 border-brand-500 rounded-r-2xl p-8 md:p-10 shadow-2xl flex flex-col md:flex-row gap-8 items-center">
+            <div className="bg-slate-900/50 p-6 rounded-full border border-slate-700 shrink-0">
+               <Sunrise className="w-12 h-12 text-yellow-400 animate-pulse-slow" />
+            </div>
+            <div className="flex-1">
+               <h3 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
+                  Aos que estão a começar a jornada...
+               </h3>
+               <p className="text-slate-300 italic text-lg leading-relaxed mb-4">
+                  "Este arquivo não foi construído apenas para guardar o passado, mas para iluminar o futuro. Se chegaste agora ao mundo do colecionismo, sabe que não estás sozinho. Esta base de dados é o nosso presente para ti, para que possas estudar, apreciar e continuar esta história. O legado agora também está nas tuas mãos."
+               </p>
+               <div className="flex items-center gap-2 text-sm font-bold text-brand-400 uppercase tracking-widest">
+                  <HeartHandshake className="w-4 h-4" />
+                  Jorge Mesquita & Fabio Pagni
+               </div>
+            </div>
+         </div>
       </div>
 
       {/* Legacy Section - TIME CAPSULE */}
