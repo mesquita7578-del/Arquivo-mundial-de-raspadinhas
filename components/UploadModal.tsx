@@ -74,7 +74,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       
       const result = await analyzeImage(frontBase64, backBase64, mime);
       
-      // Geração de ID Automática Padrão PT-00000
+      // Geração de ID Automática Padrão PT-00001 (Jorge Style)
       const countryCode = result.country?.substring(0, 2).toUpperCase() || 'PT';
       const randomNum = Math.floor(10000 + Math.random() * 89999);
       let generatedId = `${countryCode}-${randomNum}`;
@@ -98,7 +98,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
   };
 
   const updateField = (field: keyof ScratchcardData, value: any) => {
-    // Se ligar o modo série e o ID não tiver sufixo, adiciona um
     if (field === 'isSeries' && value === true && !formData.customId?.includes('-0')) {
        setFormData(prev => ({ ...prev, [field]: value, customId: `${prev.customId}-01` }));
     } else {
@@ -122,7 +121,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       backUrl: backPreview || undefined,
       gameName: formData.gameName || 'Sem Nome',
       gameNumber: formData.gameNumber || '000',
-      releaseDate: formData.releaseDate || new Date().toISOString().split('T')[0],
+      releaseDate: formData.releaseDate || new Date().getFullYear().toString(),
       size: formData.size || '10x15cm',
       values: formData.values || '',
       price: formData.price,
@@ -229,11 +228,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                          <div className="flex flex-col gap-2">
                             <label className="flex items-center gap-2 cursor-pointer group">
                                <input type="checkbox" checked={formData.isSeries} onChange={e => updateField('isSeries', e.target.checked)} className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-indigo-600" />
-                               <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1"><Layers className="w-3 h-3 text-indigo-500"/> Esta raspadinha é de Série?</span>
+                               <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1"><Layers className="w-3 h-3 text-indigo-500"/> É Membro de Série?</span>
                             </label>
-                            {formData.isSeries && <p className="text-[8px] text-indigo-400 uppercase font-black">Modo Panorama Ativado para este Jogo</p>}
+                            {formData.isSeries && <p className="text-[8px] text-indigo-400 uppercase font-black">Modo Panorama Ativado</p>}
                          </div>
-                         {/* Outros checkboxes... */}
                          <div className="flex flex-col gap-2">
                             <label className="flex items-center gap-2 cursor-pointer group">
                                <input type="checkbox" checked={formData.isRarity} onChange={e => updateField('isRarity', e.target.checked)} className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-brand-600" />
@@ -259,7 +257,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    </div>
 
                    <div>
-                      <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">Observações</label>
+                      <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">Observações do Arquivo</label>
                       <textarea value={formData.values || ''} onChange={e => updateField('values', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4 text-white text-sm h-24 focus:border-brand-500 outline-none resize-none" />
                    </div>
                 </div>

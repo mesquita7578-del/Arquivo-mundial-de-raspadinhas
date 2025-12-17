@@ -14,7 +14,7 @@ import { ScratchcardData, Continent, Category } from './types';
 import { 
   Globe, Ticket, Coins, Heart, Gem, Gift, Trophy, 
   Building2, Database, Loader2, Sparkles, X, 
-  ClipboardList, Package, Search, Filter, MapPin, PlusCircle, LogIn
+  ClipboardList, Package, Search, Filter, MapPin, PlusCircle, LogIn, LayoutGrid
 } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
@@ -167,14 +167,17 @@ function App() {
 
   const handleNavigate = (p: PageType) => {
     setCurrentPage(p);
-    // Reset filters and clear search when changing page to ensure the user isn't "stuck"
     setCountrySearch('');
     setSearchTerm('');
     
-    // Reset sub-filters if needed when going home
-    if (p === 'home') {
-       setActiveContinent('Mundo');
-       setActiveCategory('all');
+    // Se não for especificamente para a coleção, garantimos que o filtro de coleção é limpo
+    if (p !== 'my-collection') {
+       // O filtro de coleção já é implícito no 'currentPage'
+       // Mas limpamos outros filtros continentais se for home
+       if (p === 'home') {
+          setActiveContinent('Mundo');
+          setActiveCategory('all');
+       }
     }
 
     if (['europe', 'america', 'asia', 'africa', 'oceania'].includes(p as string)) {
@@ -182,8 +185,7 @@ function App() {
          'europe': 'Europa', 'america': 'América', 'asia': 'Ásia', 'africa': 'África', 'oceania': 'Oceania'
        };
        setActiveContinent(mapping[p as string]);
-    } else if (p !== 'my-collection') {
-       // Only reset if it's not the collection view being explicitly requested
+    } else if (p !== 'my-collection' && p !== 'stats' && p !== 'about') {
        setActiveContinent('Mundo');
     }
   };
@@ -212,26 +214,21 @@ function App() {
         {!(currentPage === 'stats' || currentPage === 'about') && (
           <div className="sticky top-0 z-30 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 shadow-xl">
             <div className="bg-slate-900/30 p-2 md:px-8 flex flex-wrap items-center gap-2">
-              <button onClick={() => setFilterRarity(!filterRarity)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${filterRarity ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
+              <button onClick={() => setFilterRarity(!filterRarity)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${filterRarity ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
                 <Gem className="w-3.5 h-3.5" /> Raridades
               </button>
-              <button onClick={() => setFilterPromo(!filterPromo)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${filterPromo ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
+              <button onClick={() => setFilterPromo(!filterPromo)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${filterPromo ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
                 <Gift className="w-3.5 h-3.5" /> Promo
               </button>
-              <button onClick={() => setFilterWinners(!filterWinners)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${filterWinners ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
+              <button onClick={() => setFilterWinners(!filterWinners)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${filterWinners ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
                 <Trophy className="w-3.5 h-3.5" /> Premiadas
               </button>
               
-              {/* Botão Coleção Pessoal - Agora alterna entre a coleção e a home */}
               <button 
                 onClick={() => handleNavigate(currentPage === 'my-collection' ? 'home' : 'my-collection')} 
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${currentPage === 'my-collection' ? 'bg-brand-600 border-brand-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}
               >
-                <Heart className="w-3.5 h-3.5" /> Minha Coleção
-              </button>
-
-              <button onClick={() => setIsWebsitesModalOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200 text-[10px] font-bold transition-all">
-                <Building2 className="w-3.5 h-3.5" /> Sites
+                <Heart className={`w-3.5 h-3.5 ${currentPage === 'my-collection' ? 'fill-white' : ''}`} /> Minha Coleção
               </button>
 
               <div className="h-6 w-px bg-slate-800 mx-1 hidden md:block"></div>
@@ -241,7 +238,7 @@ function App() {
                     <button 
                       key={cat} 
                       onClick={() => setActiveCategory(cat as any)} 
-                      className={`px-3 py-1 rounded text-[10px] font-bold uppercase ${activeCategory === cat ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                      className={`px-3 py-1 rounded text-[10px] font-bold uppercase transition-all ${activeCategory === cat ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
                     >
                       {cat === 'all' ? 'Tudo' : cat}
                     </button>
@@ -267,7 +264,7 @@ function App() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600" />
                         <input 
                           type="text" placeholder="Procurar País..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)}
-                          className="bg-slate-900/80 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-white focus:border-blue-500 outline-none w-full"
+                          className="bg-slate-900/80 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-white focus:border-blue-500 outline-none w-full shadow-inner"
                         />
                     </div>
                   </div>
@@ -278,13 +275,13 @@ function App() {
                       <button 
                         key={country} 
                         onClick={() => { setCountrySearch(country); if(currentPage === 'my-collection') handleNavigate('home'); }}
-                        className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase border transition-all ${countrySearch === country ? 'bg-brand-600 border-brand-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-500 hover:text-white'}`}
+                        className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase border transition-all ${countrySearch === country ? 'bg-brand-600 border-brand-500 text-white shadow-md' : 'bg-slate-800/50 border-slate-700 text-slate-500 hover:text-white'}`}
                       >
-                          {country} <span className="opacity-40 ml-0.5">({totalStats.countryStats[country]})</span>
+                          {country} <span className="opacity-40 ml-0.5 font-mono">({totalStats.countryStats[country]})</span>
                       </button>
                     ))}
                     {(countrySearch || searchTerm) && (
-                      <button onClick={() => { setCountrySearch(''); setSearchTerm(''); }} className="px-2.5 py-1 rounded-md text-[9px] font-bold uppercase bg-slate-700 text-white flex items-center gap-1">
+                      <button onClick={() => { setCountrySearch(''); setSearchTerm(''); }} className="px-2.5 py-1 rounded-md text-[9px] font-bold uppercase bg-slate-700 text-white flex items-center gap-1 hover:bg-slate-600 transition-colors">
                           <X className="w-2.5 h-2.5" /> Limpar
                       </button>
                     )}
@@ -303,20 +300,20 @@ function App() {
               {isLoadingDB ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-4">
                     <Loader2 className="w-10 h-10 text-brand-500 animate-spin" />
-                    <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">A sincronizar Arquivo Mundial...</p>
+                    <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Sincronizando Arquivo...</p>
                   </div>
               ) : currentPage === 'my-collection' && (!currentUser || filteredImages.length === 0) ? (
-                  <div className="flex flex-col items-center justify-center py-20 text-center max-w-lg mx-auto">
-                     <div className="bg-slate-900 p-8 rounded-full border border-slate-800 mb-6">
+                  <div className="flex flex-col items-center justify-center py-20 text-center max-w-lg mx-auto animate-fade-in">
+                     <div className="bg-slate-900 p-10 rounded-full border border-slate-800 mb-8 shadow-2xl">
                         <Heart className="w-16 h-16 text-slate-700" />
                      </div>
-                     <h3 className="text-xl font-bold text-white mb-3">
-                        {!currentUser ? "Entra para veres a tua Coleção" : "A tua coleção ainda está vazia!"}
+                     <h3 className="text-2xl font-black text-white mb-3">
+                        {!currentUser ? "Entra para veres a tua Coleção" : "A tua coleção está vazia"}
                      </h3>
-                     <p className="text-slate-500 text-sm mb-8 leading-relaxed">
+                     <p className="text-slate-500 text-sm mb-8 leading-relaxed font-medium">
                         {!currentUser 
-                          ? "Regista o teu nome no botão 'Entrar' para poderes marcar as raspadinhas que já tens no teu álbum pessoal." 
-                          : "Clica no botão 'Marcar' dentro de qualquer raspadinha do arquivo para a guardares aqui no teu álbum pessoal."}
+                          ? "Regista o teu nome no botão 'Entrar' para poderes marcar as tuas peças favoritas." 
+                          : "Marca itens com o botão 'Marcar' dentro de cada raspadinha para as veres aqui."}
                      </p>
                      {!currentUser ? (
                         <button onClick={() => setIsLoginModalOpen(true)} className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-900/40 transition-all active:scale-95">

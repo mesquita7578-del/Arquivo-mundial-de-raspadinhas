@@ -3,7 +3,8 @@ import {
   X, ChevronLeft, ChevronRight, Edit2, Trash2, Save, Check, 
   ZoomIn, ZoomOut, LayoutTemplate, Star, Trophy, Gem, Gift,
   Hash, Calendar, Printer, Ruler, Globe, MapPin, User, Info, 
-  Layers, Tag, Coins, Clock, Flag, Zap, Sparkles, Maximize2, Columns
+  Layers, Tag, Coins, Clock, Flag, Zap, Sparkles, Maximize2, Columns,
+  ExternalLink, FileText
 } from 'lucide-react';
 import { ScratchcardData, Category, LineType } from '../types';
 
@@ -33,10 +34,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
     setActiveLabel('front');
     setIsEditing(false);
     setIsZoomed(false);
-    setViewMode('single');
   }, [image]);
 
-  // Encontrar outros membros da mesma série (mesmo GameNumber ou seriesGroupId)
   const seriesMembers = useMemo(() => {
     if (!image.isSeries) return [];
     return contextImages
@@ -81,49 +80,33 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
     onUpdate(newData);
   };
 
-  const formatLineColor = (line: string | undefined) => {
-    const mapping: Record<string, string> = {
-      blue: 'Azul', red: 'Vermelha', multicolor: 'Multicolor', green: 'Verde',
-      yellow: 'Amarela', brown: 'Castanha', pink: 'Rosa', purple: 'Violeta', none: 'Nenhuma'
-    };
-    return line ? mapping[line] || line : 'Nenhuma';
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl animate-fade-in" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/98 backdrop-blur-2xl animate-fade-in" onClick={onClose}>
       <button className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors z-50 p-2 bg-slate-800/50 rounded-full" onClick={onClose}><X className="w-8 h-8" /></button>
-
-      {viewMode === 'single' && (
-        <>
-          <button onClick={handlePrev} className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white p-2 md:p-4 hidden md:block z-40 transition-all hover:scale-110" disabled={contextImages.findIndex(img => img.id === image.id) === 0}>
-             <ChevronLeft className="w-10 h-10 md:w-12 md:h-12" />
-          </button>
-          <button onClick={handleNext} className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white p-2 md:p-4 hidden md:block z-40 transition-all hover:scale-110" disabled={contextImages.findIndex(img => img.id === image.id) === contextImages.length - 1}>
-             <ChevronRight className="w-10 h-10 md:w-12 md:h-12" />
-          </button>
-        </>
-      )}
 
       <div className={`w-full ${viewMode === 'panorama' ? 'h-full flex flex-col' : 'max-w-7xl h-[95vh] md:h-[90vh] flex flex-col md:flex-row bg-slate-900 md:rounded-2xl overflow-hidden border border-slate-800 shadow-2xl'}`} onClick={e => e.stopPropagation()}>
          
-         {/* ÁREA DA IMAGEM / PANORAMA */}
+         {/* ÁREA DA IMAGEM / PANORAMA COMPACTO */}
          <div className="flex-1 bg-black relative flex flex-col overflow-hidden border-b md:border-b-0 md:border-r border-slate-800">
             <div className="absolute top-4 right-4 z-30 flex gap-2">
                {seriesMembers.length > 1 && (
-                  <button onClick={() => setViewMode(viewMode === 'single' ? 'panorama' : 'single')} className={`flex items-center gap-2 px-4 py-2 rounded-full border backdrop-blur transition-all font-bold text-xs ${viewMode === 'panorama' ? 'bg-brand-600 text-white border-brand-400' : 'bg-black/50 text-white/50 border-white/10 hover:text-white'}`}>
-                    <Columns className="w-4 h-4" /> {viewMode === 'panorama' ? 'SAIR PANORAMA' : 'MODO PANORAMA'}
+                  <button onClick={() => setViewMode(viewMode === 'single' ? 'panorama' : 'single')} className={`flex items-center gap-2 px-4 py-2 rounded-full border backdrop-blur transition-all font-bold text-xs ${viewMode === 'panorama' ? 'bg-brand-600 text-white border-brand-400 shadow-lg shadow-brand-900/40' : 'bg-black/50 text-white/50 border-white/10 hover:text-white'}`}>
+                    {viewMode === 'panorama' ? <Columns className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                    {viewMode === 'panorama' ? 'VISTA ÚNICA' : `VER SÉRIE (${seriesMembers.length})`}
                   </button>
                )}
-               <button onClick={() => setIsZoomed(!isZoomed)} className="bg-black/50 hover:bg-black/80 text-white p-2 rounded-full backdrop-blur border border-white/10 transition-colors">
-                  {isZoomed ? <ZoomOut className="w-5 h-5" /> : <ZoomIn className="w-5 h-5" />}
-               </button>
+               {viewMode === 'single' && (
+                 <button onClick={() => setIsZoomed(!isZoomed)} className="bg-black/50 hover:bg-black/80 text-white p-2 rounded-full backdrop-blur border border-white/10 transition-colors">
+                    {isZoomed ? <ZoomOut className="w-5 h-5" /> : <ZoomIn className="w-5 h-5" />}
+                 </button>
+               )}
             </div>
 
             {viewMode === 'single' ? (
               <>
                 <div className="absolute top-4 left-4 z-30 bg-black/50 text-white text-[10px] px-3 py-1.5 rounded-full backdrop-blur border border-white/10 uppercase tracking-widest font-bold shadow-lg flex items-center gap-2">
                    <div className={`w-1.5 h-1.5 rounded-full ${activeLabel === 'front' ? 'bg-blue-500' : 'bg-brand-500'}`}></div>
-                   {activeLabel === 'front' ? 'FRENTE' : activeLabel === 'back' ? 'VERSO' : 'VARIANTE'}
+                   {activeLabel === 'front' ? 'FRENTE' : 'VERSO'}
                 </div>
 
                 <div className={`flex-1 relative flex items-center justify-center overflow-hidden transition-all duration-300 ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in p-4 md:p-8'}`} onClick={() => setIsZoomed(!isZoomed)}>
@@ -140,48 +123,79 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                 </div>
               </>
             ) : (
-              /* MODO PANORAMA - COLADO LADO A LADO */
-              <div className="flex-1 flex flex-col items-center justify-center p-10 overflow-hidden">
-                <div className="w-full max-w-full overflow-x-auto overflow-y-auto flex flex-col gap-8 custom-scrollbar p-10 items-center">
-                  <h3 className="text-xl font-black text-brand-500 uppercase tracking-widest bg-slate-900 px-6 py-2 rounded-full border border-slate-700 shadow-2xl">
-                    Série Completa: {image.gameName} ({seriesMembers.length} itens)
-                  </h3>
-                  
-                  {/* Frentes Coladas */}
-                  <div className="flex items-center gap-2 md:gap-4 flex-nowrap bg-slate-900/40 p-6 rounded-3xl border border-white/5 shadow-inner">
+              /* NOVO MODO PANORAMA COMPACTO (A PEDIDO DO JORGE) */
+              <div className="flex-1 overflow-y-auto bg-slate-950 p-4 md:p-10 custom-scrollbar">
+                <div className="max-w-6xl mx-auto space-y-4">
+                  <div className="flex items-center justify-between mb-8 sticky top-0 z-40 bg-slate-950/90 py-4 backdrop-blur-xl border-b border-white/5">
+                     <div className="flex flex-col">
+                        <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+                           <Layers className="w-6 h-6 text-brand-500" /> {image.gameName}
+                        </h3>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">Arquivo Mundial • Inventário de Série</p>
+                     </div>
+                     <div className="flex items-center gap-3">
+                        <div className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-center">
+                           <p className="text-[9px] text-slate-500 font-bold uppercase">Itens na Série</p>
+                           <p className="text-sm font-black text-white">{seriesMembers.length}</p>
+                        </div>
+                        <button onClick={() => setViewMode('single')} className="p-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-all border border-slate-700"><X className="w-5 h-5"/></button>
+                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
                     {seriesMembers.map((member, idx) => (
-                      <div key={member.id} className="flex flex-col gap-2 shrink-0 group">
-                        <span className="text-[10px] font-black text-slate-500 text-center uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity">Posição {idx + 1}</span>
-                        <img 
-                          src={member.frontUrl} 
-                          className="h-[300px] md:h-[450px] w-auto object-contain rounded-lg shadow-2xl border border-white/5 hover:scale-110 transition-transform cursor-pointer"
-                          onClick={() => onImageSelect(member)} 
-                        />
-                        <span className="text-[9px] font-mono text-center text-blue-400 font-bold">{member.customId}</span>
+                      <div key={member.id} className={`group bg-slate-900/50 border rounded-2xl p-3 flex flex-col md:flex-row gap-4 transition-all hover:bg-slate-900/80 ${member.id === image.id ? 'border-brand-500/50 ring-1 ring-brand-500/20' : 'border-white/5'}`}>
+                        
+                        {/* Imagens Reduzidas */}
+                        <div className="flex gap-2 shrink-0">
+                           <div className="relative h-40 aspect-[3/4] bg-black rounded-lg overflow-hidden border border-white/10 group-hover:border-blue-500/50 transition-colors">
+                              <img src={member.frontUrl} className="w-full h-full object-contain" />
+                              <div className="absolute top-1 left-1 bg-blue-600 text-white text-[8px] px-1.5 py-0.5 rounded font-black">FRENTE</div>
+                           </div>
+                           {member.backUrl ? (
+                             <div className="relative h-40 aspect-[3/4] bg-black rounded-lg overflow-hidden border border-white/10 group-hover:border-brand-500/50 transition-colors">
+                                <img src={member.backUrl} className="w-full h-full object-contain" />
+                                <div className="absolute top-1 left-1 bg-brand-600 text-white text-[8px] px-1.5 py-0.5 rounded font-black">VERSO</div>
+                             </div>
+                           ) : (
+                             <div className="h-40 aspect-[3/4] bg-slate-950/50 rounded-lg border border-dashed border-slate-800 flex items-center justify-center text-[9px] text-slate-700 font-bold uppercase text-center p-4">Sem Verso Catalogado</div>
+                           )}
+                        </div>
+
+                        {/* Dados Técnicos ao Lado */}
+                        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 p-2">
+                           <div className="flex flex-col justify-center">
+                              <p className="text-[9px] font-bold text-slate-500 uppercase flex items-center gap-1 mb-1"><Hash className="w-2.5 h-2.5"/> ID do Registo</p>
+                              <p className="text-xs font-black text-brand-400 font-mono tracking-tight">{member.customId}</p>
+                           </div>
+                           <div className="flex flex-col justify-center">
+                              <p className="text-[9px] font-bold text-slate-500 uppercase flex items-center gap-1 mb-1"><Hash className="w-2.5 h-2.5"/> Nº do Jogo</p>
+                              <p className="text-xs font-black text-white font-mono">{member.gameNumber}</p>
+                           </div>
+                           <div className="flex flex-col justify-center">
+                              <p className="text-[9px] font-bold text-slate-500 uppercase flex items-center gap-1 mb-1"><Printer className="w-2.5 h-2.5"/> Gráfica</p>
+                              <p className="text-xs font-bold text-slate-300 truncate">{member.printer || '-'}</p>
+                           </div>
+                           <div className="flex flex-col justify-center items-end">
+                              <div className="flex gap-2">
+                                 <button onClick={() => onImageSelect(member)} className="p-2 bg-slate-800 hover:bg-blue-600 text-slate-400 hover:text-white rounded-lg transition-all border border-slate-700"><Maximize2 className="w-4 h-4"/></button>
+                              </div>
+                              <p className="text-[8px] text-slate-600 mt-2 font-black uppercase italic">{member.state}</p>
+                           </div>
+
+                           <div className="col-span-2 md:col-span-4 mt-2 pt-2 border-t border-white/5">
+                              <p className="text-[9px] text-slate-500 italic line-clamp-1">{member.values || 'Nenhuma nota adicional para este item da série.'}</p>
+                           </div>
+                        </div>
                       </div>
                     ))}
                   </div>
-
-                  {/* Versos Colados (Opcional - Se houver) */}
-                  {seriesMembers.some(m => m.backUrl) && (
-                    <div className="flex items-center gap-2 md:gap-4 flex-nowrap bg-slate-900/40 p-6 rounded-3xl border border-white/5 shadow-inner">
-                      {seriesMembers.map((member) => (
-                        <div key={'back-' + member.id} className="shrink-0">
-                          {member.backUrl ? (
-                            <img src={member.backUrl} className="h-[150px] md:h-[220px] w-auto object-contain rounded-lg shadow-xl opacity-60 hover:opacity-100 transition-opacity" />
-                          ) : (
-                            <div className="h-[150px] md:h-[220px] w-[110px] md:w-[160px] bg-slate-800/30 rounded-lg flex items-center justify-center border border-dashed border-slate-700 text-[10px] font-bold text-slate-600 uppercase">Sem Verso</div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
             )}
          </div>
 
-         {/* PAINEL DE DADOS (SIDEBAR) */}
+         {/* PAINEL DE DADOS (SIDEBAR) - Apenas em Vista Única */}
          {viewMode === 'single' && (
            <div className="w-full md:w-[450px] bg-slate-900 flex flex-col h-full z-20 shadow-2xl">
               <div className="p-6 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center shrink-0">
@@ -211,14 +225,14 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                       {isEditing ? (
                          <input type="text" value={formData.gameName} onChange={e => handleChange('gameName', e.target.value)} className="w-full bg-slate-800 text-white text-xl font-black rounded-xl p-3 border border-slate-700" />
                       ) : (
-                         <h2 className="text-2xl font-black text-white mb-1 tracking-tight uppercase">{formData.gameName}</h2>
+                         <h2 className="text-2xl font-black text-white mb-1 tracking-tight uppercase leading-tight">{formData.gameName}</h2>
                       )}
                       <div className="flex flex-wrap gap-2 mt-3">
                          <span className="px-2.5 py-1 rounded-md text-[10px] font-black border bg-slate-800 border-slate-700 text-slate-300 flex items-center gap-1.5 uppercase">
                            <Tag className="w-3 h-3 text-blue-500" /> {formData.category}
                          </span>
-                         <span className="px-2.5 py-1 rounded-md text-[10px] font-black border bg-slate-800 border-slate-700 text-slate-300 flex items-center gap-1.5">
-                           <Hash className="w-3 h-3 text-slate-500" /> ID: {formData.customId}
+                         <span className="px-2.5 py-1 rounded-md text-[10px] font-black border bg-slate-800 border-slate-700 text-slate-300 flex items-center gap-1.5 font-mono">
+                           <Hash className="w-3 h-3 text-slate-500" /> {formData.customId}
                          </span>
                       </div>
                    </div>
@@ -229,28 +243,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                    </div>
                  </div>
 
-                 {/* Seção de Membros da Série na Barra Lateral */}
-                 {image.isSeries && seriesMembers.length > 1 && (
-                    <div className="bg-indigo-900/10 rounded-2xl p-4 border border-indigo-500/20">
-                       <h3 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-4 flex items-center justify-between">
-                          <span className="flex items-center gap-2"><Layers className="w-3 h-3" /> Esta Série ({seriesMembers.length})</span>
-                          <button onClick={() => setViewMode('panorama')} className="text-blue-400 hover:text-white transition-colors underline">Ver Todas</button>
-                       </h3>
-                       <div className="grid grid-cols-4 gap-2">
-                          {seriesMembers.map(member => (
-                             <button 
-                               key={member.id} 
-                               onClick={() => onImageSelect(member)}
-                               className={`aspect-square rounded-md overflow-hidden border-2 transition-all ${member.id === image.id ? 'border-brand-500 ring-2 ring-brand-500/20 scale-105' : 'border-slate-800 opacity-60 hover:opacity-100'}`}
-                             >
-                               <img src={member.frontUrl} className="w-full h-full object-cover" />
-                             </button>
-                          ))}
-                       </div>
-                    </div>
-                 )}
-
-                 {/* Resto dos Dados Técnicos */}
                  <div className="grid grid-cols-2 gap-3">
                     <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-800">
                        <p className="text-[9px] font-bold text-slate-500 uppercase flex items-center gap-1 mb-1"><Hash className="w-2.5 h-2.5"/> Nº Jogo</p>
@@ -268,7 +260,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
 
                  <div className="bg-slate-800/30 p-5 rounded-2xl border border-slate-800/50">
                     <span className="text-[10px] text-slate-500 uppercase block mb-3 font-black tracking-widest">Observações</span>
-                    <p className="text-sm text-slate-300 italic leading-relaxed">{formData.values || 'Sem notas.'}</p>
+                    <p className="text-sm text-slate-300 italic leading-relaxed">{formData.values || 'Sem notas registadas.'}</p>
                  </div>
               </div>
            </div>
