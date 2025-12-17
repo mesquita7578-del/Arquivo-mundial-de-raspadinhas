@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, Edit2, Trash2, Save, Share2, Check, RotateCcw, AlertTriangle, AlignJustify, Layers, Trophy } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Edit2, Trash2, Save, Share2, Check, RotateCcw, AlertTriangle, AlignJustify, Layers, Trophy, ZoomIn, ZoomOut } from 'lucide-react';
 import { ScratchcardData, Category, LineType } from '../types';
 
 interface ImageViewerProps {
@@ -21,12 +21,14 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   // Display State
   const [activeImage, setActiveImage] = useState<string>(image.frontUrl);
   const [activeLabel, setActiveLabel] = useState<string>('front'); // 'front', 'back', 'extra-0', 'extra-1', etc
+  const [isZoomed, setIsZoomed] = useState(false); // New Zoom State
 
   useEffect(() => {
     setFormData(image);
     setActiveImage(image.frontUrl);
     setActiveLabel('front');
     setIsEditing(false);
+    setIsZoomed(false); // Reset zoom on new image
   }, [image]);
 
   const handleChange = (field: keyof ScratchcardData, value: any) => {
@@ -75,44 +77,75 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
     onUpdate(newData);
   };
 
+  const toggleZoom = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsZoomed(!isZoomed);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl animate-fade-in" onClick={onClose}>
-      <button className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors" onClick={onClose}>
+      <button className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors z-50" onClick={onClose}>
         <X className="w-8 h-8" />
       </button>
 
       {/* Navigation Arrows */}
-      <button onClick={handlePrev} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white p-4 hidden md:block" disabled={contextImages.findIndex(img => img.id === image.id) === 0}>
-         <ChevronLeft className="w-12 h-12" />
+      <button onClick={handlePrev} className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white p-2 md:p-4 hidden md:block z-40" disabled={contextImages.findIndex(img => img.id === image.id) === 0}>
+         <ChevronLeft className="w-10 h-10 md:w-12 md:h-12" />
       </button>
-      <button onClick={handleNext} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white p-4 hidden md:block" disabled={contextImages.findIndex(img => img.id === image.id) === contextImages.length - 1}>
-         <ChevronRight className="w-12 h-12" />
+      <button onClick={handleNext} className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white p-2 md:p-4 hidden md:block z-40" disabled={contextImages.findIndex(img => img.id === image.id) === contextImages.length - 1}>
+         <ChevronRight className="w-10 h-10 md:w-12 md:h-12" />
       </button>
 
       <div className="w-full max-w-6xl h-[90vh] flex flex-col md:flex-row bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl" onClick={e => e.stopPropagation()}>
          
          {/* Left: Image Canvas */}
-         <div className="flex-1 bg-black relative flex flex-col">
-            <div className="flex-1 relative flex items-center justify-center p-4">
+         <div className="flex-1 bg-black relative flex flex-col overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
+            
+            {/* Zoom Controls Overlay */}
+            <div className="absolute top-4 right-4 z-30 flex gap-2">
+               <button 
+                  onClick={toggleZoom}
+                  className="bg-black/50 hover:bg-black/80 text-white p-2 rounded-full backdrop-blur border border-white/10 transition-colors"
+                  title={isZoomed ? "Reduzir" : "Ampliar"}
+               >
+                  {isZoomed ? <ZoomOut className="w-5 h-5" /> : <ZoomIn className="w-5 h-5" />}
+               </button>
+            </div>
+
+            {/* Label Overlay */}
+            <div className="absolute top-4 left-4 z-30 bg-black/50 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur border border-white/10 uppercase tracking-widest font-bold shadow-lg pointer-events-none">
+               {activeLabel === 'front' && t.front}
+               {activeLabel === 'back' && t.back}
+               {activeLabel.startsWith('extra') && "Variante"}
+            </div>
+
+            {/* MAIN IMAGE CONTAINER */}
+            <div 
+               className={`flex-1 relative flex items-center justify-center overflow-hidden transition-all duration-300 ${isZoomed ? 'cursor-zoom-out p-0' : 'cursor-zoom-in p-4 md:p-8'}`}
+               onClick={toggleZoom}
+            >
                <img 
                   src={activeImage} 
                   alt={image.gameName}
-                  className="max-w-full max-h-full object-contain"
+                  className={`transition-transform duration-300 ease-out shadow-2xl ${
+                     isZoomed 
+                     ? 'w-full h-auto max-h-none object-contain scale-125'  // Zoomed: Allow scroll/overflow potentially, keep aspect
+                     : 'max-w-full max-h-full w-auto h-auto object-contain' // Default: Force Fit completely
+                  }`}
+                  style={{ 
+                     maxHeight: isZoomed ? 'none' : '90%', // Ensure safety margin in fit mode
+                     maxWidth: isZoomed ? 'none' : '90%' 
+                  }}
                />
-               <div className="absolute top-4 left-4 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur border border-white/10 uppercase tracking-widest font-bold">
-                  {activeLabel === 'front' && t.front}
-                  {activeLabel === 'back' && t.back}
-                  {activeLabel.startsWith('extra') && "Variante"}
-               </div>
             </div>
 
             {/* Thumbnail Gallery */}
-            <div className="h-20 bg-slate-950/80 backdrop-blur border-t border-white/10 p-2 flex items-center gap-2 justify-center overflow-x-auto">
+            <div className="h-16 md:h-20 bg-slate-950/90 backdrop-blur border-t border-white/10 p-2 flex items-center gap-2 justify-center overflow-x-auto shrink-0 z-30">
                
                {/* Front Thumb */}
                <button 
-                  onClick={() => { setActiveImage(image.frontUrl); setActiveLabel('front'); }}
-                  className={`relative h-full aspect-square rounded overflow-hidden border-2 transition-all ${activeLabel === 'front' ? 'border-brand-500 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                  onClick={() => { setActiveImage(image.frontUrl); setActiveLabel('front'); setIsZoomed(false); }}
+                  className={`relative h-full aspect-square rounded overflow-hidden border-2 transition-all ${activeLabel === 'front' ? 'border-brand-500 scale-105 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}
                >
                   <img src={image.frontUrl} className="w-full h-full object-cover" />
                </button>
@@ -120,11 +153,11 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                {/* Back Thumb */}
                {image.backUrl && (
                   <button 
-                     onClick={() => { setActiveImage(image.backUrl!); setActiveLabel('back'); }}
-                     className={`relative h-full aspect-square rounded overflow-hidden border-2 transition-all ${activeLabel === 'back' ? 'border-brand-500 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                     onClick={() => { setActiveImage(image.backUrl!); setActiveLabel('back'); setIsZoomed(false); }}
+                     className={`relative h-full aspect-square rounded overflow-hidden border-2 transition-all ${activeLabel === 'back' ? 'border-brand-500 scale-105 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}
                   >
                      <img src={image.backUrl} className="w-full h-full object-cover" />
-                     <span className="absolute bottom-0 left-0 w-full text-[8px] bg-black/70 text-white text-center font-bold">VERSO</span>
+                     <span className="absolute bottom-0 left-0 w-full text-[6px] md:text-[8px] bg-black/70 text-white text-center font-bold">VERSO</span>
                   </button>
                )}
 
@@ -132,8 +165,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                {image.extraImages && image.extraImages.map((extra, idx) => (
                   <button 
                      key={idx}
-                     onClick={() => { setActiveImage(extra); setActiveLabel(`extra-${idx}`); }}
-                     className={`relative h-full aspect-square rounded overflow-hidden border-2 transition-all ${activeLabel === `extra-${idx}` ? 'border-brand-500 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                     onClick={() => { setActiveImage(extra); setActiveLabel(`extra-${idx}`); setIsZoomed(false); }}
+                     className={`relative h-full aspect-square rounded overflow-hidden border-2 transition-all ${activeLabel === `extra-${idx}` ? 'border-brand-500 scale-105 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}
                   >
                      <img src={extra} className="w-full h-full object-cover" />
                   </button>
@@ -142,7 +175,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
          </div>
 
          {/* Right: Info */}
-         <div className="w-full md:w-96 bg-slate-900 border-l border-slate-800 flex flex-col h-full">
+         <div className="w-full md:w-96 bg-slate-900 border-l border-slate-800 flex flex-col h-[40vh] md:h-full z-20 shadow-2xl">
             <div className="p-6 flex-1 overflow-y-auto">
                
                {/* Edit / Actions Bar */}
@@ -188,7 +221,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                            className="w-full bg-slate-800 text-white text-xl font-bold rounded p-2 border border-slate-700"
                         />
                      ) : (
-                        <h2 className="text-2xl font-bold text-white mb-1">{formData.gameName}</h2>
+                        <h2 className="text-2xl font-bold text-white mb-1 leading-tight">{formData.gameName}</h2>
                      )}
                      <div className="flex items-center gap-2 text-sm text-slate-400">
                         {isEditing ? (
@@ -324,7 +357,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                </div>
             </div>
 
-            <div className="p-4 bg-slate-900 border-t border-slate-800 text-[10px] text-slate-500 flex justify-between">
+            <div className="p-4 bg-slate-900 border-t border-slate-800 text-[10px] text-slate-500 flex justify-between shrink-0">
                <span>ID: {formData.customId}</span>
                <span>{t.collector}: {formData.collector}</span>
             </div>
