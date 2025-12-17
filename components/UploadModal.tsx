@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Upload, Sparkles, AlertCircle, Check, Loader2, AlignJustify, ArrowLeft, Image as ImageIcon, ScanLine, DollarSign, Calendar, MapPin, Globe, Printer, Layers, Maximize2, Plus, Heart } from 'lucide-react';
+import { X, Upload, Sparkles, AlertCircle, Check, Loader2, ArrowLeft, Image as ImageIcon, ScanLine, DollarSign, Calendar, Globe, Printer, Layers, Heart, Hash, Map, Gift, Trophy, Star, Gem, Tag } from 'lucide-react';
 import { ScratchcardData, Category, LineType } from '../types';
 import { analyzeImage } from '../services/geminiService';
 
@@ -29,8 +29,13 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     state: 'SC',
     continent: 'Europa',
     country: 'Portugal',
+    region: '',
     lines: 'none',
-    aiGenerated: false
+    aiGenerated: false,
+    isRarity: false,
+    isSeries: false,
+    isPromotional: false,
+    isWinner: false
   });
 
   const frontInputRef = useRef<HTMLInputElement>(null);
@@ -61,11 +66,9 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     setError(null);
     setAiStatus('idle');
 
-    // 1. GERAR O ID IMEDIATAMENTE (Passo Crítico para o Jorge)
     const randomNum = Math.floor(1000 + Math.random() * 8999);
     const generatedId = `RASP-PT-${randomNum}`;
     
-    // Já guardamos o ID no formulário para ele estar lá aconteça o que acontecer
     setFormData(prev => ({ ...prev, customId: generatedId }));
 
     try {
@@ -75,26 +78,21 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       
       const result = await analyzeImage(frontBase64, backBase64, mime);
       
-      if (result.gameName === "") {
-        setAiStatus('failed'); // IA não conseguiu ler bem
-      } else {
-        setAiStatus('success');
-      }
+      setAiStatus(result.gameName === "" ? 'failed' : 'success');
 
       setFormData(prev => ({
         ...prev,
         ...result,
-        customId: generatedId, // Mantemos o ID que gerámos
+        customId: generatedId,
         aiGenerated: true
       }));
 
     } catch (err) {
       console.error("Erro na Chloe:", err);
       setAiStatus('failed');
-      // Não mudamos nada, deixamos o ID e os defaults de Portugal
     } finally {
       setIsAnalyzing(false);
-      setStep(2); // Avançamos SEMPRE, erro ou não
+      setStep(2);
     }
   };
 
@@ -104,7 +102,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
   const handleSave = () => {
     if (!formData.gameName || !formData.country) {
-      setError("Por favor, dê um nome ao jogo (ex: Pé de Meia).");
+      setError("Por favor, dê um nome ao jogo e selecione o país.");
       return;
     }
 
@@ -124,8 +122,18 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       price: formData.price,
       state: (formData.state as any) || 'SC',
       country: formData.country || 'Portugal',
+      region: formData.region || '',
       continent: formData.continent || 'Europa',
       category: formData.category || 'raspadinha',
+      lines: formData.lines || 'none',
+      emission: formData.emission || '',
+      printer: formData.printer || '',
+      isRarity: formData.isRarity || false,
+      isSeries: formData.isSeries || false,
+      isPromotional: formData.isPromotional || false,
+      isWinner: formData.isWinner || false,
+      prizeAmount: formData.prizeAmount || '',
+      seriesDetails: formData.seriesDetails || '',
       collector: currentUser || 'Jorge Mesquita',
       aiGenerated: formData.aiGenerated || false,
       createdAt: timestamp,
@@ -142,32 +150,25 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
         <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl relative p-6">
            <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white"><X className="w-5 h-5"/></button>
            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-             <Upload className="w-5 h-5 text-brand-500"/> {t.title}
+             <Upload className="w-5 h-5 text-brand-500"/> Catalogar Raspadinha
            </h2>
 
            <div className="grid grid-cols-2 gap-4 mb-6">
               <div onClick={() => frontInputRef.current?.click()} className="aspect-square border-2 border-dashed border-slate-700 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-brand-500 transition-all relative overflow-hidden bg-slate-800/50">
-                {frontPreview ? <img src={frontPreview} className="absolute inset-0 w-full h-full object-contain" /> : <><ImageIcon className="w-8 h-8 text-slate-600 mb-2"/><span className="text-[10px] text-slate-500 font-bold uppercase">Frente</span></>}
+                {frontPreview ? <img src={frontPreview} className="absolute inset-0 w-full h-full object-contain" /> : <><ImageIcon className="w-8 h-8 text-slate-600 mb-2"/><span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Frente *</span></>}
                 <input type="file" ref={frontInputRef} className="hidden" accept="image/*" onChange={e => e.target.files?.[0] && handleFrontSelect(e.target.files[0])} />
               </div>
               <div onClick={() => backInputRef.current?.click()} className="aspect-square border-2 border-dashed border-slate-700 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-brand-500 transition-all relative overflow-hidden bg-slate-800/50">
-                {backPreview ? <img src={backPreview} className="absolute inset-0 w-full h-full object-contain" /> : <><ImageIcon className="w-8 h-8 text-slate-600 mb-2"/><span className="text-[10px] text-slate-500 font-bold uppercase">Verso</span></>}
+                {backPreview ? <img src={backPreview} className="absolute inset-0 w-full h-full object-contain" /> : <><ImageIcon className="w-8 h-8 text-slate-600 mb-2"/><span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Verso</span></>}
                 <input type="file" ref={backInputRef} className="hidden" accept="image/*" onChange={e => e.target.files?.[0] && handleBackSelect(e.target.files[0])} />
               </div>
            </div>
 
-           <button 
-             onClick={processImage} 
-             disabled={!frontFile || isAnalyzing} 
-             className="w-full bg-brand-600 hover:bg-brand-500 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all shadow-lg shadow-brand-900/40 disabled:opacity-50"
-           >
+           <button onClick={processImage} disabled={!frontFile || isAnalyzing} className="w-full bg-brand-600 hover:bg-brand-500 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all shadow-lg shadow-brand-900/40 disabled:opacity-50">
              {isAnalyzing ? <Loader2 className="animate-spin w-5 h-5"/> : <Sparkles className="w-5 h-5"/>}
-             {isAnalyzing ? "A Chloe está a ler..." : "Pedir à Chloe para Catalogar"}
+             {isAnalyzing ? "A Chloe está a ler..." : "Análise Inteligente da Chloe"}
            </button>
-           
-           <p className="mt-4 text-[10px] text-slate-500 text-center uppercase tracking-widest font-bold">
-             A Chloe ajuda-te a preencher os dados automaticamente
-           </p>
+           <p className="mt-4 text-[10px] text-slate-500 text-center uppercase tracking-widest font-bold">A Chloe preenche os dados para poupares tempo</p>
         </div>
       </div>
     );
@@ -175,115 +176,170 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-       <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl h-[90vh] shadow-2xl flex flex-col overflow-hidden">
-          <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+       <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-5xl h-[95vh] shadow-2xl flex flex-col overflow-hidden">
+          <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 backdrop-blur">
              <div className="flex items-center gap-3">
                <button onClick={() => setStep(1)} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400"><ArrowLeft className="w-5 h-5"/></button>
-               <h2 className="text-lg font-bold text-white tracking-tight">Revisão do Arquivo</h2>
+               <h2 className="text-lg font-bold text-white tracking-tight">Revisão do Guardião</h2>
              </div>
              <button onClick={onClose} className="text-slate-400 hover:text-white p-2 hover:bg-slate-800 rounded-full"><X className="w-5 h-5"/></button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-6">
-             
-             {/* Mensagem da Chloe se falhou */}
              {aiStatus === 'failed' && (
-                <div className="mb-6 bg-blue-900/20 border border-blue-500/30 p-4 rounded-xl flex items-center gap-4 animate-bounce-in">
+                <div className="mb-6 bg-blue-900/20 border border-blue-500/30 p-4 rounded-2xl flex items-center gap-4 animate-bounce-in">
                    <div className="bg-blue-500 p-2 rounded-full"><Heart className="w-4 h-4 text-white fill-white"/></div>
                    <div>
-                      <p className="text-white font-bold text-sm">Olá Jorge! A imagem está um pouco difícil de ler...</p>
-                      <p className="text-blue-300 text-xs">Mas não faz mal! Já te dei um ID novo. Só tens de escrever o nome do jogo.</p>
+                      <p className="text-white font-bold text-sm">Olá Jorge! A imagem está difícil de ler...</p>
+                      <p className="text-blue-300 text-xs">Mas o ID já lá está! Só tens de completar os campos abaixo.</p>
                    </div>
                 </div>
              )}
 
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Previews */}
-                <div className="space-y-4">
-                   <div className="bg-slate-950 p-2 rounded-xl border border-slate-800 shadow-inner">
-                      <p className="text-[10px] font-bold text-slate-600 uppercase mb-2">Frente</p>
-                      <img src={frontPreview || ''} className="w-full rounded-lg shadow-lg" />
+             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Lado Esquerdo: Previews */}
+                <div className="lg:col-span-3 space-y-4">
+                   <div className="bg-slate-950 p-2 rounded-2xl border border-slate-800 shadow-inner">
+                      <p className="text-[10px] font-bold text-slate-600 uppercase mb-2 ml-1">Frente</p>
+                      <img src={frontPreview || ''} className="w-full rounded-xl shadow-lg border border-white/5" />
                    </div>
                    {backPreview && (
-                      <div className="bg-slate-950 p-2 rounded-xl border border-slate-800 shadow-inner">
-                         <p className="text-[10px] font-bold text-slate-600 uppercase mb-2">Verso</p>
-                         <img src={backPreview} className="w-full rounded-lg shadow-lg" />
+                      <div className="bg-slate-950 p-2 rounded-2xl border border-slate-800 shadow-inner">
+                         <p className="text-[10px] font-bold text-slate-600 uppercase mb-2 ml-1">Verso</p>
+                         <img src={backPreview} className="w-full rounded-xl shadow-lg border border-white/5" />
                       </div>
                    )}
                 </div>
 
-                {/* Form Fields */}
-                <div className="md:col-span-2 space-y-4">
-                   <div className="grid grid-cols-2 gap-4">
+                {/* Lado Direito: Formulário Completo */}
+                <div className="lg:col-span-9 space-y-6">
+                   {/* Seção 1: Identidade */}
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">ID no Arquivo</label>
-                         <div className="relative">
-                            <Layers className="absolute left-3 top-3 w-4 h-4 text-brand-500" />
-                            <input type="text" value={formData.customId || ''} onChange={e => updateField('customId', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-white font-mono text-sm focus:border-brand-500 outline-none" />
-                         </div>
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Layers className="w-3 h-3"/> ID Arquivo</label>
+                         <input type="text" value={formData.customId || ''} onChange={e => updateField('customId', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-mono text-sm focus:border-brand-500 outline-none" />
                       </div>
-                      <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">Nome do Jogo *</label>
-                         <input type="text" value={formData.gameName || ''} onChange={e => updateField('gameName', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white text-sm focus:border-brand-500 outline-none" placeholder="Ex: Super Pé de Meia" autoFocus />
+                      <div className="md:col-span-2">
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Star className="w-3 h-3 text-yellow-500"/> Nome do Jogo *</label>
+                         <input type="text" value={formData.gameName || ''} onChange={e => updateField('gameName', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:border-brand-500 outline-none" placeholder="Ex: Pé de Meia" />
                       </div>
                    </div>
 
-                   <div className="grid grid-cols-2 gap-4">
+                   {/* Seção 2: Geografia e Tipo */}
+                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">País</label>
-                         <div className="relative">
-                            <Globe className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
-                            <input type="text" value={formData.country || ''} onChange={e => updateField('country', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm focus:border-brand-500 outline-none" />
-                         </div>
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Globe className="w-3 h-3"/> País</label>
+                         <input type="text" value={formData.country || ''} onChange={e => updateField('country', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" />
                       </div>
                       <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">Nº de Jogo</label>
-                         <div className="relative">
-                            <ScanLine className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
-                            <input type="text" value={formData.gameNumber || ''} onChange={e => updateField('gameNumber', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm focus:border-brand-500 outline-none" />
-                         </div>
-                      </div>
-                   </div>
-
-                   <div className="grid grid-cols-3 gap-4">
-                      <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">Preço</label>
-                         <div className="relative">
-                            <DollarSign className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
-                            <input type="text" value={formData.price || ''} onChange={e => updateField('price', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm" />
-                         </div>
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Map className="w-3 h-3"/> Região / Cantão</label>
+                         <input type="text" value={formData.region || ''} onChange={e => updateField('region', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" placeholder="Ex: Vaud, Algarve..." />
                       </div>
                       <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">Estado</label>
-                         <select value={formData.state || 'SC'} onChange={e => updateField('state', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white text-sm focus:border-brand-500 outline-none appearance-none">
-                            <option value="MINT">NOVO (Intacto)</option>
-                            <option value="SC">SC (Raspada)</option>
-                            <option value="AMOSTRA">AMOSTRA / VOID</option>
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Tag className="w-3 h-3"/> Categoria</label>
+                         <select value={formData.category || 'raspadinha'} onChange={e => updateField('category', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm appearance-none">
+                            <option value="raspadinha">Raspadinha</option>
+                            <option value="lotaria">Lotaria</option>
+                            <option value="boletim">Boletim</option>
+                            <option value="objeto">Objeto</option>
                          </select>
                       </div>
                       <div>
-                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">Ano</label>
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Hash className="w-3 h-3"/> Linhas de Cores</label>
+                         <select value={formData.lines || 'none'} onChange={e => updateField('lines', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm appearance-none">
+                            <option value="none">Nenhuma</option>
+                            <option value="blue">Azul</option>
+                            <option value="red">Vermelha</option>
+                            <option value="green">Verde</option>
+                            <option value="yellow">Amarela</option>
+                            <option value="multicolor">Multicolor</option>
+                         </select>
+                      </div>
+                   </div>
+
+                   {/* Seção 3: Dados Técnicos */}
+                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                      <div>
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><ScanLine className="w-3 h-3"/> Nº Jogo</label>
+                         <input type="text" value={formData.gameNumber || ''} onChange={e => updateField('gameNumber', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" />
+                      </div>
+                      <div>
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><DollarSign className="w-3 h-3"/> Preço</label>
+                         <input type="text" value={formData.price || ''} onChange={e => updateField('price', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" />
+                      </div>
+                      <div>
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><Printer className="w-3 h-3"/> Gráfica</label>
+                         <input type="text" value={formData.printer || ''} onChange={e => updateField('printer', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" placeholder="Ex: Scientific Games" />
+                      </div>
+                      <div>
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Tiragem / Emissão</label>
+                         <input type="text" value={formData.emission || ''} onChange={e => updateField('emission', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm" />
+                      </div>
+                      <div className="col-span-2 md:col-span-1">
+                         <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Ano / Lançamento</label>
                          <div className="relative">
-                            <Calendar className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                            <Calendar className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
                             <input type="text" value={formData.releaseDate || ''} onChange={e => updateField('releaseDate', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm" />
                          </div>
                       </div>
                    </div>
 
+                   {/* Seção 4: Estado e Marcas Especiais */}
+                   <div className="bg-slate-800/30 p-4 rounded-2xl border border-slate-800">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+                         <div>
+                            <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Estado</label>
+                            <select value={formData.state || 'SC'} onChange={e => updateField('state', e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-white text-xs">
+                               <option value="MINT">MINT (Nova)</option>
+                               <option value="SC">SC (Raspada)</option>
+                               <option value="AMOSTRA">AMOSTRA / VOID</option>
+                            </select>
+                         </div>
+                         <div className="flex flex-col gap-2">
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                               <input type="checkbox" checked={formData.isRarity} onChange={e => updateField('isRarity', e.target.checked)} className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-brand-600 focus:ring-brand-500" />
+                               <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1"><Gem className="w-3 h-3 text-gold-500"/> Raridade</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                               <input type="checkbox" checked={formData.isPromotional} onChange={e => updateField('isPromotional', e.target.checked)} className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-pink-600" />
+                               <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1"><Gift className="w-3 h-3 text-pink-500"/> Promo</span>
+                            </label>
+                         </div>
+                         <div className="flex flex-col gap-2">
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                               <input type="checkbox" checked={formData.isWinner} onChange={e => updateField('isWinner', e.target.checked)} className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-green-600" />
+                               <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1"><Trophy className="w-3 h-3 text-green-500"/> Premiada</span>
+                            </label>
+                            {formData.isWinner && (
+                               <input type="text" value={formData.prizeAmount || ''} onChange={e => updateField('prizeAmount', e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-2 py-1 text-[10px] text-white" placeholder="Valor do prémio" />
+                            )}
+                         </div>
+                         <div className="flex flex-col gap-2 col-span-2">
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                               <input type="checkbox" checked={formData.isSeries} onChange={e => updateField('isSeries', e.target.checked)} className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-blue-600" />
+                               <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1"><Layers className="w-3 h-3 text-blue-500"/> Série / SET</span>
+                            </label>
+                            {formData.isSeries && (
+                               <input type="text" value={formData.seriesDetails || ''} onChange={e => updateField('seriesDetails', e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-2 py-1 text-[10px] text-white" placeholder="Detalhes (Ex: 1/4 da coleção)" />
+                            )}
+                         </div>
+                      </div>
+                   </div>
+
                    <div>
-                      <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">Notas / Informação Extra</label>
-                      <textarea value={formData.values || ''} onChange={e => updateField('values', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl p-4 text-white text-sm h-32 focus:border-brand-500 outline-none resize-none" placeholder="Ex: Ganhou 10€, Série Limitada..." />
+                      <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">Notas / Informação do Verso</label>
+                      <textarea value={formData.values || ''} onChange={e => updateField('values', e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4 text-white text-sm h-32 focus:border-brand-500 outline-none resize-none leading-relaxed" placeholder="Ex: Ganhou 10€, raspada na zona superior..." />
                    </div>
                 </div>
              </div>
           </div>
 
-          <div className="p-4 border-t border-slate-800 bg-slate-900/50 flex justify-end gap-3 shrink-0">
-             {error && <div className="mr-auto text-red-400 text-xs flex items-center gap-2"><AlertCircle className="w-4 h-4"/>{error}</div>}
+          <div className="p-4 border-t border-slate-800 bg-slate-900 flex justify-end gap-3 shrink-0">
+             {error && <div className="mr-auto text-red-400 text-xs flex items-center gap-2 font-bold animate-pulse"><AlertCircle className="w-4 h-4"/>{error}</div>}
              <button onClick={onClose} className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all">Cancelar</button>
-             <button onClick={handleSave} disabled={isSaving} className="px-8 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-brand-900/20 active:scale-95 transition-all">
+             <button onClick={handleSave} disabled={isSaving} className="px-8 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-brand-900/30 active:scale-95 transition-all">
                 {isSaving ? <Loader2 className="animate-spin w-4 h-4"/> : <Check className="w-4 h-4"/>}
-                Guardar no Meu Arquivo
+                Guardar no Arquivo Mundial
              </button>
           </div>
        </div>
