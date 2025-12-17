@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Header } from './components/Header';
+import { Footer } from './components/Footer';
 import { ImageGrid } from './components/ImageGrid';
 import { UploadModal } from './components/UploadModal';
 import { ImageViewer } from './components/ImageViewer';
@@ -162,6 +163,18 @@ function App() {
      return Object.keys(totalStats.countryStats).sort();
   }, [totalStats.countryStats]);
 
+  const handleNavigate = (p: PageType) => {
+    setCurrentPage(p);
+    if (['europe', 'america', 'asia', 'africa', 'oceania'].includes(p as string)) {
+       const mapping: Record<string, Continent> = {
+         'europe': 'Europa', 'america': 'América', 'asia': 'Ásia', 'africa': 'África', 'oceania': 'Oceania'
+       };
+       setActiveContinent(mapping[p as string]);
+    } else {
+       setActiveContinent('Mundo');
+    }
+  };
+
   return (
     <div className="flex flex-col h-[100dvh] bg-slate-950 text-slate-100 overflow-hidden font-sans">
       <Header 
@@ -176,22 +189,12 @@ function App() {
         onImport={handleImportJSON}
         language={language} setLanguage={setLanguage}
         currentPage={currentPage} 
-        onNavigate={(p) => { 
-           setCurrentPage(p); 
-           if (['europe', 'america', 'asia', 'africa', 'oceania'].includes(p)) {
-              const mapping: Record<string, Continent> = {
-                'europe': 'Europa', 'america': 'América', 'asia': 'Ásia', 'africa': 'África', 'oceania': 'Oceania'
-              };
-              setActiveContinent(mapping[p]);
-           } else {
-              setActiveContinent('Mundo');
-           }
-        }} 
+        onNavigate={handleNavigate} 
         t={t.header}
         onInstall={deferredPrompt ? handleInstallApp : undefined}
       />
 
-      <main className="flex-1 overflow-y-auto bg-slate-950 scroll-smooth custom-scrollbar">
+      <main className="flex-1 overflow-y-auto bg-slate-950 scroll-smooth custom-scrollbar flex flex-col">
         
         {/* ÁREA FIXA (Sticky Section) */}
         {!(currentPage === 'stats' || currentPage === 'about') && (
@@ -256,7 +259,7 @@ function App() {
                   </div>
                 </div>
                 
-                {/* LISTA DINÂMICA DE PAÍSES FIXA (com scroll horizontal se necessário) */}
+                {/* LISTA DINÂMICA DE PAÍSES FIXA */}
                 <div className="mt-3 flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1 custom-scrollbar">
                     {registeredCountries.map(country => (
                       <button 
@@ -278,13 +281,13 @@ function App() {
         )}
 
         {/* CONTEÚDO PRINCIPAL (Scrollable) */}
-        <div className="relative">
+        <div className="relative flex-1">
           {currentPage === 'stats' ? (
             <StatsSection stats={totalStats.stats} categoryStats={totalStats.categoryStats} countryStats={totalStats.countryStats} stateStats={totalStats.stateStats} collectorStats={totalStats.collectorStats} totalRecords={totalStats.total} t={t.stats} />
           ) : currentPage === 'about' ? (
             <AboutPage t={t} />
           ) : (
-            <div className="p-4 md:p-8 animate-fade-in">
+            <div className="p-4 md:p-8 animate-fade-in min-h-[50vh]">
               {isLoadingDB ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-4">
                     <Loader2 className="w-10 h-10 text-brand-500 animate-spin" />
@@ -304,10 +307,13 @@ function App() {
         </div>
       </main>
 
+      {/* RODAPÉ FIXO (Fora do main scrollable) */}
+      <Footer onNavigate={handleNavigate} onWebsitesClick={() => setIsWebsitesModalOpen(true)} />
+
       {isAdmin && (
         <button 
           onClick={() => setIsUploadModalOpen(true)}
-          className="fixed bottom-8 right-8 w-16 h-16 bg-brand-600 hover:bg-brand-500 text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 z-40 border-4 border-slate-950"
+          className="fixed bottom-20 right-8 w-16 h-16 bg-brand-600 hover:bg-brand-500 text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 z-40 border-4 border-slate-950"
         >
           <PlusCircle className="w-8 h-8" />
         </button>
