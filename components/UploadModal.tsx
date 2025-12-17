@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Upload, Sparkles, AlertCircle, Check, Loader2, ArrowLeft, Image as ImageIcon, ScanLine, DollarSign, Calendar, Globe, Printer, Layers, Heart, Hash, Map, Gift, Trophy, Star, Gem, Tag } from 'lucide-react';
 import { ScratchcardData, Category, LineType } from '../types';
 import { analyzeImage } from '../services/geminiService';
+import { storageService } from '../services/storage';
 
 interface UploadModalProps {
   onClose: () => void;
@@ -100,7 +101,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.gameName || !formData.country) {
       setError("Por favor, dê um nome ao jogo e selecione o país.");
       return;
@@ -140,8 +141,16 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       owners: currentUser ? [currentUser] : []
     };
 
-    onUploadComplete(newItem);
-    onClose();
+    try {
+      // CRITICAL FIX: Ensure the item is saved to IndexedDB before updating the UI
+      await storageService.save(newItem);
+      onUploadComplete(newItem);
+      onClose();
+    } catch (err) {
+      console.error("Erro ao gravar:", err);
+      setError("Erro ao gravar na base de dados local.");
+      setIsSaving(false);
+    }
   };
 
   if (step === 1) {

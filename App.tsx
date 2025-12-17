@@ -14,7 +14,7 @@ import { ScratchcardData, Continent, Category } from './types';
 import { 
   Globe, Ticket, Coins, Heart, Gem, Gift, Trophy, 
   Building2, Database, Loader2, Sparkles, X, 
-  ClipboardList, Package, Search, Filter, MapPin, PlusCircle
+  ClipboardList, Package, Search, Filter, MapPin, PlusCircle, LogIn
 } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
@@ -156,7 +156,11 @@ function App() {
                i.customId.toLowerCase().includes(search);
       }
       return true;
-    }).sort((a, b) => b.createdAt - a.createdAt);
+    }).sort((a, b) => {
+      // Ordenação Natural por Número de Jogo (Ascendente: 1, 2, 10, J01...)
+      // Conforme pedido por Jorge Mesquita
+      return a.gameNumber.localeCompare(b.gameNumber, undefined, { numeric: true, sensitivity: 'base' });
+    });
   }, [allImagesCache, activeContinent, activeCategory, filterRarity, filterPromo, filterWinners, countrySearch, searchTerm, currentPage, currentUser]);
 
   const registeredCountries = useMemo(() => {
@@ -165,6 +169,8 @@ function App() {
 
   const handleNavigate = (p: PageType) => {
     setCurrentPage(p);
+    // Reset filters when changing page to avoid confusion
+    setCountrySearch('');
     if (['europe', 'america', 'asia', 'africa', 'oceania'].includes(p as string)) {
        const mapping: Record<string, Continent> = {
          'europe': 'Europa', 'america': 'América', 'asia': 'Ásia', 'africa': 'África', 'oceania': 'Oceania'
@@ -210,7 +216,7 @@ function App() {
               <button onClick={() => setFilterWinners(!filterWinners)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${filterWinners ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
                 <Trophy className="w-3.5 h-3.5" /> Premiadas
               </button>
-              <button onClick={() => setCurrentPage('my-collection')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${currentPage === 'my-collection' ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
+              <button onClick={() => handleNavigate('my-collection')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${currentPage === 'my-collection' ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'}`}>
                 <Heart className="w-3.5 h-3.5" /> Coleção
               </button>
               <button onClick={() => setIsWebsitesModalOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200 text-[10px] font-bold transition-all">
@@ -292,6 +298,29 @@ function App() {
                   <div className="flex flex-col items-center justify-center py-20 gap-4">
                     <Loader2 className="w-10 h-10 text-brand-500 animate-spin" />
                     <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">A sincronizar Arquivo...</p>
+                  </div>
+              ) : currentPage === 'my-collection' && (!currentUser || filteredImages.length === 0) ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-center max-w-lg mx-auto">
+                     <div className="bg-slate-900 p-8 rounded-full border border-slate-800 mb-6">
+                        <Heart className="w-16 h-16 text-slate-700" />
+                     </div>
+                     <h3 className="text-xl font-bold text-white mb-3">
+                        {!currentUser ? "Entra para veres a tua Coleção" : "A tua coleção ainda está vazia!"}
+                     </h3>
+                     <p className="text-slate-500 text-sm mb-8 leading-relaxed">
+                        {!currentUser 
+                          ? "Regista o teu nome no botão 'Entrar' para poderes marcar as raspadinhas que já tens no teu álbum pessoal." 
+                          : "Clica no botão 'Marcar' dentro de qualquer raspadinha do arquivo para a guardares aqui no teu álbum pessoal."}
+                     </p>
+                     {!currentUser ? (
+                        <button onClick={() => setIsLoginModalOpen(true)} className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-900/40 transition-all active:scale-95">
+                           <LogIn className="w-5 h-5" /> Fazer Login / Entrar
+                        </button>
+                     ) : (
+                        <button onClick={() => handleNavigate('home')} className="bg-slate-800 hover:bg-slate-700 text-white px-8 py-3 rounded-xl font-bold transition-all border border-slate-700">
+                           Explorar Arquivo
+                        </button>
+                     )}
                   </div>
               ) : (
                   <ImageGrid 
