@@ -137,102 +137,92 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                 </div>
               </>
             ) : (
-              <div className="flex-1 overflow-y-auto bg-slate-950 p-4 md:p-8 custom-scrollbar">
-                <div className="max-w-[1800px] mx-auto">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6 sticky top-0 z-[70] bg-slate-950/95 py-6 border-b border-white/5 backdrop-blur-xl">
-                     <div className="flex items-center gap-5">
-                        <div className="bg-brand-600 p-5 rounded-[2rem] shadow-2xl shadow-brand-900/40 rotate-3">
-                           <Layers className="w-8 h-8 text-white" />
+              <div className="flex-1 overflow-y-auto bg-slate-950 p-4 md:p-6 lg:p-10 custom-scrollbar">
+                <div className="max-w-[1920px] mx-auto">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4 sticky top-0 z-[70] bg-slate-950/95 py-4 border-b border-white/5 backdrop-blur-xl">
+                     <div className="flex items-center gap-4">
+                        <div className="bg-brand-600 p-3 rounded-2xl shadow-xl shadow-brand-900/40">
+                           <Layers className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                           <div className="flex items-center gap-2 mb-1">
-                              <span className="bg-brand-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">Série Completa</span>
-                              <span className="text-slate-500 text-[9px] font-black uppercase tracking-widest">Grupo: {image.gameNumber}</span>
+                           <div className="flex items-center gap-2 mb-0.5">
+                              <span className="bg-brand-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest">Série</span>
+                              <span className="text-slate-500 text-[8px] font-black uppercase tracking-widest">Grup {image.gameNumber}</span>
                            </div>
-                           <h3 className="text-4xl font-black text-white uppercase tracking-tighter leading-none">{image.gameName}</h3>
+                           <h3 className="text-2xl font-black text-white uppercase tracking-tighter leading-none">{image.gameName}</h3>
                         </div>
                      </div>
                      <div className="flex items-center gap-3">
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3 flex items-center gap-4">
+                        <div className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 flex items-center gap-3">
                            <div className="flex flex-col">
-                              <span className="text-[9px] font-black text-slate-500 uppercase">Membros</span>
-                              <span className="text-xl font-black text-white leading-none">{seriesMembers.length}</span>
+                              <span className="text-[8px] font-black text-slate-500 uppercase">Peças</span>
+                              <span className="text-sm font-black text-white leading-none">{seriesMembers.length}</span>
                            </div>
-                           <div className="w-px h-8 bg-slate-800"></div>
+                           <div className="w-px h-5 bg-slate-800"></div>
                            <div className="flex flex-col">
-                              <span className="text-[9px] font-black text-slate-500 uppercase">Fichas</span>
-                              <span className="text-xl font-black text-brand-500 leading-none">{seriesMembers.length * (image.backUrl ? 2 : 1)}</span>
+                              <span className="text-[8px] font-black text-slate-500 uppercase">Imagens</span>
+                              <span className="text-sm font-black text-brand-500 leading-none">{seriesMembers.length * (image.backUrl ? 2 : 1)}</span>
                            </div>
                         </div>
-                        <button onClick={() => setViewMode('single')} className="p-4 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl transition-all border border-slate-700 shadow-xl"><X className="w-6 h-6"/></button>
+                        <button onClick={() => setViewMode('single')} className="p-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-all border border-slate-700 shadow-lg"><X className="w-5 h-5"/></button>
                      </div>
                   </div>
 
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 pb-32">
+                  {/* Grid mais denso para melhor aproveitamento */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 pb-32">
                     {seriesMembers.map((member) => (
-                      <div key={member.id} className={`group bg-slate-900/40 border rounded-[2.5rem] p-6 flex flex-col gap-6 transition-all hover:bg-slate-900/60 ${member.id === image.id ? 'border-brand-500/50 ring-2 ring-brand-500/10' : 'border-white/5 shadow-2xl shadow-black/50'}`}>
+                      <div key={member.id} className={`group bg-slate-900/30 border rounded-[1.5rem] p-4 flex flex-col gap-4 transition-all hover:bg-slate-900/60 ${member.id === image.id ? 'border-brand-500/40 ring-4 ring-brand-500/5' : 'border-white/5 shadow-xl shadow-black/40'}`}>
                         
-                        {/* Galeria Lado a Lado de Frente e Verso */}
-                        <div className="flex flex-col sm:flex-row gap-4">
-                           <div className="flex-1 space-y-3">
-                              <div className="flex items-center justify-between px-2">
-                                 <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">Frente</span>
-                                 <span className="text-[9px] font-mono text-slate-500">{member.customId}</span>
+                        {/* Galeria de Lado compacta */}
+                        <div className="flex gap-2">
+                           <div className="flex-1 space-y-1.5">
+                              <div className="flex items-center justify-between px-1">
+                                 <span className="text-[7px] font-black text-blue-500 uppercase tracking-widest">Frente</span>
                               </div>
-                              <div className="relative aspect-[3/4] bg-slate-800 rounded-3xl overflow-hidden border border-white/5 group-hover:border-blue-500/30 transition-all shadow-lg">
+                              <div className="relative aspect-[3/4] bg-slate-950 rounded-xl overflow-hidden border border-white/5 group-hover:border-blue-500/20 transition-all">
                                  <img src={member.frontUrl} className="w-full h-full object-contain" />
                                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
                               </div>
                            </div>
 
                            {member.backUrl ? (
-                              <div className="flex-1 space-y-3">
-                                 <div className="flex items-center justify-between px-2">
-                                    <span className="text-[9px] font-black text-brand-500 uppercase tracking-widest">Verso</span>
-                                    <span className="text-[9px] font-bold text-slate-500 uppercase">Segurança</span>
+                              <div className="flex-1 space-y-1.5">
+                                 <div className="flex items-center justify-between px-1">
+                                    <span className="text-[7px] font-black text-brand-500 uppercase tracking-widest">Verso</span>
                                  </div>
-                                 <div className="relative aspect-[3/4] bg-slate-800 rounded-3xl overflow-hidden border border-white/5 group-hover:border-brand-500/30 transition-all shadow-lg">
+                                 <div className="relative aspect-[3/4] bg-slate-950 rounded-xl overflow-hidden border border-white/5 group-hover:border-brand-500/20 transition-all">
                                     <img src={member.backUrl} className="w-full h-full object-contain" />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
                                  </div>
                               </div>
                            ) : (
-                              <div className="flex-1 flex flex-col items-center justify-center bg-slate-950/40 rounded-3xl border border-dashed border-slate-800 text-slate-700 opacity-50 space-y-3">
-                                 <ImageIcon className="w-12 h-12" />
-                                 <span className="text-[10px] font-black uppercase tracking-widest">Verso Não Catalogado</span>
+                              <div className="flex-1 flex flex-col items-center justify-center bg-slate-950/20 rounded-xl border border-dashed border-slate-800/50 text-slate-800 opacity-40 space-y-1">
+                                 <ImageIcon className="w-6 h-6" />
+                                 <span className="text-[7px] font-black uppercase tracking-tighter">Sem Verso</span>
                               </div>
                            )}
                         </div>
 
-                        {/* Dados Rápidos da Peça */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-950/50 p-5 rounded-3xl border border-slate-800/50">
-                           <div className="space-y-1">
-                              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">ID</p>
-                              <p className="text-xs font-black text-white font-mono">{member.customId}</p>
+                        {/* Dados Rápidos Ultra-Compactos */}
+                        <div className="flex items-center justify-between bg-slate-950/40 px-3 py-2.5 rounded-xl border border-slate-800/40">
+                           <div className="flex flex-col">
+                              <span className="text-[7px] font-black text-slate-600 uppercase tracking-widest mb-0.5">Registo</span>
+                              <span className="text-[10px] font-black text-white font-mono leading-none">{member.customId}</span>
                            </div>
-                           <div className="space-y-1">
-                              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Estado</p>
-                              <div className="flex items-center gap-1.5">
-                                 <span className={`w-1.5 h-1.5 rounded-full ${member.state === 'MINT' ? 'bg-green-500' : 'bg-slate-500'}`}></span>
-                                 <p className="text-xs font-black text-slate-200">{member.state}</p>
+                           <div className="flex flex-col items-center">
+                              <span className="text-[7px] font-black text-slate-600 uppercase tracking-widest mb-0.5">Estado</span>
+                              <div className="flex items-center gap-1">
+                                 <span className={`w-1 h-1 rounded-full ${member.state === 'MINT' ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]' : 'bg-slate-500'}`}></span>
+                                 <span className="text-[10px] font-black text-slate-300 leading-none">{member.state}</span>
                               </div>
                            </div>
-                           <div className="space-y-1">
-                              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Linhas</p>
-                              <div className="flex items-center gap-2">
-                                 {member.lines && <div className={`w-2.5 h-2.5 rounded-full ${getLineBadge(member.lines)} shadow-sm`}></div>}
-                                 <p className="text-xs font-black text-slate-300">{member.lines || '-'}</p>
-                              </div>
-                           </div>
-                           <div className="flex items-center justify-end">
-                              <button 
-                                 onClick={() => onImageSelect(member)} 
-                                 className={`px-5 py-2 rounded-2xl text-[10px] font-black uppercase transition-all flex items-center gap-2 ${member.id === image.id ? 'bg-brand-600 text-white' : 'bg-slate-800 hover:bg-blue-600 text-slate-400 hover:text-white'}`}
-                              >
-                                 {member.id === image.id ? 'FOCO ATUAL' : 'DETALHES'} 
-                                 <Maximize2 className="w-3.5 h-3.5"/>
-                              </button>
-                           </div>
+                           <button 
+                              onClick={() => onImageSelect(member)} 
+                              className={`p-2 rounded-lg transition-all ${member.id === image.id ? 'bg-brand-600 text-white' : 'bg-slate-800 hover:bg-blue-600 text-slate-400 hover:text-white'}`}
+                              title="Focar item"
+                           >
+                              <Maximize2 className="w-3.5 h-3.5"/>
+                           </button>
                         </div>
                       </div>
                     ))}
