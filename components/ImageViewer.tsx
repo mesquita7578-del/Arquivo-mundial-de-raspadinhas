@@ -85,12 +85,22 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/98 backdrop-blur-3xl animate-fade-in" onClick={onClose}>
-      <button className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors z-[100] p-2 bg-slate-900/80 rounded-full" onClick={onClose}><X className="w-8 h-8" /></button>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl animate-fade-in" onClick={onClose}>
+      {/* Botão de Fechar fixo no topo com prioridade total */}
+      <button 
+        className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors z-[120] p-3 bg-slate-900/90 rounded-full border border-white/10" 
+        onClick={onClose}
+      >
+        <X className="w-8 h-8" />
+      </button>
 
-      <div className={`w-full ${viewMode === 'panorama' ? 'h-full flex flex-col' : 'max-w-7xl h-[95vh] md:h-[90vh] flex flex-col md:flex-row bg-slate-950 md:rounded-sm overflow-hidden border border-slate-900 shadow-2xl animate-bounce-in relative'}`} onClick={e => e.stopPropagation()}>
+      <div 
+        className={`w-full ${viewMode === 'panorama' ? 'h-full flex flex-col' : 'max-w-7xl h-[95dvh] md:h-[90dvh] flex flex-col md:flex-row bg-slate-950 md:rounded-xl overflow-hidden border border-slate-800 shadow-[0_0_50px_rgba(0,0,0,0.5)] relative animate-fade-in'}`} 
+        onClick={e => e.stopPropagation()}
+      >
          
-         <div className="flex-1 bg-black relative flex flex-col overflow-hidden border-b md:border-b-0 md:border-r border-slate-900">
+         {/* Lado Esquerdo: Área da Imagem */}
+         <div className="flex-1 bg-black relative flex flex-col overflow-hidden border-b md:border-b-0 md:border-r border-slate-900 min-h-0">
             <div className="absolute top-4 right-4 z-[60] flex gap-2">
                {seriesMembers.length > 1 && (
                   <button onClick={() => setViewMode(viewMode === 'single' ? 'panorama' : 'single')} className={`flex items-center gap-2 px-4 py-2 rounded-full border backdrop-blur transition-all font-black text-[10px] tracking-widest ${viewMode === 'panorama' ? 'bg-blue-600 text-white border-blue-400 shadow-lg' : 'bg-black/50 text-white/50 border-white/10 hover:text-white'}`}>
@@ -100,25 +110,33 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
             </div>
 
             {viewMode === 'single' ? (
-              <>
-                <div className={`flex-1 relative flex items-center justify-center overflow-hidden p-4 md:p-12 ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`} onClick={() => setIsZoomed(!isZoomed)}>
+              <div className="flex-1 flex flex-col min-h-0">
+                <div className={`flex-1 relative flex items-center justify-center overflow-hidden p-4 md:p-8 ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`} onClick={() => setIsZoomed(!isZoomed)}>
                    <img 
                      src={activeImage} 
-                     className={`transition-all duration-700 ease-out shadow-2xl ${isZoomed ? 'w-full h-auto scale-150 origin-center grayscale-0' : 'max-w-full max-h-full object-contain grayscale-[0.2] hover:grayscale-0'}`} 
+                     key={activeImage}
+                     className={`transition-all duration-500 ease-out shadow-2xl ${isZoomed ? 'w-full h-auto scale-125 origin-center' : 'max-w-full max-h-full object-contain'}`} 
                    />
                 </div>
 
-                <div className="h-24 bg-slate-950/90 backdrop-blur border-t border-slate-900 p-3 flex items-center gap-4 justify-center shrink-0 z-30">
-                   <button onClick={() => { setActiveImage(image.frontUrl); setActiveLabel('front'); setIsZoomed(false); }} className={`relative h-full aspect-square rounded-lg overflow-hidden border-2 transition-all ${activeLabel === 'front' ? 'border-blue-600 scale-110 shadow-xl' : 'border-slate-800 opacity-40 hover:opacity-100'}`}><img src={image.frontUrl} className="w-full h-full object-cover" /></button>
-                   {image.backUrl && <button onClick={() => { setActiveImage(image.backUrl!); setActiveLabel('back'); setIsZoomed(false); }} className={`relative h-full aspect-square rounded-lg overflow-hidden border-2 transition-all ${activeLabel === 'back' ? 'border-brand-600 scale-110 shadow-xl' : 'border-slate-800 opacity-40 hover:opacity-100'}`}><img src={image.backUrl} className="w-full h-full object-cover" /></button>}
+                {/* Miniaturas de Frente/Verso */}
+                <div className="h-24 bg-slate-950/80 backdrop-blur border-t border-slate-900 p-3 flex items-center gap-4 justify-center shrink-0 z-30">
+                   <button onClick={() => { setActiveImage(image.frontUrl); setActiveLabel('front'); setIsZoomed(false); }} className={`relative h-full aspect-square rounded-lg overflow-hidden border-2 transition-all ${activeLabel === 'front' ? 'border-blue-600 scale-110 shadow-lg' : 'border-slate-800 opacity-40 hover:opacity-100'}`}>
+                      <img src={image.frontUrl} className="w-full h-full object-cover" />
+                   </button>
+                   {image.backUrl && (
+                      <button onClick={() => { setActiveImage(image.backUrl!); setActiveLabel('back'); setIsZoomed(false); }} className={`relative h-full aspect-square rounded-lg overflow-hidden border-2 transition-all ${activeLabel === 'back' ? 'border-brand-600 scale-110 shadow-lg' : 'border-slate-800 opacity-40 hover:opacity-100'}`}>
+                        <img src={image.backUrl} className="w-full h-full object-cover" />
+                      </button>
+                   )}
                 </div>
-              </>
+              </div>
             ) : (
               <div className="flex-1 overflow-y-auto bg-slate-950 px-4 md:px-8 lg:px-12 py-6 custom-scrollbar">
                 <div className="max-w-[2200px] mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 pb-24">
                     {seriesMembers.map((member) => (
                       <div key={member.id} className="group bg-slate-900/30 border border-slate-900 rounded-lg p-2 flex flex-col gap-2 hover:border-blue-500/30 transition-all cursor-pointer" onClick={() => onImageSelect(member)}>
-                         <img src={member.frontUrl} className="w-full aspect-[3/4] object-contain rounded" />
+                         <img src={member.frontUrl} className="w-full aspect-[3/4] object-contain rounded shadow-md" />
                          <span className="text-[7px] font-black text-slate-500 text-center uppercase tracking-[0.2em]">{member.customId}</span>
                       </div>
                     ))}
@@ -127,8 +145,9 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
             )}
          </div>
 
+         {/* Lado Direito: Detalhes Técnicos */}
          {viewMode === 'single' && (
-           <div className="w-full md:w-[450px] bg-slate-950 flex flex-col h-full z-20 shadow-2xl border-l border-slate-900 overflow-hidden">
+           <div className="w-full md:w-[450px] bg-slate-950 flex flex-col h-full z-20 shadow-2xl border-l border-slate-900 overflow-hidden shrink-0">
               <div className="p-4 border-b border-slate-900 bg-slate-950/80 backdrop-blur flex justify-between items-center shrink-0">
                  <div className="flex gap-2">
                     {isAdmin && (
