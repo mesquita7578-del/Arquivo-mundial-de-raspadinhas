@@ -75,9 +75,18 @@ export interface WebsiteLink {
   continent?: string;
 }
 
+export interface Milestone {
+  year: string;
+  title: string;
+  description: string;
+}
+
 export interface SiteMetadata {
   id: 'site_settings';
   founderPhotoUrl: string;
+  founderBio?: string;
+  founderQuote?: string;
+  milestones?: Milestone[];
 }
 
 export interface AnalysisResult {

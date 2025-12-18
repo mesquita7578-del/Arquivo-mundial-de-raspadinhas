@@ -31,7 +31,20 @@ type PageType = 'home' | 'stats' | 'about' | 'europe' | 'america' | 'asia' | 'af
 function App() {
   const [allImagesCache, setAllImagesCache] = useState<ScratchcardData[]>([]);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
-  const [siteMetadata, setSiteMetadata] = useState<SiteMetadata>({ id: 'site_settings', founderPhotoUrl: '' });
+  const [siteMetadata, setSiteMetadata] = useState<SiteMetadata>({ 
+    id: 'site_settings', 
+    founderPhotoUrl: '',
+    founderBio: `Nascido a 16 de julho de 1967 na rua de Bonjóia, em Campanhã, no coração do Porto, Jorge Manuel Cardoso Mesquita carrega no sangue a paixão pelo detalhe. Filho de Custódio Mateus Mesquita e Ana Conceição Jesus Cardoso, Jorge descobriu o encanto do colecionismo através do seu falecido pai, que dedicava horas aos álbuns de cromos da Panini.\n\nO que começou com latas de bebidas, isqueiros e miniaturas de carros, evoluiu para a numismática e, finalmente, para o encontro que mudaria o seu destino: a descoberta das "Gratta e Vinci" em Itália. Ali, entre a arte italiana e os exemplares que já possuía em Portugal, Jorge mergulhou de cabeça no mundo da sorte instantânea.\n\nA jornada não foi fácil. A falta de informação sobre as emissões da SCML em Portugal motivou uma busca incessante que o levou a conhecer David Vázquez Trujillo, o maior colecionador mundial de lotarias. Sob a mentoria de David, Fabio Pagni e Kurt Böhmer, Jorge transformou-se de um entusiasta num verdadeiro guardião da história mundial das raspadinhas.\n\nHoje, a viver e trabalhar na Suíça, Jorge dedica 99,9% da sua alma ao colecionismo de raspadinhas, mantendo o espírito vivo para que este arquivo digital seja um legado eterno para as futuras gerações, incluindo a sua neta Chloe.`,
+    founderQuote: "Dedico 99,9% da minha alma às raspadinhas; o resto é a história de uma vida a colecionar sonhos.",
+    milestones: [
+      { year: '1967', title: 'O Início no Porto', description: 'Nascimento na Rua de Bonjóia, Campanhã. O início de uma jornada marcada pela curiosidade.' },
+      { year: '1980', title: 'A Herança de Custódio', description: 'A descoberta dos cromos Panini e o despertar do "vício" saudável do colecionismo pelas mãos do pai.' },
+      { year: '1983', title: 'O Primeiro Passo Profissional', description: 'Início da vida laboral, mantendo sempre o "bichinho" das moedas e notas do mundo.' },
+      { year: 'Itália', title: 'O Despertar da Sorte', description: 'A descoberta das "Gratta e Vinci" e a decisão de catalogar sistematicamente as raspadinhas mundiais.' },
+      { year: '2013', title: 'A Conexão Mundial', description: 'O encontro com David Vázquez Trujillo e o início da grande caminhada com mentores globais.' },
+      { year: '2025', title: 'O Arquivo Digital', description: 'A viver na Suíça, consolida o seu legado digital para garantir que a história nunca se perca.' }
+    ]
+  });
   const [totalStats, setTotalStats] = useState({ total: 0, stats: {} as Record<string, number>, categoryStats: {} as Record<string, number>, countryStats: {} as Record<string, number>, stateStats: {} as Record<string, number>, collectorStats: {} as Record<string, number> });
   const [isLoadingDB, setIsLoadingDB] = useState(true);
   const [currentPage, setCurrentPage] = useState<PageType>('home');
@@ -89,7 +102,12 @@ function App() {
       setCategories(cats);
       
       const meta = await storageService.getSiteMetadata();
-      setSiteMetadata(meta);
+      // If meta is empty or default, keep our pre-filled story
+      if (meta && meta.founderBio) {
+        setSiteMetadata(meta);
+      } else {
+        await storageService.saveSiteMetadata(siteMetadata);
+      }
 
       const allItems = await storageService.getAll();
       if (allItems.length === 0) {
@@ -108,10 +126,11 @@ function App() {
     }
   };
 
-  const handleUpdateSiteMetadata = async (newMeta: SiteMetadata) => {
-    await storageService.saveSiteMetadata(newMeta);
-    setSiteMetadata(newMeta);
-    triggerSignal("Definições do Site Atualizadas!", 'success');
+  const handleUpdateSiteMetadata = async (newMeta: Partial<SiteMetadata>) => {
+    const updated = { ...siteMetadata, ...newMeta } as SiteMetadata;
+    await storageService.saveSiteMetadata(updated);
+    setSiteMetadata(updated);
+    triggerSignal("Memórias Guardadas com Sucesso!", 'success');
   };
 
   const handleUpdateImage = async (updatedImage: ScratchcardData) => {
@@ -297,7 +316,16 @@ function App() {
           ) : currentPage === 'stats' ? (
             <StatsSection stats={totalStats.stats} categoryStats={totalStats.categoryStats as any} countryStats={totalStats.countryStats} stateStats={totalStats.stateStats} collectorStats={totalStats.collectorStats} totalRecords={totalStats.total} t={t.stats} currentUser={currentUser} />
           ) : currentPage === 'about' ? (
-            <AboutPage t={t} isAdmin={isAdmin} founderPhoto={siteMetadata.founderPhotoUrl} onUpdateFounderPhoto={(url) => handleUpdateSiteMetadata({ ...siteMetadata, founderPhotoUrl: url })} />
+            <AboutPage 
+              t={t} 
+              isAdmin={isAdmin} 
+              founderPhoto={siteMetadata.founderPhotoUrl} 
+              founderBio={siteMetadata.founderBio}
+              founderQuote={siteMetadata.founderQuote}
+              milestones={siteMetadata.milestones}
+              onUpdateFounderPhoto={(url) => handleUpdateSiteMetadata({ founderPhotoUrl: url })} 
+              onUpdateMetadata={(data) => handleUpdateSiteMetadata(data)}
+            />
           ) : currentPage === 'map' ? (
             <div className="flex-1 p-4 md:p-8 animate-fade-in flex flex-col h-full">
                <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between shrink-0 gap-4">
