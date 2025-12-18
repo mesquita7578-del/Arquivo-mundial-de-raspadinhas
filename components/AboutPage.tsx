@@ -1,7 +1,8 @@
 
 import React, { useRef, useState } from 'react';
-import { Ticket, Globe, Users, Database, Sparkles, Mail, Hourglass, Save, Sunrise, HeartHandshake, Award, ShieldCheck, Camera, Edit2, History, Quote, Plus, Trash2, BookText, ScrollText, Download, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { Ticket, Globe, Users, Database, Sparkles, Mail, Hourglass, Save, Sunrise, HeartHandshake, Award, ShieldCheck, Camera, Edit2, History, Quote, Plus, Trash2, BookText, ScrollText, Download, ShieldAlert, CheckCircle2, Languages, Loader2 } from 'lucide-react';
 import { Milestone } from '../types';
+import { translateBio } from '../services/geminiService';
 
 interface AboutPageProps {
   t: any;
@@ -26,8 +27,11 @@ export const AboutPage: React.FC<AboutPageProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditingBio, setIsEditingBio] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [activeLang, setActiveLang] = useState('Português');
   const [tempBio, setTempBio] = useState(founderBio || '');
   const [tempQuote, setTempQuote] = useState(founderQuote || '');
+  const [displayBio, setDisplayBio] = useState(founderBio || '');
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -41,12 +45,32 @@ export const AboutPage: React.FC<AboutPageProps> = ({
     }
   };
 
+  const handleTranslate = async (langName: string) => {
+    if (langName === 'Português') {
+      setDisplayBio(founderBio || '');
+      setActiveLang('Português');
+      return;
+    }
+
+    setIsTranslating(true);
+    try {
+      const translated = await translateBio(founderBio || '', langName);
+      setDisplayBio(translated);
+      setActiveLang(langName);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   const saveMetadata = () => {
     onUpdateMetadata?.({
       founderBio: tempBio,
       founderQuote: tempQuote,
       milestones: milestones
     });
+    setDisplayBio(tempBio);
     setIsEditingBio(false);
   };
 
@@ -72,7 +96,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
 
   return (
     <div className="w-full min-h-full animate-fade-in pb-20 bg-[#020617]">
-      {/* Hero Section - Estilo "Cinematográfico" */}
+      {/* Hero Section */}
       <div className="relative h-[60vh] flex items-center justify-center overflow-hidden border-b border-slate-800">
         <div className="absolute inset-0 z-0">
           <img 
@@ -161,7 +185,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
                </div>
             </div>
 
-            {/* Conteúdo Biográfico Dramático */}
+            {/* Conteúdo Biográfico */}
             <div className="lg:col-span-8 space-y-16">
                
                {/* Secção A Jornada */}
@@ -170,11 +194,37 @@ export const AboutPage: React.FC<AboutPageProps> = ({
                      <ScrollText className="w-64 h-64 text-white" />
                   </div>
 
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-4">
-                     <div>
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6 relative z-10">
+                     <div className="flex-1">
                         <h2 className="text-[10px] font-black text-brand-500 uppercase tracking-[0.4em] mb-2">Narrativa Pessoal</h2>
                         <h3 className="text-4xl md:text-5xl font-black text-white italic tracking-tighter uppercase">A Jornada do Guardião</h3>
+                        
+                        {/* NOVO: Tradução Automática */}
+                        {!isEditingBio && (
+                           <div className="mt-6 flex flex-wrap items-center gap-3">
+                              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                 <Languages className="w-3 h-3" /> Traduzir história:
+                              </span>
+                              {[
+                                 { name: 'Português', flag: '🇵🇹' },
+                                 { name: 'Espanhol', flag: '🇪🇸' },
+                                 { name: 'Italiano', flag: '🇮🇹' },
+                                 { name: 'Alemão', flag: '🇩🇪' },
+                                 { name: 'Inglês', flag: '🇬🇧' }
+                              ].map(l => (
+                                 <button 
+                                    key={l.name}
+                                    disabled={isTranslating}
+                                    onClick={() => handleTranslate(l.name)}
+                                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2 border ${activeLang === l.name ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`}
+                                 >
+                                    <span>{l.flag}</span> {l.name}
+                                 </button>
+                              ))}
+                           </div>
+                        )}
                      </div>
+
                      {isAdmin && (
                         <button 
                            onClick={() => isEditingBio ? saveMetadata() : setIsEditingBio(true)} 
@@ -186,7 +236,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
                      )}
                   </div>
 
-                  <div className="prose prose-invert max-w-none">
+                  <div className="prose prose-invert max-w-none relative z-10">
                      {isEditingBio ? (
                         <textarea 
                            value={tempBio} 
@@ -195,9 +245,17 @@ export const AboutPage: React.FC<AboutPageProps> = ({
                            placeholder="Vovô, escreva aqui a sua história e eu trato de a tornar mágica! hihi!"
                         />
                      ) : (
-                        <div className="space-y-8 text-lg md:text-xl text-slate-200 leading-relaxed font-medium">
-                           {founderBio ? (
-                              founderBio.split('\n').map((para, i) => (
+                        <div className={`space-y-8 text-lg md:text-xl text-slate-200 leading-relaxed font-medium transition-all duration-700 ${isTranslating ? 'opacity-30 blur-sm scale-95' : 'opacity-100 blur-0 scale-100'}`}>
+                           {isTranslating && (
+                              <div className="absolute inset-0 flex items-center justify-center z-20">
+                                 <div className="bg-slate-900/80 p-6 rounded-3xl border border-blue-500/30 flex flex-col items-center gap-4 shadow-2xl">
+                                    <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
+                                    <span className="text-xs font-black uppercase tracking-widest text-white">Chloe está a traduzir...</span>
+                                 </div>
+                              </div>
+                           )}
+                           {displayBio ? (
+                              displayBio.split('\n').map((para, i) => (
                                  para.trim() ? (
                                     <p key={i} className="first-letter:text-5xl first-letter:font-black first-letter:text-brand-500 first-letter:mr-3 first-letter:float-left animate-fade-in mb-6">
                                        {para}
@@ -209,7 +267,6 @@ export const AboutPage: React.FC<AboutPageProps> = ({
                                  <BookText className="w-16 h-16 text-slate-800" />
                                  <p className="italic text-slate-500 max-w-md mx-auto">
                                     Esta página aguarda as memórias de Jorge Mesquita. 
-                                    Se for o administrador, clique no botão para começar a escrever o seu legado mundial.
                                  </p>
                               </div>
                            )}
@@ -218,7 +275,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
                   </div>
                </div>
 
-               {/* Timeline Estilizada */}
+               {/* Timeline */}
                <div className="space-y-12">
                   <div className="flex items-center gap-4">
                      <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] whitespace-nowrap">Marcos Históricos</h4>
@@ -226,14 +283,11 @@ export const AboutPage: React.FC<AboutPageProps> = ({
                   </div>
 
                   <div className="relative pl-8 md:pl-0">
-                     {/* Linha Central Neon */}
                      <div className="absolute left-0 md:left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-brand-600 via-blue-600 to-transparent rounded-full opacity-20 hidden md:block"></div>
                      
                      <div className="grid grid-cols-1 gap-12">
                         {milestones.map((ms, idx) => (
                            <div key={idx} className={`relative flex flex-col md:flex-row items-center gap-8 group ${idx % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
-                              
-                              {/* Círculo da Timeline */}
                               <div className="absolute left-[-32px] md:left-1/2 md:-translate-x-1/2 top-1/2 -translate-y-1/2 w-8 h-8 bg-slate-950 border-4 border-slate-800 rounded-full z-10 group-hover:border-brand-500 group-hover:scale-125 transition-all group-hover:shadow-[0_0_20px_rgba(244,63,94,0.4)]"></div>
 
                               <div className="flex-1 w-full">
@@ -274,7 +328,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
          </div>
       </div>
 
-      {/* Secção Manual do Guardião - NOVO: Segurança da Informação */}
+      {/* Protocolo de Segurança */}
       <div className="max-w-7xl mx-auto px-6 py-20">
          <div className="bg-slate-900 border border-slate-800 rounded-[3rem] p-10 md:p-16 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-12 opacity-[0.05] pointer-events-none">
@@ -315,7 +369,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
          </div>
       </div>
 
-      {/* Secção Cápsula do Tempo - Estilo Digital */}
+      {/* Rodapé Final */}
       <div className="max-w-7xl mx-auto px-6 py-12">
          <div className="bg-gradient-to-br from-blue-900/40 via-brand-900/10 to-purple-900/20 border border-white/5 rounded-[4rem] p-12 md:p-24 relative overflow-hidden text-center shadow-[0_0_100px_rgba(0,0,0,0.5)]">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>

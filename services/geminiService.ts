@@ -12,6 +12,27 @@ const getContinentFromCountry = (country: string): Continent => {
   return 'Europa';
 };
 
+export const translateBio = async (text: string, targetLanguage: string): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  try {
+    const prompt = `Traduza a seguinte biografia para ${targetLanguage}. 
+    Mantenha o tom respeitoso, emocional e o contexto histórico de um colecionador de raspadinhas. 
+    Não altere nomes próprios como "Bonjóia", "Campanhã" ou "Jorge Mesquita".
+    
+    TEXTO:
+    ${text}`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+    });
+    return response.text || text;
+  } catch (error) {
+    console.error("Erro na tradução:", error);
+    return text;
+  }
+};
+
 export const generateDocumentMetadata = async (fileName: string, title: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
@@ -37,7 +58,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     5. gameNumber (Jogo nº)
     6. releaseDate (Data da primeira emissão)
     7. closeDate (Data de encerramento)
-    8. lines (Cores das linhas: azul, vermelho, multicolor, verde, etc)
+    8. lines (Cores das lines: azul, vermelho, multicolor, verde, etc)
     9. price (Custo facial)
     10. printer (Impresso por ex: Scientific Games, CBN)
     11. size (Dimensões ex: 10x15cm)
