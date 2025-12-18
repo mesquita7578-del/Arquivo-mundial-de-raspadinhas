@@ -60,6 +60,19 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
   const frontInputRef = useRef<HTMLInputElement>(null);
   const backInputRef = useRef<HTMLInputElement>(null);
 
+  // Compute unique suggestions from archive for autocomplete
+  const suggestions = useMemo(() => {
+    const unique = (arr: any[]) => Array.from(new Set(arr.filter(Boolean)));
+    return {
+      gameNames: unique(existingImages.map(img => img.gameName)),
+      countries: unique(existingImages.map(img => img.country)),
+      operators: unique(existingImages.map(img => img.operator)),
+      printers: unique(existingImages.map(img => img.printer)),
+      collectors: unique(existingImages.map(img => img.collector)),
+      years: unique(existingImages.map(img => img.releaseDate))
+    };
+  }, [existingImages]);
+
   useEffect(() => {
     if (initialFile) handleFrontSelect(initialFile);
   }, [initialFile]);
@@ -184,27 +197,27 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    <div className="space-y-4">
                       <label className="block">
                          <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Nome do Jogo</span>
-                         <input type="text" value={formData.gameName} onChange={e => setFormData({...formData, gameName: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold" />
+                         <input list="game-names" type="text" value={formData.gameName} onChange={e => setFormData({...formData, gameName: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-brand-500 transition-all" />
                       </label>
                       <label className="block">
                          <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Colecionador</span>
                          <div className="relative">
                             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                            <input type="text" value={formData.collector} onChange={e => setFormData({...formData, collector: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2 text-white" />
+                            <input list="collectors" type="text" value={formData.collector} onChange={e => setFormData({...formData, collector: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2 text-white outline-none focus:border-brand-500 transition-all" />
                          </div>
                       </label>
                       <div className="grid grid-cols-2 gap-4">
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">País</span>
-                           <input type="text" value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white" />
+                           <input list="countries" type="text" value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white outline-none focus:border-brand-500 transition-all" />
                         </label>
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Entidade (Operador)</span>
-                           <input type="text" value={formData.operator} onChange={e => setFormData({...formData, operator: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white" />
+                           <input list="operators" type="text" value={formData.operator} onChange={e => setFormData({...formData, operator: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white outline-none focus:border-brand-500 transition-all" />
                         </label>
                       </div>
 
-                      {/* NOVO SELETOR DE CORES PARA LINHAS */}
+                      {/* SELETOR DE CORES PARA LINHAS */}
                       <div className="space-y-2">
                         <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1 flex items-center gap-2">
                           <Palette className="w-3 h-3 text-brand-500" /> Linhas de Segurança (Cores)
@@ -227,30 +240,30 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                       <div className="grid grid-cols-2 gap-4">
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Nº Jogo</span>
-                           <input type="text" value={formData.gameNumber} onChange={e => setFormData({...formData, gameNumber: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white" />
+                           <input type="text" value={formData.gameNumber} onChange={e => setFormData({...formData, gameNumber: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white outline-none focus:border-brand-500 transition-all" />
                         </label>
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Ano</span>
-                           <input type="text" value={formData.releaseDate} onChange={e => setFormData({...formData, releaseDate: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white" />
+                           <input list="years" type="text" value={formData.releaseDate} onChange={e => setFormData({...formData, releaseDate: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white outline-none focus:border-brand-500 transition-all" />
                         </label>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Preço</span>
-                           <input type="text" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white" />
+                           <input type="text" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white outline-none focus:border-brand-500 transition-all" />
                         </label>
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Gráfica</span>
-                           <input type="text" value={formData.printer} onChange={e => setFormData({...formData, printer: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white" />
+                           <input list="printers" type="text" value={formData.printer} onChange={e => setFormData({...formData, printer: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white outline-none focus:border-brand-500 transition-all" />
                         </label>
                       </div>
-                      <textarea value={formData.values} onChange={e => setFormData({...formData, values: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl p-4 text-white text-sm h-32 outline-none italic" placeholder="Notas do Arquivo..." />
+                      <textarea value={formData.values} onChange={e => setFormData({...formData, values: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl p-4 text-white text-sm h-32 outline-none italic transition-all focus:border-brand-500 shadow-inner" placeholder="Notas do Arquivo..." />
                    </div>
                 </div>
              </div>
           </div>
 
-          <div className="p-6 border-t border-slate-800 bg-slate-900 flex justify-end gap-4">
+          <div className="p-6 border-t border-slate-800 bg-slate-900 flex justify-end gap-4 shrink-0">
              <button onClick={onClose} className="px-8 py-3 bg-slate-800 text-slate-400 rounded-xl font-black text-xs uppercase hover:text-white transition-all">Cancelar</button>
              <button onClick={handleSave} disabled={isSaving} className="px-12 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-black flex items-center gap-2 shadow-2xl active:scale-95 transition-all">
                 {isSaving ? <Loader2 className="animate-spin w-5 h-5"/> : <Check className="w-5 h-5"/>}
@@ -258,6 +271,14 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
              </button>
           </div>
        </div>
+
+       {/* Autocomplete Datalists */}
+       <datalist id="game-names">{suggestions.gameNames.map(val => <option key={val} value={val} />)}</datalist>
+       <datalist id="collectors">{suggestions.collectors.map(val => <option key={val} value={val} />)}</datalist>
+       <datalist id="countries">{suggestions.countries.map(val => <option key={val} value={val} />)}</datalist>
+       <datalist id="operators">{suggestions.operators.map(val => <option key={val} value={val} />)}</datalist>
+       <datalist id="printers">{suggestions.printers.map(val => <option key={val} value={val} />)}</datalist>
+       <datalist id="years">{suggestions.years.map(val => <option key={val} value={val} />)}</datalist>
     </div>
   );
 };

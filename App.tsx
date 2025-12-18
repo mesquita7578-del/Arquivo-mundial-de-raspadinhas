@@ -327,7 +327,7 @@ function App() {
         } else { setCurrentUser(u); setUserRole('visitor'); return true; }
       }} t={t.login} />}
       
-      {isUploadModalOpen && <UploadModal onClose={() => setIsUploadModalOpen(false)} onUploadComplete={handleUploadComplete} existingImages={[]} initialFile={null} currentUser={currentUser} t={t.upload} />}
+      {isUploadModalOpen && <UploadModal onClose={() => setIsUploadModalOpen(false)} onUploadComplete={handleUploadComplete} existingImages={allImagesCache} initialFile={null} currentUser={currentUser} t={t.upload} />}
       {isHistoryModalOpen && <HistoryModal onClose={() => setIsHistoryModalOpen(false)} isAdmin={isAdmin} t={t.header} />}
       {isWebsitesModalOpen && <WebsitesModal onClose={() => setIsWebsitesModalOpen(false)} isAdmin={isAdmin} t={t.header} />}
     </div>
