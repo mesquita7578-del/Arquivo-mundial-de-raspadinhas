@@ -25,6 +25,7 @@ export interface ScratchcardData {
   continent: Continent;
   collector?: string;
   
+  operator?: string; // Novo: Casa do Jogo (ex: SCML, SWISSLOS)
   emission?: string;
   printer?: string;
   isSeries?: boolean;
@@ -66,7 +67,6 @@ export interface WebsiteLink {
   logoUrl?: string;
   country: string;
   category?: string;
-  // Added continent property to fix type mismatch in directory
   continent?: string;
 }
 
@@ -81,6 +81,7 @@ export interface AnalysisResult {
   country: string;
   region?: string;
   continent: Continent;
+  operator?: string;
   emission?: string;
   printer?: string;
   category: Category;

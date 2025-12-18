@@ -42,13 +42,24 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
     .sort((a, b) => Number(b[1]) - Number(a[1]));
 
   const getCollectorBadge = (name: string) => {
-     const lower = name.toLowerCase();
-     if (lower.includes('jorge')) return { color: 'bg-blue-500', text: 'JM', icon: <Crown className="w-3 h-3 text-yellow-400 fill-yellow-400" /> };
-     if (lower.includes('fabio') || lower.includes('fábio')) return { color: 'bg-green-500', text: 'FP', icon: <Star className="w-3 h-3 text-white fill-white" /> };
-     if (lower.includes('chloe')) return { color: 'bg-pink-500', text: 'CH', icon: <Crown className="w-3 h-3 text-pink-200 fill-pink-200" /> };
-     if (lower.includes('pedro') || lower.includes('rodrigo')) return { color: 'bg-orange-500', text: 'PR', icon: <ShieldCheck className="w-3 h-3 text-white fill-white" /> };
-     if (lower.includes('ia') || lower.includes('system') || lower.includes('guardiã')) return { color: 'bg-purple-600', text: 'IA', icon: <Sparkles className="w-3 h-3 text-cyan-300 fill-cyan-300" /> };
-     return { color: 'bg-slate-600', text: name.substring(0, 2).toUpperCase(), icon: null };
+     const lower = name.toLowerCase().trim();
+     // Identificação do Vovô Jorge: nome ou iniciais J / Jj
+     if (lower.includes('jorge') || lower === 'j' || lower === 'jj') {
+       return { color: 'bg-blue-600', text: 'JM', icon: <Crown className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.5)]" /> };
+     }
+     if (lower.includes('fabio') || lower.includes('fábio')) {
+       return { color: 'bg-green-600', text: 'FP', icon: <Star className="w-3.5 h-3.5 text-white fill-white" /> };
+     }
+     if (lower.includes('chloe')) {
+       return { color: 'bg-pink-600', text: 'CH', icon: <Crown className="w-3.5 h-3.5 text-pink-200 fill-pink-200" /> };
+     }
+     if (lower.includes('pedro') || lower.includes('rodrigo')) {
+       return { color: 'bg-orange-600', text: 'PR', icon: <ShieldCheck className="w-3.5 h-3.5 text-white fill-white" /> };
+     }
+     if (lower.includes('ia') || lower.includes('system') || lower.includes('guardiã')) {
+       return { color: 'bg-purple-700', text: 'IA', icon: <Sparkles className="w-3.5 h-3.5 text-cyan-300 fill-cyan-300" /> };
+     }
+     return { color: 'bg-slate-700', text: name.substring(0, 2).toUpperCase(), icon: null };
   };
 
   // State Distribution Data (Donut)
@@ -123,7 +134,6 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
               <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Países Representados</p>
            </div>
 
-           {/* Gráfico 1: Raspadinhas */}
            <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-6 rounded-2xl relative overflow-hidden group hover:border-brand-500/50 transition-all">
               <div className="flex items-center justify-between mb-4">
                  <div className="p-2.5 bg-brand-500/10 rounded-xl text-brand-500">
@@ -143,7 +153,6 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
               </div>
            </div>
 
-           {/* Gráfico 2: Lotarias */}
            <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-6 rounded-2xl relative overflow-hidden group hover:border-purple-500/50 transition-all">
               <div className="flex items-center justify-between mb-4">
                  <div className="p-2.5 bg-purple-500/10 rounded-xl text-purple-400">
@@ -228,29 +237,34 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                          <div key={name} className="group">
                             <div className="flex items-center justify-between mb-2">
                                <div className="flex items-center gap-3">
-                                  <div className={`w-8 h-8 rounded-full ${badge.color} flex items-center justify-center text-xs font-bold text-white shadow-lg border border-white/10`}>
-                                     {badge.icon ? badge.icon : badge.text}
+                                  <div className={`w-9 h-9 rounded-full ${badge.color} flex items-center justify-center text-xs font-black text-white shadow-xl border border-white/20 relative`}>
+                                     {badge.icon ? (
+                                       <div className="flex items-center justify-center w-full h-full">
+                                         <span className="absolute -top-1 -right-1 z-20 transform rotate-12">{badge.icon}</span>
+                                         {badge.text}
+                                       </div>
+                                     ) : badge.text}
                                   </div>
                                   <div>
-                                     <div className="text-xs font-bold text-white flex items-center gap-1">
+                                     <div className="text-xs font-black text-white flex items-center gap-1 uppercase tracking-tight">
                                         {name}
-                                        {index === 0 && <Crown className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
+                                        {(name.toLowerCase().trim() === 'j' || name.toLowerCase().trim() === 'jj' || name.toLowerCase().includes('jorge')) && <Crown className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
                                      </div>
-                                     <div className="text-[10px] text-slate-400 font-mono">{count} registos</div>
+                                     <div className="text-[10px] text-slate-400 font-mono font-bold">{count} peças arquivadas</div>
                                   </div>
                                </div>
-                               <span className="text-xs font-bold text-slate-500">{Math.round(percentage)}%</span>
+                               <span className="text-[10px] font-black text-slate-500">{Math.round(percentage)}%</span>
                             </div>
                             <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
                                <div 
-                                  className={`h-full rounded-full ${badge.color.replace('bg-', 'bg-gradient-to-r from-').replace('500', '400')} to-white/50 transition-all duration-1000`} 
+                                  className={`h-full rounded-full ${badge.color.replace('bg-', 'bg-gradient-to-r from-').replace('600', '400')} to-white/30 transition-all duration-1000`} 
                                   style={{ width: `${animate ? percentage : 0}%` }}
                                ></div>
                             </div>
                          </div>
                       );
                    }) : (
-                      <div className="text-center py-4 text-xs text-slate-500 italic">Nenhum guardião detetado ancora.</div>
+                      <div className="text-center py-4 text-xs text-slate-500 italic">O arquivo está em silêncio...</div>
                    )}
                 </div>
              </div>

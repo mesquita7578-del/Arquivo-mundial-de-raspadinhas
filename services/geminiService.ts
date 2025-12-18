@@ -12,6 +12,26 @@ const getContinentFromCountry = (country: string): Continent => {
   return 'Europa'; // Default
 };
 
+// Fix: Added missing export for generateDocumentMetadata to resolve compilation error in HistoryModal.tsx
+export const generateDocumentMetadata = async (fileName: string, title: string): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  try {
+    const prompt = `Como Chloe, a guardiã do arquivo, escreva uma breve descrição histórica ou técnica (máximo 2 parágrafos) para este documento intitulado "${title}". 
+    O documento faz parte de um arquivo mundial de raspadinhas e lotarias. 
+    Seja profissional e informativa.`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+    });
+
+    return response.text || "";
+  } catch (error) {
+    console.error("Erro ao gerar metadados do documento:", error);
+    return "";
+  }
+};
+
 export const analyzeImage = async (frontBase64: string, backBase64: string | null, mimeType: string): Promise<AnalysisResult> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
@@ -23,16 +43,17 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     CAMPOS OBRIGATÓRIOS:
     1. gameName: Nome do jogo.
     2. country: País de origem (ex: Argentina, Portugal, Brasil).
-    3. continent: Continente correto (Europa, América, Ásia, África, Oceania). ATENÇÃO: Argentina e Brasil são AMÉRICA.
-    4. region: Estado/Cantão/Região (se aplicável).
-    5. gameNumber: Número do jogo/modelo.
-    6. emission: Tiragem ou série (ex: 1.000.000).
-    7. printer: Gráfica/Impressor.
-    8. price: Preço facial (ex: 5€).
-    9. size: Medidas/Tamanho (ex: 10x15cm).
-    10. releaseDate: Ano de lançamento (apenas o ano).
-    11. state: "SC" (raspada) ou "MINT" (nova).
-    12. lines: Identifique a cor das linhas de segurança ou série (ex: azul, vermelha, multicolor, verde, amarela, castanha, cinza).
+    3. continent: Continente correto (Europa, América, Ásia, África, Oceania).
+    4. operator: Casa do Jogo / Entidade emissora (ex: SCML, SWISSLOS, Lotería de la Ciudad, ONCE, Jogos Santa Casa).
+    5. region: Estado/Cantão/Região (se aplicável).
+    6. gameNumber: Número do jogo/modelo.
+    7. emission: Tiragem ou série (ex: 1.000.000).
+    8. printer: Gráfica/Impressor (quem imprimiu, ex: Scientific Games, CBN).
+    9. price: Preço facial (ex: 5€).
+    10. size: Medidas/Tamanho (ex: 10x15cm).
+    11. releaseDate: Ano de lançamento (apenas o ano).
+    12. state: "SC" (raspada) ou "MINT" (nova).
+    13. lines: Identifique a cor das linhas de segurança ou série.
     
     Retorne APENAS JSON puro. Se não ler algum campo, deixe vazio.`;
 
@@ -60,6 +81,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
             country: { type: Type.STRING },
             continent: { type: Type.STRING },
             region: { type: Type.STRING },
+            operator: { type: Type.STRING },
             state: { type: Type.STRING },
             values: { type: Type.STRING },
             emission: { type: Type.STRING },
@@ -86,6 +108,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       country: data.country || "Portugal",
       continent: data.continent || getContinentFromCountry(data.country || "Portugal"),
       region: data.region || "",
+      operator: data.operator || "",
       emission: data.emission || "",
       printer: data.printer || "",
       lines: data.lines || ""
@@ -104,37 +127,11 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       state: "SC",
       country: "Portugal",
       continent: "Europa",
+      operator: "",
       region: "",
       emission: "",
       printer: "",
       lines: ""
     };
-  }
-};
-
-export const searchScratchcardInfo = async (query: string): Promise<Partial<AnalysisResult>> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Pesquise informações oficiais sobre esta raspadinha/lotaria: "${query}".`,
-      config: { tools: [{ googleSearch: {} }] },
-    });
-    return {}; 
-  } catch (error) {
-    return {};
-  }
-};
-
-export const generateDocumentMetadata = async (fileName: string, title: string): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Gere um resumo técnico para: "${title}".`,
-    });
-    return response.text?.trim() || "";
-  } catch (error) {
-    return "";
   }
 };
