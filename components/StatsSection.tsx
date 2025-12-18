@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Continent } from '../types';
-import { BarChart3, Database, Map, PieChart, Users, Award, Ticket, Coins, Crown, Star, Sparkles, Flag, Globe, Mail, ShieldCheck } from 'lucide-react';
+import { BarChart3, Database, Map, PieChart, Users, Award, Ticket, Coins, Crown, Star, Sparkles, Flag, Globe, Mail, ShieldCheck, LayoutGrid, CheckCircle2 } from 'lucide-react';
 
 interface StatsSectionProps {
   stats: Record<string, number>;
@@ -51,16 +52,11 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
   };
 
   // State Distribution Data (Donut)
-  // Casting values to number to avoid 'unknown' errors
   const totalStateCount = (Object.values(stateStats) as number[]).reduce((a, b) => a + b, 0);
   
-  // Group 1: MINT
   const countMint = Number(stateStats['MINT']) || 0;
-  // Group 2: SC
   const countSC = Number(stateStats['SC']) || 0;
-  // Group 3: CS
   const countCS = Number(stateStats['CS']) || 0;
-  // Group 4: AMOSTRAS (Samples/Specimens/Void + International Variants)
   const amostraKeys = [
     'AMOSTRA', 'MUESTRA', 'CAMPIONE', 'SPECIMEN', 'VOID', 
     'MUSTER', 'ÉCHANTILLON', '견본', 'STEEKPROEF', 'PRØVE', 
@@ -68,19 +64,15 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
   ];
   const countAmostra = amostraKeys.reduce((sum, key) => sum + (Number(stateStats[key]) || 0), 0);
 
-  // Calculate Percentages
   const pctMint = totalStateCount > 0 ? (countMint / totalStateCount) * 100 : 0;
   const pctSC = totalStateCount > 0 ? (countSC / totalStateCount) * 100 : 0;
   const pctCS = totalStateCount > 0 ? (countCS / totalStateCount) * 100 : 0;
   const pctAmostra = totalStateCount > 0 ? (countAmostra / totalStateCount) * 100 : 0;
 
-  // Calculate Stops for Conic Gradient
   const stopMint = pctMint;
   const stopSC = stopMint + pctSC;
   const stopCS = stopSC + pctCS;
-  // Remaining is Amostra/Other
 
-  // Calculation for Separate Bars
   const safeTotal = totalRecords || 1;
   const scratchCount = categoryStats.scratch || 0;
   const lotteryCount = categoryStats.lottery || 0;
@@ -89,20 +81,17 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
 
   return (
     <div className="w-full bg-slate-950 border-t border-slate-900 py-12 pb-32 animate-fade-in relative overflow-hidden">
-      
-      {/* Background Decor */}
       <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-brand-900/10 to-transparent pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
            <div>
               <div className="flex items-center gap-2 text-brand-500 mb-2">
                 <BarChart3 className="w-6 h-6" />
                 <h2 className="text-sm font-bold uppercase tracking-widest">{t.title}</h2>
               </div>
-              <h3 className="text-3xl md:text-4xl font-black text-white">Dashboard do Colecionador</h3>
+              <h3 className="text-3xl md:text-4xl font-black text-white italic">Dashboard do Colecionador</h3>
            </div>
            <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 rounded-full px-4 py-2">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
@@ -110,23 +99,19 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
            </div>
         </div>
 
-        {/* Top Section: Main Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
            
-           {/* Total Items Card */}
            <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-6 rounded-2xl relative overflow-hidden group hover:border-brand-500/30 transition-colors">
               <div className="absolute -right-6 -top-6 w-24 h-24 bg-brand-500/10 rounded-full blur-2xl group-hover:bg-brand-500/20 transition-colors"></div>
               <div className="flex justify-between items-start mb-4">
                  <div className="p-3 bg-brand-500/10 rounded-xl text-brand-500">
                     <Database className="w-6 h-6" />
                  </div>
-                 <span className="text-xs font-bold text-slate-500 bg-slate-900 px-2 py-1 rounded border border-slate-800">+1 hoje</span>
               </div>
               <div className="text-4xl font-black text-white mb-1 font-mono tracking-tight">{totalRecords}</div>
               <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">{t.totalRecords}</p>
            </div>
 
-           {/* Countries Count Card */}
            <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-6 rounded-2xl relative overflow-hidden group hover:border-blue-500/30 transition-colors">
               <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-colors"></div>
               <div className="flex justify-between items-start mb-4">
@@ -138,51 +123,49 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
               <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Países Representados</p>
            </div>
 
-           {/* Type Breakdown Card (UPDATED TO SPLIT BARS) */}
-           <div className="col-span-1 md:col-span-2 bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-6 rounded-2xl flex flex-col justify-center relative overflow-hidden">
-              <div className="flex items-center gap-2 mb-4">
-                 <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400"><Ticket className="w-5 h-5" /></div>
-                 <span className="text-sm font-bold text-white">Distribuição por Tipo</span>
+           {/* Gráfico 1: Raspadinhas */}
+           <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-6 rounded-2xl relative overflow-hidden group hover:border-brand-500/50 transition-all">
+              <div className="flex items-center justify-between mb-4">
+                 <div className="p-2.5 bg-brand-500/10 rounded-xl text-brand-500">
+                    <Coins className="w-6 h-6" />
+                 </div>
+                 <span className="text-[10px] font-black text-brand-400 bg-brand-900/20 px-2 py-0.5 rounded-full border border-brand-500/30 uppercase">Raspadinhas</span>
               </div>
-              
-              <div className="space-y-4 w-full">
-                 {/* Raspadinhas Bar */}
-                 <div>
-                    <div className="flex justify-between items-center mb-1.5">
-                       <span className="flex items-center gap-2 text-xs font-bold text-slate-300">
-                          <Coins className="w-3.5 h-3.5 text-brand-500" /> Raspadinhas
-                       </span>
-                       <span className="text-xs font-mono font-bold text-white">
-                          {scratchCount} <span className="text-slate-500">({Math.round(scratchPct)}%)</span>
-                       </span>
-                    </div>
-                    <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
-                       <div className="h-full bg-brand-500 shadow-[0_0_10px_rgba(244,63,94,0.5)] transition-all duration-1000 ease-out" style={{ width: `${animate ? scratchPct : 0}%` }}></div>
-                    </div>
-                 </div>
+              <div className="flex items-baseline gap-2 mb-4">
+                <div className="text-4xl font-black text-white font-mono tracking-tighter">{scratchCount}</div>
+                <div className="text-xs font-bold text-slate-500">{Math.round(scratchPct)}% do arquivo</div>
+              </div>
+              <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
+                <div 
+                  className="h-full bg-gradient-to-r from-brand-600 to-brand-400 shadow-[0_0_15px_rgba(244,63,94,0.4)] transition-all duration-1000 ease-out" 
+                  style={{ width: `${animate ? scratchPct : 0}%` }}
+                ></div>
+              </div>
+           </div>
 
-                 {/* Lotarias Bar */}
-                 <div>
-                    <div className="flex justify-between items-center mb-1.5">
-                       <span className="flex items-center gap-2 text-xs font-bold text-slate-300">
-                          <Ticket className="w-3.5 h-3.5 text-purple-500" /> Lotarias
-                       </span>
-                       <span className="text-xs font-mono font-bold text-white">
-                          {lotteryCount} <span className="text-slate-500">({Math.round(lotteryPct)}%)</span>
-                       </span>
-                    </div>
-                    <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
-                       <div className="h-full bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)] transition-all duration-1000 ease-out" style={{ width: `${animate ? lotteryPct : 0}%` }}></div>
-                    </div>
+           {/* Gráfico 2: Lotarias */}
+           <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-6 rounded-2xl relative overflow-hidden group hover:border-purple-500/50 transition-all">
+              <div className="flex items-center justify-between mb-4">
+                 <div className="p-2.5 bg-purple-500/10 rounded-xl text-purple-400">
+                    <Ticket className="w-6 h-6" />
                  </div>
+                 <span className="text-[10px] font-black text-purple-400 bg-purple-900/20 px-2 py-0.5 rounded-full border border-purple-500/30 uppercase">Lotarias</span>
+              </div>
+              <div className="flex items-baseline gap-2 mb-4">
+                <div className="text-4xl font-black text-white font-mono tracking-tighter">{lotteryCount}</div>
+                <div className="text-xs font-bold text-slate-500">{Math.round(lotteryPct)}% do arquivo</div>
+              </div>
+              <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
+                <div 
+                  className="h-full bg-gradient-to-r from-purple-600 to-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all duration-1000 ease-out" 
+                  style={{ width: `${animate ? lotteryPct : 0}%` }}
+                ></div>
               </div>
            </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Main Chart: Continents */}
-          <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl relative">
+          <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
             <h3 className="text-lg font-bold text-white mb-12 flex items-center gap-2">
                <Globe className="w-5 h-5 text-slate-400" />
                Itens por Continente
@@ -192,42 +175,33 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
               {continentsConfig.map((c) => {
                 const count = Number(stats[c.key as string]) || 0;
                 const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
-                const height = animate ? Math.max(percentage, 5) : 5; // Min height 5%
+                const height = animate ? Math.max(percentage, 5) : 5;
                 
                 return (
                   <div key={c.key} className="flex flex-col items-center flex-1 group h-full justify-end">
-                    {/* Value Badge on Top - Always Visible */}
                     <div 
                         className={`mb-3 bg-slate-800 text-white text-xs md:text-sm font-bold py-1 px-2 md:px-3 rounded-lg border border-slate-700 shadow-xl transition-all duration-700 transform ${animate ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
                         style={{ transitionDelay: '300ms' }}
                     >
                         {count}
                     </div>
-
-                    {/* The Bar */}
                     <div className="w-full max-w-[60px] relative flex flex-col justify-end group-hover:scale-105 transition-transform duration-300">
                         <div 
                             className={`w-full rounded-t-xl bg-gradient-to-t ${c.gradient} shadow-[0_0_20px_rgba(0,0,0,0.3)] transition-all duration-[1500ms] cubic-bezier(0.34, 1.56, 0.64, 1) relative overflow-hidden`}
                             style={{ height: `${height}%` }}
                         >
-                            {/* Shine effect */}
                             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent translate-y-full group-hover:-translate-y-full transition-transform duration-1000"></div>
                         </div>
-                        
-                        {/* Reflection at bottom */}
                         <div 
                             className={`w-full h-4 bg-gradient-to-b ${c.gradient} opacity-20 blur-md rounded-b-xl transform scale-y-[-0.5]`}
                             style={{ display: count > 0 ? 'block' : 'none' }}
                         ></div>
                     </div>
-
                     <span className="mt-4 text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider text-center">{c.label}</span>
                   </div>
                 );
               })}
             </div>
-            
-            {/* Grid Lines Background */}
             <div className="absolute inset-0 px-8 py-20 pointer-events-none flex flex-col justify-between opacity-10">
                <div className="w-full h-px bg-white"></div>
                <div className="w-full h-px bg-white"></div>
@@ -237,25 +211,19 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
             </div>
           </div>
 
-          {/* Side Column: Leaderboard & Status */}
           <div className="flex flex-col gap-6">
-             
-             {/* GUARDIANS OF THE ARCHIVE (New Widget) */}
              <div className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700/50 rounded-3xl p-6 shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
                    <Users className="w-32 h-32 text-white" />
                 </div>
-                
                 <h3 className="text-sm font-bold text-white mb-6 flex items-center gap-2 uppercase tracking-wider relative z-10">
                    <Award className="w-4 h-4 text-yellow-500" />
                    Guardiões do Arquivo
                 </h3>
-
                 <div className="space-y-4 relative z-10">
                    {guardians.length > 0 ? guardians.map(([name, count], index) => {
                       const badge = getCollectorBadge(name);
                       const percentage = (Number(count) / totalRecords) * 100;
-                      
                       return (
                          <div key={name} className="group">
                             <div className="flex items-center justify-between mb-2">
@@ -282,14 +250,11 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                          </div>
                       );
                    }) : (
-                      <div className="text-center py-4 text-xs text-slate-500 italic">
-                         Nenhum guardião detetado ancora.
-                      </div>
+                      <div className="text-center py-4 text-xs text-slate-500 italic">Nenhum guardião detetado ancora.</div>
                    )}
                 </div>
              </div>
 
-             {/* Top 5 Countries */}
              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
                 <h3 className="text-sm font-bold text-white mb-6 flex items-center gap-2 uppercase tracking-wider">
                    <Flag className="w-4 h-4 text-blue-500" />
@@ -318,17 +283,12 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                 </div>
              </div>
 
-             {/* State Distribution (Specific Breakdown) */}
              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col justify-center relative overflow-hidden">
-                <div className="flex justify-between items-center mb-6">
-                   <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
-                      <PieChart className="w-4 h-4 text-brand-500" />
-                      Estado
-                   </h3>
-                </div>
-                
+                <h3 className="text-sm font-bold text-white mb-6 flex items-center gap-2 uppercase tracking-wider">
+                   <PieChart className="w-4 h-4 text-brand-500" />
+                   Estado
+                </h3>
                 <div className="flex items-center justify-between gap-4">
-                   {/* CSS Conic Gradient Donut for 4 Segments */}
                    <div 
                      className="w-24 h-24 rounded-full relative flex items-center justify-center shrink-0"
                      style={{ 
@@ -341,50 +301,32 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                      }}
                    >
                       <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center border border-slate-800">
-                         <span className="text-[10px] font-bold text-slate-500">Estado</span>
+                         <span className="text-[10px] font-bold text-slate-500 italic">Estado</span>
                       </div>
                    </div>
-
                    <div className="flex-1 space-y-2">
-                      {/* MINT */}
                       <div className="flex items-center justify-between text-[10px]">
-                         <span className="flex items-center gap-2 text-slate-300">
-                            <span className="w-2 h-2 rounded-full bg-green-500"></span> MINT
-                         </span>
+                         <span className="flex items-center gap-2 text-slate-300"><span className="w-2 h-2 rounded-full bg-green-500"></span> MINT</span>
                          <span className="font-mono text-white font-bold">{Math.round(pctMint)}%</span>
                       </div>
-                      
-                      {/* SC */}
                       <div className="flex items-center justify-between text-[10px]">
-                         <span className="flex items-center gap-2 text-slate-300">
-                            <span className="w-2 h-2 rounded-full bg-blue-500"></span> SC
-                         </span>
+                         <span className="flex items-center gap-2 text-slate-300"><span className="w-2 h-2 rounded-full bg-blue-500"></span> SC</span>
                          <span className="font-mono text-white font-bold">{Math.round(pctSC)}%</span>
                       </div>
-
-                      {/* CS */}
                       <div className="flex items-center justify-between text-[10px]">
-                         <span className="flex items-center gap-2 text-slate-300">
-                            <span className="w-2 h-2 rounded-full bg-orange-500"></span> CS
-                         </span>
+                         <span className="flex items-center gap-2 text-slate-300"><span className="w-2 h-2 rounded-full bg-orange-500"></span> CS</span>
                          <span className="font-mono text-white font-bold">{Math.round(pctCS)}%</span>
                       </div>
-
-                      {/* AMOSTRAS */}
                       <div className="flex items-center justify-between text-[10px]">
-                         <span className="flex items-center gap-2 text-slate-300">
-                            <span className="w-2 h-2 rounded-full bg-pink-500"></span> Amostras
-                         </span>
+                         <span className="flex items-center gap-2 text-slate-300"><span className="w-2 h-2 rounded-full bg-pink-500"></span> Outros</span>
                          <span className="font-mono text-white font-bold">{Math.round(pctAmostra)}%</span>
                       </div>
                    </div>
                 </div>
              </div>
-
           </div>
         </div>
 
-        {/* FOOTER / SIGNATURE */}
         <div className="mt-24 pt-8 border-t border-slate-900 flex flex-col items-center justify-center text-center space-y-3 opacity-50 hover:opacity-100 transition-opacity duration-500">
             <p className="text-slate-500 text-[10px] uppercase tracking-[0.2em]">
               © {new Date().getFullYear()} • Arquivo Mundial
@@ -399,7 +341,6 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
               </a>
             </div>
         </div>
-
       </div>
     </div>
   );
