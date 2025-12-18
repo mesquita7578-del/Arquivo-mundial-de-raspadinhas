@@ -5,9 +5,10 @@ import {
   Hash, Clock, Flag, MapPin, Info, 
   History, Building2, Globe, Fingerprint,
   Sparkles, Columns, Ruler, Printer, Banknote, ScanLine,
-  Layers, LayoutGrid, Eye, Calendar, ChevronDown, User
+  Layers, LayoutGrid, Eye, Calendar, ChevronDown, User,
+  Tag, ShieldCheck, Palette
 } from 'lucide-react';
-import { ScratchcardData, ScratchcardState, Continent } from '../types';
+import { ScratchcardData, ScratchcardState, Continent, LineType } from '../types';
 
 interface ImageViewerProps {
   image: ScratchcardData;
@@ -31,6 +32,19 @@ const GERMAN_STATES = [
 
 const CONTINENTS: Continent[] = ['Europa', 'América', 'Ásia', 'África', 'Oceania'];
 
+const LINE_COLORS: { id: LineType; label: string; bg: string }[] = [
+  { id: 'blue', label: 'Azul', bg: 'bg-blue-500' },
+  { id: 'red', label: 'Vermelho', bg: 'bg-red-500' },
+  { id: 'multicolor', label: 'Multi', bg: 'bg-gradient-to-tr from-red-500 via-green-500 to-blue-500' },
+  { id: 'green', label: 'Verde', bg: 'bg-emerald-500' },
+  { id: 'brown', label: 'Castanho', bg: 'bg-amber-900' },
+  { id: 'pink', label: 'Rosa', bg: 'bg-pink-500' },
+  { id: 'purple', label: 'Violeta', bg: 'bg-purple-600' },
+  { id: 'yellow', label: 'Amarelo', bg: 'bg-yellow-400' },
+  { id: 'gray', label: 'Cinza', bg: 'bg-slate-500' },
+  { id: 'none', label: 'Sem', bg: 'bg-slate-800 border-slate-700' }
+];
+
 export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpdate, onDelete, isAdmin, currentUser, contextImages, onImageSelect, t }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<ScratchcardData>(image);
@@ -50,7 +64,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   }, [image]);
 
   const seriesMembers = useMemo(() => {
-    // Agrupamento por Nome do Jogo + Número do Jogo OU ID de Grupo de Série
     return contextImages
       .filter(img => 
         (img.gameNumber === image.gameNumber && img.gameName === image.gameName) || 
@@ -81,15 +94,14 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
     onUpdate(newData);
   };
 
-  const DataCard = ({ icon: Icon, label, value, colorClass = "text-slate-400", subValue }: any) => (
-    <div className="bg-slate-900/60 backdrop-blur-md p-3 rounded-xl border border-slate-800 transition-all flex flex-col justify-between hover:border-slate-700">
-      <div className="flex items-center gap-2 mb-1.5">
-        <Icon className={`w-3 h-3 ${colorClass}`} />
-        <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{label}</span>
+  const DataTag = ({ icon: Icon, label, value, colorClass = "text-slate-400" }: any) => (
+    <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 px-3 py-2 rounded-xl hover:border-slate-700 transition-all group">
+      <div className={`p-1.5 rounded-lg bg-slate-800 group-hover:bg-slate-700 transition-colors`}>
+        <Icon className={`w-3.5 h-3.5 ${colorClass}`} />
       </div>
-      <div>
-        <p className="text-xs font-black text-slate-200 leading-tight truncate">{value || '-'}</p>
-        {subValue && <p className="text-[7px] text-slate-600 font-bold mt-0.5 uppercase tracking-tighter">{subValue}</p>}
+      <div className="flex flex-col">
+        <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">{label}</span>
+        <span className="text-xs font-black text-slate-200 leading-none truncate max-w-[120px]">{value || '-'}</span>
       </div>
     </div>
   );
@@ -100,28 +112,28 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-xl" onClick={onClose}>
-      <button className="absolute top-6 right-6 text-white/80 hover:text-white transition-colors z-[10000] p-4 bg-slate-900 border border-white/10 rounded-full" onClick={onClose}>
+      <button className="absolute top-6 right-6 text-white/80 hover:text-white transition-colors z-[10000] p-4 bg-slate-900 border border-white/10 rounded-full shadow-2xl" onClick={onClose}>
         <X className="w-8 h-8" />
       </button>
 
-      <div className={`w-full h-full md:h-[95vh] md:max-w-[1600px] flex flex-col md:flex-row bg-slate-950 md:rounded-3xl overflow-hidden border border-slate-800 shadow-2xl relative`} onClick={e => e.stopPropagation()}>
+      <div className={`w-full h-full md:h-[95vh] md:max-w-[1600px] flex flex-col md:flex-row bg-slate-950 md:rounded-3xl overflow-hidden border border-slate-800 shadow-[0_0_100px_rgba(0,0,0,0.8)] relative animate-fade-in`} onClick={e => e.stopPropagation()}>
          
          {/* ÁREA DE VISUALIZAÇÃO PRINCIPAL */}
          <div className="flex-1 bg-black relative flex flex-col min-h-0 border-b md:border-b-0 md:border-r border-slate-900">
             {viewMode === 'single' ? (
               <div className="flex-1 flex flex-col min-h-0 w-full h-full">
                 <div className={`flex-1 relative w-full h-full flex items-center justify-center p-4 md:p-10 ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`} onClick={() => setIsZoomed(!isZoomed)}>
-                   <img src={activeImage} className={`max-w-full max-h-full object-contain transition-transform duration-300 ${isZoomed ? 'scale-150' : 'scale-100'}`} />
+                   <img src={activeImage} className={`max-w-full max-h-full object-contain transition-transform duration-500 shadow-2xl ${isZoomed ? 'scale-150' : 'scale-100'}`} alt={formData.gameName} />
                 </div>
                 <div className="h-28 bg-slate-950 border-t border-slate-800 p-4 flex items-center gap-6 justify-center shrink-0">
-                   <button onClick={() => { setActiveImage(image.frontUrl); setActiveLabel('front'); }} className={`relative h-20 aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeLabel === 'front' ? 'border-blue-500 scale-105 shadow-xl' : 'border-slate-800 opacity-40'}`}>
-                      <img src={image.frontUrl} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-[10px] font-black text-white">FRENTE</div>
+                   <button onClick={() => { setActiveImage(image.frontUrl); setActiveLabel('front'); }} className={`relative h-20 aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeLabel === 'front' ? 'border-blue-500 scale-105 shadow-xl' : 'border-slate-800 opacity-40 hover:opacity-100'}`}>
+                      <img src={image.frontUrl} className="w-full h-full object-cover" alt="Frente" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-[10px] font-black text-white uppercase tracking-widest">Frente</div>
                    </button>
                    {image.backUrl && (
-                      <button onClick={() => { setActiveImage(image.backUrl!); setActiveLabel('back'); }} className={`relative h-20 aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeLabel === 'back' ? 'border-brand-500 scale-105 shadow-xl' : 'border-slate-800 opacity-40'}`}>
-                        <img src={image.backUrl} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-[10px] font-black text-white">VERSO</div>
+                      <button onClick={() => { setActiveImage(image.backUrl!); setActiveLabel('back'); }} className={`relative h-20 aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeLabel === 'back' ? 'border-brand-500 scale-105 shadow-xl' : 'border-slate-800 opacity-40 hover:opacity-100'}`}>
+                        <img src={image.backUrl} className="w-full h-full object-cover" alt="Verso" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-[10px] font-black text-white uppercase tracking-widest">Verso</div>
                       </button>
                    )}
                 </div>
@@ -135,7 +147,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                       </h3>
                       <div className="flex flex-col items-end">
                         <span className="text-xs font-black text-slate-500 uppercase tracking-widest">{seriesMembers.length} Itens Catalogados</span>
-                        <span className="text-[10px] text-brand-600 font-bold uppercase tracking-widest">Coleção Jorge Mesquita</span>
                       </div>
                    </div>
                    
@@ -160,7 +171,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                                      <div className="h-px w-4 bg-slate-800"></div> FRENTE <div className="h-px w-4 bg-slate-800"></div>
                                   </div>
                                   <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border border-slate-800 group-hover:border-blue-500/50 transition-all">
-                                     <img src={member.frontUrl} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" />
+                                     <img src={member.frontUrl} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" alt="Frente" />
                                   </div>
                                </div>
                                <div className="space-y-3">
@@ -169,7 +180,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                                   </div>
                                   <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border border-slate-800 group-hover:border-blue-500/50 transition-all flex items-center justify-center bg-slate-900/50">
                                      {member.backUrl ? (
-                                        <img src={member.backUrl} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" />
+                                        <img src={member.backUrl} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" alt="Verso" />
                                      ) : (
                                         <div className="text-slate-700 text-[10px] font-black uppercase italic tracking-widest text-center p-4">Verso não catalogado</div>
                                      )}
@@ -207,7 +218,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                  <div className="flex gap-2">
                     {isAdmin && (
                        <>
-                          <button onClick={isEditing ? handleSave : () => setIsEditing(true)} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all ${isEditing ? 'bg-green-600 text-white' : 'bg-slate-800 text-blue-400 border border-slate-700'}`}>
+                          <button onClick={isEditing ? handleSave : () => setIsEditing(true)} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all ${isEditing ? 'bg-green-600 text-white shadow-lg shadow-green-900/20' : 'bg-slate-800 text-blue-400 border border-slate-700 hover:bg-slate-700'}`}>
                              {isEditing ? <Save className="w-4 h-4"/> : <Edit2 className="w-4 h-4"/>} {isEditing ? 'Guardar' : 'Editar'}
                           </button>
                           {!isEditing && <button onClick={handleDelete} className="p-2.5 bg-slate-900 hover:bg-red-600 text-slate-600 hover:text-white rounded-xl transition-all"><Trash2 className="w-5 h-5"/></button>}
@@ -218,14 +229,14 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                     {(image.isSeries || seriesMembers.length > 1) && !isEditing && (
                        <button 
                          onClick={() => setViewMode(viewMode === 'single' ? 'panorama' : 'single')}
-                         className={`p-2.5 rounded-xl border transition-all flex items-center gap-2 font-black text-[10px] uppercase tracking-widest ${viewMode === 'panorama' ? 'bg-blue-600 text-white border-blue-500' : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'}`}
+                         className={`p-2.5 rounded-xl border transition-all flex items-center gap-2 font-black text-[10px] uppercase tracking-widest ${viewMode === 'panorama' ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-900/20' : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'}`}
                        >
                           {viewMode === 'single' ? <LayoutGrid className="w-4 h-4" /> : <Columns className="w-4 h-4" />}
                           {viewMode === 'single' ? 'Ver SET' : 'Individual'}
                        </button>
                     )}
                     {currentUser && (
-                       <button onClick={toggleCollection} className={`px-5 py-2.5 rounded-xl text-[10px] font-black border transition-all flex items-center gap-2 ${formData.owners?.includes(currentUser) ? 'bg-green-600 text-white border-green-500 shadow-xl shadow-green-900/20' : 'bg-slate-900 text-slate-500 border-slate-800'}`}>
+                       <button onClick={toggleCollection} className={`px-5 py-2.5 rounded-xl text-[10px] font-black border transition-all flex items-center gap-2 ${formData.owners?.includes(currentUser) ? 'bg-brand-600 text-white border-brand-500 shadow-xl shadow-brand-900/20' : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-white'}`}>
                           <Check className="w-4 h-4" /> {formData.owners?.includes(currentUser) ? 'Coleção' : 'Marcar'}
                        </button>
                     )}
@@ -238,20 +249,20 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                        <Fingerprint className="w-4 h-4" />
                        <span className="text-[10px] font-black uppercase tracking-widest">{formData.customId}</span>
                        {formData.isSeries && <span className="ml-2 bg-brand-900/30 text-brand-400 px-2 py-0.5 rounded text-[8px] font-black border border-brand-500/20">SET / SÉRIE</span>}
-                       {formData.aiGenerated && <Sparkles className="w-4 h-4 text-cyan-800 ml-auto" />}
+                       {formData.aiGenerated && <Sparkles className="w-4 h-4 text-cyan-800 ml-auto animate-pulse" />}
                     </div>
                     {isEditing ? (
                        <div className="space-y-4 animate-fade-in">
                           <div className="space-y-1">
-                             <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Nome do Jogo</label>
-                             <input type="text" value={formData.gameName} onChange={e => handleChange('gameName', e.target.value)} className="w-full bg-slate-900 text-white text-lg font-black rounded-xl p-3 border border-slate-800 outline-none focus:border-blue-500 transition-all" />
+                             <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Nome do Jogo</label>
+                             <input type="text" value={formData.gameName} onChange={e => handleChange('gameName', e.target.value)} className="w-full bg-slate-900 text-white text-lg font-black rounded-xl p-3 border border-slate-800 outline-none focus:border-blue-500 transition-all shadow-inner" />
                           </div>
 
                           <div className="space-y-1">
-                             <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Colecionador</label>
+                             <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Colecionador</label>
                              <div className="relative group">
                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
-                                <input type="text" value={formData.collector || ''} onChange={e => handleChange('collector', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black rounded-xl p-3 pl-10 border border-slate-800 outline-none focus:border-brand-500 transition-all" placeholder="Nome do Colecionador" />
+                                <input type="text" value={formData.collector || ''} onChange={e => handleChange('collector', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black rounded-xl p-3 pl-10 border border-slate-800 outline-none focus:border-brand-500 transition-all shadow-inner" placeholder="Nome do Colecionador" />
                              </div>
                           </div>
                           
@@ -262,11 +273,11 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                           
                           <div className="grid grid-cols-2 gap-4">
                              <div className="space-y-1">
-                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">País</label>
-                                <input type="text" value={formData.country} onChange={e => handleChange('country', e.target.value)} className="w-full bg-slate-900 text-red-400 text-sm font-black rounded-xl p-3 border border-slate-800 outline-none focus:border-red-500/50 transition-all" />
+                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">País</label>
+                                <input type="text" value={formData.country} onChange={e => handleChange('country', e.target.value)} className="w-full bg-slate-900 text-red-400 text-sm font-black rounded-xl p-3 border border-slate-800 outline-none focus:border-red-500/50 transition-all shadow-inner" />
                              </div>
                              <div className="space-y-1">
-                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest flex items-center justify-between">
+                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest flex items-center justify-between ml-1">
                                    Região / Estado
                                    {isGermany && <span className="text-[7px] bg-red-900/50 text-red-400 px-1 rounded">ALEMANHA</span>}
                                 </label>
@@ -275,7 +286,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                                      <select 
                                        value={formData.region || ''} 
                                        onChange={e => handleChange('region', e.target.value)} 
-                                       className="w-full bg-slate-900 text-white text-sm font-black rounded-xl p-3 border border-slate-800 outline-none focus:border-blue-500 transition-all appearance-none pr-10"
+                                       className="w-full bg-slate-900 text-white text-sm font-black rounded-xl p-3 border border-slate-800 outline-none focus:border-blue-500 transition-all appearance-none pr-10 shadow-inner"
                                      >
                                         <option value="">Selecione o Estado...</option>
                                         {GERMAN_STATES.map(state => <option key={state} value={state}>{state}</option>)}
@@ -283,67 +294,96 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 pointer-events-none" />
                                    </div>
                                 ) : (
-                                   <input type="text" value={formData.region || ''} onChange={e => handleChange('region', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black rounded-xl p-3 border border-slate-800 outline-none focus:border-blue-500 transition-all" placeholder="Ex: Continente" />
+                                   <input type="text" value={formData.region || ''} onChange={e => handleChange('region', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black rounded-xl p-3 border border-slate-800 outline-none focus:border-blue-500 transition-all shadow-inner" placeholder="Ex: Continente" />
                                 )}
                              </div>
                           </div>
 
                           <div className="grid grid-cols-2 gap-4">
                              <div className="space-y-1">
-                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Operador</label>
-                                <input type="text" value={formData.operator || ''} onChange={e => handleChange('operator', e.target.value)} className="w-full bg-slate-900 text-blue-400 text-sm font-black rounded-xl p-3 border border-slate-800 outline-none" placeholder="Operador" />
+                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Operador</label>
+                                <input type="text" value={formData.operator || ''} onChange={e => handleChange('operator', e.target.value)} className="w-full bg-slate-900 text-blue-400 text-sm font-black rounded-xl p-3 border border-slate-800 outline-none focus:border-blue-500 shadow-inner" placeholder="Ex: SCML" />
                              </div>
                              <div className="space-y-1">
-                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Linhas</label>
-                                <input type="text" value={formData.lines || ''} onChange={e => handleChange('lines', e.target.value)} className="w-full bg-slate-900 text-emerald-400 text-sm font-black rounded-xl p-3 border border-slate-800 outline-none" placeholder="Cor das Linhas" />
+                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Nº Jogo</label>
+                                <input type="text" value={formData.gameNumber || ''} onChange={e => handleChange('gameNumber', e.target.value)} className="w-full bg-slate-900 text-slate-400 text-sm font-black rounded-xl p-3 border border-slate-800 outline-none focus:border-slate-500 shadow-inner" />
+                             </div>
+                          </div>
+
+                          {/* SELETOR DE CORES PARA LINHAS NO EDITOR */}
+                          <div className="space-y-2">
+                             <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1 flex items-center gap-2">
+                               <Palette className="w-3 h-3 text-brand-500" /> Linhas de Segurança
+                             </label>
+                             <div className="flex flex-wrap gap-2 p-2 bg-slate-900 rounded-xl border border-slate-800 shadow-inner">
+                                {LINE_COLORS.map(color => (
+                                  <button
+                                    key={color.id}
+                                    onClick={() => handleChange('lines', color.id)}
+                                    className={`w-8 h-8 rounded-full ${color.bg} border-2 transition-all flex items-center justify-center ${formData.lines === color.id ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100 hover:scale-105'}`}
+                                    title={color.label}
+                                  >
+                                    {formData.lines === color.id && <Check className="w-4 h-4 text-white" />}
+                                  </button>
+                                ))}
                              </div>
                           </div>
 
                           <div className="grid grid-cols-2 gap-4">
                              <div className="space-y-1">
-                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Nº Jogo</label>
-                                <input type="text" value={formData.gameNumber || ''} onChange={e => handleChange('gameNumber', e.target.value)} className="w-full bg-slate-900 text-slate-400 text-sm font-black rounded-xl p-3 border border-slate-800 outline-none" />
-                             </div>
-                             <div className="space-y-1">
-                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Continente</label>
-                                <select value={formData.continent} onChange={e => handleChange('continent', e.target.value)} className="w-full bg-slate-900 text-indigo-400 text-sm font-black rounded-xl p-3 border border-slate-800 outline-none">
+                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Continente</label>
+                                <select value={formData.continent} onChange={e => handleChange('continent', e.target.value)} className="w-full bg-slate-900 text-indigo-400 text-sm font-black rounded-xl p-3 border border-slate-800 outline-none focus:border-indigo-500 shadow-inner">
                                    {CONTINENTS.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                              </div>
                           </div>
                        </div>
                     ) : (
-                       <div className="animate-fade-in">
-                          <h2 className="text-3xl font-black text-slate-100 uppercase tracking-tighter italic leading-none">{formData.gameName}</h2>
-                          {formData.operator && <div className="text-blue-500 text-xs font-black uppercase tracking-widest mt-2">{formData.operator}</div>}
+                       <div className="animate-fade-in border-b border-slate-900 pb-6">
+                          <h2 className="text-4xl font-black text-slate-100 uppercase tracking-tighter italic leading-none">{formData.gameName}</h2>
+                          {formData.operator && (
+                            <div className="flex items-center gap-2 mt-3">
+                              <Building2 className="w-3.5 h-3.5 text-blue-500" />
+                              <span className="text-blue-500 text-xs font-black uppercase tracking-[0.2em]">{formData.operator}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 mt-2 bg-slate-900/50 w-fit px-3 py-1 rounded-full border border-slate-800">
+                             <User className="w-3 h-3 text-brand-500" />
+                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Colecionador: <span className="text-brand-400">{formData.collector || 'Arquivo Geral'}</span></span>
+                          </div>
                        </div>
                     )}
                  </div>
 
-                 <div className="grid grid-cols-2 gap-4">
-                    <DataCard icon={ScanLine} label="Linhas" value={formData.lines} colorClass="text-emerald-500" />
-                    <DataCard icon={Building2} label="Entidade" value={formData.operator} colorClass="text-blue-500" />
-                    <DataCard icon={User} label="Colecionador" value={formData.collector} colorClass="text-brand-500" />
-                    <DataCard icon={Hash} label="Nº Jogo" value={formData.gameNumber} colorClass="text-slate-500" />
-                    <DataCard icon={Flag} label="País" value={formData.country} colorClass="text-red-500" />
-                    <DataCard icon={MapPin} label="Região" value={formData.region} colorClass="text-white" />
-                    <DataCard icon={Globe} label="Continente" value={formData.continent} colorClass="text-indigo-500" />
-                    <DataCard icon={Clock} label="Ano" value={formData.releaseDate} colorClass="text-orange-500" />
-                    <DataCard icon={Banknote} label="Preço" value={formData.price} colorClass="text-green-500" />
-                    <DataCard icon={Printer} label="Gráfica" value={formData.printer} colorClass="text-slate-500" />
-                 </div>
+                 {!isEditing && (
+                    <div className="grid grid-cols-2 gap-3 animate-fade-in">
+                       <DataTag icon={ScanLine} label="Linhas Técnicas" value={formData.lines} colorClass="text-emerald-500" />
+                       <DataTag icon={ShieldCheck} label="Operador" value={formData.operator} colorClass="text-blue-500" />
+                       <DataTag icon={Hash} label="Referência Jogo" value={formData.gameNumber} colorClass="text-slate-500" />
+                       <DataTag icon={Flag} label="Nação" value={formData.country} colorClass="text-red-500" />
+                       <DataTag icon={MapPin} label="Região/Estado" value={formData.region} colorClass="text-white" />
+                       <DataTag icon={Globe} label="Continente" value={formData.continent} colorClass="text-indigo-500" />
+                       <DataTag icon={Clock} label="Ano Lançamento" value={formData.releaseDate} colorClass="text-orange-500" />
+                       <DataTag icon={Banknote} label="Valor Facial" value={formData.price} colorClass="text-green-500" />
+                       <DataTag icon={Printer} label="Impressão" value={formData.printer} colorClass="text-slate-500" />
+                       <DataTag icon={Ruler} label="Medidas" value={formData.size} colorClass="text-cyan-500" />
+                    </div>
+                 )}
 
-                 <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
-                    <span className="text-[9px] text-slate-500 uppercase block mb-3 font-black tracking-widest">Resumo Técnico</span>
+                 <div className="bg-slate-900/40 p-6 rounded-3xl border border-slate-800 shadow-inner group">
+                    <div className="flex items-center gap-2 mb-4">
+                       <Info className="w-3.5 h-3.5 text-slate-500" />
+                       <span className="text-[9px] text-slate-500 uppercase font-black tracking-widest">Observações do Curador</span>
+                    </div>
                     {isEditing ? (
-                      <textarea value={formData.values} onChange={e => handleChange('values', e.target.value)} className="w-full bg-slate-900 text-white text-xs p-4 rounded-xl border border-slate-800 h-32 outline-none italic transition-all focus:border-brand-500" />
+                      <textarea value={formData.values} onChange={e => handleChange('values', e.target.value)} className="w-full bg-slate-900 text-white text-xs p-4 rounded-xl border border-slate-800 h-32 outline-none italic transition-all focus:border-brand-500 shadow-inner" placeholder="Detalhes técnicos, prémios, raridade..." />
                     ) : (
-                      <p className="text-xs text-slate-400 italic leading-relaxed">{formData.values || 'Sem observações catalogadas.'}</p>
+                      <p className="text-xs text-slate-400 italic leading-relaxed group-hover:text-slate-300 transition-colors">{formData.values || 'Nenhuma observação técnica adicional para este exemplar.'}</p>
                     )}
                  </div>
                  
-                 <div className="text-[9px] text-slate-700 font-black uppercase tracking-[0.2em] text-center pt-8 border-t border-slate-900/50">
-                    Arquivo Mundial • Coleção Jorge Mesquita
+                 <div className="text-[9px] text-slate-800 font-black uppercase tracking-[0.3em] text-center pt-8 border-t border-slate-900/50 pb-4">
+                    Arquivo Mundial de Raspadinhas • Jorge Mesquita
                  </div>
               </div>
            </div>

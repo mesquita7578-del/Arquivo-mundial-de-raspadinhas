@@ -4,9 +4,9 @@ import {
   X, Upload, Sparkles, Check, Loader2, ArrowLeft, 
   Image as ImageIcon, ScanLine, Star, Hash, Globe, 
   Printer, Ruler, Banknote, Clock, Info, MapPin, 
-  Building2, Layers
+  Building2, Layers, User, Palette
 } from 'lucide-react';
-import { ScratchcardData, Category, ScratchcardState } from '../types';
+import { ScratchcardData, Category, ScratchcardState, LineType } from '../types';
 import { analyzeImage } from '../services/geminiService';
 import { storageService } from '../services/storage';
 
@@ -18,6 +18,19 @@ interface UploadModalProps {
   currentUser: string | null;
   t: any;
 }
+
+const LINE_COLORS: { id: LineType; label: string; bg: string }[] = [
+  { id: 'blue', label: 'Azul', bg: 'bg-blue-500' },
+  { id: 'red', label: 'Vermelho', bg: 'bg-red-500' },
+  { id: 'multicolor', label: 'Multi', bg: 'bg-gradient-to-tr from-red-500 via-green-500 to-blue-500' },
+  { id: 'green', label: 'Verde', bg: 'bg-emerald-500' },
+  { id: 'brown', label: 'Castanho', bg: 'bg-amber-900' },
+  { id: 'pink', label: 'Rosa', bg: 'bg-pink-500' },
+  { id: 'purple', label: 'Violeta', bg: 'bg-purple-600' },
+  { id: 'yellow', label: 'Amarelo', bg: 'bg-yellow-400' },
+  { id: 'gray', label: 'Cinza', bg: 'bg-slate-500' },
+  { id: 'none', label: 'Sem', bg: 'bg-slate-800 border-slate-700' }
+];
 
 export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadComplete, existingImages, initialFile, currentUser, t }) => {
   const [step, setStep] = useState<1 | 2>(1);
@@ -35,11 +48,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     continent: 'Europa',
     country: 'Portugal',
     operator: '',
-    lines: '',
+    lines: 'none',
     gameNumber: '',
     size: '10x15cm',
     printer: '',
     price: '',
+    collector: currentUser || 'Jorge Mesquita',
     releaseDate: new Date().getFullYear().toString()
   });
 
@@ -105,8 +119,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       category: formData.category || 'raspadinha',
       operator: formData.operator || '',
       printer: formData.printer || '',
-      lines: formData.lines || '',
-      collector: currentUser || 'Jorge Mesquita',
+      lines: formData.lines || 'none',
+      collector: formData.collector || currentUser || 'Jorge Mesquita',
       aiGenerated: formData.aiGenerated || false,
       createdAt: timestamp,
       owners: currentUser ? [currentUser] : []
@@ -172,6 +186,13 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                          <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Nome do Jogo</span>
                          <input type="text" value={formData.gameName} onChange={e => setFormData({...formData, gameName: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold" />
                       </label>
+                      <label className="block">
+                         <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Colecionador</span>
+                         <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                            <input type="text" value={formData.collector} onChange={e => setFormData({...formData, collector: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2 text-white" />
+                         </div>
+                      </label>
                       <div className="grid grid-cols-2 gap-4">
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">País</span>
@@ -182,7 +203,28 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                            <input type="text" value={formData.operator} onChange={e => setFormData({...formData, operator: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white" />
                         </label>
                       </div>
-                      <div className="grid grid-cols-3 gap-4">
+
+                      {/* NOVO SELETOR DE CORES PARA LINHAS */}
+                      <div className="space-y-2">
+                        <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1 flex items-center gap-2">
+                          <Palette className="w-3 h-3 text-brand-500" /> Linhas de Segurança (Cores)
+                        </span>
+                        <div className="flex flex-wrap gap-2.5 p-3 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                          {LINE_COLORS.map(color => (
+                            <button
+                              key={color.id}
+                              onClick={() => setFormData({...formData, lines: color.id})}
+                              className={`w-10 h-10 rounded-full ${color.bg} border-2 transition-all relative group flex items-center justify-center ${formData.lines === color.id ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100 hover:scale-105'}`}
+                              title={color.label}
+                            >
+                              {formData.lines === color.id && <Check className="w-5 h-5 text-white drop-shadow-md" />}
+                              <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[7px] font-black uppercase tracking-widest text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">{color.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Nº Jogo</span>
                            <input type="text" value={formData.gameNumber} onChange={e => setFormData({...formData, gameNumber: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white" />
@@ -190,10 +232,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Ano</span>
                            <input type="text" value={formData.releaseDate} onChange={e => setFormData({...formData, releaseDate: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white" />
-                        </label>
-                        <label>
-                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Linhas</span>
-                           <input type="text" value={formData.lines} onChange={e => setFormData({...formData, lines: e.target.value})} placeholder="Ex: azul" className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white" />
                         </label>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
