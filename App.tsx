@@ -273,20 +273,20 @@ function App() {
           </div>
         )}
 
-        <div className="relative flex-1 flex flex-col">
+        <div className="relative flex-1 flex flex-col min-h-0">
           {currentPage === 'stats' ? (
             <StatsSection stats={totalStats.stats} categoryStats={totalStats.categoryStats} countryStats={totalStats.countryStats} stateStats={totalStats.stateStats} collectorStats={totalStats.collectorStats} totalRecords={totalStats.total} t={t.stats} />
           ) : currentPage === 'about' ? (
             <AboutPage t={t} />
           ) : currentPage === 'map' ? (
-            <div className="flex-1 p-4 md:p-8 animate-fade-in flex flex-col">
-               <div className="mb-6">
+            <div className="flex-1 p-4 md:p-8 animate-fade-in flex flex-col h-full overflow-hidden">
+               <div className="mb-6 shrink-0">
                  <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase flex items-center gap-3">
                    <Globe className="w-8 h-8 text-brand-500" /> Mapa Mundi do Arquivo
                  </h2>
                  <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-1">Navegue pelas coleções através do globo interativo</p>
                </div>
-               <div className="flex-1 min-h-[600px]">
+               <div className="flex-1 min-h-0 relative">
                  <WorldMap images={allImagesCache} onCountrySelect={handleCountrySelectFromMap} t={t.grid} />
                </div>
             </div>
