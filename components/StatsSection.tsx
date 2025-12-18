@@ -45,7 +45,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
     const countSC = Number(stateStats['SC']) || 0;
     const countCS = Number(stateStats['CS']) || 0;
     
-    const amostraKeys = ['AMOSTRA', 'MUESTRA', 'CAMPIONE', 'SPECIMEN', 'VOID', 'MUSTER', 'ÉCHANTILLON', '样本'];
+    const amostraKeys = ['AMOSTRA', 'MUESTRA', 'CAMPIONE', 'SPECIMEN', 'VOID', 'MUSTER', 'ÉCHANTILLON', '样本', 'SAMPLE', 'PRØVE'];
     const countAmostra = amostraKeys.reduce((sum, key) => sum + (Number(stateStats[key]) || 0), 0);
     
     // Fix: Arithmetic operations now have typed operands through inferred and explicit number types

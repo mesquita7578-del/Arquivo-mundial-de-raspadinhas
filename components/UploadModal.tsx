@@ -4,7 +4,7 @@ import {
   X, Upload, Sparkles, Check, Loader2, ArrowLeft, 
   Image as ImageIcon, ScanLine, Star, Hash, Globe, 
   Printer, Ruler, Banknote, Clock, Info, MapPin, 
-  Building2, Layers, User, Palette
+  Building2, Layers, User, Palette, Activity
 } from 'lucide-react';
 import { ScratchcardData, Category, ScratchcardState, LineType } from '../types';
 import { analyzeImage } from '../services/geminiService';
@@ -30,6 +30,20 @@ const LINE_COLORS: { id: LineType; label: string; bg: string }[] = [
   { id: 'yellow', label: 'Amarelo', bg: 'bg-yellow-400' },
   { id: 'gray', label: 'Cinza', bg: 'bg-slate-500' },
   { id: 'none', label: 'Sem', bg: 'bg-slate-800 border-slate-700' }
+];
+
+const STATE_OPTIONS: { id: ScratchcardState; label: string; group: 'Archivio' | 'Condizione' }[] = [
+  { id: 'MINT', label: 'MINT', group: 'Condizione' },
+  { id: 'SC', label: 'SC', group: 'Condizione' },
+  { id: 'CS', label: 'CS', group: 'Condizione' },
+  { id: 'AMOSTRA', label: 'AMOSTRA', group: 'Archivio' },
+  { id: 'VOID', label: 'VOID', group: 'Archivio' },
+  { id: 'SAMPLE', label: 'SAMPLE', group: 'Archivio' },
+  { id: 'MUESTRA', label: 'MUESTRA', group: 'Archivio' },
+  { id: 'CAMPIONE', label: 'CAMPIONE', group: 'Archivio' },
+  { id: '样本', label: '样本', group: 'Archivio' },
+  { id: 'MUSTER', label: 'MUSTER', group: 'Archivio' },
+  { id: 'PRØVE', label: 'PRØVE', group: 'Archivio' }
 ];
 
 export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadComplete, existingImages, initialFile, currentUser, t }) => {
@@ -60,7 +74,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
   const frontInputRef = useRef<HTMLInputElement>(null);
   const backInputRef = useRef<HTMLInputElement>(null);
 
-  // Compute unique suggestions from archive for autocomplete
   const suggestions = useMemo(() => {
     const unique = (arr: any[]) => Array.from(new Set(arr.filter(Boolean)));
     return {
@@ -206,6 +219,25 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                             <input list="collectors" type="text" value={formData.collector} onChange={e => setFormData({...formData, collector: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2 text-white outline-none focus:border-brand-500 transition-all" />
                          </div>
                       </label>
+                      
+                      {/* SELETOR DE ESTADO FÍSICO */}
+                      <div className="space-y-3">
+                        <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1 flex items-center gap-2">
+                          <Activity className="w-3.5 h-3.5 text-blue-500" /> Estado do Exemplar
+                        </span>
+                        <div className="flex flex-wrap gap-2 p-3 bg-slate-800/50 rounded-2xl border border-slate-700/50 shadow-inner">
+                           {STATE_OPTIONS.map(opt => (
+                              <button
+                                key={opt.id}
+                                onClick={() => setFormData({...formData, state: opt.id})}
+                                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-tighter border transition-all ${formData.state === opt.id ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-slate-900 border-slate-700 text-slate-500 hover:text-slate-300'}`}
+                              >
+                                 {opt.label}
+                              </button>
+                           ))}
+                        </div>
+                      </div>
+
                       <div className="grid grid-cols-2 gap-4">
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">País</span>
@@ -217,7 +249,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                         </label>
                       </div>
 
-                      {/* SELETOR DE CORES PARA LINHAS */}
                       <div className="space-y-2">
                         <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1 flex items-center gap-2">
                           <Palette className="w-3 h-3 text-brand-500" /> Linhas de Segurança (Cores)
@@ -272,7 +303,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
           </div>
        </div>
 
-       {/* Autocomplete Datalists */}
        <datalist id="game-names">{suggestions.gameNames.map(val => <option key={val} value={val} />)}</datalist>
        <datalist id="collectors">{suggestions.collectors.map(val => <option key={val} value={val} />)}</datalist>
        <datalist id="countries">{suggestions.countries.map(val => <option key={val} value={val} />)}</datalist>

@@ -1,5 +1,5 @@
 
-export type ScratchcardState = 'AMOSTRA' | 'VOID' | 'MUESTRA' | 'CAMPIONE' | 'SPECIMEN' | 'MUSTER' | 'ÉCHANTILLON' | '견본' | 'STEEKPROEF' | 'PRØVE' | 'PROV' | '样本' | 'MINT' | 'CS' | 'SC';
+export type ScratchcardState = 'AMOSTRA' | 'VOID' | 'SAMPLE' | 'MUESTRA' | 'CAMPIONE' | 'SPECIMEN' | 'MUSTER' | 'ÉCHANTILLON' | '견본' | 'STEEKPROEF' | 'PRØVE' | 'PROV' | '样本' | 'MINT' | 'CS' | 'SC';
 
 export type Continent = 'Europa' | 'América' | 'Ásia' | 'África' | 'Oceania' | 'Mundo';
 

@@ -6,7 +6,7 @@ import {
   History, Building2, Globe, Fingerprint,
   Sparkles, Columns, Ruler, Printer, Banknote, ScanLine,
   Layers, LayoutGrid, Eye, Calendar, ChevronDown, User,
-  Tag, ShieldCheck, Palette
+  Tag, ShieldCheck, Palette, Activity
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent, LineType } from '../types';
 
@@ -45,6 +45,20 @@ const LINE_COLORS: { id: LineType; label: string; bg: string }[] = [
   { id: 'none', label: 'Sem', bg: 'bg-slate-800 border-slate-700' }
 ];
 
+const STATE_OPTIONS: { id: ScratchcardState; label: string; group: 'Archivio' | 'Condizione' }[] = [
+  { id: 'MINT', label: 'MINT', group: 'Condizione' },
+  { id: 'SC', label: 'SC', group: 'Condizione' },
+  { id: 'CS', label: 'CS', group: 'Condizione' },
+  { id: 'AMOSTRA', label: 'AMOSTRA', group: 'Archivio' },
+  { id: 'VOID', label: 'VOID', group: 'Archivio' },
+  { id: 'SAMPLE', label: 'SAMPLE', group: 'Archivio' },
+  { id: 'MUESTRA', label: 'MUESTRA', group: 'Archivio' },
+  { id: 'CAMPIONE', label: 'CAMPIONE', group: 'Archivio' },
+  { id: '样本', label: '样本', group: 'Archivio' },
+  { id: 'MUSTER', label: 'MUSTER', group: 'Archivio' },
+  { id: 'PRØVE', label: 'PRØVE', group: 'Archivio' }
+];
+
 export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpdate, onDelete, isAdmin, currentUser, contextImages, onImageSelect, t }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<ScratchcardData>(image);
@@ -72,7 +86,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
       .sort((a, b) => a.customId.localeCompare(b.customId, undefined, { numeric: true }));
   }, [image, contextImages]);
 
-  // Lista única de colecionadores baseada no arquivo existente
   const collectorsList = useMemo(() => {
     const defaultCollectors = ["Jorge Mesquita", "Fabio Pagni", "Chloe", "Pedro Rodrigo", "IA", "System"];
     const fromArchive = contextImages.map(img => img.collector).filter(Boolean) as string[];
@@ -126,7 +139,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
 
       <div className={`w-full h-full md:h-[95vh] md:max-w-[1600px] flex flex-col md:flex-row bg-slate-950 md:rounded-3xl overflow-hidden border border-slate-800 shadow-[0_0_100px_rgba(0,0,0,0.8)] relative animate-fade-in`} onClick={e => e.stopPropagation()}>
          
-         {/* ÁREA DE VISUALIZAÇÃO PRINCIPAL */}
          <div className="flex-1 bg-black relative flex flex-col min-h-0 border-b md:border-b-0 md:border-r border-slate-900">
             {viewMode === 'single' ? (
               <div className="flex-1 flex flex-col min-h-0 w-full h-full">
@@ -220,7 +232,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
             )}
          </div>
 
-         {/* PAINEL LATERAL DE DADOS */}
          <div className="w-full md:w-[450px] bg-slate-950 flex flex-col h-full z-20 border-l border-slate-900 overflow-hidden shrink-0">
               <div className="p-6 border-b border-slate-900 bg-slate-900/40 backdrop-blur flex justify-between items-center shrink-0">
                  <div className="flex gap-2">
@@ -283,6 +294,24 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 pointer-events-none group-focus-within:text-brand-500 transition-colors" />
                              </div>
                           </div>
+
+                          {/* NOVO SELETOR DE ESTADO FÍSICO NO EDITOR */}
+                          <div className="space-y-2">
+                             <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <Activity className="w-3.5 h-3.5 text-blue-500" /> Estado Físico
+                             </label>
+                             <div className="flex flex-wrap gap-1.5 p-2 bg-slate-900 rounded-xl border border-slate-800 shadow-inner">
+                                {STATE_OPTIONS.map(opt => (
+                                   <button
+                                     key={opt.id}
+                                     onClick={() => handleChange('state', opt.id)}
+                                     className={`px-2 py-1.5 rounded-md text-[8px] font-black uppercase tracking-tighter border transition-all ${formData.state === opt.id ? 'bg-blue-600 border-blue-400 text-white' : 'bg-slate-950 border-slate-800 text-slate-600 hover:text-slate-400'}`}
+                                   >
+                                      {opt.label}
+                                   </button>
+                                ))}
+                             </div>
+                          </div>
                           
                           <div className="flex items-center gap-3 bg-slate-900/50 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
                              <input type="checkbox" id="isSeriesEdit" checked={formData.isSeries} onChange={e => handleChange('isSeries', e.target.checked)} className="w-5 h-5 accent-brand-500 cursor-pointer" />
@@ -328,7 +357,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                              </div>
                           </div>
 
-                          {/* SELETOR DE CORES PARA LINHAS NO EDITOR */}
                           <div className="space-y-2">
                              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1 flex items-center gap-2">
                                <Palette className="w-3 h-3 text-brand-500" /> Linhas de Segurança
