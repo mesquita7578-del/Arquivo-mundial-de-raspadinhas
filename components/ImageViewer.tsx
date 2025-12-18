@@ -72,6 +72,14 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
       .sort((a, b) => a.customId.localeCompare(b.customId, undefined, { numeric: true }));
   }, [image, contextImages]);
 
+  // Lista única de colecionadores baseada no arquivo existente
+  const collectorsList = useMemo(() => {
+    const defaultCollectors = ["Jorge Mesquita", "Fabio Pagni", "Chloe", "Pedro Rodrigo", "IA", "System"];
+    const fromArchive = contextImages.map(img => img.collector).filter(Boolean) as string[];
+    const combined = Array.from(new Set([...defaultCollectors, ...fromArchive])).sort((a, b) => a.localeCompare(b));
+    return combined;
+  }, [contextImages]);
+
   const handleChange = (field: keyof ScratchcardData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -262,7 +270,17 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Colecionador</label>
                              <div className="relative group">
                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
-                                <input type="text" value={formData.collector || ''} onChange={e => handleChange('collector', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black rounded-xl p-3 pl-10 border border-slate-800 outline-none focus:border-brand-500 transition-all shadow-inner" placeholder="Nome do Colecionador" />
+                                <select 
+                                   value={formData.collector || ''} 
+                                   onChange={e => handleChange('collector', e.target.value)} 
+                                   className="w-full bg-slate-900 text-white text-sm font-black rounded-xl p-3 pl-10 border border-slate-800 outline-none focus:border-brand-500 transition-all shadow-inner appearance-none cursor-pointer"
+                                >
+                                   <option value="">Selecione o Colecionador...</option>
+                                   {collectorsList.map(name => (
+                                      <option key={name} value={name}>{name}</option>
+                                   ))}
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 pointer-events-none group-focus-within:text-brand-500 transition-colors" />
                              </div>
                           </div>
                           

@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Continent } from '../types';
-import { BarChart3, Database, Map, PieChart, Users, Award, Ticket, Coins, Crown, Star, Sparkles, Flag, Globe, Mail, ShieldCheck, LayoutGrid, CheckCircle2 } from 'lucide-react';
+import { BarChart3, Database, Map, PieChart, Users, Award, Ticket, Coins, Crown, Star, Sparkles, Flag, Globe, Mail, ShieldCheck, LayoutGrid, CheckCircle2, RotateCcw } from 'lucide-react';
 
 interface StatsSectionProps {
   stats: Record<string, number>;
@@ -17,12 +17,16 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
   const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setAnimate(true), 100);
+    const timer = setTimeout(() => setAnimate(true), 150);
     return () => clearTimeout(timer);
   }, []);
   
   // Continent Bar Chart Data
-  const maxCount = Math.max(...(Object.values(stats) as number[]), 1);
+  const maxCount = useMemo(() => {
+    const vals = Object.values(stats) as number[];
+    return vals.length > 0 ? Math.max(...vals) : 1;
+  }, [stats]);
+
   const continentsConfig: { key: Continent; label: string; color: string; gradient: string }[] = [
     { key: 'Europa', label: 'Europa', color: 'bg-blue-500', gradient: 'from-blue-500 to-indigo-600' },
     { key: 'América', label: 'América', color: 'bg-red-500', gradient: 'from-red-500 to-pink-600' },
@@ -31,21 +35,38 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
     { key: 'Oceania', label: 'Oceania', color: 'bg-purple-500', gradient: 'from-purple-500 to-violet-600' },
   ];
 
-  // Top Countries Data
-  const topCountries = Object.entries(countryStats)
-    .sort((a, b) => Number(b[1]) - Number(a[1]))
-    .slice(0, 5);
-  const maxCountryCount = topCountries.length > 0 ? Number(topCountries[0][1]) : 1;
+  // Donut Chart Logic - Refined for "Circulation"
+  const stateDonutData = useMemo(() => {
+    // Fix: Explicitly cast Object.values to number[] to ensure type safety in division operations
+    const vals = Object.values(stateStats) as number[];
+    const total = vals.reduce((a: number, b: number) => a + b, 0) || 1;
+    
+    const countMint = Number(stateStats['MINT']) || 0;
+    const countSC = Number(stateStats['SC']) || 0;
+    const countCS = Number(stateStats['CS']) || 0;
+    
+    const amostraKeys = ['AMOSTRA', 'MUESTRA', 'CAMPIONE', 'SPECIMEN', 'VOID', 'MUSTER', 'ÉCHANTILLON', '样本'];
+    const countAmostra = amostraKeys.reduce((sum, key) => sum + (Number(stateStats[key]) || 0), 0);
+    
+    // Fix: Arithmetic operations now have typed operands through inferred and explicit number types
+    const pMint = (countMint / total) * 100;
+    const pSC = (countSC / total) * 100;
+    const pCS = (countCS / total) * 100;
+    const pAmostra = 100 - (pMint + pSC + pCS); // Garante 100% total matemático
 
-  // Collector Leaderboard Logic
-  const guardians = Object.entries(collectorStats)
-    .sort((a, b) => Number(b[1]) - Number(a[1]));
+    return {
+      pMint, pSC, pCS, pAmostra,
+      stop1: pMint,
+      stop2: pMint + pSC,
+      stop3: pMint + pSC + pCS,
+      total
+    };
+  }, [stateStats]);
 
   const getCollectorBadge = (name: string) => {
      const lower = name.toLowerCase().trim();
-     // Identificação do Vovô Jorge: nome ou iniciais J / Jj
      if (lower.includes('jorge') || lower === 'j' || lower === 'jj') {
-       return { color: 'bg-blue-600', text: 'JM', icon: <Crown className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.5)]" /> };
+       return { color: 'bg-blue-600', text: 'JM', icon: <Crown className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" /> };
      }
      if (lower.includes('fabio') || lower.includes('fábio')) {
        return { color: 'bg-green-600', text: 'FP', icon: <Star className="w-3.5 h-3.5 text-white fill-white" /> };
@@ -53,166 +74,108 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
      if (lower.includes('chloe')) {
        return { color: 'bg-pink-600', text: 'CH', icon: <Crown className="w-3.5 h-3.5 text-pink-200 fill-pink-200" /> };
      }
-     if (lower.includes('pedro') || lower.includes('rodrigo')) {
-       return { color: 'bg-orange-600', text: 'PR', icon: <ShieldCheck className="w-3.5 h-3.5 text-white fill-white" /> };
-     }
-     if (lower.includes('ia') || lower.includes('system') || lower.includes('guardiã')) {
-       return { color: 'bg-purple-700', text: 'IA', icon: <Sparkles className="w-3.5 h-3.5 text-cyan-300 fill-cyan-300" /> };
-     }
      return { color: 'bg-slate-700', text: name.substring(0, 2).toUpperCase(), icon: null };
   };
 
-  // State Distribution Data (Donut)
-  const totalStateCount = (Object.values(stateStats) as number[]).reduce((a, b) => a + b, 0);
-  
-  const countMint = Number(stateStats['MINT']) || 0;
-  const countSC = Number(stateStats['SC']) || 0;
-  const countCS = Number(stateStats['CS']) || 0;
-  const amostraKeys = [
-    'AMOSTRA', 'MUESTRA', 'CAMPIONE', 'SPECIMEN', 'VOID', 
-    'MUSTER', 'ÉCHANTILLON', '견본', 'STEEKPROEF', 'PRØVE', 
-    'PROV', '样本'
-  ];
-  const countAmostra = amostraKeys.reduce((sum, key) => sum + (Number(stateStats[key]) || 0), 0);
-
-  const pctMint = totalStateCount > 0 ? (countMint / totalStateCount) * 100 : 0;
-  const pctSC = totalStateCount > 0 ? (countSC / totalStateCount) * 100 : 0;
-  const pctCS = totalStateCount > 0 ? (countCS / totalStateCount) * 100 : 0;
-  const pctAmostra = totalStateCount > 0 ? (countAmostra / totalStateCount) * 100 : 0;
-
-  const stopMint = pctMint;
-  const stopSC = stopMint + pctSC;
-  const stopCS = stopSC + pctCS;
-
   const safeTotal = totalRecords || 1;
-  const scratchCount = categoryStats.scratch || 0;
-  const lotteryCount = categoryStats.lottery || 0;
-  const scratchPct = (scratchCount / safeTotal) * 100;
-  const lotteryPct = (lotteryCount / safeTotal) * 100;
+  const scratchPct = ((categoryStats.scratch || 0) / safeTotal) * 100;
+  const lotteryPct = ((categoryStats.lottery || 0) / safeTotal) * 100;
 
   return (
-    <div className="w-full bg-slate-950 border-t border-slate-900 py-12 pb-32 animate-fade-in relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-brand-900/10 to-transparent pointer-events-none"></div>
+    <div className="flex-1 w-full bg-slate-950 border-t border-slate-900 py-12 pb-32 animate-fade-in relative overflow-y-auto custom-scrollbar">
+      <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-blue-900/5 via-transparent to-transparent pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
            <div>
               <div className="flex items-center gap-2 text-brand-500 mb-2">
                 <BarChart3 className="w-6 h-6" />
-                <h2 className="text-sm font-bold uppercase tracking-widest">{t.title}</h2>
+                <h2 className="text-sm font-black uppercase tracking-[0.3em]">{t.title}</h2>
               </div>
-              <h3 className="text-3xl md:text-4xl font-black text-white italic">Dashboard do Colecionador</h3>
+              <h3 className="text-4xl md:text-5xl font-black text-white italic tracking-tighter">Fluxo do Arquivo</h3>
+              <p className="text-slate-500 text-xs font-black uppercase tracking-widest mt-2 ml-1">Análise volumétrica global em tempo real</p>
            </div>
-           <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 rounded-full px-4 py-2">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.liveUpdate}</span>
+           <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 rounded-full px-5 py-2.5 backdrop-blur-md">
+              <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sincronizado</span>
            </div>
         </div>
 
+        {/* Top Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-           
-           <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-6 rounded-2xl relative overflow-hidden group hover:border-brand-500/30 transition-colors">
-              <div className="absolute -right-6 -top-6 w-24 h-24 bg-brand-500/10 rounded-full blur-2xl group-hover:bg-brand-500/20 transition-colors"></div>
-              <div className="flex justify-between items-start mb-4">
-                 <div className="p-3 bg-brand-500/10 rounded-xl text-brand-500">
-                    <Database className="w-6 h-6" />
-                 </div>
+           <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl group hover:border-brand-500/40 transition-all shadow-2xl">
+              <div className="p-3 bg-brand-500/10 w-fit rounded-2xl text-brand-500 mb-6 group-hover:scale-110 transition-transform">
+                 <Database className="w-6 h-6" />
               </div>
-              <div className="text-4xl font-black text-white mb-1 font-mono tracking-tight">{totalRecords}</div>
-              <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">{t.totalRecords}</p>
+              <div className="text-5xl font-black text-white mb-2 font-mono tracking-tighter">{totalRecords}</div>
+              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{t.totalRecords}</p>
            </div>
 
-           <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-6 rounded-2xl relative overflow-hidden group hover:border-blue-500/30 transition-colors">
-              <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-colors"></div>
-              <div className="flex justify-between items-start mb-4">
-                 <div className="p-3 bg-blue-500/10 rounded-xl text-blue-500">
-                    <Map className="w-6 h-6" />
-                 </div>
+           <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl group hover:border-blue-500/40 transition-all shadow-2xl">
+              <div className="p-3 bg-blue-500/10 w-fit rounded-2xl text-blue-500 mb-6 group-hover:scale-110 transition-transform">
+                 <Map className="w-6 h-6" />
               </div>
-              <div className="text-4xl font-black text-white mb-1 font-mono tracking-tight">{Object.keys(countryStats).length}</div>
-              <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Países Representados</p>
+              <div className="text-5xl font-black text-white mb-2 font-mono tracking-tighter">{Object.keys(countryStats).length}</div>
+              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Nações Unidas</p>
            </div>
 
-           <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-6 rounded-2xl relative overflow-hidden group hover:border-brand-500/50 transition-all">
-              <div className="flex items-center justify-between mb-4">
-                 <div className="p-2.5 bg-brand-500/10 rounded-xl text-brand-500">
-                    <Coins className="w-6 h-6" />
-                 </div>
-                 <span className="text-[10px] font-black text-brand-400 bg-brand-900/20 px-2 py-0.5 rounded-full border border-brand-500/30 uppercase">Raspadinhas</span>
+           <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl group hover:border-brand-500/40 transition-all shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                 <Coins className="w-6 h-6 text-brand-500" />
+                 <span className="text-[9px] font-black text-brand-400 bg-brand-900/30 px-2 py-0.5 rounded border border-brand-500/20">RASP.</span>
               </div>
-              <div className="flex items-baseline gap-2 mb-4">
-                <div className="text-4xl font-black text-white font-mono tracking-tighter">{scratchCount}</div>
-                <div className="text-xs font-bold text-slate-500">{Math.round(scratchPct)}% do arquivo</div>
-              </div>
-              <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
-                <div 
-                  className="h-full bg-gradient-to-r from-brand-600 to-brand-400 shadow-[0_0_15px_rgba(244,63,94,0.4)] transition-all duration-1000 ease-out" 
-                  style={{ width: `${animate ? scratchPct : 0}%` }}
-                ></div>
+              <div className="text-4xl font-black text-white mb-4 tracking-tighter">{categoryStats.scratch}</div>
+              <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-full bg-brand-500 transition-all duration-1000" style={{ width: `${animate ? scratchPct : 0}%` }}></div>
               </div>
            </div>
 
-           <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-6 rounded-2xl relative overflow-hidden group hover:border-purple-500/50 transition-all">
-              <div className="flex items-center justify-between mb-4">
-                 <div className="p-2.5 bg-purple-500/10 rounded-xl text-purple-400">
-                    <Ticket className="w-6 h-6" />
-                 </div>
-                 <span className="text-[10px] font-black text-purple-400 bg-purple-900/20 px-2 py-0.5 rounded-full border border-purple-500/30 uppercase">Lotarias</span>
+           <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl group hover:border-purple-500/40 transition-all shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                 <Ticket className="w-6 h-6 text-purple-500" />
+                 <span className="text-[9px] font-black text-purple-400 bg-purple-900/30 px-2 py-0.5 rounded border border-purple-500/20">LOT.</span>
               </div>
-              <div className="flex items-baseline gap-2 mb-4">
-                <div className="text-4xl font-black text-white font-mono tracking-tighter">{lotteryCount}</div>
-                <div className="text-xs font-bold text-slate-500">{Math.round(lotteryPct)}% do arquivo</div>
-              </div>
-              <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
-                <div 
-                  className="h-full bg-gradient-to-r from-purple-600 to-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all duration-1000 ease-out" 
-                  style={{ width: `${animate ? lotteryPct : 0}%` }}
-                ></div>
+              <div className="text-4xl font-black text-white mb-4 tracking-tighter">{categoryStats.lottery}</div>
+              <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-full bg-purple-500 transition-all duration-1000" style={{ width: `${animate ? lotteryPct : 0}%` }}></div>
               </div>
            </div>
         </div>
 
+        {/* Main Grid Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-            <h3 className="text-lg font-bold text-white mb-12 flex items-center gap-2">
-               <Globe className="w-5 h-5 text-slate-400" />
-               Itens por Continente
+          
+          {/* Continents Bar Chart */}
+          <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-[2rem] p-10 shadow-2xl relative overflow-hidden flex flex-col min-h-[450px]">
+            <h3 className="text-sm font-black text-slate-400 mb-16 flex items-center gap-3 uppercase tracking-[0.2em]">
+               <Globe className="w-5 h-5" /> Distribuição Continental
             </h3>
             
-            <div className="flex items-end justify-around h-64 gap-2 md:gap-6 relative z-10 px-2 md:px-8">
+            <div className="flex-1 flex items-end justify-around gap-2 md:gap-8 relative z-10">
               {continentsConfig.map((c) => {
                 const count = Number(stats[c.key as string]) || 0;
-                const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
-                const height = animate ? Math.max(percentage, 5) : 5;
+                const percentage = (count / maxCount) * 100;
+                const height = animate ? Math.max(percentage, 5) : 2;
                 
                 return (
-                  <div key={c.key} className="flex flex-col items-center flex-1 group h-full justify-end">
-                    <div 
-                        className={`mb-3 bg-slate-800 text-white text-xs md:text-sm font-bold py-1 px-2 md:px-3 rounded-lg border border-slate-700 shadow-xl transition-all duration-700 transform ${animate ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-                        style={{ transitionDelay: '300ms' }}
-                    >
+                  <div key={c.key} className="flex flex-col items-center flex-1 h-full justify-end group">
+                    <div className={`mb-4 bg-slate-800 text-white text-[10px] font-black py-1.5 px-3 rounded-lg border border-slate-700 shadow-2xl transition-all duration-700 ${animate ? 'opacity-100' : 'opacity-0 translate-y-2'}`}>
                         {count}
                     </div>
-                    <div className="w-full max-w-[60px] relative flex flex-col justify-end group-hover:scale-105 transition-transform duration-300">
-                        <div 
-                            className={`w-full rounded-t-xl bg-gradient-to-t ${c.gradient} shadow-[0_0_20px_rgba(0,0,0,0.3)] transition-all duration-[1500ms] cubic-bezier(0.34, 1.56, 0.64, 1) relative overflow-hidden`}
-                            style={{ height: `${height}%` }}
-                        >
-                            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent translate-y-full group-hover:-translate-y-full transition-transform duration-1000"></div>
-                        </div>
-                        <div 
-                            className={`w-full h-4 bg-gradient-to-b ${c.gradient} opacity-20 blur-md rounded-b-xl transform scale-y-[-0.5]`}
-                            style={{ display: count > 0 ? 'block' : 'none' }}
-                        ></div>
+                    <div 
+                        className={`w-full max-w-[50px] rounded-t-2xl bg-gradient-to-t ${c.gradient} transition-all duration-[1200ms] ease-out relative group-hover:scale-x-110 origin-bottom`}
+                        style={{ height: `${height}%` }}
+                    >
+                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     </div>
-                    <span className="mt-4 text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider text-center">{c.label}</span>
+                    <span className="mt-6 text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">{c.label}</span>
                   </div>
                 );
               })}
             </div>
-            <div className="absolute inset-0 px-8 py-20 pointer-events-none flex flex-col justify-between opacity-10">
-               <div className="w-full h-px bg-white"></div>
+            {/* Grid Lines Overlay */}
+            <div className="absolute inset-0 px-10 py-24 pointer-events-none flex flex-col justify-between opacity-[0.03]">
                <div className="w-full h-px bg-white"></div>
                <div className="w-full h-px bg-white"></div>
                <div className="w-full h-px bg-white"></div>
@@ -220,140 +183,84 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
             </div>
           </div>
 
-          <div className="flex flex-col gap-6">
-             <div className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700/50 rounded-3xl p-6 shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-                   <Users className="w-32 h-32 text-white" />
-                </div>
-                <h3 className="text-sm font-bold text-white mb-6 flex items-center gap-2 uppercase tracking-wider relative z-10">
-                   <Award className="w-4 h-4 text-yellow-500" />
-                   Guardiões do Arquivo
+          <div className="flex flex-col gap-8">
+             {/* Donut Chart - The "Circulation" Fix */}
+             <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-8 shadow-2xl">
+                <h3 className="text-[10px] font-black text-slate-400 mb-8 flex items-center gap-2 uppercase tracking-widest">
+                   <PieChart className="w-4 h-4 text-brand-500" /> Estados Físicos
                 </h3>
-                <div className="space-y-4 relative z-10">
-                   {guardians.length > 0 ? guardians.map(([name, count], index) => {
-                      const badge = getCollectorBadge(name);
-                      const percentage = (Number(count) / totalRecords) * 100;
-                      return (
-                         <div key={name} className="group">
-                            <div className="flex items-center justify-between mb-2">
-                               <div className="flex items-center gap-3">
-                                  <div className={`w-9 h-9 rounded-full ${badge.color} flex items-center justify-center text-xs font-black text-white shadow-xl border border-white/20 relative`}>
-                                     {badge.icon ? (
-                                       <div className="flex items-center justify-center w-full h-full">
-                                         <span className="absolute -top-1 -right-1 z-20 transform rotate-12">{badge.icon}</span>
-                                         {badge.text}
-                                       </div>
-                                     ) : badge.text}
-                                  </div>
-                                  <div>
-                                     <div className="text-xs font-black text-white flex items-center gap-1 uppercase tracking-tight">
-                                        {name}
-                                        {(name.toLowerCase().trim() === 'j' || name.toLowerCase().trim() === 'jj' || name.toLowerCase().includes('jorge')) && <Crown className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
-                                     </div>
-                                     <div className="text-[10px] text-slate-400 font-mono font-bold">{count} peças arquivadas</div>
-                                  </div>
-                               </div>
-                               <span className="text-[10px] font-black text-slate-500">{Math.round(percentage)}%</span>
-                            </div>
-                            <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                               <div 
-                                  className={`h-full rounded-full ${badge.color.replace('bg-', 'bg-gradient-to-r from-').replace('600', '400')} to-white/30 transition-all duration-1000`} 
-                                  style={{ width: `${animate ? percentage : 0}%` }}
-                               ></div>
-                            </div>
-                         </div>
-                      );
-                   }) : (
-                      <div className="text-center py-4 text-xs text-slate-500 italic">O arquivo está em silêncio...</div>
-                   )}
-                </div>
-             </div>
-
-             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
-                <h3 className="text-sm font-bold text-white mb-6 flex items-center gap-2 uppercase tracking-wider">
-                   <Flag className="w-4 h-4 text-blue-500" />
-                   Top 5 Países
-                </h3>
-                <div className="space-y-5">
-                   {topCountries.map(([country, count], index) => (
-                      <div key={country} className="relative">
-                         <div className="flex justify-between text-xs font-bold text-slate-300 mb-1.5 z-10 relative">
-                            <span className="flex items-center gap-2">
-                               <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] ${index === 0 ? 'bg-yellow-500 text-black' : index === 1 ? 'bg-slate-400 text-black' : index === 2 ? 'bg-orange-700 text-white' : 'bg-slate-800 text-slate-500'}`}>
-                                  {index + 1}
-                               </span>
-                               {country}
-                            </span>
-                            <span className="font-mono">{count}</span>
-                         </div>
-                         <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                            <div 
-                               className={`h-full rounded-full ${index === 0 ? 'bg-yellow-500' : 'bg-slate-600'} transition-all duration-1000`} 
-                               style={{ width: `${animate ? (Number(count) / maxCountryCount) * 100 : 0}%` }}
-                            ></div>
-                         </div>
-                      </div>
-                   ))}
-                </div>
-             </div>
-
-             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col justify-center relative overflow-hidden">
-                <h3 className="text-sm font-bold text-white mb-6 flex items-center gap-2 uppercase tracking-wider">
-                   <PieChart className="w-4 h-4 text-brand-500" />
-                   Estado
-                </h3>
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center justify-between gap-8">
                    <div 
-                     className="w-24 h-24 rounded-full relative flex items-center justify-center shrink-0"
+                     className={`w-28 h-28 rounded-full relative flex items-center justify-center shrink-0 border-4 border-slate-950 shadow-2xl transition-transform duration-[2000ms] ${animate ? 'rotate-0' : 'rotate-180'}`}
                      style={{ 
                         background: `conic-gradient(
-                           #22c55e 0% ${stopMint}%, 
-                           #3b82f6 ${stopMint}% ${stopSC}%,
-                           #f59e0b ${stopSC}% ${stopCS}%,
-                           #ec4899 ${stopCS}% 100%
+                           #22c55e 0% ${stateDonutData.stop1}%, 
+                           #3b82f6 ${stateDonutData.stop1}% ${stateDonutData.stop2}%,
+                           #f59e0b ${stateDonutData.stop2}% ${stateDonutData.stop3}%,
+                           #ec4899 ${stateDonutData.stop3}% 100%
                         )` 
                      }}
                    >
-                      <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center border border-slate-800">
-                         <span className="text-[10px] font-bold text-slate-500 italic">Estado</span>
+                      <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center border border-slate-800/50 shadow-inner">
+                         <div className="flex flex-col items-center">
+                            <span className="text-[16px] font-black text-white leading-none">{stateDonutData.total}</span>
+                            <span className="text-[7px] font-black text-slate-600 uppercase">Total</span>
+                         </div>
                       </div>
                    </div>
-                   <div className="flex-1 space-y-2">
-                      <div className="flex items-center justify-between text-[10px]">
-                         <span className="flex items-center gap-2 text-slate-300"><span className="w-2 h-2 rounded-full bg-green-500"></span> MINT</span>
-                         <span className="font-mono text-white font-bold">{Math.round(pctMint)}%</span>
-                      </div>
-                      <div className="flex items-center justify-between text-[10px]">
-                         <span className="flex items-center gap-2 text-slate-300"><span className="w-2 h-2 rounded-full bg-blue-500"></span> SC</span>
-                         <span className="font-mono text-white font-bold">{Math.round(pctSC)}%</span>
-                      </div>
-                      <div className="flex items-center justify-between text-[10px]">
-                         <span className="flex items-center gap-2 text-slate-300"><span className="w-2 h-2 rounded-full bg-orange-500"></span> CS</span>
-                         <span className="font-mono text-white font-bold">{Math.round(pctCS)}%</span>
-                      </div>
-                      <div className="flex items-center justify-between text-[10px]">
-                         <span className="flex items-center gap-2 text-slate-300"><span className="w-2 h-2 rounded-full bg-pink-500"></span> Outros</span>
-                         <span className="font-mono text-white font-bold">{Math.round(pctAmostra)}%</span>
-                      </div>
+                   <div className="flex-1 space-y-3">
+                      {[
+                        { label: 'MINT', color: 'bg-green-500', pct: stateDonutData.pMint },
+                        { label: 'SC', color: 'bg-blue-500', pct: stateDonutData.pSC },
+                        { label: 'CS', color: 'bg-orange-500', pct: stateDonutData.pCS },
+                        { label: 'Outros', color: 'bg-pink-500', pct: stateDonutData.pAmostra }
+                      ].map(item => (
+                        <div key={item.label} className="flex items-center justify-between group">
+                           <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${item.color} group-hover:scale-125 transition-transform`}></div>
+                              <span className="text-[10px] font-black text-slate-400 uppercase">{item.label}</span>
+                           </div>
+                           <span className="text-[10px] font-mono font-black text-slate-200">{Math.round(item.pct)}%</span>
+                        </div>
+                      ))}
                    </div>
+                </div>
+             </div>
+
+             {/* Top Countries */}
+             <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-8 shadow-2xl flex-1">
+                <h3 className="text-[10px] font-black text-slate-400 mb-8 flex items-center gap-2 uppercase tracking-widest">
+                   <Flag className="w-4 h-4 text-blue-500" /> Principais Nações
+                </h3>
+                <div className="space-y-5">
+                   {Object.entries(countryStats)
+                    .sort((a, b) => Number(b[1]) - Number(a[1]))
+                    .slice(0, 5)
+                    .map(([country, count], i) => {
+                      const maxC = Math.max(...(Object.values(countryStats) as number[]), 1);
+                      const pct = (Number(count) / maxC) * 100;
+                      return (
+                        <div key={country} className="space-y-2">
+                           <div className="flex justify-between text-[10px] font-black text-slate-300 uppercase tracking-tighter">
+                              <span>{i + 1}. {country}</span>
+                              <span className="text-blue-500">{count}</span>
+                           </div>
+                           <div className="w-full h-1 bg-slate-950 rounded-full overflow-hidden">
+                              <div className="h-full bg-blue-600 transition-all duration-1000" style={{ width: `${animate ? pct : 0}%` }}></div>
+                           </div>
+                        </div>
+                      );
+                    })}
                 </div>
              </div>
           </div>
         </div>
 
-        <div className="mt-24 pt-8 border-t border-slate-900 flex flex-col items-center justify-center text-center space-y-3 opacity-50 hover:opacity-100 transition-opacity duration-500">
-            <p className="text-slate-500 text-[10px] uppercase tracking-[0.2em]">
-              © {new Date().getFullYear()} • Arquivo Mundial
+        {/* Footer info */}
+        <div className="mt-24 pt-12 border-t border-slate-900 flex flex-col items-center justify-center opacity-30">
+            <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.4em]">
+              © {new Date().getFullYear()} • Arquivo Mundial de Raspadinhas
             </p>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-2 items-center">
-              <a href="mailto:mesquita757@hotmail.com" className="flex items-center gap-2 text-slate-600 hover:text-white text-xs transition-colors">
-                 <Mail className="w-3.5 h-3.5" /> Jorge Mesquita
-              </a>
-              <span className="hidden sm:inline text-slate-700">|</span>
-              <a href="mailto:fabio.pagni@libero.it" className="flex items-center gap-2 text-slate-600 hover:text-white text-xs transition-colors">
-                 <Mail className="w-3.5 h-3.5" /> Fabio Pagni
-              </a>
-            </div>
         </div>
       </div>
     </div>
