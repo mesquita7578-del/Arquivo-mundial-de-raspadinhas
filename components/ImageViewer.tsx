@@ -5,9 +5,9 @@ import {
   Hash, Clock, Flag, MapPin, Info, 
   History, Building2, Globe, Fingerprint,
   Sparkles, Columns, Ruler, Printer, Banknote, ScanLine,
-  Layers, LayoutGrid, Eye
+  Layers, LayoutGrid, Eye, Calendar
 } from 'lucide-react';
-import { ScratchcardData, ScratchcardState } from '../types';
+import { ScratchcardData, ScratchcardState, Continent } from '../types';
 
 interface ImageViewerProps {
   image: ScratchcardData;
@@ -20,6 +20,16 @@ interface ImageViewerProps {
   onImageSelect: (img: ScratchcardData) => void;
   t: any;
 }
+
+const GERMAN_STATES = [
+  "Baden-Württemberg", "Bayern", "Berlin", "Brandenburg", "Bremen", 
+  "Hamburg", "Hessen", "Mecklenburg-Vorpommern", "Niedersachsen", 
+  "Nordrhein-Westfalen", "Rheinland-Pfalz", "Saarland", "Sachsen", 
+  "Sachsen-Anhalt", "Schleswig-Holstein", "Thüringen", 
+  "National / Geral", "Outro"
+];
+
+const CONTINENTS: Continent[] = ['Europa', 'América', 'Ásia', 'África', 'Oceania'];
 
 export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpdate, onDelete, isAdmin, currentUser, contextImages, onImageSelect, t }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -40,7 +50,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   }, [image]);
 
   const seriesMembers = useMemo(() => {
-    // Busca todos os itens que pertencem à mesma série técnica
     return contextImages
       .filter(img => 
         (img.gameNumber === image.gameNumber && img.gameName === image.gameName) || 
@@ -83,6 +92,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
       </div>
     </div>
   );
+
+  const isGermany = formData.country.toLowerCase().trim() === 'alemanha' || formData.country.toLowerCase().trim() === 'germany';
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-xl" onClick={onClose}>
@@ -175,7 +186,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                     )}
                  </div>
                  <div className="flex items-center gap-2">
-                    {/* BOTÃO DE MODO PANORAMA - SÓ APARECE EM SÉRIES */}
                     {(image.isSeries || seriesMembers.length > 1) && !isEditing && (
                        <button 
                          onClick={() => setViewMode(viewMode === 'single' ? 'panorama' : 'single')}
@@ -203,13 +213,56 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                     </div>
                     {isEditing ? (
                        <div className="space-y-4">
-                          <input type="text" value={formData.gameName} onChange={e => handleChange('gameName', e.target.value)} className="w-full bg-slate-900 text-white text-xl font-black rounded-xl p-4 border border-slate-800 outline-none" />
+                          <div className="space-y-1">
+                             <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Nome do Jogo</label>
+                             <input type="text" value={formData.gameName} onChange={e => handleChange('gameName', e.target.value)} className="w-full bg-slate-900 text-white text-lg font-black rounded-xl p-3 border border-slate-800 outline-none focus:border-blue-500" />
+                          </div>
                           <div className="flex items-center gap-3 bg-slate-900/50 p-3 rounded-xl border border-slate-800">
                              <input type="checkbox" id="isSeriesEdit" checked={formData.isSeries} onChange={e => handleChange('isSeries', e.target.checked)} className="w-5 h-5 accent-brand-500" />
                              <label htmlFor="isSeriesEdit" className="text-xs font-black text-slate-300 uppercase">Pertence a uma Série (SET)</label>
                           </div>
-                          <input type="text" value={formData.operator || ''} onChange={e => handleChange('operator', e.target.value)} className="w-full bg-slate-900 text-blue-400 text-sm font-black rounded-xl p-4 border border-slate-800 outline-none" placeholder="Operador" />
-                          <input type="text" value={formData.lines || ''} onChange={e => handleChange('lines', e.target.value)} className="w-full bg-slate-900 text-emerald-400 text-sm font-black rounded-xl p-4 border border-slate-800 outline-none" placeholder="Cor das Linhas" />
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                             <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">País</label>
+                                <input type="text" value={formData.country} onChange={e => handleChange('country', e.target.value)} className="w-full bg-slate-900 text-red-400 text-sm font-black rounded-xl p-3 border border-slate-800 outline-none" />
+                             </div>
+                             <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Região / Estado</label>
+                                {isGermany ? (
+                                   <select value={formData.region || ''} onChange={e => handleChange('region', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black rounded-xl p-3 border border-slate-800 outline-none">
+                                      <option value="">Selecione o Estado...</option>
+                                      {GERMAN_STATES.map(state => <option key={state} value={state}>{state}</option>)}
+                                   </select>
+                                ) : (
+                                   <input type="text" value={formData.region || ''} onChange={e => handleChange('region', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black rounded-xl p-3 border border-slate-800 outline-none" placeholder="Ex: Continente" />
+                                )}
+                             </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                             <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Operador</label>
+                                <input type="text" value={formData.operator || ''} onChange={e => handleChange('operator', e.target.value)} className="w-full bg-slate-900 text-blue-400 text-sm font-black rounded-xl p-3 border border-slate-800 outline-none" placeholder="Operador" />
+                             </div>
+                             <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Linhas</label>
+                                <input type="text" value={formData.lines || ''} onChange={e => handleChange('lines', e.target.value)} className="w-full bg-slate-900 text-emerald-400 text-sm font-black rounded-xl p-3 border border-slate-800 outline-none" placeholder="Cor das Linhas" />
+                             </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                             <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Nº Jogo</label>
+                                <input type="text" value={formData.gameNumber || ''} onChange={e => handleChange('gameNumber', e.target.value)} className="w-full bg-slate-900 text-slate-400 text-sm font-black rounded-xl p-3 border border-slate-800 outline-none" />
+                             </div>
+                             <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Continente</label>
+                                <select value={formData.continent} onChange={e => handleChange('continent', e.target.value)} className="w-full bg-slate-900 text-indigo-400 text-sm font-black rounded-xl p-3 border border-slate-800 outline-none">
+                                   {CONTINENTS.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                             </div>
+                          </div>
                        </div>
                     ) : (
                        <>
@@ -224,6 +277,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                     <DataCard icon={Building2} label="Entidade" value={formData.operator} colorClass="text-blue-500" />
                     <DataCard icon={Hash} label="Nº Jogo" value={formData.gameNumber} colorClass="text-slate-500" />
                     <DataCard icon={Flag} label="País" value={formData.country} colorClass="text-red-500" />
+                    <DataCard icon={MapPin} label="Região" value={formData.region} colorClass="text-white" />
                     <DataCard icon={Globe} label="Continente" value={formData.continent} colorClass="text-indigo-500" />
                     <DataCard icon={Clock} label="Ano" value={formData.releaseDate} colorClass="text-orange-500" />
                     <DataCard icon={Banknote} label="Preço" value={formData.price} colorClass="text-green-500" />

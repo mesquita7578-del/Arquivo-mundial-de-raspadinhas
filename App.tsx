@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
@@ -9,12 +10,13 @@ import { StatsSection } from './components/StatsSection';
 import { HistoryModal } from './components/HistoryModal'; 
 import { WebsitesModal } from './components/WebsitesModal';
 import { AboutPage } from './components/AboutPage'; 
+import { WorldMap } from './components/WorldMap';
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category } from './types';
 import { 
   Globe, Ticket, Coins, Heart, Gem, Gift, Trophy, 
   Building2, Database, Loader2, Sparkles, X, 
-  ClipboardList, Package, Search, Filter, MapPin, PlusCircle, LogIn, LayoutGrid
+  ClipboardList, Package, Search, Filter, MapPin, PlusCircle, LogIn, LayoutGrid, Map as MapIcon
 } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
@@ -22,7 +24,7 @@ import { storageService } from './services/storage';
 const AUTHORIZED_ADMINS = ["JORGE MESQUITA", "FABIO PAGNI", "CHLOE", "IA", "SYSTEM", "PEDRO RODRIGO"];
 const ADMIN_PASSWORD = "123456";
 
-type PageType = 'home' | 'stats' | 'about' | 'europe' | 'america' | 'asia' | 'africa' | 'oceania' | 'showcase' | 'my-collection';
+type PageType = 'home' | 'stats' | 'about' | 'europe' | 'america' | 'asia' | 'africa' | 'oceania' | 'showcase' | 'my-collection' | 'map';
 
 function App() {
   const [allImagesCache, setAllImagesCache] = useState<ScratchcardData[]>([]);
@@ -77,7 +79,6 @@ function App() {
     finally { setIsLoadingDB(false); }
   };
 
-  // Added handleInstallApp to handle PWA installation prompt
   const handleInstallApp = async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
@@ -115,7 +116,13 @@ function App() {
     setActiveContinent(continent);
     setCountrySearch(country);
     setSearchTerm('');
-    // Scroll para o topo ao selecionar país
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCountrySelectFromMap = (country: string) => {
+    setCurrentPage('home');
+    setCountrySearch(country);
+    setSearchTerm('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -199,7 +206,6 @@ function App() {
     }).sort((a, b) => a.gameNumber.localeCompare(b.gameNumber, undefined, { numeric: true }));
   }, [allImagesCache, activeContinent, activeCategory, filterRarity, filterPromo, filterWinners, countrySearch, searchTerm, currentPage, currentUser]);
 
-  // CHAVE DE RESET PARA A GRID: Sempre que os filtros mudarem, a grid volta à pág 1
   const gridKey = useMemo(() => {
     return `${currentPage}-${activeContinent}-${activeCategory}-${countrySearch}-${searchTerm}-${filterRarity}-${filterPromo}-${filterWinners}-${currentUser}`;
   }, [currentPage, activeContinent, activeCategory, countrySearch, searchTerm, filterRarity, filterPromo, filterWinners, currentUser]);
@@ -239,7 +245,7 @@ function App() {
       />
 
       <main className="flex-1 overflow-y-auto bg-slate-950 scroll-smooth custom-scrollbar flex flex-col">
-        {!(currentPage === 'stats' || currentPage === 'about') && (
+        {!(currentPage === 'stats' || currentPage === 'about' || currentPage === 'map') && (
           <div className="sticky top-0 z-30 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 shadow-xl">
             <div className="bg-slate-900/30 p-2 md:px-8 flex flex-wrap items-center gap-2">
               <button onClick={() => setFilterRarity(!filterRarity)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterRarity ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400'}`}><Gem className="w-3.5 h-3.5" /> Raridades</button>
@@ -267,11 +273,23 @@ function App() {
           </div>
         )}
 
-        <div className="relative flex-1">
+        <div className="relative flex-1 flex flex-col">
           {currentPage === 'stats' ? (
             <StatsSection stats={totalStats.stats} categoryStats={totalStats.categoryStats} countryStats={totalStats.countryStats} stateStats={totalStats.stateStats} collectorStats={totalStats.collectorStats} totalRecords={totalStats.total} t={t.stats} />
           ) : currentPage === 'about' ? (
             <AboutPage t={t} />
+          ) : currentPage === 'map' ? (
+            <div className="flex-1 p-4 md:p-8 animate-fade-in flex flex-col">
+               <div className="mb-6">
+                 <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase flex items-center gap-3">
+                   <Globe className="w-8 h-8 text-brand-500" /> Mapa Mundi do Arquivo
+                 </h2>
+                 <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-1">Navegue pelas coleções através do globo interativo</p>
+               </div>
+               <div className="flex-1 min-h-[600px]">
+                 <WorldMap images={allImagesCache} onCountrySelect={handleCountrySelectFromMap} t={t.grid} />
+               </div>
+            </div>
           ) : (
             <div className="p-4 md:p-8 animate-fade-in min-h-[50vh]">
               {isLoadingDB ? (

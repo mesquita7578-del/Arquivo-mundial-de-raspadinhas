@@ -3,7 +3,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { 
   Ticket, Lock, LogOut, BookOpen, Home, 
   BarChart2, ChevronDown, Globe, User, Smartphone, 
-  Info, Database, FileJson, FileSpreadsheet, ClipboardList, UploadCloud, ChevronRight, MapPin
+  Info, Database, FileJson, FileSpreadsheet, ClipboardList, UploadCloud, ChevronRight, MapPin, Map as MapIcon
 } from 'lucide-react';
 import { Language } from '../translations';
 import { Continent } from '../types';
@@ -152,6 +152,13 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             )}
          </div>
+
+         <button 
+           onClick={() => onNavigate('map')}
+           className={`px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all ${currentPage === 'map' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+         >
+           <MapIcon className="w-4 h-4" /> Mapa
+         </button>
 
          <button 
            onClick={() => onNavigate('stats')}
