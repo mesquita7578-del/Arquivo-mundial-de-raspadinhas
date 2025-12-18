@@ -6,7 +6,7 @@ import {
   Building2, Globe, Fingerprint,
   Sparkles, Columns, Ruler, Printer, Banknote, ScanLine,
   Layers, LayoutGrid, Eye, Calendar, ChevronDown, User,
-  Tag, ShieldCheck, Palette, Activity, Percent, Plus
+  Tag, ShieldCheck, Palette, Activity, Percent, Plus, RefreshCw
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent, LineType, CategoryItem } from '../types';
 
@@ -53,7 +53,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<ScratchcardData>(image);
   const [activeImage, setActiveImage] = useState<string>(image.frontUrl);
-  const [activeLabel, setActiveLabel] = useState<string>('front');
+  const [activeLabel, setActiveLabel] = useState<'front' | 'back'>('front');
   const [isZoomed, setIsZoomed] = useState(false);
   const [viewMode, setViewMode] = useState<'single' | 'panorama'>('single');
   const backInputRef = useRef<HTMLInputElement>(null);
@@ -64,6 +64,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
       setActiveImage(image.frontUrl);
       setActiveLabel('front');
       setIsEditing(false);
+      setIsZoomed(false);
     }
   }, [image]);
 
@@ -110,10 +111,22 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
       </div>
       <div className="flex flex-col">
         <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">{label}</span>
-        <span className="text-xs font-black text-slate-200 leading-none truncate max-w-[160px]">{value || '-'}</span>
+        <span className="text-xs font-black text-slate-200 leading-none truncate max-w-[120px]">{value || '-'}</span>
       </div>
     </div>
   );
+
+  const toggleImage = () => {
+    if (formData.backUrl) {
+       if (activeLabel === 'front') {
+          setActiveImage(formData.backUrl);
+          setActiveLabel('back');
+       } else {
+          setActiveImage(formData.frontUrl);
+          setActiveLabel('front');
+       }
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-xl" onClick={onClose}>
@@ -128,7 +141,18 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
               <div className="flex-1 flex flex-col min-h-0 w-full h-full">
                 <div className={`flex-1 relative w-full h-full flex items-center justify-center p-4 md:p-10 ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`} onClick={() => setIsZoomed(!isZoomed)}>
                    <img src={activeImage} className={`max-w-full max-h-full object-contain transition-transform duration-500 shadow-2xl ${isZoomed ? 'scale-150' : 'scale-100'}`} alt={formData.gameName} />
+                   
+                   {/* Botão de Rotação Rápida no Centro se houver Verso */}
+                   {formData.backUrl && !isZoomed && (
+                     <button 
+                       onClick={(e) => { e.stopPropagation(); toggleImage(); }}
+                       className="absolute bottom-10 right-10 bg-brand-600/80 hover:bg-brand-500 text-white p-4 rounded-full shadow-2xl backdrop-blur-md border border-brand-400/50 transition-all hover:scale-110 active:scale-95 group z-50"
+                     >
+                       <RefreshCw className="w-6 h-6 group-hover:rotate-180 transition-transform duration-500" />
+                     </button>
+                   )}
                 </div>
+                
                 <div className="h-28 bg-slate-950 border-t border-slate-800 p-4 flex items-center gap-6 justify-center shrink-0">
                    <button onClick={() => { setActiveImage(formData.frontUrl); setActiveLabel('front'); }} className={`relative h-20 aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeLabel === 'front' ? 'border-blue-500 scale-105 shadow-xl' : 'border-slate-800 opacity-40 hover:opacity-100'}`}>
                       <img src={formData.frontUrl} className="w-full h-full object-cover" alt="Frente" />

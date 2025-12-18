@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { 
-  Filter, Zap, Trophy, CheckCircle2, Image as ImageIcon, ChevronLeft, ChevronRight, MapPin
+  Filter, Zap, Trophy, CheckCircle2, Image as ImageIcon, ChevronLeft, ChevronRight, MapPin, RefreshCcw
 } from 'lucide-react';
 import { ScratchcardData } from '../types';
 
@@ -43,7 +43,6 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   
-  // Garante que as imagens estejam ordenadas por gameNumber antes de paginar
   const sortedImages = useMemo(() => {
     return [...images].sort((a, b) => {
       const numA = a.gameNumber || "";
@@ -89,16 +88,25 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                  <div className="flex items-center gap-0.5">
                     <span className="text-blue-900">REF</span> {item.gameNumber}
                  </div>
-                 <span className="group-hover:text-slate-400 transition-colors">{item.releaseDate.split('-')[0]}</span>
+                 <span className="group-hover:text-slate-400 transition-colors">{item.releaseDate?.split('-')[0]}</span>
               </div>
 
               <div className="relative aspect-[3/4] bg-black flex items-center justify-center overflow-hidden">
                 <SafeImage 
                   src={item.frontUrl} 
                   alt={item.gameName} 
-                  className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105" 
+                  className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${item.backUrl ? 'group-hover:opacity-0' : 'opacity-80 group-hover:opacity-100'}`} 
                 />
                 
+                {/* Imagem do Verso no Hover */}
+                {item.backUrl && (
+                  <img 
+                    src={item.backUrl} 
+                    alt={`${item.gameName} Verso`}
+                    className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-105 group-hover:scale-100 z-10"
+                  />
+                )}
+
                 <div className="absolute top-1 left-1 flex flex-col gap-0.5 z-20">
                    <div className="bg-black/60 backdrop-blur-md text-white text-[7px] font-black px-1.5 py-0.5 rounded-sm border border-white/5 uppercase tracking-tighter leading-none shadow-xl">
                       {item.customId}
@@ -106,6 +114,11 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 </div>
 
                  <div className="absolute top-1 right-1 flex flex-col gap-1 items-end z-20">
+                    {item.backUrl && (
+                      <div className="bg-slate-900/60 backdrop-blur-sm text-slate-400 p-1 rounded-sm border border-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <RefreshCcw className="w-2.5 h-2.5" />
+                      </div>
+                    )}
                     {itemIsRecent && (
                        <div className="bg-blue-600/20 backdrop-blur-md text-red-500 px-2 py-0.5 rounded-sm shadow-[0_0_15px_rgba(59,130,246,0.3)] -rotate-12 border border-blue-500/30 flex items-center gap-1 animate-pulse" title="Adicionado nas últimas 48h!">
                           <Zap className="w-2.5 h-2.5 fill-current drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]" />
