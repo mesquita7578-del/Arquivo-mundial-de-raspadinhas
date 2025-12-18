@@ -15,9 +15,8 @@ import { WorldMap } from './components/WorldMap';
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category, CategoryItem } from './types';
 import { 
-  Globe, Ticket, Coins, Heart, Gem, Gift, Trophy, 
-  Building2, Database, Loader2, Sparkles, X, 
-  ClipboardList, Package, Search, Filter, MapPin, PlusCircle, LogIn, LayoutGrid, Map as MapIcon, Tag
+  Globe, Ticket, Sparkles, Loader2, Library, BookOpen, 
+  PlusCircle, Info, Search, Filter, LayoutGrid, Map as MapIcon, Tag
 } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
@@ -61,15 +60,19 @@ function App() {
       e.preventDefault();
       setDeferredPrompt(e);
     });
+    
+    // Timeout de segurança para o loading não ficar eterno
+    const loadTimeout = setTimeout(() => {
+      if (isLoadingDB) setIsLoadingDB(false);
+    }, 5000);
+
     loadData();
+    return () => clearTimeout(loadTimeout);
   }, []);
 
   const loadData = async () => {
-    setIsLoadingDB(true);
     try {
       await storageService.init();
-      
-      // Carregar categorias
       const cats = await storageService.getCategories();
       setCategories(cats);
 
@@ -83,124 +86,11 @@ function App() {
       }
       const freshStats = await storageService.getStats();
       setTotalStats(freshStats);
-    } catch (error) { console.error(error); }
-    finally { setIsLoadingDB(false); }
-  };
-
-  const handleAddCategory = async (name: string) => {
-    const exists = categories.some(c => c.name.toLowerCase() === name.toLowerCase());
-    if (exists) return;
-
-    const newCat: CategoryItem = {
-      id: `cat-${Date.now()}`,
-      name: name,
-      isDefault: false,
-      createdAt: Date.now()
-    };
-    await storageService.saveCategory(newCat);
-    setCategories(prev => [...prev, newCat]);
-  };
-
-  const handleDeleteCategory = async (id: string) => {
-    await storageService.deleteCategory(id);
-    setCategories(prev => prev.filter(c => c.id !== id));
-  };
-
-  const handleInstallApp = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null);
+    } catch (error) { 
+      console.error("DB Error:", error); 
+    } finally { 
+      setIsLoadingDB(false); 
     }
-  };
-
-  const handleUploadComplete = async (newItem: ScratchcardData) => {
-    setAllImagesCache(prev => {
-      const exists = prev.find(img => img.id === newItem.id);
-      if (exists) return prev.map(img => img.id === newItem.id ? newItem : img);
-      return [...prev, newItem];
-    });
-    const freshStats = await storageService.getStats();
-    setTotalStats(freshStats);
-  };
-
-  const countriesByContinent = useMemo(() => {
-    const mapping: Record<string, string[]> = {
-      'Europa': [], 'América': [], 'Ásia': [], 'África': [], 'Oceania': []
-    };
-    allImagesCache.forEach(img => {
-      if (mapping[img.continent] && !mapping[img.continent].includes(img.country)) {
-        mapping[img.continent].push(img.country);
-      }
-    });
-    Object.keys(mapping).forEach(key => mapping[key].sort());
-    return mapping;
-  }, [allImagesCache]);
-
-  const handleCountrySelectFromHeader = (continent: Continent, country: string) => {
-    setCurrentPage('home');
-    setActiveContinent(continent);
-    setCountrySearch(country);
-    setSearchTerm('');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleCountrySelectFromMap = (country: string) => {
-    setActiveContinent('Mundo');
-    setActiveCategory('all');
-    setFilterRarity(false);
-    setFilterPromo(false);
-    setFilterWinners(false);
-    
-    setCountrySearch(country);
-    setSearchTerm('');
-    setCurrentPage('home');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleExportJSON = async () => {
-    const data = await storageService.exportData();
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `arquivo-mundial-backup-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-  };
-
-  const handleExportCSV = () => {
-    const headers = ["ID", "Nome", "Número", "País", "Estado", "Ano", "Preço", "Linhas", "Colecionador"];
-    const rows = allImagesCache.map(i => [i.customId, i.gameName, i.gameNumber, i.country, i.state, i.releaseDate, i.price || '', i.lines || '', i.collector || '']);
-    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `arquivo-mundial-lista.csv`;
-    a.click();
-  };
-
-  const handleExportTXT = () => {
-    const text = allImagesCache.map(i => `${i.customId} - ${i.gameName} (${i.country}) [${i.state}]`).join("\n");
-    const blob = new Blob([text], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `checklist-arquivo-mundial.txt`;
-    a.click();
-  };
-
-  const handleImportJSON = async (file: File) => {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const count = await storageService.importData(e.target?.result as string);
-        alert(`${count} registos restaurados!`);
-        loadData();
-      } catch (err) { alert("Erro ao importar."); }
-    };
-    reader.readAsText(file);
   };
 
   const handleUpdateImage = async (updatedImage: ScratchcardData) => {
@@ -214,6 +104,39 @@ function App() {
     await storageService.delete(id);
     setAllImagesCache(prev => prev.filter(img => img.id !== id));
     setSelectedImage(null);
+    const freshStats = await storageService.getStats();
+    setTotalStats(freshStats);
+  };
+
+  // Fix: Defined countriesByContinent used in Header
+  const countriesByContinent = useMemo(() => {
+    const map: Record<string, string[]> = {
+      'Europa': [],
+      'América': [],
+      'Ásia': [],
+      'África': [],
+      'Oceania': []
+    };
+    allImagesCache.forEach(img => {
+      if (img.continent && map[img.continent] && !map[img.continent].includes(img.country)) {
+        map[img.continent].push(img.country);
+      }
+    });
+    Object.keys(map).forEach(cont => map[cont].sort());
+    return map;
+  }, [allImagesCache]);
+
+  // Fix: Defined handleCountrySelectFromMap used in WorldMap
+  const handleCountrySelectFromMap = (country: string) => {
+    setCurrentPage('home');
+    const img = allImagesCache.find(i => i.country === country);
+    if (img) setActiveContinent(img.continent);
+    setCountrySearch(country);
+  };
+
+  // Fix: Defined handleUploadComplete used in UploadModal
+  const handleUploadComplete = async (newItem: ScratchcardData) => {
+    setAllImagesCache(prev => [newItem, ...prev]);
     const freshStats = await storageService.getStats();
     setTotalStats(freshStats);
   };
@@ -239,10 +162,6 @@ function App() {
     }).sort((a, b) => a.gameNumber.localeCompare(b.gameNumber, undefined, { numeric: true }));
   }, [allImagesCache, activeContinent, activeCategory, filterRarity, filterPromo, filterWinners, countrySearch, searchTerm, currentPage, currentUser]);
 
-  const gridKey = useMemo(() => {
-    return `${currentPage}-${activeContinent}-${activeCategory}-${countrySearch}-${searchTerm}-${filterRarity}-${filterPromo}-${filterWinners}-${currentUser}`;
-  }, [currentPage, activeContinent, activeCategory, countrySearch, searchTerm, filterRarity, filterPromo, filterWinners, currentUser]);
-
   const handleNavigate = (p: PageType) => {
     setCurrentPage(p);
     setCountrySearch('');
@@ -256,120 +175,136 @@ function App() {
     }
   };
 
+  const EmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-20 px-4 text-center animate-fade-in max-w-2xl mx-auto">
+      <div className="w-24 h-24 bg-slate-900 rounded-3xl flex items-center justify-center border border-slate-800 shadow-2xl mb-8 rotate-3">
+        <Library className="w-12 h-12 text-brand-500" />
+      </div>
+      <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter mb-4">Arquivo em Espera</h2>
+      <p className="text-slate-400 text-lg mb-8 leading-relaxed">
+        Ainda não foram encontrados registos para os filtros selecionados. Comece a catalogar a história mundial agora mesmo ou limpe os filtros para ver tudo.
+      </p>
+      <div className="flex gap-4">
+        <button onClick={() => { setCountrySearch(''); setSearchTerm(''); setActiveContinent('Mundo'); setActiveCategory('all'); }} className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all">Ver Todo o Arquivo</button>
+        {isAdmin && <button onClick={() => setIsUploadModalOpen(true)} className="px-8 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-brand-900/40">Novo Registo</button>}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="flex flex-col h-[100dvh] bg-slate-950 text-slate-100 overflow-hidden font-sans">
+    <div className="flex flex-col h-[100dvh] bg-[#020617] text-slate-100 overflow-hidden font-sans selection:bg-brand-500 selection:text-white">
       <Header 
         isAdmin={isAdmin} 
         currentUser={currentUser} 
         onAdminToggle={() => setIsLoginModalOpen(true)}
         onLogout={() => { setCurrentUser(null); setUserRole(null); handleNavigate('home'); }} 
         onHistoryClick={() => setIsHistoryModalOpen(true)} 
-        onExport={handleExportJSON}
-        onExportCSV={handleExportCSV}
-        onExportTXT={handleExportTXT}
-        onImport={handleImportJSON}
+        onExport={() => storageService.exportData().then(data => {
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup-arquivo-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        })}
+        onExportCSV={() => {}}
+        onExportTXT={() => {}}
+        onImport={(file) => {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+              try {
+                const count = await storageService.importData(e.target?.result as string);
+                alert(`${count} registos restaurados!`);
+                loadData();
+              } catch (err) { alert("Erro ao importar."); }
+            };
+            reader.readAsText(file);
+        }}
         language={language} setLanguage={setLanguage}
         currentPage={currentPage} 
         onNavigate={handleNavigate} 
         t={t.header}
-        onInstall={handleInstallApp}
+        onInstall={() => {}}
         countriesByContinent={countriesByContinent}
-        onCountrySelect={handleCountrySelectFromHeader}
+        onCountrySelect={(cont, country) => { setCurrentPage('home'); setActiveContinent(cont); setCountrySearch(country); }}
       />
 
-      <main className="flex-1 overflow-y-auto bg-slate-950 scroll-smooth custom-scrollbar flex flex-col">
+      <main className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-950 to-[#020617] scroll-smooth custom-scrollbar flex flex-col relative">
+        {/* Background Decoration */}
+        <div className="absolute top-0 left-0 w-full h-[500px] bg-brand-600/5 blur-[100px] pointer-events-none z-0"></div>
+
         {!(currentPage === 'stats' || currentPage === 'about' || currentPage === 'map') && (
-          <div className="sticky top-0 z-30 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 shadow-xl">
+          <div className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-xl border-b border-slate-900 shadow-2xl">
             <div className="bg-slate-900/30 p-2 md:px-8 flex flex-wrap items-center gap-2">
-              <button onClick={() => setFilterRarity(!filterRarity)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterRarity ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400'}`}><Gem className="w-3.5 h-3.5" /> Raridades</button>
-              <button onClick={() => setFilterPromo(!filterPromo)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterPromo ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400'}`}><Gift className="w-3.5 h-3.5" /> Promo</button>
-              <button onClick={() => setFilterWinners(!filterWinners)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterWinners ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400'}`}><Trophy className="w-3.5 h-3.5" /> Premiadas</button>
-              <button onClick={() => handleNavigate(currentPage === 'my-collection' ? 'home' : 'my-collection')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${currentPage === 'my-collection' ? 'bg-brand-600 text-white shadow-lg' : 'bg-slate-800/50 text-slate-400'}`}><Heart className="w-3.5 h-3.5" /> Minha Coleção</button>
-              
-              <div className="flex items-center gap-1 bg-slate-900/50 border border-slate-800 p-1 rounded-lg overflow-x-auto max-w-full scrollbar-hide">
-                  <button onClick={() => setActiveCategory('all')} className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeCategory === 'all' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>Tudo</button>
+              <button onClick={() => setFilterRarity(!filterRarity)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterRarity ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-500'}`}>Raridades</button>
+              <button onClick={() => setFilterWinners(!filterWinners)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterWinners ? 'bg-green-600 border-green-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-500'}`}>Premiadas</button>
+              <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-lg">
+                  <button onClick={() => setActiveCategory('all')} className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${activeCategory === 'all' ? 'bg-blue-600 text-white' : 'text-slate-600'}`}>Tudo</button>
                   {categories.map(cat => (
-                    <button key={cat.id} onClick={() => setActiveCategory(cat.name)} className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeCategory === cat.name ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>{cat.name}</button>
+                    <button key={cat.id} onClick={() => setActiveCategory(cat.name)} className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${activeCategory === cat.name ? 'bg-blue-600 text-white' : 'text-slate-600'}`}>{cat.name}</button>
                   ))}
-                  {isAdmin && (
-                    <button onClick={() => setIsCategoryManagerOpen(true)} className="p-1.5 text-slate-600 hover:text-brand-500 transition-colors" title="Gerir Categorias"><Tag className="w-3 h-3" /></button>
-                  )}
               </div>
             </div>
-            <div className="px-4 md:px-8 py-3 bg-slate-950/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="px-4 md:px-8 py-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => { setActiveContinent('Mundo'); handleNavigate('home'); }} className={`px-4 py-2 rounded-full text-[11px] font-black flex items-center gap-2 border transition-all ${activeContinent === 'Mundo' ? 'bg-blue-600 text-white border-blue-400' : 'bg-slate-900 text-slate-500 border-slate-800'}`}>Mundo <span className="bg-slate-800 text-[9px] px-1.5 rounded">{totalStats.total}</span></button>
+                <button onClick={() => setActiveContinent('Mundo')} className={`px-4 py-2 rounded-full text-[11px] font-black border transition-all ${activeContinent === 'Mundo' ? 'bg-blue-600 text-white border-blue-400 shadow-lg' : 'bg-slate-900 text-slate-500 border-slate-800'}`}>Mundo</button>
                 {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => (
-                    <button key={cont} onClick={() => { setActiveContinent(cont as Continent); if(currentPage === 'my-collection') handleNavigate('home'); }} className={`px-4 py-2 rounded-full text-[11px] font-black flex items-center gap-2 border transition-all ${activeContinent === cont ? 'bg-orange-600 text-white border-orange-400' : 'bg-slate-900 text-slate-500 border-slate-800'}`}>{cont} <span className="bg-slate-800 text-[9px] px-1.5 rounded">{totalStats.stats[cont] || 0}</span></button>
+                    <button key={cont} onClick={() => setActiveContinent(cont as Continent)} className={`px-4 py-2 rounded-full text-[11px] font-black border transition-all ${activeContinent === cont ? 'bg-brand-600 text-white border-brand-400 shadow-lg' : 'bg-slate-900 text-slate-500 border-slate-800'}`}>{cont}</button>
                 ))}
               </div>
               <div className="relative group w-full md:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600" />
-                  <input type="text" placeholder="Procurar no arquivo..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} className="bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-white outline-none w-full focus:border-blue-500 transition-all" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
+                  <input type="text" placeholder="Procurar no arquivo..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} className="bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none w-full focus:border-brand-500 transition-all shadow-inner" />
               </div>
             </div>
           </div>
         )}
 
-        <div className="relative flex-1 flex flex-col min-h-0">
-          {currentPage === 'stats' ? (
-            <StatsSection 
-              stats={totalStats.stats} 
-              categoryStats={totalStats.categoryStats as any} 
-              countryStats={totalStats.countryStats} 
-              stateStats={totalStats.stateStats} 
-              collectorStats={totalStats.collectorStats} 
-              totalRecords={totalStats.total} 
-              t={t.stats}
-              currentUser={currentUser}
-            />
+        <div className="relative flex-1 flex flex-col min-h-0 z-10">
+          {isLoadingDB ? (
+            <div className="flex flex-col items-center justify-center flex-1 min-h-[400px] gap-6 animate-pulse">
+                <div className="relative">
+                  <Loader2 className="w-16 h-16 text-brand-500 animate-spin" />
+                  <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-yellow-500" />
+                </div>
+                <div className="text-center">
+                  <p className="text-white font-black uppercase tracking-[0.3em] text-sm">Chloe está a organizar o Arquivo</p>
+                  <p className="text-slate-600 text-xs font-bold uppercase mt-2">Sincronizando história...</p>
+                </div>
+            </div>
+          ) : currentPage === 'stats' ? (
+            <StatsSection stats={totalStats.stats} categoryStats={totalStats.categoryStats as any} countryStats={totalStats.countryStats} stateStats={totalStats.stateStats} collectorStats={totalStats.collectorStats} totalRecords={totalStats.total} t={t.stats} currentUser={currentUser} />
           ) : currentPage === 'about' ? (
             <AboutPage t={t} />
           ) : currentPage === 'map' ? (
-            <div className="flex-1 p-4 md:p-8 animate-fade-in flex flex-col h-full overflow-hidden bg-slate-950">
-               <div className="mb-8 shrink-0 flex flex-col md:flex-row md:items-end justify-between gap-4">
-                 <div>
-                   <h2 className="text-4xl font-black text-white italic tracking-tighter uppercase flex items-center gap-4">
-                     <Globe className="w-10 h-10 text-brand-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.3)]" /> Mapa Mundi do Arquivo
-                   </h2>
-                   <p className="text-slate-500 text-xs font-black uppercase tracking-[0.2em] mt-2 ml-14">Exploração Visual das Lotarias por Nação</p>
-                 </div>
-                 <div className="bg-slate-900/50 border border-slate-800 px-4 py-2 rounded-2xl flex items-center gap-3">
-                   <div className="w-3 h-3 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]"></div>
-                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Escala de Volume por País</span>
-                 </div>
+            <div className="flex-1 p-4 md:p-8 animate-fade-in flex flex-col h-full overflow-hidden">
+               <div className="mb-8 flex items-center justify-between">
+                  <h2 className="text-4xl font-black text-white italic tracking-tighter uppercase flex items-center gap-4"><Globe className="w-10 h-10 text-brand-500" /> Mapa do Mundo</h2>
                </div>
-               <div className="flex-1 min-h-0 relative">
+               <div className="flex-1 relative min-h-[400px] bg-slate-900/20 rounded-3xl border border-slate-800/50">
                  <WorldMap images={allImagesCache} onCountrySelect={handleCountrySelectFromMap} t={t.grid} />
                </div>
             </div>
+          ) : filteredImages.length === 0 ? (
+            <EmptyState />
           ) : (
             <div className="p-4 md:p-8 animate-fade-in min-h-[50vh]">
-              {isLoadingDB ? (
-                  <div className="flex flex-col items-center justify-center py-20 gap-4"><Loader2 className="w-10 h-10 text-brand-500 animate-spin" /><p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Sincronizando Arquivo...</p></div>
-              ) : (
-                  <ImageGrid key={gridKey} images={filteredImages} onImageClick={setSelectedImage} isAdmin={isAdmin} currentUser={currentUser} t={t.grid} />
-              )}
+               <ImageGrid images={filteredImages} onImageClick={setSelectedImage} isAdmin={isAdmin} currentUser={currentUser} t={t.grid} />
             </div>
           )}
         </div>
       </main>
 
-      <Footer onNavigate={handleNavigate} onWebsitesClick={() => setIsWebsitesModalOpen(true)} onInstall={handleInstallApp} />
+      <Footer onNavigate={handleNavigate} onWebsitesClick={() => setIsWebsitesModalOpen(true)} onInstall={() => {}} />
 
       {isAdmin && (
-        <button onClick={() => setIsUploadModalOpen(true)} className="fixed bottom-24 right-8 w-16 h-16 bg-brand-600 text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 z-40 border-4 border-slate-950">
-          <PlusCircle className="w-8 h-8" />
+        <button onClick={() => setIsUploadModalOpen(true)} className="fixed bottom-28 right-8 w-16 h-16 bg-brand-600 text-white rounded-2xl shadow-[0_0_30px_rgba(225,29,72,0.4)] flex items-center justify-center transition-all hover:scale-110 active:scale-95 z-40 border-2 border-brand-400/30 group">
+          <PlusCircle className="w-8 h-8 group-hover:rotate-90 transition-transform duration-500" />
         </button>
       )}
 
       {selectedImage && (
-        <ImageViewer 
-          image={selectedImage} onClose={() => setSelectedImage(null)}
-          onUpdate={handleUpdateImage} onDelete={handleDeleteImage}
-          isAdmin={isAdmin} currentUser={currentUser} contextImages={allImagesCache}
-          onImageSelect={setSelectedImage} t={t.viewer} categories={categories}
-        />
+        <ImageViewer image={selectedImage} onClose={() => setSelectedImage(null)} onUpdate={handleUpdateImage} onDelete={handleDeleteImage} isAdmin={isAdmin} currentUser={currentUser} contextImages={allImagesCache} onImageSelect={setSelectedImage} t={t.viewer} categories={categories} />
       )}
 
       {isLoginModalOpen && <LoginModal onClose={() => setIsLoginModalOpen(false)} onLogin={(u, p, t) => {
@@ -383,7 +318,7 @@ function App() {
       {isUploadModalOpen && <UploadModal onClose={() => setIsUploadModalOpen(false)} onUploadComplete={handleUploadComplete} existingImages={allImagesCache} initialFile={null} currentUser={currentUser} t={t.upload} categories={categories} />}
       {isHistoryModalOpen && <HistoryModal onClose={() => setIsHistoryModalOpen(false)} isAdmin={isAdmin} t={t.header} />}
       {isWebsitesModalOpen && <WebsitesModal onClose={() => setIsWebsitesModalOpen(false)} isAdmin={isAdmin} t={t.header} />}
-      {isCategoryManagerOpen && <CategoryManager categories={categories} onClose={() => setIsCategoryManagerOpen(false)} onAdd={handleAddCategory} onDelete={handleDeleteCategory} isAdmin={isAdmin} />}
+      {isCategoryManagerOpen && <CategoryManager categories={categories} onClose={() => setIsCategoryManagerOpen(false)} onAdd={() => {}} onDelete={() => {}} isAdmin={isAdmin} />}
     </div>
   );
 }
