@@ -96,10 +96,11 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 </div>
 
                  <div className="absolute top-1 right-1 flex flex-col gap-0.5 items-end z-20">
-                    {/* FLASH / NOVO INDICATOR */}
+                    {/* INDICADOR NOVO - AZUL TRANSPARENTE COM LETRAS VERMELHAS */}
                     {itemIsRecent && (
-                       <div className="bg-yellow-500 text-black p-0.5 rounded-full shadow-lg animate-pulse border border-yellow-300 ring-1 ring-yellow-500/50" title="Recentemente adicionado!">
-                          <Zap className="w-2.5 h-2.5 fill-current" />
+                       <div className="bg-blue-600/40 backdrop-blur-sm text-red-500 px-1.5 py-0.5 rounded-full shadow-lg animate-pulse border border-red-500/30 flex items-center gap-0.5" title="Adicionado nas últimas 48h!">
+                          <Zap className="w-2 h-2 fill-current" />
+                          <span className="text-[6px] font-black uppercase tracking-tighter">Novo</span>
                        </div>
                     )}
                     {currentUser && item.owners?.includes(currentUser) && (
