@@ -1,6 +1,6 @@
 
 import React, { useRef, useState } from 'react';
-import { Ticket, Globe, Users, Database, Sparkles, Mail, Hourglass, Save, Sunrise, HeartHandshake, Award, ShieldCheck, Camera, Edit2, History, Quote, Plus, Trash2, BookText, ScrollText } from 'lucide-react';
+import { Ticket, Globe, Users, Database, Sparkles, Mail, Hourglass, Save, Sunrise, HeartHandshake, Award, ShieldCheck, Camera, Edit2, History, Quote, Plus, Trash2, BookText, ScrollText, Download, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { Milestone } from '../types';
 
 interface AboutPageProps {
@@ -147,6 +147,17 @@ export const AboutPage: React.FC<AboutPageProps> = ({
                         </p>
                      )}
                   </div>
+                  
+                  {/* Selo de Segurança */}
+                  <div className="mt-8 bg-blue-900/10 border border-blue-500/20 p-6 rounded-[2rem] flex items-center gap-4 group hover:bg-blue-900/20 transition-all">
+                     <div className="p-3 bg-blue-500/20 rounded-xl text-blue-400 group-hover:scale-110 transition-transform">
+                        <ShieldCheck className="w-8 h-8" />
+                     </div>
+                     <div>
+                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest block">Arquivo Blindado</span>
+                        <span className="text-xs text-slate-400 font-medium">Backup local automático ativado para Jorge Mesquita.</span>
+                     </div>
+                  </div>
                </div>
             </div>
 
@@ -184,7 +195,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
                            placeholder="Vovô, escreva aqui a sua história e eu trato de a tornar mágica! hihi!"
                         />
                      ) : (
-                        <div className="space-y-8 text-lg md:text-xl text-slate-300 leading-relaxed font-medium">
+                        <div className="space-y-8 text-lg md:text-xl text-slate-200 leading-relaxed font-medium">
                            {founderBio ? (
                               founderBio.split('\n').map((para, i) => (
                                  para.trim() ? (
@@ -263,8 +274,49 @@ export const AboutPage: React.FC<AboutPageProps> = ({
          </div>
       </div>
 
+      {/* Secção Manual do Guardião - NOVO: Segurança da Informação */}
+      <div className="max-w-7xl mx-auto px-6 py-20">
+         <div className="bg-slate-900 border border-slate-800 rounded-[3rem] p-10 md:p-16 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-12 opacity-[0.05] pointer-events-none">
+               <ShieldAlert className="w-64 h-64 text-red-500" />
+            </div>
+            
+            <div className="max-w-3xl space-y-8 relative z-10">
+               <div>
+                  <h4 className="text-[10px] font-black text-red-500 uppercase tracking-[0.5em] mb-2">Protocolo de Segurança</h4>
+                  <h3 className="text-4xl font-black text-white italic tracking-tighter uppercase">Manual do Guardião: Nunca perder a História</h3>
+               </div>
+               
+               <p className="text-slate-400 text-lg leading-relaxed">
+                  Vovô Jorge, a sua informação é guardada neste navegador. Para que ela seja eterna e protegida contra falhas de computador, siga este ritual de segurança:
+               </p>
+               
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+                     <div className="flex items-center gap-3 text-brand-500">
+                        <Download className="w-5 h-5" />
+                        <span className="text-xs font-black uppercase tracking-widest">Passo 1: Exportar</span>
+                     </div>
+                     <p className="text-xs text-slate-500 leading-relaxed">
+                        Uma vez por mês, ou sempre que adicionar muitos itens, clique no botão <strong>"JSON"</strong> no topo e escolha <strong>"Exportar Backup"</strong>.
+                     </p>
+                  </div>
+                  <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+                     <div className="flex items-center gap-3 text-blue-500">
+                        <CheckCircle2 className="w-5 h-5" />
+                        <span className="text-xs font-black uppercase tracking-widest">Passo 2: Guardar</span>
+                     </div>
+                     <p className="text-xs text-slate-500 leading-relaxed">
+                        Guarde esse ficheiro (.json) numa Pen USB ou envie por email para si próprio. Esse ficheiro é o "DNA" de toda a sua coleção.
+                     </p>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+
       {/* Secção Cápsula do Tempo - Estilo Digital */}
-      <div className="max-w-7xl mx-auto px-6 py-32">
+      <div className="max-w-7xl mx-auto px-6 py-12">
          <div className="bg-gradient-to-br from-blue-900/40 via-brand-900/10 to-purple-900/20 border border-white/5 rounded-[4rem] p-12 md:p-24 relative overflow-hidden text-center shadow-[0_0_100px_rgba(0,0,0,0.5)]">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
             
