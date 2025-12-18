@@ -5,7 +5,7 @@ import {
   Hash, Clock, Flag, MapPin, Info, 
   History, Building2, Globe, Fingerprint,
   Sparkles, Columns, Ruler, Printer, Banknote, ScanLine,
-  Layers, LayoutGrid, Eye, Calendar
+  Layers, LayoutGrid, Eye, Calendar, ChevronDown, User
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent } from '../types';
 
@@ -50,6 +50,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   }, [image]);
 
   const seriesMembers = useMemo(() => {
+    // Agrupamento por Nome do Jogo + Número do Jogo OU ID de Grupo de Série
     return contextImages
       .filter(img => 
         (img.gameNumber === image.gameNumber && img.gameName === image.gameName) || 
@@ -81,19 +82,21 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   };
 
   const DataCard = ({ icon: Icon, label, value, colorClass = "text-slate-400", subValue }: any) => (
-    <div className="bg-slate-900/60 backdrop-blur-md p-3 rounded-xl border border-slate-800 transition-all flex flex-col justify-between">
+    <div className="bg-slate-900/60 backdrop-blur-md p-3 rounded-xl border border-slate-800 transition-all flex flex-col justify-between hover:border-slate-700">
       <div className="flex items-center gap-2 mb-1.5">
         <Icon className={`w-3 h-3 ${colorClass}`} />
         <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{label}</span>
       </div>
       <div>
-        <p className="text-xs font-black text-slate-200 leading-tight">{value || '-'}</p>
+        <p className="text-xs font-black text-slate-200 leading-tight truncate">{value || '-'}</p>
         {subValue && <p className="text-[7px] text-slate-600 font-bold mt-0.5 uppercase tracking-tighter">{subValue}</p>}
       </div>
     </div>
   );
 
-  const isGermany = formData.country.toLowerCase().trim() === 'alemanha' || formData.country.toLowerCase().trim() === 'germany';
+  const isGermany = formData.country.toLowerCase().trim() === 'alemanha' || 
+                    formData.country.toLowerCase().trim() === 'germany' ||
+                    formData.country.toLowerCase().trim() === 'deutschland';
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-xl" onClick={onClose}>
@@ -125,44 +128,70 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto bg-slate-950 p-6 md:p-12 custom-scrollbar">
-                <div className="flex flex-col gap-12 max-w-5xl mx-auto">
+                <div className="flex flex-col gap-12 max-w-5xl mx-auto animate-fade-in">
                    <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                       <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter flex items-center gap-3">
                          <Layers className="w-6 h-6 text-brand-500" /> Visualização do SET: {image.gameName}
                       </h3>
-                      <span className="text-xs font-black text-slate-500 uppercase tracking-widest">{seriesMembers.length} Itens Encontrados</span>
+                      <div className="flex flex-col items-end">
+                        <span className="text-xs font-black text-slate-500 uppercase tracking-widest">{seriesMembers.length} Itens Catalogados</span>
+                        <span className="text-[10px] text-brand-600 font-bold uppercase tracking-widest">Coleção Jorge Mesquita</span>
+                      </div>
                    </div>
                    
-                   <div className="grid grid-cols-1 gap-8">
+                   <div className="grid grid-cols-1 gap-12">
                     {seriesMembers.map((member) => (
-                      <div key={member.id} className="bg-slate-900/40 border border-slate-800 rounded-3xl p-6 flex flex-col md:flex-row gap-6 hover:border-blue-500/30 transition-all group">
-                         <div className="flex-1 flex flex-col gap-4">
+                      <div key={member.id} className="bg-slate-900/20 border border-slate-800/50 rounded-3xl p-8 flex flex-col md:flex-row gap-8 hover:border-blue-500/30 transition-all group relative overflow-hidden">
+                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-bl-full pointer-events-none"></div>
+                         
+                         <div className="flex-1 flex flex-col gap-6">
                             <div className="flex items-center justify-between">
-                               <span className="text-[10px] font-black text-brand-500 bg-brand-900/20 px-3 py-1 rounded-full border border-brand-500/30">{member.customId}</span>
-                               <button onClick={() => onImageSelect(member)} className="text-[10px] font-black text-slate-500 hover:text-white flex items-center gap-1 uppercase transition-colors">
-                                  <Eye className="w-3 h-3" /> Ver Detalhes
+                               <div className="flex items-center gap-3">
+                                  <span className="text-[10px] font-black text-white bg-blue-600 px-3 py-1 rounded-md border border-blue-400/50 shadow-lg shadow-blue-900/20">{member.customId}</span>
+                                  {member.id === image.id && <span className="text-[8px] font-black text-brand-500 uppercase tracking-widest bg-brand-900/20 px-2 py-0.5 rounded border border-brand-500/20">Item Selecionado</span>}
+                               </div>
+                               <button onClick={() => onImageSelect(member)} className="text-[10px] font-black text-slate-500 hover:text-white flex items-center gap-1.5 uppercase transition-colors group/btn">
+                                  <Eye className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" /> Ver Detalhes
                                </button>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                               <div className="space-y-2">
-                                  <div className="text-[8px] font-black text-slate-600 uppercase tracking-widest text-center">Frente</div>
-                                  <img src={member.frontUrl} className="w-full rounded-xl shadow-2xl border border-slate-800 group-hover:scale-[1.02] transition-transform" />
+                            <div className="grid grid-cols-2 gap-8">
+                               <div className="space-y-3">
+                                  <div className="text-[8px] font-black text-slate-600 uppercase tracking-widest text-center flex items-center justify-center gap-2">
+                                     <div className="h-px w-4 bg-slate-800"></div> FRENTE <div className="h-px w-4 bg-slate-800"></div>
+                                  </div>
+                                  <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border border-slate-800 group-hover:border-blue-500/50 transition-all">
+                                     <img src={member.frontUrl} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" />
+                                  </div>
                                </div>
-                               <div className="space-y-2">
-                                  <div className="text-[8px] font-black text-slate-600 uppercase tracking-widest text-center">Verso</div>
-                                  {member.backUrl ? (
-                                     <img src={member.backUrl} className="w-full rounded-xl shadow-2xl border border-slate-800 group-hover:scale-[1.02] transition-transform" />
-                                  ) : (
-                                     <div className="w-full aspect-[3/4] bg-slate-900 border border-dashed border-slate-800 rounded-xl flex items-center justify-center text-slate-700 text-[10px] font-black">SEM VERSO</div>
-                                  )}
+                               <div className="space-y-3">
+                                  <div className="text-[8px] font-black text-slate-600 uppercase tracking-widest text-center flex items-center justify-center gap-2">
+                                     <div className="h-px w-4 bg-slate-800"></div> VERSO <div className="h-px w-4 bg-slate-800"></div>
+                                  </div>
+                                  <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border border-slate-800 group-hover:border-blue-500/50 transition-all flex items-center justify-center bg-slate-900/50">
+                                     {member.backUrl ? (
+                                        <img src={member.backUrl} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" />
+                                     ) : (
+                                        <div className="text-slate-700 text-[10px] font-black uppercase italic tracking-widest text-center p-4">Verso não catalogado</div>
+                                     )}
+                                  </div>
                                </div>
                             </div>
                          </div>
-                         <div className="w-full md:w-48 flex flex-col justify-center border-t md:border-t-0 md:border-l border-slate-800 pt-4 md:pt-0 md:pl-6">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ano</span>
-                            <span className="text-sm font-black text-white mb-3">{member.releaseDate || '-'}</span>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Linhas</span>
-                            <span className="text-sm font-black text-emerald-500 uppercase italic">{member.lines || '-'}</span>
+                         <div className="w-full md:w-60 flex flex-col justify-center border-t md:border-t-0 md:border-l border-slate-800/50 pt-6 md:pt-0 md:pl-8 space-y-4">
+                            <div>
+                               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Ano de Lançamento</span>
+                               <span className="text-lg font-black text-white italic">{member.releaseDate || '-'}</span>
+                            </div>
+                            <div>
+                               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Linhas Técnicas</span>
+                               <span className="text-sm font-black text-emerald-500 uppercase italic tracking-wider flex items-center gap-2">
+                                  <ScanLine className="w-4 h-4" /> {member.lines || 'Nenhuma'}
+                               </span>
+                            </div>
+                            <div>
+                               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Nº de Jogo</span>
+                               <span className="text-sm font-black text-blue-400 font-mono">{member.gameNumber || '-'}</span>
+                            </div>
                          </div>
                       </div>
                     ))}
@@ -212,30 +241,49 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                        {formData.aiGenerated && <Sparkles className="w-4 h-4 text-cyan-800 ml-auto" />}
                     </div>
                     {isEditing ? (
-                       <div className="space-y-4">
+                       <div className="space-y-4 animate-fade-in">
                           <div className="space-y-1">
                              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Nome do Jogo</label>
-                             <input type="text" value={formData.gameName} onChange={e => handleChange('gameName', e.target.value)} className="w-full bg-slate-900 text-white text-lg font-black rounded-xl p-3 border border-slate-800 outline-none focus:border-blue-500" />
+                             <input type="text" value={formData.gameName} onChange={e => handleChange('gameName', e.target.value)} className="w-full bg-slate-900 text-white text-lg font-black rounded-xl p-3 border border-slate-800 outline-none focus:border-blue-500 transition-all" />
                           </div>
-                          <div className="flex items-center gap-3 bg-slate-900/50 p-3 rounded-xl border border-slate-800">
-                             <input type="checkbox" id="isSeriesEdit" checked={formData.isSeries} onChange={e => handleChange('isSeries', e.target.checked)} className="w-5 h-5 accent-brand-500" />
-                             <label htmlFor="isSeriesEdit" className="text-xs font-black text-slate-300 uppercase">Pertence a uma Série (SET)</label>
+
+                          <div className="space-y-1">
+                             <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Colecionador</label>
+                             <div className="relative group">
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
+                                <input type="text" value={formData.collector || ''} onChange={e => handleChange('collector', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black rounded-xl p-3 pl-10 border border-slate-800 outline-none focus:border-brand-500 transition-all" placeholder="Nome do Colecionador" />
+                             </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-3 bg-slate-900/50 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                             <input type="checkbox" id="isSeriesEdit" checked={formData.isSeries} onChange={e => handleChange('isSeries', e.target.checked)} className="w-5 h-5 accent-brand-500 cursor-pointer" />
+                             <label htmlFor="isSeriesEdit" className="text-xs font-black text-slate-300 uppercase cursor-pointer select-none">Pertence a uma Série (SET)</label>
                           </div>
                           
                           <div className="grid grid-cols-2 gap-4">
                              <div className="space-y-1">
                                 <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">País</label>
-                                <input type="text" value={formData.country} onChange={e => handleChange('country', e.target.value)} className="w-full bg-slate-900 text-red-400 text-sm font-black rounded-xl p-3 border border-slate-800 outline-none" />
+                                <input type="text" value={formData.country} onChange={e => handleChange('country', e.target.value)} className="w-full bg-slate-900 text-red-400 text-sm font-black rounded-xl p-3 border border-slate-800 outline-none focus:border-red-500/50 transition-all" />
                              </div>
                              <div className="space-y-1">
-                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Região / Estado</label>
+                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest flex items-center justify-between">
+                                   Região / Estado
+                                   {isGermany && <span className="text-[7px] bg-red-900/50 text-red-400 px-1 rounded">ALEMANHA</span>}
+                                </label>
                                 {isGermany ? (
-                                   <select value={formData.region || ''} onChange={e => handleChange('region', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black rounded-xl p-3 border border-slate-800 outline-none">
-                                      <option value="">Selecione o Estado...</option>
-                                      {GERMAN_STATES.map(state => <option key={state} value={state}>{state}</option>)}
-                                   </select>
+                                   <div className="relative">
+                                     <select 
+                                       value={formData.region || ''} 
+                                       onChange={e => handleChange('region', e.target.value)} 
+                                       className="w-full bg-slate-900 text-white text-sm font-black rounded-xl p-3 border border-slate-800 outline-none focus:border-blue-500 transition-all appearance-none pr-10"
+                                     >
+                                        <option value="">Selecione o Estado...</option>
+                                        {GERMAN_STATES.map(state => <option key={state} value={state}>{state}</option>)}
+                                     </select>
+                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 pointer-events-none" />
+                                   </div>
                                 ) : (
-                                   <input type="text" value={formData.region || ''} onChange={e => handleChange('region', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black rounded-xl p-3 border border-slate-800 outline-none" placeholder="Ex: Continente" />
+                                   <input type="text" value={formData.region || ''} onChange={e => handleChange('region', e.target.value)} className="w-full bg-slate-900 text-white text-sm font-black rounded-xl p-3 border border-slate-800 outline-none focus:border-blue-500 transition-all" placeholder="Ex: Continente" />
                                 )}
                              </div>
                           </div>
@@ -265,16 +313,17 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                           </div>
                        </div>
                     ) : (
-                       <>
+                       <div className="animate-fade-in">
                           <h2 className="text-3xl font-black text-slate-100 uppercase tracking-tighter italic leading-none">{formData.gameName}</h2>
                           {formData.operator && <div className="text-blue-500 text-xs font-black uppercase tracking-widest mt-2">{formData.operator}</div>}
-                       </>
+                       </div>
                     )}
                  </div>
 
                  <div className="grid grid-cols-2 gap-4">
                     <DataCard icon={ScanLine} label="Linhas" value={formData.lines} colorClass="text-emerald-500" />
                     <DataCard icon={Building2} label="Entidade" value={formData.operator} colorClass="text-blue-500" />
+                    <DataCard icon={User} label="Colecionador" value={formData.collector} colorClass="text-brand-500" />
                     <DataCard icon={Hash} label="Nº Jogo" value={formData.gameNumber} colorClass="text-slate-500" />
                     <DataCard icon={Flag} label="País" value={formData.country} colorClass="text-red-500" />
                     <DataCard icon={MapPin} label="Região" value={formData.region} colorClass="text-white" />
@@ -287,7 +336,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                  <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
                     <span className="text-[9px] text-slate-500 uppercase block mb-3 font-black tracking-widest">Resumo Técnico</span>
                     {isEditing ? (
-                      <textarea value={formData.values} onChange={e => handleChange('values', e.target.value)} className="w-full bg-slate-900 text-white text-xs p-4 rounded-xl border border-slate-800 h-32 outline-none italic" />
+                      <textarea value={formData.values} onChange={e => handleChange('values', e.target.value)} className="w-full bg-slate-900 text-white text-xs p-4 rounded-xl border border-slate-800 h-32 outline-none italic transition-all focus:border-brand-500" />
                     ) : (
                       <p className="text-xs text-slate-400 italic leading-relaxed">{formData.values || 'Sem observações catalogadas.'}</p>
                     )}
