@@ -1,16 +1,10 @@
 
-import React, { useMemo, useState, useEffect } from 'react';
-import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
-import { Tooltip } from 'react-tooltip';
-import { scaleSqrt } from "d3-scale";
+import React, { useMemo, useState } from 'react';
 import { ScratchcardData, Continent } from '../types';
 import { 
-  ZoomIn, ZoomOut, RefreshCw, Loader2, 
-  MapPin, AlertTriangle, Globe, Compass, 
-  LayoutGrid, Search
+  Globe, LayoutGrid, Search, MapPin, 
+  ChevronRight, Zap, Trophy, Database
 } from 'lucide-react';
-
-const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 interface WorldMapProps {
   images: ScratchcardData[];
@@ -19,15 +13,6 @@ interface WorldMapProps {
   t: any;
 }
 
-const CONTINENT_VIEWS: Record<string, { center: [number, number]; zoom: number }> = {
-  'Mundo': { center: [10, 20], zoom: 1 },
-  'Europa': { center: [15, 52], zoom: 3 },
-  'América': { center: [-80, 10], zoom: 1.5 },
-  'Ásia': { center: [90, 30], zoom: 1.8 },
-  'África': { center: [20, 0], zoom: 2 },
-  'Oceania': { center: [140, -25], zoom: 2.5 },
-};
-
 const COUNTRY_MAP: Record<string, string> = {
   "Portugal": "Portugal",
   "Itália": "Italy",
@@ -35,179 +20,143 @@ const COUNTRY_MAP: Record<string, string> = {
   "Alemanha": "Germany",
   "França": "France",
   "Brasil": "Brazil",
-  "EUA": "United States of America",
-  "USA": "United States of America",
-  "Reino Unido": "United Kingdom",
-  "UK": "United Kingdom",
-  "Suíça": "Switzerland",
-  "Áustria": "Austria",
-  "Bélgica": "Belgium"
+  "EUA": "USA",
+  "Reino Unido": "UK"
 };
 
-export const WorldMap: React.FC<WorldMapProps> = ({ images, onCountrySelect, activeContinent, t }) => {
-  const [position, setPosition] = useState(CONTINENT_VIEWS[activeContinent] || CONTINENT_VIEWS['Mundo']);
-  const [tooltipContent, setTooltipContent] = useState("");
-  const [mapStatus, setMapStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+export const WorldMap: React.FC<WorldMapProps> = ({ images, onCountrySelect, activeContinent }) => {
+  const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
-    setPosition(CONTINENT_VIEWS[activeContinent] || CONTINENT_VIEWS['Mundo']);
-  }, [activeContinent]);
+  const stats = useMemo(() => {
+    const countries: Record<string, { count: number; continent: Continent }> = {};
+    const continentTotals: Record<string, number> = {
+      'Europa': 0, 'América': 0, 'Ásia': 0, 'África': 0, 'Oceania': 0
+    };
 
-  const countryCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
     images.forEach(img => {
-      const name = COUNTRY_MAP[img.country] || img.country;
-      counts[name] = (counts[name] || 0) + 1;
+      const name = img.country;
+      if (!countries[name]) {
+        countries[name] = { count: 0, continent: img.continent };
+      }
+      countries[name].count++;
+      if (continentTotals[img.continent] !== undefined) {
+        continentTotals[img.continent]++;
+      }
     });
-    return counts;
+
+    return { countries, continentTotals };
   }, [images]);
 
-  const activeCountriesList = useMemo(() => {
-    // Added type assertion to [string, number][] to fix 'unknown' type errors during filter and sort
-    return (Object.entries(countryCounts) as [string, number][])
-      .filter(([_, count]) => count > 0)
-      .sort((a, b) => b[1] - a[1]);
-  }, [countryCounts]);
+  const filteredCountries = useMemo(() => {
+    // Explicitly cast Object.entries to resolve 'unknown' type inference on data object
+    return (Object.entries(stats.countries) as [string, { count: number; continent: Continent }][])
+      .filter(([name, data]) => {
+        const matchesContinent = activeContinent === 'Mundo' || data.continent === activeContinent;
+        const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesContinent && matchesSearch;
+      })
+      .sort((a, b) => a[0].localeCompare(b[0]));
+  }, [stats, activeContinent, searchTerm]);
 
-  const maxVal = useMemo(() => {
-    const vals = Object.values(countryCounts) as number[];
-    return vals.length > 0 ? Math.max(...vals) : 1;
-  }, [countryCounts]);
+  const continentColors: Record<string, string> = {
+    'Europa': 'from-blue-600 to-cyan-500',
+    'América': 'from-red-600 to-pink-500',
+    'Ásia': 'from-yellow-600 to-orange-500',
+    'África': 'from-emerald-600 to-green-500',
+    'Oceania': 'from-purple-600 to-indigo-500',
+    'Mundo': 'from-slate-700 to-slate-800'
+  };
 
   return (
-    <div className="flex flex-col h-full w-full gap-6">
-      {/* Container do Mapa com Cores Neon */}
-      <div className="relative w-full h-[500px] md:h-[600px] bg-black rounded-[2rem] border-2 border-slate-800 overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)]">
-        
-        {/* Camada Neon de Fundo */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-brand-900/10 via-blue-900/5 to-purple-900/10 pointer-events-none"></div>
-
-        {mapStatus === 'loading' && (
-          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md">
-             <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mb-4" />
-             <p className="text-cyan-400 font-black text-[10px] uppercase tracking-[0.4em] animate-pulse">Radar Chloe Ativo...</p>
-          </div>
-        )}
-
-        {mapStatus === 'error' && (
-          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 p-8 text-center">
-             <AlertTriangle className="w-12 h-12 text-brand-500 mb-4" />
-             <h3 className="text-white font-black uppercase text-sm mb-4">Erro Crítico no Mapa</h3>
-             <p className="text-slate-500 text-[10px] uppercase mb-6">A Chloe não conseguiu desenhar o globo. Use a lista abaixo para navegar.</p>
-          </div>
-        )}
-
-        {/* Controles HUD Neon */}
-        <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-2">
-           <button onClick={() => setPosition(p => ({...p, zoom: p.zoom + 0.5}))} className="w-12 h-12 bg-slate-900/80 border border-cyan-500/50 text-cyan-400 rounded-xl flex items-center justify-center hover:bg-cyan-500 hover:text-black transition-all shadow-[0_0_15px_rgba(34,211,238,0.2)]"><ZoomIn className="w-5 h-5" /></button>
-           <button onClick={() => setPosition(p => ({...p, zoom: Math.max(1, p.zoom - 0.5)}))} className="w-12 h-12 bg-slate-900/80 border border-cyan-500/50 text-cyan-400 rounded-xl flex items-center justify-center hover:bg-cyan-500 hover:text-black transition-all shadow-[0_0_15px_rgba(34,211,238,0.2)]"><ZoomOut className="w-5 h-5" /></button>
-           <button onClick={() => setPosition(CONTINENT_VIEWS[activeContinent] || CONTINENT_VIEWS['Mundo'])} className="w-12 h-12 bg-brand-600/80 border border-brand-400/50 text-white rounded-xl flex items-center justify-center hover:bg-brand-500 transition-all shadow-[0_0_15px_rgba(244,63,94,0.2)]"><RefreshCw className="w-5 h-5" /></button>
-        </div>
-
-        <ComposableMap 
-          projection="geoEqualEarth"
-          style={{ width: "100%", height: "100%" }}
-        >
-          <ZoomableGroup 
-             zoom={position.zoom} 
-             center={position.center} 
-             onMoveEnd={pos => setPosition(pos)}
-          >
-            <Geographies 
-               geography={GEO_URL} 
-               onGeographyRetrieved={() => setMapStatus('loaded')}
-               onError={() => setMapStatus('error')}
-            >
-              {({ geographies }) =>
-                geographies.map((geo) => {
-                  const name = geo.properties.name;
-                  const count = countryCounts[name] || 0;
-                  const isSelected = count > 0;
-                  
-                  // Cores Neon Reais
-                  const fillColor = isSelected ? "#f43f5e" : "#0f172a";
-                  const strokeColor = isSelected ? "#fff" : "#1e293b";
-                  
-                  return (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      fill={fillColor}
-                      stroke={strokeColor}
-                      strokeWidth={isSelected ? 0.8 : 0.3}
-                      style={{
-                        default: { outline: "none", transition: "all 300ms" },
-                        hover: { 
-                          fill: isSelected ? "#ff0000" : "#22d3ee",
-                          outline: "none", 
-                          stroke: "#fff",
-                          strokeWidth: 1,
-                          cursor: isSelected ? "pointer" : "default"
-                        },
-                        pressed: { outline: "none", scale: 0.98 },
-                      }}
-                      onMouseEnter={() => {
-                         if (name) setTooltipContent(`${name}: ${count} ITENS`);
-                      }}
-                      onMouseLeave={() => setTooltipContent("")}
-                      onClick={() => {
-                         if (isSelected) {
-                            const originalName = Object.keys(COUNTRY_MAP).find(k => COUNTRY_MAP[k] === name) || name;
-                            onCountrySelect(originalName);
-                         }
-                      }}
-                    />
-                  );
-                })
-              }
-            </Geographies>
-          </ZoomableGroup>
-        </ComposableMap>
-
-        <Tooltip 
-          id="map-tooltip" 
-          content={tooltipContent} 
-          style={{ 
-            backgroundColor: "#000", 
-            color: "#00f3ff", 
-            borderRadius: "4px", 
-            padding: "4px 8px", 
-            fontSize: "10px", 
-            fontWeight: "900",
-            border: "1px solid #00f3ff",
-            boxShadow: "0 0 15px rgba(0, 243, 255, 0.4)",
-            zIndex: 1000 
-          }} 
+    <div className="flex flex-col h-full w-full gap-8 animate-fade-in">
+      
+      {/* Search Bar Neon */}
+      <div className="relative group max-w-md">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
+        <input 
+          type="text" 
+          placeholder="Pesquisar país no arquivo..." 
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full bg-slate-900/50 border-2 border-slate-800 rounded-2xl pl-12 pr-4 py-3 text-sm text-white focus:border-cyan-500/50 outline-none transition-all shadow-inner placeholder:text-slate-600"
         />
       </div>
 
-      {/* Backup Navigation - Se o mapa falhar ou para navegação rápida */}
-      <div className="bg-slate-900/30 border border-slate-800 rounded-3xl p-6">
-         <div className="flex items-center justify-between mb-6">
-            <h3 className="text-white font-black uppercase text-[10px] tracking-widest flex items-center gap-2">
-               <LayoutGrid className="w-4 h-4 text-cyan-400" /> Países no Arquivo ({activeContinent})
-            </h3>
+      {/* Grid de Continentes (Resumo) */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map((cont) => (
+          <div 
+            key={cont}
+            className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${activeContinent === cont ? 'bg-slate-900 border-cyan-500 shadow-[0_0_20px_rgba(34,211,238,0.2)]' : 'bg-slate-950 border-slate-900 opacity-60'}`}
+          >
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{cont}</span>
+            <span className={`text-xl font-black italic bg-clip-text text-transparent bg-gradient-to-r ${continentColors[cont]}`}>
+              {stats.continentTotals[cont]} <span className="text-[10px] not-italic">ITENS</span>
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Lista de Países Estilizada */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+        {filteredCountries.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-slate-700 border-2 border-dashed border-slate-900 rounded-[3rem]">
+            <Globe className="w-12 h-12 mb-4 opacity-20" />
+            <p className="font-black uppercase tracking-[0.3em] text-xs text-center px-6">Nenhum país encontrado neste setor.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {filteredCountries.map(([name, data]) => (
+              <button
+                key={name}
+                onClick={() => onCountrySelect(name)}
+                className="group relative bg-slate-900/40 border border-slate-800 hover:border-cyan-500/50 p-5 rounded-[2rem] transition-all flex flex-col gap-3 overflow-hidden active:scale-95 text-left"
+              >
+                {/* Glow Effect */}
+                <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${continentColors[data.continent]} opacity-0 group-hover:opacity-10 rounded-full -mr-12 -mt-12 transition-opacity blur-2xl`}></div>
+                
+                <div className="flex justify-between items-start">
+                   <div className="bg-slate-950 p-2 rounded-xl border border-slate-800 group-hover:border-cyan-500/30 transition-colors">
+                      <MapPin className="w-4 h-4 text-cyan-400" />
+                   </div>
+                   <div className="flex flex-col items-end">
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{data.continent}</span>
+                      <span className="text-[8px] font-black text-slate-700 uppercase tracking-[0.2em] mt-0.5">Setor Ativo</span>
+                   </div>
+                </div>
+
+                <div className="mt-2">
+                   <h4 className="text-white font-black text-lg uppercase tracking-tighter leading-none group-hover:text-cyan-400 transition-colors">{name}</h4>
+                   <div className="flex items-center gap-2 mt-2">
+                      <Database className="w-3 h-3 text-slate-600" />
+                      <span className="text-xs font-bold text-slate-400">{data.count} Registos</span>
+                   </div>
+                </div>
+
+                <div className="absolute bottom-4 right-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 translate-x-4 transition-all">
+                   <ChevronRight className="w-5 h-5 text-cyan-500" />
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Rodapé do Explorador */}
+      <div className="bg-slate-900/50 p-6 rounded-[2.5rem] border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6 shrink-0">
+         <div className="flex items-center gap-4">
+            <div className="bg-cyan-600 p-2 rounded-lg shadow-[0_0_15px_rgba(8,145,178,0.4)]">
+               <Zap className="w-4 h-4 text-white" />
+            </div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-relaxed">
+               Navegação Otimizada pela Chloe • {filteredCountries.length} Nações Catalogadas
+            </p>
          </div>
-         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
-            {activeCountriesList.length === 0 ? (
-               <div className="col-span-full py-10 text-center text-slate-600 font-black uppercase text-[8px] tracking-widest">
-                  Nenhum país catalogado neste continente
-               </div>
-            ) : (
-               activeCountriesList.map(([name, count]) => (
-                  <button 
-                     key={name}
-                     onClick={() => {
-                        const originalName = Object.keys(COUNTRY_MAP).find(k => COUNTRY_MAP[k] === name) || name;
-                        onCountrySelect(originalName);
-                     }}
-                     className="bg-slate-900 hover:bg-cyan-900/20 border border-slate-800 hover:border-cyan-500/50 p-3 rounded-xl transition-all flex flex-col items-center gap-2 group"
-                  >
-                     <span className="text-white font-black text-[9px] uppercase tracking-tighter group-hover:text-cyan-400 text-center truncate w-full">{name}</span>
-                     <span className="bg-slate-800 text-[8px] font-mono px-2 py-0.5 rounded text-slate-400 group-hover:text-cyan-300">{count}</span>
-                  </button>
-               ))
-            )}
+         <div className="flex gap-2">
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-950 border border-slate-800 rounded-full">
+               <Trophy className="w-3 h-3 text-yellow-500" />
+               <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Arquivo Premium</span>
+            </div>
          </div>
       </div>
     </div>

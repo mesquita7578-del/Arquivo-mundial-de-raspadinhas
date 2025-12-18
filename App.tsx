@@ -274,18 +274,18 @@ function App() {
             <AboutPage t={t} />
           ) : currentPage === 'map' ? (
             <div className="flex-1 p-4 md:p-8 animate-fade-in flex flex-col h-full">
-               <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between shrink-0 gap-4">
+               <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between shrink-0 gap-4">
                   <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase flex items-center gap-4">
-                    <Globe className="w-8 h-8 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" /> Cartografia Neon
+                    <Globe className="w-8 h-8 text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.4)]" /> Explorador Global
                   </h2>
-                  <div className="flex items-center gap-3 bg-slate-900/50 p-2 rounded-2xl border border-slate-800">
-                     <Navigation className="w-4 h-4 text-cyan-500" />
+                  <div className="flex items-center gap-2 bg-slate-900/50 p-2 rounded-2xl border border-slate-800">
+                     <Navigation className="w-4 h-4 text-cyan-500 mr-2" />
                      {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(c => (
-                        <button key={c} onClick={() => setActiveContinent(c as Continent)} className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all ${activeContinent === c ? 'bg-cyan-600 text-black shadow-[0_0_10px_rgba(6,182,212,0.4)]' : 'hover:text-white text-slate-500'}`}>{c}</button>
+                        <button key={c} onClick={() => setActiveContinent(c as Continent)} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all ${activeContinent === c ? 'bg-cyan-600 text-black shadow-[0_0_15px_rgba(6,182,212,0.3)]' : 'hover:text-white text-slate-500'}`}>{c}</button>
                      ))}
                   </div>
                </div>
-               <div className="flex-1 overflow-y-auto custom-scrollbar">
+               <div className="flex-1">
                  <WorldMap images={allImagesCache} onCountrySelect={handleCountrySelectFromMap} activeContinent={activeContinent} t={t.grid} />
                </div>
             </div>
