@@ -1,12 +1,13 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   X, Edit2, Trash2, Save, Check, 
   Hash, Clock, Flag, MapPin, Info, 
   History, Building2, Globe, Fingerprint,
   Sparkles, Columns, Ruler, Printer, Banknote, ScanLine,
   Layers, LayoutGrid, Eye, Calendar, ChevronDown, User,
-  Tag, ShieldCheck, Palette, Activity
+  Tag, ShieldCheck, Palette, Activity, Image as ImageIcon,
+  Plus
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent, LineType } from '../types';
 
@@ -66,6 +67,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   const [activeLabel, setActiveLabel] = useState<string>('front');
   const [isZoomed, setIsZoomed] = useState(false);
   const [viewMode, setViewMode] = useState<'single' | 'panorama'>('single');
+  const backInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (image) {
@@ -95,6 +97,21 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
 
   const handleChange = (field: keyof ScratchcardData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleBackImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        handleChange('backUrl', base64);
+        // Se estivermos a editar e carregarmos o verso, mostrar logo o verso
+        setActiveImage(base64);
+        setActiveLabel('back');
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSave = () => {
@@ -146,14 +163,20 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                    <img src={activeImage} className={`max-w-full max-h-full object-contain transition-transform duration-500 shadow-2xl ${isZoomed ? 'scale-150' : 'scale-100'}`} alt={formData.gameName} />
                 </div>
                 <div className="h-28 bg-slate-950 border-t border-slate-800 p-4 flex items-center gap-6 justify-center shrink-0">
-                   <button onClick={() => { setActiveImage(image.frontUrl); setActiveLabel('front'); }} className={`relative h-20 aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeLabel === 'front' ? 'border-blue-500 scale-105 shadow-xl' : 'border-slate-800 opacity-40 hover:opacity-100'}`}>
-                      <img src={image.frontUrl} className="w-full h-full object-cover" alt="Frente" />
+                   <button onClick={() => { setActiveImage(formData.frontUrl); setActiveLabel('front'); }} className={`relative h-20 aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeLabel === 'front' ? 'border-blue-500 scale-105 shadow-xl' : 'border-slate-800 opacity-40 hover:opacity-100'}`}>
+                      <img src={formData.frontUrl} className="w-full h-full object-cover" alt="Frente" />
                       <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-[10px] font-black text-white uppercase tracking-widest">Frente</div>
                    </button>
-                   {image.backUrl && (
-                      <button onClick={() => { setActiveImage(image.backUrl!); setActiveLabel('back'); }} className={`relative h-20 aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeLabel === 'back' ? 'border-brand-500 scale-105 shadow-xl' : 'border-slate-800 opacity-40 hover:opacity-100'}`}>
-                        <img src={image.backUrl} className="w-full h-full object-cover" alt="Verso" />
+                   {formData.backUrl ? (
+                      <button onClick={() => { setActiveImage(formData.backUrl!); setActiveLabel('back'); }} className={`relative h-20 aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeLabel === 'back' ? 'border-brand-500 scale-105 shadow-xl' : 'border-slate-800 opacity-40 hover:opacity-100'}`}>
+                        <img src={formData.backUrl} className="w-full h-full object-cover" alt="Verso" />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-[10px] font-black text-white uppercase tracking-widest">Verso</div>
+                      </button>
+                   ) : isEditing && (
+                      <button onClick={() => backInputRef.current?.click()} className="relative h-20 aspect-square rounded-xl overflow-hidden border-2 border-dashed border-slate-700 bg-slate-900/50 flex flex-col items-center justify-center group hover:border-brand-500 transition-all">
+                        <Plus className="w-5 h-5 text-slate-600 group-hover:text-brand-500" />
+                        <span className="text-[8px] font-black text-slate-600 uppercase group-hover:text-brand-500">Add Verso</span>
+                        <input type="file" ref={backInputRef} className="hidden" accept="image/*" onChange={handleBackImageUpload} />
                       </button>
                    )}
                 </div>
@@ -295,7 +318,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                              </div>
                           </div>
 
-                          {/* NOVO SELETOR DE ESTADO FÍSICO NO EDITOR */}
+                          {/* SELETOR DE ESTADO FÍSICO NO EDITOR */}
                           <div className="space-y-2">
                              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1 flex items-center gap-2">
                                 <Activity className="w-3.5 h-3.5 text-blue-500" /> Estado Físico
