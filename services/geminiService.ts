@@ -33,15 +33,18 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     1. gameName (Nome do jogo)
     2. country (País)
     3. continent (Continente: Europa, América, Ásia, África, Oceania)
-    4. operator (Entidade ex: SCML, ONCE, Sisal)
-    5. gameNumber (Nº de série/jogo)
-    6. releaseDate (Ano)
-    7. lines (Cor das linhas de segurança/série: azul, vermelho, multicolor, verde, etc)
-    8. price (Preço facial)
-    9. printer (Gráfica ex: Scientific Games, CBN)
-    10. size (Medidas ex: 10x15cm)
-    11. state (SC para raspada, MINT para nova)
-    12. values (Resumo de prémios)
+    4. operator (Operador do jogo ex: SCML, ONCE, Sisal)
+    5. gameNumber (Jogo nº)
+    6. releaseDate (Data da primeira emissão)
+    7. closeDate (Data de encerramento)
+    8. lines (Cores das linhas: azul, vermelho, multicolor, verde, etc)
+    9. price (Custo facial)
+    10. printer (Impresso por ex: Scientific Games, CBN)
+    11. size (Dimensões ex: 10x15cm)
+    12. state (SC para raspada, MINT para nova)
+    13. emission (Tiragem)
+    14. winProbability (Probabilidade de ganhar ex: 1 em 4.5)
+    15. values (NOTA/Observações adicionais)
 
     Retorne JSON puro.`;
 
@@ -68,6 +71,9 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
             printer: { type: Type.STRING },
             size: { type: Type.STRING },
             releaseDate: { type: Type.STRING },
+            closeDate: { type: Type.STRING },
+            emission: { type: Type.STRING },
+            winProbability: { type: Type.STRING },
             lines: { type: Type.STRING }
           }
         }
@@ -80,6 +86,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       gameName: data.gameName || "",
       gameNumber: data.gameNumber || "",
       releaseDate: data.releaseDate || "",
+      closeDate: data.closeDate || "",
       size: data.size || "",
       values: data.values || "",
       price: data.price || "",
@@ -88,6 +95,8 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       continent: data.continent || getContinentFromCountry(data.country || "Portugal"),
       operator: data.operator || "",
       printer: data.printer || "",
+      emission: data.emission || "",
+      winProbability: data.winProbability || "",
       lines: data.lines || ""
     } as AnalysisResult;
   } catch (error) {

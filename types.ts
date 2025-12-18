@@ -3,7 +3,8 @@ export type ScratchcardState = 'AMOSTRA' | 'VOID' | 'SAMPLE' | 'MUESTRA' | 'CAMP
 
 export type Continent = 'Europa' | 'América' | 'Ásia' | 'África' | 'Oceania' | 'Mundo';
 
-export type Category = 'raspadinha' | 'lotaria' | 'boletim' | 'objeto';
+// Category agora é uma string flexível
+export type Category = string;
 
 export type LineType = 'blue' | 'red' | 'multicolor' | 'none' | 'green' | 'brown' | 'pink' | 'purple' | 'yellow' | 'gray' | string;
 
@@ -16,6 +17,7 @@ export interface ScratchcardData {
   gameName: string;
   gameNumber: string;
   releaseDate: string;
+  closeDate?: string; // Novo
   size: string;
   values: string;
   price?: string;
@@ -25,7 +27,7 @@ export interface ScratchcardData {
   continent: Continent;
   collector?: string;
   
-  operator?: string; // Novo: Casa do Jogo (ex: SCML, SWISSLOS)
+  operator?: string;
   emission?: string;
   printer?: string;
   isSeries?: boolean;
@@ -39,10 +41,18 @@ export interface ScratchcardData {
   
   isWinner?: boolean;
   prizeAmount?: string;
+  winProbability?: string; // Novo
   
   owners?: string[];
   category: Category;
   aiGenerated: boolean;
+  createdAt: number;
+}
+
+export interface CategoryItem {
+  id: string;
+  name: string;
+  isDefault: boolean;
   createdAt: number;
 }
 
@@ -74,6 +84,7 @@ export interface AnalysisResult {
   gameName: string;
   gameNumber: string;
   releaseDate: string;
+  closeDate?: string;
   size: string;
   values: string;
   price?: string;
@@ -87,4 +98,5 @@ export interface AnalysisResult {
   category: Category;
   seriesDetails?: string;
   lines?: string;
+  winProbability?: string;
 }

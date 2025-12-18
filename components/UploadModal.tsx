@@ -4,9 +4,9 @@ import {
   X, Upload, Sparkles, Check, Loader2, ArrowLeft, 
   Image as ImageIcon, ScanLine, Star, Hash, Globe, 
   Printer, Ruler, Banknote, Clock, Info, MapPin, 
-  Building2, Layers, User, Palette, Activity
+  Building2, Layers, User, Palette, Activity, Percent, Calendar
 } from 'lucide-react';
-import { ScratchcardData, Category, ScratchcardState, LineType } from '../types';
+import { ScratchcardData, Category, ScratchcardState, LineType, CategoryItem } from '../types';
 import { analyzeImage } from '../services/geminiService';
 import { storageService } from '../services/storage';
 
@@ -17,6 +17,7 @@ interface UploadModalProps {
   initialFile: File | null;
   currentUser: string | null;
   t: any;
+  categories: CategoryItem[];
 }
 
 const LINE_COLORS: { id: LineType; label: string; bg: string }[] = [
@@ -46,7 +47,7 @@ const STATE_OPTIONS: { id: ScratchcardState; label: string; group: 'Archivio' | 
   { id: 'PRØVE', label: 'PRØVE', group: 'Archivio' }
 ];
 
-export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadComplete, existingImages, initialFile, currentUser, t }) => {
+export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadComplete, existingImages, initialFile, currentUser, t, categories }) => {
   const [step, setStep] = useState<1 | 2>(1);
   const [frontFile, setFrontFile] = useState<File | null>(null);
   const [backFile, setBackFile] = useState<File | null>(null);
@@ -54,7 +55,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
   const [backPreview, setBackPreview] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<Partial<ScratchcardData>>({
     category: 'raspadinha',
@@ -64,11 +64,15 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     operator: '',
     lines: 'none',
     gameNumber: '',
-    size: '10x15cm',
+    size: '',
     printer: '',
     price: '',
     collector: currentUser || 'Jorge Mesquita',
-    releaseDate: new Date().getFullYear().toString()
+    releaseDate: '',
+    closeDate: '',
+    emission: '',
+    winProbability: '',
+    values: ''
   });
 
   const frontInputRef = useRef<HTMLInputElement>(null);
@@ -79,6 +83,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     return {
       gameNames: unique(existingImages.map(img => img.gameName)),
       countries: unique(existingImages.map(img => img.country)),
+      regions: unique(existingImages.map(img => img.region)),
       operators: unique(existingImages.map(img => img.operator)),
       printers: unique(existingImages.map(img => img.printer)),
       collectors: unique(existingImages.map(img => img.collector)),
@@ -136,15 +141,19 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       gameName: formData.gameName || '',
       gameNumber: formData.gameNumber || '',
       releaseDate: formData.releaseDate || '',
+      closeDate: formData.closeDate || '',
       size: formData.size || '',
       values: formData.values || '',
       price: formData.price,
       state: (formData.state as ScratchcardState) || 'SC',
       country: formData.country || '',
+      region: formData.region || '',
       continent: formData.continent || 'Europa',
       category: formData.category || 'raspadinha',
       operator: formData.operator || '',
       printer: formData.printer || '',
+      emission: formData.emission || '',
+      winProbability: formData.winProbability || '',
       lines: formData.lines || 'none',
       collector: formData.collector || currentUser || 'Jorge Mesquita',
       aiGenerated: formData.aiGenerated || false,
@@ -167,7 +176,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
         <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-8 shadow-2xl relative">
            <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-white"><X className="w-6 h-6"/></button>
            <h2 className="text-2xl font-black text-white mb-8 italic uppercase tracking-tighter flex items-center gap-3">
-             <Upload className="w-6 h-6 text-brand-500"/> Arquivar Item
+             <Upload className="w-6 h-6 text-brand-500"/> Novo Registo
            </h2>
            <div className="grid grid-cols-2 gap-4 mb-8">
               <div onClick={() => frontInputRef.current?.click()} className="aspect-square border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-brand-500 transition-all relative overflow-hidden bg-slate-950">
@@ -181,7 +190,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
            </div>
            <button onClick={processImage} disabled={!frontFile || isAnalyzing} className="w-full bg-brand-600 hover:bg-brand-500 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl disabled:opacity-50">
              {isAnalyzing ? <Loader2 className="animate-spin w-5 h-5"/> : <Sparkles className="w-5 h-5"/>}
-             {isAnalyzing ? "CHLOE A ANALISAR..." : "PEDIR ANÁLISE À CHLOE"}
+             {isAnalyzing ? "CHLOE A ANALISAR..." : "CHLOE: PREENCHER AUTOMATICAMENTE"}
            </button>
         </div>
       </div>
@@ -194,7 +203,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
           <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900">
              <div className="flex items-center gap-4">
                <button onClick={() => setStep(1)} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400"><ArrowLeft className="w-6 h-6"/></button>
-               <h2 className="text-xl font-black text-white italic uppercase tracking-tighter">Confirmar Registo</h2>
+               <h2 className="text-xl font-black text-white italic uppercase tracking-tighter">Detalhes do Arquivo</h2>
              </div>
              <button onClick={onClose} className="text-slate-500 hover:text-white"><X className="w-6 h-6"/></button>
           </div>
@@ -202,56 +211,71 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
           <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-slate-950/20">
              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 <div className="space-y-4">
-                   <img src={frontPreview || ''} className="w-full rounded-2xl shadow-2xl border border-slate-800" />
-                   {backPreview && <img src={backPreview} className="w-full rounded-2xl shadow-2xl border border-slate-800" />}
+                   <div className="sticky top-0 space-y-4">
+                      <div className="bg-slate-950 rounded-2xl p-2 border border-slate-800 shadow-2xl">
+                         <img src={frontPreview || ''} className="w-full rounded-xl object-contain max-h-[400px]" />
+                      </div>
+                      {backPreview && (
+                         <div className="bg-slate-950 rounded-2xl p-2 border border-slate-800 shadow-2xl">
+                            <img src={backPreview} className="w-full rounded-xl object-contain max-h-[300px]" />
+                         </div>
+                      )}
+                   </div>
                 </div>
 
-                <div className="space-y-6">
-                   <div className="space-y-4">
-                      <label className="block">
-                         <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Nome do Jogo</span>
-                         <input list="game-names" type="text" value={formData.gameName} onChange={e => setFormData({...formData, gameName: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-brand-500 transition-all" />
-                      </label>
-                      <label className="block">
-                         <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Colecionador</span>
-                         <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                            <input list="collectors" type="text" value={formData.collector} onChange={e => setFormData({...formData, collector: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2 text-white outline-none focus:border-brand-500 transition-all" />
-                         </div>
-                      </label>
-                      
-                      {/* SELETOR DE ESTADO FÍSICO */}
+                <div className="space-y-8">
+                   {/* IDENTIDADE */}
+                   <section className="space-y-4">
+                      <h3 className="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em] flex items-center gap-2">
+                        <User className="w-3 h-3" /> Identificação do Jogo
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <label className="block col-span-2">
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Nome do jogo:</span>
+                           <input list="game-names" type="text" value={formData.gameName} onChange={e => setFormData({...formData, gameName: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-brand-500 transition-all" />
+                        </label>
+                        <label className="block">
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Jogo nº:</span>
+                           <input type="text" value={formData.gameNumber} onChange={e => setFormData({...formData, gameNumber: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" />
+                        </label>
+                        <label className="block">
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Codigo / ID:</span>
+                           <input type="text" value={formData.customId} onChange={e => setFormData({...formData, customId: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" />
+                        </label>
+                      </div>
+                   </section>
+
+                   {/* DADOS TÉCNICOS */}
+                   <section className="space-y-4">
+                      <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] flex items-center gap-2">
+                        <ScanLine className="w-3 h-3" /> Especificações Técnicas
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <label className="block col-span-2">
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Operador dos Jogo:</span>
+                           <input list="operators" type="text" value={formData.operator} onChange={e => setFormData({...formData, operator: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" placeholder="Ex: SCML, ONCE, Sisal..." />
+                        </label>
+                        <label className="block">
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">dimensões:</span>
+                           <input type="text" value={formData.size} onChange={e => setFormData({...formData, size: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" placeholder="Ex: 10x15cm" />
+                        </label>
+                        <label className="block">
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">tiragem:</span>
+                           <input type="text" value={formData.emission} onChange={e => setFormData({...formData, emission: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" placeholder="Ex: 500.000" />
+                        </label>
+                        <label className="block">
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Impresso por:</span>
+                           <input list="printers" type="text" value={formData.printer} onChange={e => setFormData({...formData, printer: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" placeholder="Ex: Scientific Games" />
+                        </label>
+                        <label className="block">
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">probabilidade de ganhar:</span>
+                           <input type="text" value={formData.winProbability} onChange={e => setFormData({...formData, winProbability: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" placeholder="Ex: 1 em 4.5" />
+                        </label>
+                      </div>
+
                       <div className="space-y-3">
                         <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1 flex items-center gap-2">
-                          <Activity className="w-3.5 h-3.5 text-blue-500" /> Estado do Exemplar
-                        </span>
-                        <div className="flex flex-wrap gap-2 p-3 bg-slate-800/50 rounded-2xl border border-slate-700/50 shadow-inner">
-                           {STATE_OPTIONS.map(opt => (
-                              <button
-                                key={opt.id}
-                                onClick={() => setFormData({...formData, state: opt.id})}
-                                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-tighter border transition-all ${formData.state === opt.id ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-slate-900 border-slate-700 text-slate-500 hover:text-slate-300'}`}
-                              >
-                                 {opt.label}
-                              </button>
-                           ))}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <label>
-                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">País</span>
-                           <input list="countries" type="text" value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white outline-none focus:border-brand-500 transition-all" />
-                        </label>
-                        <label>
-                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Entidade (Operador)</span>
-                           <input list="operators" type="text" value={formData.operator} onChange={e => setFormData({...formData, operator: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white outline-none focus:border-brand-500 transition-all" />
-                        </label>
-                      </div>
-
-                      <div className="space-y-2">
-                        <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1 flex items-center gap-2">
-                          <Palette className="w-3 h-3 text-brand-500" /> Linhas de Segurança (Cores)
+                          <Palette className="w-3 h-3 text-brand-500" /> Cores das linhas:
                         </span>
                         <div className="flex flex-wrap gap-2.5 p-3 bg-slate-800/50 rounded-2xl border border-slate-700/50">
                           {LINE_COLORS.map(color => (
@@ -262,33 +286,72 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                               title={color.label}
                             >
                               {formData.lines === color.id && <Check className="w-5 h-5 text-white drop-shadow-md" />}
-                              <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[7px] font-black uppercase tracking-widest text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">{color.label}</span>
                             </button>
                           ))}
                         </div>
                       </div>
+                   </section>
 
+                   {/* DATAS E VALORES */}
+                   <section className="space-y-4">
+                      <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] flex items-center gap-2">
+                        <Calendar className="w-3 h-3" /> Datas e Custos
+                      </h3>
                       <div className="grid grid-cols-2 gap-4">
-                        <label>
-                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Nº Jogo</span>
-                           <input type="text" value={formData.gameNumber} onChange={e => setFormData({...formData, gameNumber: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white outline-none focus:border-brand-500 transition-all" />
+                        <label className="block">
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">data da primeira emissão:</span>
+                           <input list="years" type="text" value={formData.releaseDate} onChange={e => setFormData({...formData, releaseDate: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" />
                         </label>
-                        <label>
-                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Ano</span>
-                           <input list="years" type="text" value={formData.releaseDate} onChange={e => setFormData({...formData, releaseDate: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white outline-none focus:border-brand-500 transition-all" />
+                        <label className="block">
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">data de encerramento:</span>
+                           <input type="text" value={formData.closeDate} onChange={e => setFormData({...formData, closeDate: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" />
+                        </label>
+                        <label className="block">
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">custo:</span>
+                           <input type="text" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" placeholder="Ex: 5€" />
+                        </label>
+                        <label className="block">
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Estado Físico (Exemplar):</span>
+                           <select value={formData.state} onChange={e => setFormData({...formData, state: e.target.value as any})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500 uppercase text-[10px] font-black">
+                              {STATE_OPTIONS.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
+                           </select>
                         </label>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                   </section>
+
+                   {/* LOCALIZAÇÃO */}
+                   <section className="space-y-4">
+                      <h3 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] flex items-center gap-2">
+                        <MapPin className="w-3 h-3" /> Origem Geográfica
+                      </h3>
+                      <div className="grid grid-cols-3 gap-4">
                         <label>
-                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Preço</span>
-                           <input type="text" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white outline-none focus:border-brand-500 transition-all" />
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">País:</span>
+                           <input list="countries" type="text" value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500" />
                         </label>
                         <label>
-                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Gráfica</span>
-                           <input list="printers" type="text" value={formData.printer} onChange={e => setFormData({...formData, printer: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white outline-none focus:border-brand-500 transition-all" />
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Região / Cantão:</span>
+                           <input list="regions" type="text" value={formData.region} onChange={e => setFormData({...formData, region: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500" />
+                        </label>
+                        <label>
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Continente:</span>
+                           <select value={formData.continent} onChange={e => setFormData({...formData, continent: e.target.value as any})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500">
+                             {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(c => <option key={c} value={c}>{c}</option>)}
+                           </select>
                         </label>
                       </div>
-                      <textarea value={formData.values} onChange={e => setFormData({...formData, values: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl p-4 text-white text-sm h-32 outline-none italic transition-all focus:border-brand-500 shadow-inner" placeholder="Notas do Arquivo..." />
+                   </section>
+
+                   <section className="space-y-2">
+                      <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">NOTA / Observações:</span>
+                      <textarea value={formData.values} onChange={e => setFormData({...formData, values: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl p-4 text-white text-sm h-32 outline-none italic transition-all focus:border-brand-500 shadow-inner" placeholder="Pode colocar aqui observações históricas, prémios, raridade..." />
+                   </section>
+
+                   <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                      <label className="flex items-center gap-3">
+                         <input type="text" list="collectors" value={formData.collector} onChange={e => setFormData({...formData, collector: e.target.value})} className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-xs text-white outline-none" placeholder="Colecionador Responsável" />
+                         <span className="text-[8px] font-black text-slate-600 uppercase">Responsável</span>
+                      </label>
                    </div>
                 </div>
              </div>
@@ -298,7 +361,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
              <button onClick={onClose} className="px-8 py-3 bg-slate-800 text-slate-400 rounded-xl font-black text-xs uppercase hover:text-white transition-all">Cancelar</button>
              <button onClick={handleSave} disabled={isSaving} className="px-12 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-black flex items-center gap-2 shadow-2xl active:scale-95 transition-all">
                 {isSaving ? <Loader2 className="animate-spin w-5 h-5"/> : <Check className="w-5 h-5"/>}
-                Confirmar Registo
+                Confirmar e Arquivar
              </button>
           </div>
        </div>
@@ -306,6 +369,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
        <datalist id="game-names">{suggestions.gameNames.map(val => <option key={val} value={val} />)}</datalist>
        <datalist id="collectors">{suggestions.collectors.map(val => <option key={val} value={val} />)}</datalist>
        <datalist id="countries">{suggestions.countries.map(val => <option key={val} value={val} />)}</datalist>
+       <datalist id="regions">{suggestions.regions.map(val => <option key={val} value={val} />)}</datalist>
        <datalist id="operators">{suggestions.operators.map(val => <option key={val} value={val} />)}</datalist>
        <datalist id="printers">{suggestions.printers.map(val => <option key={val} value={val} />)}</datalist>
        <datalist id="years">{suggestions.years.map(val => <option key={val} value={val} />)}</datalist>

@@ -1,11 +1,19 @@
 
-import { ScratchcardData, DocumentItem, WebsiteLink } from "../types";
+import { ScratchcardData, DocumentItem, WebsiteLink, CategoryItem } from "../types";
 
 const DB_NAME = 'raspadinhas-archive-db';
-const DB_VERSION = 4;
+const DB_VERSION = 5; // Incremented version
 const STORE_ITEMS = 'items';
 const STORE_DOCS = 'documents';
 const STORE_SITES = 'websites';
+const STORE_CATEGORIES = 'categories';
+
+const DEFAULT_CATEGORIES: CategoryItem[] = [
+  { id: 'cat-1', name: 'raspadinha', isDefault: true, createdAt: 0 },
+  { id: 'cat-2', name: 'lotaria', isDefault: true, createdAt: 0 },
+  { id: 'cat-3', name: 'boletim', isDefault: true, createdAt: 0 },
+  { id: 'cat-4', name: 'objeto', isDefault: true, createdAt: 0 },
+];
 
 class StorageService {
   private db: IDBDatabase | null = null;
@@ -31,7 +39,54 @@ class StorageService {
         if (!db.objectStoreNames.contains(STORE_SITES)) {
           db.createObjectStore(STORE_SITES, { keyPath: 'id' });
         }
+        if (!db.objectStoreNames.contains(STORE_CATEGORIES)) {
+          db.createObjectStore(STORE_CATEGORIES, { keyPath: 'id' });
+        }
       };
+    });
+  }
+
+  async getCategories(): Promise<CategoryItem[]> {
+    if (!this.db) await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([STORE_CATEGORIES], 'readonly');
+      const store = transaction.objectStore(STORE_CATEGORIES);
+      const request = store.getAll();
+      request.onsuccess = () => {
+        const results = request.result || [];
+        if (results.length === 0) {
+          // If no categories in DB, initialize with defaults
+          const initTx = this.db!.transaction([STORE_CATEGORIES], 'readwrite');
+          const initStore = initTx.objectStore(STORE_CATEGORIES);
+          DEFAULT_CATEGORIES.forEach(c => initStore.put(c));
+          resolve(DEFAULT_CATEGORIES);
+        } else {
+          resolve(results.sort((a, b) => a.createdAt - b.createdAt));
+        }
+      };
+      request.onerror = () => reject("Erro ao buscar categorias");
+    });
+  }
+
+  async saveCategory(category: CategoryItem): Promise<void> {
+    if (!this.db) await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([STORE_CATEGORIES], 'readwrite');
+      const store = transaction.objectStore(STORE_CATEGORIES);
+      store.put(category);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject("Erro ao salvar categoria");
+    });
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    if (!this.db) await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([STORE_CATEGORIES], 'readwrite');
+      const store = transaction.objectStore(STORE_CATEGORIES);
+      store.delete(id);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject("Erro ao deletar categoria");
     });
   }
 
@@ -59,37 +114,6 @@ class StorageService {
     });
   }
 
-  async search(term: string, continent: string | 'Mundo'): Promise<ScratchcardData[]> {
-    if (!this.db) await this.init();
-    return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([STORE_ITEMS], 'readonly');
-      const store = transaction.objectStore(STORE_ITEMS);
-      const request = store.openCursor();
-      const results: ScratchcardData[] = [];
-      const lowerTerm = term.toLowerCase().trim();
-
-      request.onsuccess = (event) => {
-        const cursor = (event.target as IDBRequest).result as IDBCursorWithValue;
-        if (cursor) {
-          const img = cursor.value as ScratchcardData;
-          let matchesContinent = continent === 'Mundo' || img.continent === continent;
-          let matchesTerm = !lowerTerm || 
-            img.gameName.toLowerCase().includes(lowerTerm) ||
-            img.customId.toLowerCase().includes(lowerTerm) ||
-            img.gameNumber.toLowerCase().includes(lowerTerm) ||
-            img.country.toLowerCase().includes(lowerTerm) ||
-            (img.region && img.region.toLowerCase().includes(lowerTerm));
-
-          if (matchesContinent && matchesTerm) results.push(img);
-          cursor.continue();
-        } else {
-          resolve(results.sort((a, b) => (a.gameNumber || "").localeCompare(b.gameNumber || "", undefined, { numeric: true })));
-        }
-      };
-      request.onerror = () => reject("Erro na pesquisa");
-    });
-  }
-
   async getStats(): Promise<any> {
      if (!this.db) await this.init();
      return new Promise((resolve, reject) => {
@@ -97,7 +121,7 @@ class StorageService {
       const store = transaction.objectStore(STORE_ITEMS);
       const request = store.openCursor();
       const stats: Record<string, number> = { 'Europa': 0, 'América': 0, 'Ásia': 0, 'África': 0, 'Oceania': 0 };
-      const categoryStats = { scratch: 0, lottery: 0 };
+      const categoryStats: Record<string, number> = {};
       const countryStats: Record<string, number> = {};
       const stateStats: Record<string, number> = {};
       const collectorStats: Record<string, number> = {};
@@ -109,7 +133,9 @@ class StorageService {
           const img = cursor.value as ScratchcardData;
           total++;
           if (stats[img.continent] !== undefined) stats[img.continent]++;
-          if (img.category === 'lotaria') categoryStats.lottery++; else categoryStats.scratch++;
+          
+          const cat = img.category || 'raspadinha';
+          categoryStats[cat] = (categoryStats[cat] || 0) + 1;
           
           const countryKey = img.country || 'Desconhecido';
           countryStats[countryKey] = (countryStats[countryKey] || 0) + 1;
@@ -152,19 +178,28 @@ class StorageService {
 
   async exportData(): Promise<string> {
     const items = await this.getAll();
-    return JSON.stringify(items, null, 2);
+    const categories = await this.getCategories();
+    return JSON.stringify({ items, categories }, null, 2);
   }
 
   async importData(jsonString: string): Promise<number> {
     if (!this.db) await this.init();
     return new Promise((resolve, reject) => {
        try {
-          const items = JSON.parse(jsonString);
+          const data = JSON.parse(jsonString);
+          const items = Array.isArray(data) ? data : (data.items || []);
+          const categories = data.categories || [];
+
           if (!Array.isArray(items)) throw new Error("Formato inválido");
-          const transaction = this.db!.transaction([STORE_ITEMS], 'readwrite');
+          
+          const transaction = this.db!.transaction([STORE_ITEMS, STORE_CATEGORIES], 'readwrite');
           const store = transaction.objectStore(STORE_ITEMS);
+          const catStore = transaction.objectStore(STORE_CATEGORIES);
+          
           let count = 0;
           items.forEach((item: ScratchcardData) => { if (item.id && item.gameName) { store.put(item); count++; } });
+          categories.forEach((cat: CategoryItem) => { if (cat.id && cat.name) { catStore.put(cat); } });
+          
           transaction.oncomplete = () => resolve(count);
           transaction.onerror = () => reject("Erro na importação");
        } catch (e) { reject(e); }

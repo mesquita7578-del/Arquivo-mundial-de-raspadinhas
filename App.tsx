@@ -9,14 +9,15 @@ import { LoginModal } from './components/LoginModal';
 import { StatsSection } from './components/StatsSection';
 import { HistoryModal } from './components/HistoryModal'; 
 import { WebsitesModal } from './components/WebsitesModal';
+import { CategoryManager } from './components/CategoryManager';
 import { AboutPage } from './components/AboutPage'; 
 import { WorldMap } from './components/WorldMap';
 import { INITIAL_RASPADINHAS } from './constants';
-import { ScratchcardData, Continent, Category } from './types';
+import { ScratchcardData, Continent, Category, CategoryItem } from './types';
 import { 
   Globe, Ticket, Coins, Heart, Gem, Gift, Trophy, 
   Building2, Database, Loader2, Sparkles, X, 
-  ClipboardList, Package, Search, Filter, MapPin, PlusCircle, LogIn, LayoutGrid, Map as MapIcon
+  ClipboardList, Package, Search, Filter, MapPin, PlusCircle, LogIn, LayoutGrid, Map as MapIcon, Tag
 } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
@@ -28,7 +29,8 @@ type PageType = 'home' | 'stats' | 'about' | 'europe' | 'america' | 'asia' | 'af
 
 function App() {
   const [allImagesCache, setAllImagesCache] = useState<ScratchcardData[]>([]);
-  const [totalStats, setTotalStats] = useState({ total: 0, stats: {} as Record<string, number>, categoryStats: { scratch: 0, lottery: 0 }, countryStats: {} as Record<string, number>, stateStats: {} as Record<string, number>, collectorStats: {} as Record<string, number> });
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [totalStats, setTotalStats] = useState({ total: 0, stats: {} as Record<string, number>, categoryStats: {} as Record<string, number>, countryStats: {} as Record<string, number>, stateStats: {} as Record<string, number>, collectorStats: {} as Record<string, number> });
   const [isLoadingDB, setIsLoadingDB] = useState(true);
   const [currentPage, setCurrentPage] = useState<PageType>('home');
   
@@ -46,6 +48,7 @@ function App() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); 
   const [isWebsitesModalOpen, setIsWebsitesModalOpen] = useState(false); 
+  const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<'admin' | 'visitor' | null>(null);
@@ -65,6 +68,11 @@ function App() {
     setIsLoadingDB(true);
     try {
       await storageService.init();
+      
+      // Carregar categorias
+      const cats = await storageService.getCategories();
+      setCategories(cats);
+
       const allItems = await storageService.getAll();
       if (allItems.length === 0) {
         await storageService.syncInitialItems(INITIAL_RASPADINHAS);
@@ -77,6 +85,25 @@ function App() {
       setTotalStats(freshStats);
     } catch (error) { console.error(error); }
     finally { setIsLoadingDB(false); }
+  };
+
+  const handleAddCategory = async (name: string) => {
+    const exists = categories.some(c => c.name.toLowerCase() === name.toLowerCase());
+    if (exists) return;
+
+    const newCat: CategoryItem = {
+      id: `cat-${Date.now()}`,
+      name: name,
+      isDefault: false,
+      createdAt: Date.now()
+    };
+    await storageService.saveCategory(newCat);
+    setCategories(prev => [...prev, newCat]);
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    await storageService.deleteCategory(id);
+    setCategories(prev => prev.filter(c => c.id !== id));
   };
 
   const handleInstallApp = async () => {
@@ -258,10 +285,15 @@ function App() {
               <button onClick={() => setFilterPromo(!filterPromo)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterPromo ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400'}`}><Gift className="w-3.5 h-3.5" /> Promo</button>
               <button onClick={() => setFilterWinners(!filterWinners)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterWinners ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400'}`}><Trophy className="w-3.5 h-3.5" /> Premiadas</button>
               <button onClick={() => handleNavigate(currentPage === 'my-collection' ? 'home' : 'my-collection')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${currentPage === 'my-collection' ? 'bg-brand-600 text-white shadow-lg' : 'bg-slate-800/50 text-slate-400'}`}><Heart className="w-3.5 h-3.5" /> Minha Coleção</button>
-              <div className="flex items-center gap-1 bg-slate-900/50 border border-slate-800 p-1 rounded-lg">
-                  {['all', 'raspadinha', 'lotaria', 'boletim', 'objeto'].map(cat => (
-                    <button key={cat} onClick={() => setActiveCategory(cat as any)} className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${activeCategory === cat ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>{cat === 'all' ? 'Tudo' : cat}</button>
+              
+              <div className="flex items-center gap-1 bg-slate-900/50 border border-slate-800 p-1 rounded-lg overflow-x-auto max-w-full scrollbar-hide">
+                  <button onClick={() => setActiveCategory('all')} className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeCategory === 'all' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>Tudo</button>
+                  {categories.map(cat => (
+                    <button key={cat.id} onClick={() => setActiveCategory(cat.name)} className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeCategory === cat.name ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>{cat.name}</button>
                   ))}
+                  {isAdmin && (
+                    <button onClick={() => setIsCategoryManagerOpen(true)} className="p-1.5 text-slate-600 hover:text-brand-500 transition-colors" title="Gerir Categorias"><Tag className="w-3 h-3" /></button>
+                  )}
               </div>
             </div>
             <div className="px-4 md:px-8 py-3 bg-slate-950/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -283,7 +315,7 @@ function App() {
           {currentPage === 'stats' ? (
             <StatsSection 
               stats={totalStats.stats} 
-              categoryStats={totalStats.categoryStats} 
+              categoryStats={totalStats.categoryStats as any} 
               countryStats={totalStats.countryStats} 
               stateStats={totalStats.stateStats} 
               collectorStats={totalStats.collectorStats} 
@@ -336,7 +368,7 @@ function App() {
           image={selectedImage} onClose={() => setSelectedImage(null)}
           onUpdate={handleUpdateImage} onDelete={handleDeleteImage}
           isAdmin={isAdmin} currentUser={currentUser} contextImages={allImagesCache}
-          onImageSelect={setSelectedImage} t={t.viewer}
+          onImageSelect={setSelectedImage} t={t.viewer} categories={categories}
         />
       )}
 
@@ -348,9 +380,10 @@ function App() {
         } else { setCurrentUser(u); setUserRole('visitor'); return true; }
       }} t={t.login} />}
       
-      {isUploadModalOpen && <UploadModal onClose={() => setIsUploadModalOpen(false)} onUploadComplete={handleUploadComplete} existingImages={allImagesCache} initialFile={null} currentUser={currentUser} t={t.upload} />}
+      {isUploadModalOpen && <UploadModal onClose={() => setIsUploadModalOpen(false)} onUploadComplete={handleUploadComplete} existingImages={allImagesCache} initialFile={null} currentUser={currentUser} t={t.upload} categories={categories} />}
       {isHistoryModalOpen && <HistoryModal onClose={() => setIsHistoryModalOpen(false)} isAdmin={isAdmin} t={t.header} />}
       {isWebsitesModalOpen && <WebsitesModal onClose={() => setIsWebsitesModalOpen(false)} isAdmin={isAdmin} t={t.header} />}
+      {isCategoryManagerOpen && <CategoryManager categories={categories} onClose={() => setIsCategoryManagerOpen(false)} onAdd={handleAddCategory} onDelete={handleDeleteCategory} isAdmin={isAdmin} />}
     </div>
   );
 }
