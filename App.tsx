@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { ImageGrid } from './components/ImageGrid';
@@ -12,6 +12,7 @@ import { WebsitesModal } from './components/WebsitesModal';
 import { CategoryManager } from './components/CategoryManager';
 import { AboutPage } from './components/AboutPage'; 
 import { WorldMap } from './components/WorldMap';
+import { DivineSignal, Signal, SignalType } from './components/DivineSignal';
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category, CategoryItem } from './types';
 import { 
@@ -33,6 +34,7 @@ function App() {
   const [totalStats, setTotalStats] = useState({ total: 0, stats: {} as Record<string, number>, categoryStats: {} as Record<string, number>, countryStats: {} as Record<string, number>, stateStats: {} as Record<string, number>, collectorStats: {} as Record<string, number> });
   const [isLoadingDB, setIsLoadingDB] = useState(true);
   const [currentPage, setCurrentPage] = useState<PageType>('home');
+  const [signals, setSignals] = useState<Signal[]>([]);
   
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
@@ -70,6 +72,15 @@ function App() {
     return () => clearTimeout(loadTimeout);
   }, []);
 
+  const triggerSignal = useCallback((message: string, type: SignalType = 'info') => {
+    const id = Math.random().toString(36).substr(2, 9);
+    setSignals(prev => [...prev, { id, message, type }]);
+  }, []);
+
+  const removeSignal = useCallback((id: string) => {
+    setSignals(prev => prev.filter(s => s.id !== id));
+  }, []);
+
   const loadData = async () => {
     try {
       await storageService.init();
@@ -98,6 +109,7 @@ function App() {
     setAllImagesCache(prev => prev.map(img => img.id === updatedImage.id ? updatedImage : img));
     const freshStats = await storageService.getStats();
     setTotalStats(freshStats);
+    triggerSignal("Registo Atualizado!", 'success');
   };
 
   const handleDeleteImage = async (id: string) => {
@@ -106,6 +118,7 @@ function App() {
     setSelectedImage(null);
     const freshStats = await storageService.getStats();
     setTotalStats(freshStats);
+    triggerSignal("Item Removido do Arquivo", 'warning');
   };
 
   const countriesByContinent = useMemo(() => {
@@ -130,12 +143,14 @@ function App() {
     const img = allImagesCache.find(i => i.country === country);
     if (img) setActiveContinent(img.continent);
     setCountrySearch(country);
+    triggerSignal(`Setor: ${country}`, 'info');
   };
 
   const handleUploadComplete = async (newItem: ScratchcardData) => {
     setAllImagesCache(prev => [newItem, ...prev]);
     const freshStats = await storageService.getStats();
     setTotalStats(freshStats);
+    triggerSignal("INTERVENÇÃO DIVINA: NOVO ITEM ARQUIVADO! ✨", 'divine');
   };
 
   const filteredImages = useMemo(() => {
@@ -194,7 +209,7 @@ function App() {
         isAdmin={isAdmin} 
         currentUser={currentUser} 
         onAdminToggle={() => setIsLoginModalOpen(true)}
-        onLogout={() => { setCurrentUser(null); setUserRole(null); handleNavigate('home'); }} 
+        onLogout={() => { setCurrentUser(null); setUserRole(null); handleNavigate('home'); triggerSignal("Sessão Encerrada", 'info'); }} 
         onHistoryClick={() => setIsHistoryModalOpen(true)} 
         onExport={() => storageService.exportData().then(data => {
             const blob = new Blob([data], { type: 'application/json' });
@@ -203,6 +218,7 @@ function App() {
             a.href = url;
             a.download = `backup-arquivo-${new Date().toISOString().split('T')[0]}.json`;
             a.click();
+            triggerSignal("Backup Gerado!", 'success');
         })}
         onExportCSV={() => {}}
         onExportTXT={() => {}}
@@ -211,9 +227,9 @@ function App() {
             reader.onload = async (e) => {
               try {
                 const count = await storageService.importData(e.target?.result as string);
-                alert(`${count} registos restaurados!`);
+                triggerSignal(`${count} registos restaurados!`, 'divine');
                 loadData();
-              } catch (err) { alert("Erro ao importar."); }
+              } catch (err) { triggerSignal("Erro na restauração", 'warning'); }
             };
             reader.readAsText(file);
         }}
@@ -314,15 +330,27 @@ function App() {
       {isLoginModalOpen && <LoginModal onClose={() => setIsLoginModalOpen(false)} onLogin={(u, p, t) => {
         if (t === 'admin') {
           const clean = u.trim().toUpperCase();
-          if (AUTHORIZED_ADMINS.includes(clean) && p === ADMIN_PASSWORD) { setCurrentUser(u); setUserRole('admin'); return true; }
+          if (AUTHORIZED_ADMINS.includes(clean) && p === ADMIN_PASSWORD) { 
+            setCurrentUser(u); 
+            setUserRole('admin'); 
+            triggerSignal(`Bem-vindo, Administrador ${u.split(' ')[0]}`, 'divine');
+            return true; 
+          }
           return false;
-        } else { setCurrentUser(u); setUserRole('visitor'); return true; }
+        } else { 
+          setCurrentUser(u); 
+          setUserRole('visitor'); 
+          triggerSignal(`Entrada Registada: ${u}`, 'info');
+          return true; 
+        }
       }} t={t.login} />}
       
       {isUploadModalOpen && <UploadModal onClose={() => setIsUploadModalOpen(false)} onUploadComplete={handleUploadComplete} existingImages={allImagesCache} initialFile={null} currentUser={currentUser} t={t.upload} categories={categories} />}
       {isHistoryModalOpen && <HistoryModal onClose={() => setIsHistoryModalOpen(false)} isAdmin={isAdmin} t={t.header} />}
       {isWebsitesModalOpen && <WebsitesModal onClose={() => setIsWebsitesModalOpen(false)} isAdmin={isAdmin} t={t.header} />}
       {isCategoryManagerOpen && <CategoryManager categories={categories} onClose={() => setIsCategoryManagerOpen(false)} onAdd={() => {}} onDelete={() => {}} isAdmin={isAdmin} />}
+
+      <DivineSignal signals={signals} onRemove={removeSignal} />
     </div>
   );
 }
