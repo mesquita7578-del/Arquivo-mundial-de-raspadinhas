@@ -62,7 +62,6 @@ function App() {
       setDeferredPrompt(e);
     });
     
-    // Timeout de segurança para o loading não ficar eterno
     const loadTimeout = setTimeout(() => {
       if (isLoadingDB) setIsLoadingDB(false);
     }, 5000);
@@ -274,24 +273,19 @@ function App() {
           ) : currentPage === 'about' ? (
             <AboutPage t={t} />
           ) : currentPage === 'map' ? (
-            <div className="flex-1 p-4 md:p-8 animate-fade-in flex flex-col h-full overflow-hidden min-h-[600px]">
+            <div className="flex-1 p-4 md:p-8 animate-fade-in flex flex-col h-full">
                <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between shrink-0 gap-4">
                   <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase flex items-center gap-4">
-                    <Globe className="w-8 h-8 text-brand-500" /> Cartografia da Sorte
+                    <Globe className="w-8 h-8 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" /> Cartografia Neon
                   </h2>
                   <div className="flex items-center gap-3 bg-slate-900/50 p-2 rounded-2xl border border-slate-800">
-                     <Navigation className="w-4 h-4 text-blue-500" />
-                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Navegar por:</span>
+                     <Navigation className="w-4 h-4 text-cyan-500" />
                      {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(c => (
-                        <button key={c} onClick={() => setActiveContinent(c as Continent)} className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all ${activeContinent === c ? 'bg-blue-600 text-white' : 'hover:text-white'}`}>{c}</button>
+                        <button key={c} onClick={() => setActiveContinent(c as Continent)} className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all ${activeContinent === c ? 'bg-cyan-600 text-black shadow-[0_0_10px_rgba(6,182,212,0.4)]' : 'hover:text-white text-slate-500'}`}>{c}</button>
                      ))}
                   </div>
                </div>
-               <div className="flex-1 relative bg-slate-900/20 rounded-[3rem] border border-slate-800/50 overflow-hidden shadow-inner">
-                 <div className="absolute top-6 right-6 z-30 flex items-center gap-3 bg-slate-950/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-800">
-                    <MousePointer2 className="w-3 h-3 text-brand-500" />
-                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Interativo • Clique num país</span>
-                 </div>
+               <div className="flex-1 overflow-y-auto custom-scrollbar">
                  <WorldMap images={allImagesCache} onCountrySelect={handleCountrySelectFromMap} activeContinent={activeContinent} t={t.grid} />
                </div>
             </div>

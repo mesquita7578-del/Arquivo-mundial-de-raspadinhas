@@ -5,9 +5,9 @@ import { Tooltip } from 'react-tooltip';
 import { scaleSqrt } from "d3-scale";
 import { ScratchcardData, Continent } from '../types';
 import { 
-  ZoomIn, ZoomOut, RefreshCw, Layers, Loader2, 
-  MapPin, AlertTriangle, Globe, Navigation2,
-  Compass
+  ZoomIn, ZoomOut, RefreshCw, Loader2, 
+  MapPin, AlertTriangle, Globe, Compass, 
+  LayoutGrid, Search
 } from 'lucide-react';
 
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
@@ -19,14 +19,13 @@ interface WorldMapProps {
   t: any;
 }
 
-// Configurações de visualização por continente para carregamento focado
 const CONTINENT_VIEWS: Record<string, { center: [number, number]; zoom: number }> = {
-  'Mundo': { center: [10, 20], zoom: 1.2 },
-  'Europa': { center: [15, 52], zoom: 3.5 },
-  'América': { center: [-80, 10], zoom: 1.8 },
-  'Ásia': { center: [90, 30], zoom: 2 },
-  'África': { center: [20, 0], zoom: 2.2 },
-  'Oceania': { center: [140, -25], zoom: 3 },
+  'Mundo': { center: [10, 20], zoom: 1 },
+  'Europa': { center: [15, 52], zoom: 3 },
+  'América': { center: [-80, 10], zoom: 1.5 },
+  'Ásia': { center: [90, 30], zoom: 1.8 },
+  'África': { center: [20, 0], zoom: 2 },
+  'Oceania': { center: [140, -25], zoom: 2.5 },
 };
 
 const COUNTRY_MAP: Record<string, string> = {
@@ -50,11 +49,8 @@ export const WorldMap: React.FC<WorldMapProps> = ({ images, onCountrySelect, act
   const [tooltipContent, setTooltipContent] = useState("");
   const [mapStatus, setMapStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
 
-  // Atualiza a posição quando o continente muda no menu superior
   useEffect(() => {
-    if (CONTINENT_VIEWS[activeContinent]) {
-      setPosition(CONTINENT_VIEWS[activeContinent]);
-    }
+    setPosition(CONTINENT_VIEWS[activeContinent] || CONTINENT_VIEWS['Mundo']);
   }, [activeContinent]);
 
   const countryCounts = useMemo(() => {
@@ -66,90 +62,51 @@ export const WorldMap: React.FC<WorldMapProps> = ({ images, onCountrySelect, act
     return counts;
   }, [images]);
 
+  const activeCountriesList = useMemo(() => {
+    // Added type assertion to [string, number][] to fix 'unknown' type errors during filter and sort
+    return (Object.entries(countryCounts) as [string, number][])
+      .filter(([_, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1]);
+  }, [countryCounts]);
+
   const maxVal = useMemo(() => {
     const vals = Object.values(countryCounts) as number[];
     return vals.length > 0 ? Math.max(...vals) : 1;
   }, [countryCounts]);
 
-  const colorScale = useMemo(() => {
-    return scaleSqrt<string>()
-      .domain([0, maxVal])
-      .range(["#1e293b", "#f43f5e"]);
-  }, [maxVal]);
-
   return (
-    <div className="relative w-full h-full min-h-[600px] bg-[#020617] rounded-[2.5rem] border border-slate-800/50 overflow-hidden flex flex-col shadow-2xl animate-fade-in group">
-      
-      {/* Overlay de carregamento elegante */}
-      {mapStatus === 'loading' && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#020617]/95 backdrop-blur-xl">
-           <div className="relative mb-6">
-              <Loader2 className="w-20 h-20 text-brand-500 animate-spin opacity-20" />
-              <Globe className="absolute inset-0 m-auto w-8 h-8 text-brand-500 animate-pulse" />
-           </div>
-           <div className="text-center space-y-2">
-              <p className="text-white font-black uppercase text-xs tracking-[0.4em] animate-pulse">
-                 Sincronizando Coordenadas
-              </p>
-              <p className="text-slate-600 text-[9px] font-bold uppercase tracking-widest">
-                 Arquivo de {activeContinent} • A carregar...
-              </p>
-           </div>
+    <div className="flex flex-col h-full w-full gap-6">
+      {/* Container do Mapa com Cores Neon */}
+      <div className="relative w-full h-[500px] md:h-[600px] bg-black rounded-[2rem] border-2 border-slate-800 overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)]">
+        
+        {/* Camada Neon de Fundo */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-brand-900/10 via-blue-900/5 to-purple-900/10 pointer-events-none"></div>
+
+        {mapStatus === 'loading' && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md">
+             <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mb-4" />
+             <p className="text-cyan-400 font-black text-[10px] uppercase tracking-[0.4em] animate-pulse">Radar Chloe Ativo...</p>
+          </div>
+        )}
+
+        {mapStatus === 'error' && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 p-8 text-center">
+             <AlertTriangle className="w-12 h-12 text-brand-500 mb-4" />
+             <h3 className="text-white font-black uppercase text-sm mb-4">Erro Crítico no Mapa</h3>
+             <p className="text-slate-500 text-[10px] uppercase mb-6">A Chloe não conseguiu desenhar o globo. Use a lista abaixo para navegar.</p>
+          </div>
+        )}
+
+        {/* Controles HUD Neon */}
+        <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-2">
+           <button onClick={() => setPosition(p => ({...p, zoom: p.zoom + 0.5}))} className="w-12 h-12 bg-slate-900/80 border border-cyan-500/50 text-cyan-400 rounded-xl flex items-center justify-center hover:bg-cyan-500 hover:text-black transition-all shadow-[0_0_15px_rgba(34,211,238,0.2)]"><ZoomIn className="w-5 h-5" /></button>
+           <button onClick={() => setPosition(p => ({...p, zoom: Math.max(1, p.zoom - 0.5)}))} className="w-12 h-12 bg-slate-900/80 border border-cyan-500/50 text-cyan-400 rounded-xl flex items-center justify-center hover:bg-cyan-500 hover:text-black transition-all shadow-[0_0_15px_rgba(34,211,238,0.2)]"><ZoomOut className="w-5 h-5" /></button>
+           <button onClick={() => setPosition(CONTINENT_VIEWS[activeContinent] || CONTINENT_VIEWS['Mundo'])} className="w-12 h-12 bg-brand-600/80 border border-brand-400/50 text-white rounded-xl flex items-center justify-center hover:bg-brand-500 transition-all shadow-[0_0_15px_rgba(244,63,94,0.2)]"><RefreshCw className="w-5 h-5" /></button>
         </div>
-      )}
 
-      {/* Mensagem de Erro com Botões de Recuperação */}
-      {mapStatus === 'error' && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/90 p-8 text-center animate-fade-in">
-           <AlertTriangle className="w-16 h-16 text-yellow-500 mb-6" />
-           <h3 className="text-2xl font-black text-white uppercase italic mb-2 tracking-tighter">O Mapa está Oculto</h3>
-           <p className="text-slate-400 text-sm mb-8 max-w-sm leading-relaxed">
-             O teu dispositivo pode estar com a memória cheia. Não te preocupes, usa a lista lateral ou tenta atualizar.
-           </p>
-           <button onClick={() => window.location.reload()} className="px-10 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all shadow-2xl shadow-brand-900/40 active:scale-95">
-             Reiniciar Sistema
-           </button>
-        </div>
-      )}
-
-      {/* Controlos e Info HUD */}
-      <div className="absolute top-8 left-8 z-20 hidden md:flex flex-col gap-4">
-        <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 p-6 rounded-3xl shadow-2xl min-w-[240px]">
-           <div className="flex items-center gap-3 mb-6">
-              <Compass className="w-5 h-5 text-brand-500" />
-              <h4 className="text-white font-black uppercase text-[10px] tracking-[0.2em]">{activeContinent}</h4>
-           </div>
-           
-           <div className="space-y-4">
-              {(Object.entries(countryCounts) as [string, number][])
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 4)
-                .map(([name, count], i) => (
-                  <div key={name} className="flex flex-col gap-1.5">
-                    <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-tighter">
-                      <span className="text-slate-400">{i + 1}. {name}</span>
-                      <span className="text-brand-500">{count}</span>
-                    </div>
-                    <div className="w-full h-1 bg-slate-800 rounded-full">
-                      <div className="h-full bg-brand-600" style={{ width: `${(count / maxVal) * 100}%` }}></div>
-                    </div>
-                  </div>
-                ))}
-           </div>
-        </div>
-      </div>
-
-      {/* Floating Action Buttons para Zoom */}
-      <div className="absolute bottom-8 right-8 z-20 flex flex-col gap-2">
-         <button onClick={() => setPosition(p => ({...p, zoom: p.zoom + 0.5}))} className="w-12 h-12 bg-slate-900 border border-slate-700 text-white rounded-xl flex items-center justify-center hover:bg-brand-600 transition-all shadow-xl"><ZoomIn className="w-5 h-5" /></button>
-         <button onClick={() => setPosition(p => ({...p, zoom: Math.max(1, p.zoom - 0.5)}))} className="w-12 h-12 bg-slate-900 border border-slate-700 text-white rounded-xl flex items-center justify-center hover:bg-brand-600 transition-all shadow-xl"><ZoomOut className="w-5 h-5" /></button>
-         <button onClick={() => setPosition(CONTINENT_VIEWS[activeContinent] || CONTINENT_VIEWS['Mundo'])} className="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center hover:bg-blue-500 transition-all shadow-xl"><RefreshCw className="w-5 h-5" /></button>
-      </div>
-
-      <div className="flex-1 w-full h-full cursor-grab active:cursor-grabbing" data-tooltip-id="map-tooltip">
         <ComposableMap 
           projection="geoEqualEarth"
-          style={{ width: "100%", height: "100%", minHeight: "600px" }}
+          style={{ width: "100%", height: "100%" }}
         >
           <ZoomableGroup 
              zoom={position.zoom} 
@@ -167,17 +124,21 @@ export const WorldMap: React.FC<WorldMapProps> = ({ images, onCountrySelect, act
                   const count = countryCounts[name] || 0;
                   const isSelected = count > 0;
                   
+                  // Cores Neon Reais
+                  const fillColor = isSelected ? "#f43f5e" : "#0f172a";
+                  const strokeColor = isSelected ? "#fff" : "#1e293b";
+                  
                   return (
                     <Geography
                       key={geo.rsmKey}
                       geography={geo}
-                      fill={colorScale(count)}
-                      stroke="#020617"
-                      strokeWidth={0.5}
+                      fill={fillColor}
+                      stroke={strokeColor}
+                      strokeWidth={isSelected ? 0.8 : 0.3}
                       style={{
                         default: { outline: "none", transition: "all 300ms" },
                         hover: { 
-                          fill: isSelected ? "#f43f5e" : "#334155",
+                          fill: isSelected ? "#ff0000" : "#22d3ee",
                           outline: "none", 
                           stroke: "#fff",
                           strokeWidth: 1,
@@ -186,7 +147,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({ images, onCountrySelect, act
                         pressed: { outline: "none", scale: 0.98 },
                       }}
                       onMouseEnter={() => {
-                         if (name) setTooltipContent(`${name}: ${count} itens`);
+                         if (name) setTooltipContent(`${name}: ${count} ITENS`);
                       }}
                       onMouseLeave={() => setTooltipContent("")}
                       onClick={() => {
@@ -202,25 +163,53 @@ export const WorldMap: React.FC<WorldMapProps> = ({ images, onCountrySelect, act
             </Geographies>
           </ZoomableGroup>
         </ComposableMap>
+
+        <Tooltip 
+          id="map-tooltip" 
+          content={tooltipContent} 
+          style={{ 
+            backgroundColor: "#000", 
+            color: "#00f3ff", 
+            borderRadius: "4px", 
+            padding: "4px 8px", 
+            fontSize: "10px", 
+            fontWeight: "900",
+            border: "1px solid #00f3ff",
+            boxShadow: "0 0 15px rgba(0, 243, 255, 0.4)",
+            zIndex: 1000 
+          }} 
+        />
       </div>
 
-      <Tooltip 
-        id="map-tooltip" 
-        content={tooltipContent} 
-        style={{ 
-          backgroundColor: "#020617", 
-          color: "#fff", 
-          borderRadius: "12px", 
-          padding: "8px 12px", 
-          fontSize: "10px", 
-          fontWeight: "900",
-          textTransform: "uppercase",
-          letterSpacing: "0.15em",
-          border: "1px solid #334155",
-          zIndex: 1000,
-          boxShadow: "0 20px 40px -10px rgba(0,0,0,0.5)"
-        }} 
-      />
+      {/* Backup Navigation - Se o mapa falhar ou para navegação rápida */}
+      <div className="bg-slate-900/30 border border-slate-800 rounded-3xl p-6">
+         <div className="flex items-center justify-between mb-6">
+            <h3 className="text-white font-black uppercase text-[10px] tracking-widest flex items-center gap-2">
+               <LayoutGrid className="w-4 h-4 text-cyan-400" /> Países no Arquivo ({activeContinent})
+            </h3>
+         </div>
+         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+            {activeCountriesList.length === 0 ? (
+               <div className="col-span-full py-10 text-center text-slate-600 font-black uppercase text-[8px] tracking-widest">
+                  Nenhum país catalogado neste continente
+               </div>
+            ) : (
+               activeCountriesList.map(([name, count]) => (
+                  <button 
+                     key={name}
+                     onClick={() => {
+                        const originalName = Object.keys(COUNTRY_MAP).find(k => COUNTRY_MAP[k] === name) || name;
+                        onCountrySelect(originalName);
+                     }}
+                     className="bg-slate-900 hover:bg-cyan-900/20 border border-slate-800 hover:border-cyan-500/50 p-3 rounded-xl transition-all flex flex-col items-center gap-2 group"
+                  >
+                     <span className="text-white font-black text-[9px] uppercase tracking-tighter group-hover:text-cyan-400 text-center truncate w-full">{name}</span>
+                     <span className="bg-slate-800 text-[8px] font-mono px-2 py-0.5 rounded text-slate-400 group-hover:text-cyan-300">{count}</span>
+                  </button>
+               ))
+            )}
+         </div>
+      </div>
     </div>
   );
 };
