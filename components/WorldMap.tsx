@@ -2,10 +2,10 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 import { Tooltip } from 'react-tooltip';
+import { scaleSqrt } from "d3-scale";
 import { ScratchcardData } from '../types';
-import { ZoomIn, ZoomOut, RefreshCw, Layers, Loader2 } from 'lucide-react';
+import { ZoomIn, ZoomOut, RefreshCw, Layers, Loader2, Info, MapPin } from 'lucide-react';
 
-// URL de TopoJSON confiável e leve
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 interface WorldMapProps {
@@ -14,121 +14,118 @@ interface WorldMapProps {
   t: any;
 }
 
-// Mapeamento para alinhar nomes do banco de dados com nomes do TopoJSON
-const COUNTRY_NAME_FIX: Record<string, string> = {
-  "EUA": "United States of America",
-  "USA": "United States of America",
-  "Estados Unidos": "United States of America",
-  "Reino Unido": "United Kingdom",
-  "UK": "United Kingdom",
-  "Inglaterra": "United Kingdom",
-  "Brasil": "Brazil",
+// Mapa de normalização para nomes de países (DB -> TopoJSON)
+const COUNTRY_MAP: Record<string, string> = {
+  "Portugal": "Portugal",
   "Itália": "Italy",
   "Espanha": "Spain",
-  "França": "France",
   "Alemanha": "Germany",
-  "Japão": "Japan",
+  "França": "France",
+  "Brasil": "Brazil",
+  "EUA": "United States of America",
+  "USA": "United States of America",
+  "Reino Unido": "United Kingdom",
+  "UK": "United Kingdom",
   "Suíça": "Switzerland",
-  "Bélgica": "Belgium",
   "Áustria": "Austria",
-  "Canadá": "Canada",
-  "Austrália": "Australia",
-  "Rússia": "Russia",
-  "Índia": "India",
-  "México": "Mexico"
+  "Bélgica": "Belgium"
 };
 
 export const WorldMap: React.FC<WorldMapProps> = ({ images, onCountrySelect, t }) => {
-  const [position, setPosition] = useState({ coordinates: [0, 0] as [number, number], zoom: 1 });
+  const [position, setPosition] = useState({ coordinates: [10, 20] as [number, number], zoom: 1.2 });
   const [tooltipContent, setTooltipContent] = useState("");
   const [mapLoaded, setMapLoaded] = useState(false);
 
-  // Calcula a densidade por país
-  const data = useMemo(() => {
+  // Agrupar dados por país
+  const countryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     images.forEach(img => {
-      let countryName = img.country.trim();
-      // Aplica correção de nome se existir
-      if (COUNTRY_NAME_FIX[countryName]) {
-        countryName = COUNTRY_NAME_FIX[countryName];
-      }
-      counts[countryName] = (counts[countryName] || 0) + 1;
+      const name = COUNTRY_MAP[img.country] || img.country;
+      counts[name] = (counts[name] || 0) + 1;
     });
     return counts;
   }, [images]);
 
   const maxVal = useMemo(() => {
-    const vals = Object.values(data) as number[];
-    return Math.max(...vals, 1);
-  }, [data]);
+    // Explicitly cast Object.values to number[] to fix "unknown" type error during spread for Math.max
+    const vals = Object.values(countryCounts) as number[];
+    return vals.length > 0 ? Math.max(...vals) : 1;
+  }, [countryCounts]);
 
-  const getColor = (count: number) => {
-    if (count === 0) return "#1e293b"; // Slate-800 para países sem itens
-    const intensity = 0.3 + (count / maxVal) * 0.7;
-    return `rgba(244, 63, 94, ${intensity})`; // Brand-500 com opacidade baseada no volume
-  };
+  // Escala de cores profissional usando d3
+  const colorScale = useMemo(() => {
+    return scaleSqrt<string>()
+      .domain([0, maxVal])
+      .range(["#1e293b", "#f43f5e"]); // slate-800 para brand-500
+  }, [maxVal]);
 
-  const handleZoomIn = () => {
-    if (position.zoom >= 8) return;
-    setPosition(pos => ({ ...pos, zoom: pos.zoom * 1.5 }));
-  };
-
-  const handleZoomOut = () => {
-    if (position.zoom <= 1) return;
-    setPosition(pos => ({ ...pos, zoom: pos.zoom / 1.5 }));
-  };
-  
-  const handleReset = () => {
-     setPosition({ coordinates: [0, 0], zoom: 1 });
-  };
+  const handleZoomIn = () => setPosition(pos => ({ ...pos, zoom: Math.min(pos.zoom * 1.5, 8) }));
+  const handleZoomOut = () => setPosition(pos => ({ ...pos, zoom: Math.max(pos.zoom / 1.5, 1) }));
+  const handleReset = () => setPosition({ coordinates: [10, 20], zoom: 1.2 });
 
   return (
-    <div className="relative w-full h-full min-h-[500px] bg-slate-900/50 rounded-3xl border border-slate-800 overflow-hidden flex flex-col shadow-2xl">
+    <div className="relative w-full h-full bg-slate-950 rounded-3xl border border-slate-800 overflow-hidden flex flex-col shadow-2xl">
       {!mapLoaded && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-sm">
-           <Loader2 className="w-10 h-10 text-brand-500 animate-spin mb-4" />
-           <p className="text-slate-400 font-black uppercase text-xs tracking-[0.2em]">Desenhando Fronteiras...</p>
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-md">
+           <Loader2 className="w-12 h-12 text-brand-500 animate-spin mb-4" />
+           <p className="text-slate-500 font-black uppercase text-[10px] tracking-[0.3em] animate-pulse">Renderizando Globo...</p>
         </div>
       )}
 
-      {/* Controlos de Zoom */}
-      <div className="absolute top-6 right-6 z-10 flex flex-col gap-2">
-        <button onClick={handleZoomIn} className="p-2.5 bg-slate-800/90 text-white rounded-xl hover:bg-brand-600 transition-all border border-slate-700 shadow-xl">
-          <ZoomIn className="w-5 h-5" />
-        </button>
-        <button onClick={handleZoomOut} className="p-2.5 bg-slate-800/90 text-white rounded-xl hover:bg-brand-600 transition-all border border-slate-700 shadow-xl">
-          <ZoomOut className="w-5 h-5" />
-        </button>
-        <button onClick={handleReset} className="p-2.5 bg-slate-800/90 text-white rounded-xl hover:bg-blue-600 transition-all border border-slate-700 shadow-xl">
-          <RefreshCw className="w-5 h-5" />
-        </button>
-      </div>
-
-      {/* Legenda de Top 5 */}
-      <div className="absolute bottom-6 left-6 z-10 bg-slate-900/95 backdrop-blur-md border border-slate-800 p-5 rounded-2xl shadow-2xl hidden md:block w-64">
-        <div className="flex items-center gap-2 mb-4 border-b border-slate-800 pb-2">
-           <Layers className="w-4 h-4 text-brand-500" />
-           <h4 className="text-white font-black uppercase text-[10px] tracking-widest">Top Países</h4>
-        </div>
-        <div className="space-y-3">
-          {Object.entries(data)
-            .sort((a, b) => (b[1] as number) - (a[1] as number))
-            .slice(0, 5)
-            .map(([name, count], i) => (
-              <div key={name} className="flex flex-col gap-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded transition-colors" onClick={() => onCountrySelect(name)}>
-                <div className="flex justify-between items-center text-[10px]">
-                  <span className="text-slate-400 font-bold truncate pr-2">{i + 1}. {name}</span>
-                  <span className="font-mono font-black text-brand-400">{count}</span>
-                </div>
-                <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
-                   <div className="h-full bg-brand-600" style={{ width: `${((count as number) / maxVal) * 100}%` }}></div>
-                </div>
-              </div>
-            ))}
+      {/* Controles Flutuantes */}
+      <div className="absolute top-8 right-8 z-10 flex flex-col gap-3">
+        <div className="flex flex-col gap-2 p-1.5 bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl">
+          <button onClick={handleZoomIn} className="p-3 hover:bg-brand-600 hover:text-white text-slate-400 rounded-xl transition-all" title="Zoom In"><ZoomIn className="w-5 h-5" /></button>
+          <button onClick={handleZoomOut} className="p-3 hover:bg-brand-600 hover:text-white text-slate-400 rounded-xl transition-all" title="Zoom Out"><ZoomOut className="w-5 h-5" /></button>
+          <div className="h-px bg-slate-800 mx-2"></div>
+          <button onClick={handleReset} className="p-3 hover:bg-blue-600 hover:text-white text-slate-400 rounded-xl transition-all" title="Reset Map"><RefreshCw className="w-5 h-5" /></button>
         </div>
       </div>
 
-      <div className="flex-1 cursor-grab active:cursor-grabbing w-full h-full" data-tooltip-id="map-tooltip">
+      {/* Legenda e Top Ranking */}
+      <div className="absolute bottom-8 left-8 z-10 w-72 space-y-4 hidden md:block">
+        <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-800 p-6 rounded-3xl shadow-2xl">
+          <div className="flex items-center gap-3 mb-6">
+            <Layers className="w-5 h-5 text-brand-500" />
+            <h4 className="text-white font-black uppercase text-xs tracking-widest">Densidade Mundial</h4>
+          </div>
+          
+          <div className="space-y-4">
+            {/* Explicitly cast Object.entries to [string, number][] to fix arithmetic operation type errors */}
+            {(Object.entries(countryCounts) as [string, number][])
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 5)
+              .map(([name, count], i) => (
+                <button 
+                  key={name} 
+                  onClick={() => onCountrySelect(name)}
+                  className="w-full flex flex-col gap-2 group text-left"
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 font-black text-[9px] uppercase tracking-tighter group-hover:text-white transition-colors">
+                      {i + 1}. {name}
+                    </span>
+                    <span className="text-[10px] font-mono font-black text-brand-400">{count}</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-brand-600 to-brand-400 transition-all duration-1000" 
+                      // Fixed type error: count and maxVal are now correctly typed as numbers
+                      style={{ width: `${(count / maxVal) * 100}%` }}
+                    ></div>
+                  </div>
+                </button>
+              ))}
+          </div>
+          
+          <div className="mt-8 pt-4 border-t border-slate-800 flex items-center gap-2">
+            <Info className="w-3 h-3 text-slate-600" />
+            <span className="text-[8px] font-bold text-slate-600 uppercase tracking-widest">Clique num país para filtrar</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 cursor-grab active:cursor-grabbing" data-tooltip-id="map-tooltip">
         <ComposableMap 
           projection="geoMercator" 
           width={800} 
@@ -144,35 +141,36 @@ export const WorldMap: React.FC<WorldMapProps> = ({ images, onCountrySelect, t }
               {({ geographies }) =>
                 geographies.map((geo) => {
                   const name = geo.properties.name;
-                  const count = data[name] || 0;
+                  const count = countryCounts[name] || 0;
+                  const isSelected = count > 0;
                   
                   return (
                     <Geography
                       key={geo.rsmKey}
                       geography={geo}
-                      fill={getColor(count)}
-                      stroke="#0f172a"
+                      fill={colorScale(count)}
+                      stroke="#020617"
                       strokeWidth={0.5}
                       style={{
                         default: { outline: "none" },
                         hover: { 
-                          fill: count > 0 ? "#f43f5e" : "#334155",
+                          fill: isSelected ? "#f43f5e" : "#334155",
                           outline: "none", 
                           stroke: "#fff",
                           strokeWidth: 1,
-                          cursor: count > 0 ? "pointer" : "default"
+                          cursor: isSelected ? "pointer" : "default"
                         },
-                        pressed: { outline: "none" },
+                        pressed: { outline: "none", scale: 0.98 },
                       }}
                       onMouseEnter={() => {
-                         setTooltipContent(`${name}: ${count} itens`);
+                         setTooltipContent(`${name}: ${count} ${count === 1 ? 'item' : 'itens'}`);
                       }}
-                      onMouseLeave={() => {
-                        setTooltipContent("");
-                      }}
+                      onMouseLeave={() => setTooltipContent("")}
                       onClick={() => {
-                         if (count > 0) {
-                            onCountrySelect(name);
+                         if (isSelected) {
+                            // Encontrar o nome original do DB para o filtro
+                            const originalName = Object.keys(COUNTRY_MAP).find(k => COUNTRY_MAP[k] === name) || name;
+                            onCountrySelect(originalName);
                          }
                       }}
                     />
@@ -190,11 +188,14 @@ export const WorldMap: React.FC<WorldMapProps> = ({ images, onCountrySelect, t }
         style={{ 
           backgroundColor: "#0f172a", 
           color: "#fff", 
-          borderRadius: "8px", 
-          padding: "6px 10px", 
-          fontSize: "11px", 
-          fontWeight: "bold",
+          borderRadius: "12px", 
+          padding: "8px 12px", 
+          fontSize: "10px", 
+          fontWeight: "900",
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
           border: "1px solid #334155",
+          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5)",
           zIndex: 1000
         }} 
       />

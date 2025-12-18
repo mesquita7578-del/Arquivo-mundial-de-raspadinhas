@@ -41,7 +41,10 @@ class StorageService {
       const transaction = this.db!.transaction([STORE_ITEMS], 'readonly');
       const store = transaction.objectStore(STORE_ITEMS);
       const request = store.getAll();
-      request.onsuccess = () => resolve(request.result || []);
+      request.onsuccess = () => {
+        const results = request.result || [];
+        resolve(results.sort((a, b) => (a.gameNumber || "").localeCompare(b.gameNumber || "", undefined, { numeric: true })));
+      };
       request.onerror = () => reject("Erro ao buscar items");
     });
   }
@@ -80,7 +83,7 @@ class StorageService {
           if (matchesContinent && matchesTerm) results.push(img);
           cursor.continue();
         } else {
-          resolve(results.sort((a, b) => a.gameNumber.localeCompare(b.gameNumber, undefined, { numeric: true })));
+          resolve(results.sort((a, b) => (a.gameNumber || "").localeCompare(b.gameNumber || "", undefined, { numeric: true })));
         }
       };
       request.onerror = () => reject("Erro na pesquisa");

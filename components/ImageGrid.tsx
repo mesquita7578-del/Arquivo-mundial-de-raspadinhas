@@ -42,12 +42,22 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   t 
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(images.length / ITEMS_PER_PAGE);
+  
+  // Garante que as imagens estejam ordenadas por gameNumber antes de paginar
+  const sortedImages = useMemo(() => {
+    return [...images].sort((a, b) => {
+      const numA = a.gameNumber || "";
+      const numB = b.gameNumber || "";
+      return numA.localeCompare(numB, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }, [images]);
+
+  const totalPages = Math.ceil(sortedImages.length / ITEMS_PER_PAGE);
 
   const displayedImages = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return images.slice(start, start + ITEMS_PER_PAGE);
-  }, [images, currentPage]);
+    return sortedImages.slice(start, start + ITEMS_PER_PAGE);
+  }, [sortedImages, currentPage]);
 
   const isRecent = (createdAt: number) => {
     const fortyEightHoursInMs = 48 * 60 * 60 * 1000;
@@ -96,7 +106,6 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 </div>
 
                  <div className="absolute top-1 right-1 flex flex-col gap-1 items-end z-20">
-                    {/* INDICADOR REBELDE - AZUL TRANSLÚCIDO COM LETRAS VERMELHAS E INCLINADO */}
                     {itemIsRecent && (
                        <div className="bg-blue-600/20 backdrop-blur-md text-red-500 px-2 py-0.5 rounded-sm shadow-[0_0_15px_rgba(59,130,246,0.3)] -rotate-12 border border-blue-500/30 flex items-center gap-1 animate-pulse" title="Adicionado nas últimas 48h!">
                           <Zap className="w-2.5 h-2.5 fill-current drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]" />
@@ -132,7 +141,6 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-6 py-12">
-          {/* BOTÕES TRANSLÚCIDOS / REBELDES */}
           <button 
             onClick={() => {setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo(0,0);}} 
             disabled={currentPage === 1} 
@@ -142,7 +150,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
           </button>
           
           <div className="px-4 py-1.5 bg-slate-950/80 rounded-full border border-slate-800/50 shadow-inner">
-             <span className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em]">SET <span className="text-slate-300">{currentPage}</span> / {totalPages}</span>
+             <span className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em]">PAG <span className="text-slate-300">{currentPage}</span> / {totalPages}</span>
           </div>
 
           <button 

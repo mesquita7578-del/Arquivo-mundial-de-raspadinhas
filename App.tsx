@@ -120,9 +120,16 @@ function App() {
   };
 
   const handleCountrySelectFromMap = (country: string) => {
-    setCurrentPage('home');
+    // Resetar filtros ao selecionar do mapa para garantir que o país apareça
+    setActiveContinent('Mundo');
+    setActiveCategory('all');
+    setFilterRarity(false);
+    setFilterPromo(false);
+    setFilterWinners(false);
+    
     setCountrySearch(country);
     setSearchTerm('');
+    setCurrentPage('home');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -279,12 +286,18 @@ function App() {
           ) : currentPage === 'about' ? (
             <AboutPage t={t} />
           ) : currentPage === 'map' ? (
-            <div className="flex-1 p-4 md:p-8 animate-fade-in flex flex-col h-full overflow-hidden">
-               <div className="mb-6 shrink-0">
-                 <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase flex items-center gap-3">
-                   <Globe className="w-8 h-8 text-brand-500" /> Mapa Mundi do Arquivo
-                 </h2>
-                 <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-1">Navegue pelas coleções através do globo interativo</p>
+            <div className="flex-1 p-4 md:p-8 animate-fade-in flex flex-col h-full overflow-hidden bg-slate-950">
+               <div className="mb-8 shrink-0 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                 <div>
+                   <h2 className="text-4xl font-black text-white italic tracking-tighter uppercase flex items-center gap-4">
+                     <Globe className="w-10 h-10 text-brand-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.3)]" /> Mapa Mundi do Arquivo
+                   </h2>
+                   <p className="text-slate-500 text-xs font-black uppercase tracking-[0.2em] mt-2 ml-14">Exploração Visual das Lotarias por Nação</p>
+                 </div>
+                 <div className="bg-slate-900/50 border border-slate-800 px-4 py-2 rounded-2xl flex items-center gap-3">
+                   <div className="w-3 h-3 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]"></div>
+                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Escala de Volume por País</span>
+                 </div>
                </div>
                <div className="flex-1 min-h-0 relative">
                  <WorldMap images={allImagesCache} onCountrySelect={handleCountrySelectFromMap} t={t.grid} />
