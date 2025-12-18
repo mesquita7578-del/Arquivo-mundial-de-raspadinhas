@@ -66,6 +66,8 @@ export interface WebsiteLink {
   logoUrl?: string;
   country: string;
   category?: string;
+  // Added continent property to fix type mismatch in directory
+  continent?: string;
 }
 
 export interface AnalysisResult {

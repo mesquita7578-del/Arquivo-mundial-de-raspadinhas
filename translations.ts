@@ -1,3 +1,4 @@
+
 export type Language = 'pt' | 'it';
 
 export const translations = {
@@ -24,8 +25,11 @@ export const translations = {
       winners: "Premiadas",
       websites: "Sites Oficiais",
       install: "Instalar App",
-      myCollection: "Minha Coleção"
+      myCollection: "Minha Coleção",
+      websitesTitle: "Diretório Mundial",
+      websitesSubtitle: "Links Oficiais & Organizações"
     },
+    // ... rest of translations
     grid: {
       filters: "Filtros",
       results: "items",
@@ -52,18 +56,15 @@ export const translations = {
       object: "Objeto",
       emptyCollection: "A tua coleção ainda está vazia!",
       emptyCollectionDesc: "Clica no botão 'Marcar' dentro de qualquer raspadinha para a guardares aqui no teu álbum pessoal.",
-      // Pagination
       page: "Pág",
-      of: "di",
+      of: "de",
       next: "Próx",
       prev: "Ant",
       showing: "Mostrando",
-      // Collection Banner
       collectionTitle: "A Coleção de",
       collectionSubtitle: "Itens catalogados e verificados.",
       downloadList: "Baixar Lista Simplificada (.txt)"
     },
-    // ... rest of translations (keeping them for consistency)
     stats: {
       title: "Estatísticas",
       distribution: "Por Continente",
@@ -207,7 +208,9 @@ export const translations = {
       winners: "Vincenti",
       websites: "Siti Ufficiali",
       install: "Installa App",
-      myCollection: "Mia Collezione"
+      myCollection: "Mia Collezione",
+      websitesTitle: "Directory Mondiale",
+      websitesSubtitle: "Link Ufficiali"
     },
     grid: {
       filters: "Filtri",
@@ -235,13 +238,11 @@ export const translations = {
       object: "Oggetto",
       emptyCollection: "La tua collezione è vuota!",
       emptyCollectionDesc: "Clicca su 'Marcar' su qualsiasi scheda per salvarla qui.",
-      // Pagination
       page: "Pag",
       of: "di",
       next: "Succ",
       prev: "Prec",
       showing: "Mostrando",
-      // Collection Banner
       collectionTitle: "Collezione di",
       collectionSubtitle: "Articoli catalogati.",
       downloadList: "Scarica Lista (.txt)"
@@ -257,7 +258,7 @@ export const translations = {
       reviewTitle: "Revisione",
       errorImage: "Solo immagini.",
       errorFront: "Fronte obbligatorio.",
-      errorAnalyze: "Errore analisi.",
+      errorAnalyze: "Errore análise.",
       success: "Fatto!",
       saved: "Salvato.",
       clickDrag: "Aggiungi Foto",
