@@ -108,7 +108,6 @@ function App() {
     setTotalStats(freshStats);
   };
 
-  // Fix: Defined countriesByContinent used in Header
   const countriesByContinent = useMemo(() => {
     const map: Record<string, string[]> = {
       'Europa': [],
@@ -126,7 +125,6 @@ function App() {
     return map;
   }, [allImagesCache]);
 
-  // Fix: Defined handleCountrySelectFromMap used in WorldMap
   const handleCountrySelectFromMap = (country: string) => {
     setCurrentPage('home');
     const img = allImagesCache.find(i => i.country === country);
@@ -134,7 +132,6 @@ function App() {
     setCountrySearch(country);
   };
 
-  // Fix: Defined handleUploadComplete used in UploadModal
   const handleUploadComplete = async (newItem: ScratchcardData) => {
     setAllImagesCache(prev => [newItem, ...prev]);
     const freshStats = await storageService.getStats();
@@ -230,7 +227,6 @@ function App() {
       />
 
       <main className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-950 to-[#020617] scroll-smooth custom-scrollbar flex flex-col relative">
-        {/* Background Decoration */}
         <div className="absolute top-0 left-0 w-full h-[500px] bg-brand-600/5 blur-[100px] pointer-events-none z-0"></div>
 
         {!(currentPage === 'stats' || currentPage === 'about' || currentPage === 'map') && (
@@ -277,11 +273,13 @@ function App() {
           ) : currentPage === 'about' ? (
             <AboutPage t={t} />
           ) : currentPage === 'map' ? (
-            <div className="flex-1 p-4 md:p-8 animate-fade-in flex flex-col h-full overflow-hidden">
-               <div className="mb-8 flex items-center justify-between">
-                  <h2 className="text-4xl font-black text-white italic tracking-tighter uppercase flex items-center gap-4"><Globe className="w-10 h-10 text-brand-500" /> Mapa do Mundo</h2>
+            <div className="flex-1 p-4 md:p-8 animate-fade-in flex flex-col h-full overflow-hidden min-h-[600px]">
+               <div className="mb-6 flex items-center justify-between shrink-0">
+                  <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase flex items-center gap-4">
+                    <Globe className="w-8 h-8 text-brand-500" /> Mapa Mundial da Sorte
+                  </h2>
                </div>
-               <div className="flex-1 relative min-h-[400px] bg-slate-900/20 rounded-3xl border border-slate-800/50">
+               <div className="flex-1 relative bg-slate-900/20 rounded-3xl border border-slate-800/50 overflow-hidden">
                  <WorldMap images={allImagesCache} onCountrySelect={handleCountrySelectFromMap} t={t.grid} />
                </div>
             </div>
