@@ -1,7 +1,12 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Continent } from '../types';
-import { BarChart3, Database, Map, PieChart, Users, Award, Ticket, Coins, Crown, Star, Sparkles, Flag, Globe, Mail, ShieldCheck, LayoutGrid, CheckCircle2, RotateCcw } from 'lucide-react';
+import { 
+  BarChart3, Database, Map, PieChart, Users, Award, Ticket, 
+  Coins, Crown, Star, Sparkles, Flag, Globe, Mail, 
+  ShieldCheck, LayoutGrid, CheckCircle2, RotateCcw, 
+  User, Zap, TrendingUp
+} from 'lucide-react';
 
 interface StatsSectionProps {
   stats: Record<string, number>;
@@ -11,9 +16,10 @@ interface StatsSectionProps {
   collectorStats: Record<string, number>;
   totalRecords: number;
   t: any;
+  currentUser?: string | null;
 }
 
-export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats, countryStats, stateStats, collectorStats, totalRecords, t }) => {
+export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats, countryStats, stateStats, collectorStats, totalRecords, t, currentUser }) => {
   const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
@@ -21,11 +27,19 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
     return () => clearTimeout(timer);
   }, []);
   
-  // Continent Bar Chart Data
   const maxCount = useMemo(() => {
     const vals = Object.values(stats) as number[];
     return vals.length > 0 ? Math.max(...vals) : 1;
   }, [stats]);
+
+  // FIX: Calculate percentages for categories to be used in progress bars
+  const { scratchPct, lotteryPct } = useMemo(() => {
+    const total = totalRecords || 1;
+    return {
+      scratchPct: (categoryStats.scratch / total) * 100,
+      lotteryPct: (categoryStats.lottery / total) * 100
+    };
+  }, [categoryStats, totalRecords]);
 
   const continentsConfig: { key: Continent; label: string; color: string; gradient: string }[] = [
     { key: 'Europa', label: 'Europa', color: 'bg-blue-500', gradient: 'from-blue-500 to-indigo-600' },
@@ -35,9 +49,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
     { key: 'Oceania', label: 'Oceania', color: 'bg-purple-500', gradient: 'from-purple-500 to-violet-600' },
   ];
 
-  // Donut Chart Logic - Refined for "Circulation"
   const stateDonutData = useMemo(() => {
-    // Fix: Explicitly cast Object.values to number[] to ensure type safety in division operations
     const vals = Object.values(stateStats) as number[];
     const total = vals.reduce((a: number, b: number) => a + b, 0) || 1;
     
@@ -48,11 +60,10 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
     const amostraKeys = ['AMOSTRA', 'MUESTRA', 'CAMPIONE', 'SPECIMEN', 'VOID', 'MUSTER', 'ÉCHANTILLON', '样本', 'SAMPLE', 'PRØVE'];
     const countAmostra = amostraKeys.reduce((sum, key) => sum + (Number(stateStats[key]) || 0), 0);
     
-    // Fix: Arithmetic operations now have typed operands through inferred and explicit number types
     const pMint = (countMint / total) * 100;
     const pSC = (countSC / total) * 100;
     const pCS = (countCS / total) * 100;
-    const pAmostra = 100 - (pMint + pSC + pCS); // Garante 100% total matemático
+    const pAmostra = 100 - (pMint + pSC + pCS);
 
     return {
       pMint, pSC, pCS, pAmostra,
@@ -63,30 +74,45 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
     };
   }, [stateStats]);
 
-  const getCollectorBadge = (name: string) => {
-     const lower = name.toLowerCase().trim();
-     if (lower.includes('jorge') || lower === 'j' || lower === 'jj') {
-       return { color: 'bg-blue-600', text: 'JM', icon: <Crown className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" /> };
-     }
-     if (lower.includes('fabio') || lower.includes('fábio')) {
-       return { color: 'bg-green-600', text: 'FP', icon: <Star className="w-3.5 h-3.5 text-white fill-white" /> };
-     }
-     if (lower.includes('chloe')) {
-       return { color: 'bg-pink-600', text: 'CH', icon: <Crown className="w-3.5 h-3.5 text-pink-200 fill-pink-200" /> };
-     }
-     return { color: 'bg-slate-700', text: name.substring(0, 2).toUpperCase(), icon: null };
-  };
-
-  const safeTotal = totalRecords || 1;
-  const scratchPct = ((categoryStats.scratch || 0) / safeTotal) * 100;
-  const lotteryPct = ((categoryStats.lottery || 0) / safeTotal) * 100;
+  const isChloe = currentUser?.toUpperCase() === 'CHLOE';
 
   return (
-    <div className="flex-1 w-full bg-slate-950 border-t border-slate-900 py-12 pb-32 animate-fade-in relative overflow-y-auto custom-scrollbar">
-      <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-blue-900/5 via-transparent to-transparent pointer-events-none"></div>
+    <div className="w-full bg-slate-950 border-t border-slate-900 py-12 pb-32 animate-fade-in relative">
+      <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-blue-900/10 via-transparent to-transparent pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         
+        {/* Collector Welcome Card */}
+        <div className="mb-12 bg-slate-900/50 border border-slate-800 rounded-[2.5rem] p-8 md:p-10 flex flex-col md:flex-row items-center gap-8 shadow-2xl backdrop-blur-sm overflow-hidden group">
+           <div className="relative">
+              <div className={`w-24 h-24 rounded-3xl flex items-center justify-center border-2 rotate-3 group-hover:rotate-0 transition-all duration-500 ${isChloe ? 'bg-pink-600/20 border-pink-500 shadow-[0_0_30px_rgba(236,72,153,0.3)]' : 'bg-blue-600/20 border-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.3)]'}`}>
+                 {isChloe ? <Sparkles className="w-10 h-10 text-pink-500" /> : <User className="w-10 h-10 text-blue-500" />}
+              </div>
+              <div className="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 rounded-full border-4 border-slate-900 animate-pulse"></div>
+           </div>
+           <div className="flex-1 text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
+                 <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">
+                   {isChloe ? 'Bem-vinda, Guardiã Chloe' : `Painel de ${currentUser || 'Curador'}`}
+                 </h2>
+                 <Crown className={`w-6 h-6 ${isChloe ? 'text-pink-500' : 'text-yellow-500'}`} />
+              </div>
+              <p className="text-slate-400 text-sm font-medium leading-relaxed max-w-xl">
+                 O arquivo mundial está sob sua supervisão. Você catalogou <span className="text-white font-black">{totalRecords} itens</span> até agora. Continue preservando a história da sorte.
+              </p>
+           </div>
+           <div className="hidden lg:flex gap-4">
+              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col items-center">
+                 <TrendingUp className="w-5 h-5 text-emerald-500 mb-1" />
+                 <span className="text-[10px] font-black text-slate-500 uppercase">Tendência</span>
+              </div>
+              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col items-center">
+                 <Zap className="w-5 h-5 text-blue-500 mb-1" />
+                 <span className="text-[10px] font-black text-slate-500 uppercase">Atividade</span>
+              </div>
+           </div>
+        </div>
+
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
            <div>
               <div className="flex items-center gap-2 text-brand-500 mb-2">
@@ -146,7 +172,6 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
         {/* Main Grid Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Continents Bar Chart */}
           <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-[2rem] p-10 shadow-2xl relative overflow-hidden flex flex-col min-h-[450px]">
             <h3 className="text-sm font-black text-slate-400 mb-16 flex items-center gap-3 uppercase tracking-[0.2em]">
                <Globe className="w-5 h-5" /> Distribuição Continental
@@ -174,7 +199,6 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                 );
               })}
             </div>
-            {/* Grid Lines Overlay */}
             <div className="absolute inset-0 px-10 py-24 pointer-events-none flex flex-col justify-between opacity-[0.03]">
                <div className="w-full h-px bg-white"></div>
                <div className="w-full h-px bg-white"></div>
@@ -184,7 +208,6 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
           </div>
 
           <div className="flex flex-col gap-8">
-             {/* Donut Chart - The "Circulation" Fix */}
              <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-8 shadow-2xl">
                 <h3 className="text-[10px] font-black text-slate-400 mb-8 flex items-center gap-2 uppercase tracking-widest">
                    <PieChart className="w-4 h-4 text-brand-500" /> Estados Físicos
@@ -227,7 +250,6 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                 </div>
              </div>
 
-             {/* Top Countries */}
              <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-8 shadow-2xl flex-1">
                 <h3 className="text-[10px] font-black text-slate-400 mb-8 flex items-center gap-2 uppercase tracking-widest">
                    <Flag className="w-4 h-4 text-blue-500" /> Principais Nações
@@ -256,7 +278,6 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
           </div>
         </div>
 
-        {/* Footer info */}
         <div className="mt-24 pt-12 border-t border-slate-900 flex flex-col items-center justify-center opacity-30">
             <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.4em]">
               © {new Date().getFullYear()} • Arquivo Mundial de Raspadinhas

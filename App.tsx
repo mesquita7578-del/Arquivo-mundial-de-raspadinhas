@@ -120,7 +120,6 @@ function App() {
   };
 
   const handleCountrySelectFromMap = (country: string) => {
-    // Resetar filtros ao selecionar do mapa para garantir que o país apareça
     setActiveContinent('Mundo');
     setActiveCategory('all');
     setFilterRarity(false);
@@ -282,7 +281,16 @@ function App() {
 
         <div className="relative flex-1 flex flex-col min-h-0">
           {currentPage === 'stats' ? (
-            <StatsSection stats={totalStats.stats} categoryStats={totalStats.categoryStats} countryStats={totalStats.countryStats} stateStats={totalStats.stateStats} collectorStats={totalStats.collectorStats} totalRecords={totalStats.total} t={t.stats} />
+            <StatsSection 
+              stats={totalStats.stats} 
+              categoryStats={totalStats.categoryStats} 
+              countryStats={totalStats.countryStats} 
+              stateStats={totalStats.stateStats} 
+              collectorStats={totalStats.collectorStats} 
+              totalRecords={totalStats.total} 
+              t={t.stats}
+              currentUser={currentUser}
+            />
           ) : currentPage === 'about' ? (
             <AboutPage t={t} />
           ) : currentPage === 'map' ? (
