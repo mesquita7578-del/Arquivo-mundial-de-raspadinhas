@@ -27,9 +27,19 @@ export const translations = {
       install: "Instalar App",
       myCollection: "Minha Coleção",
       websitesTitle: "Diretório Mundial",
-      websitesSubtitle: "Links Oficiais & Organizações"
+      websitesSubtitle: "Links Oficiais & Organizações",
+      home: "Início",
+      explore: "Explorar",
+      stats: "Estatísticas",
+      about: "Sobre",
+      loginBtn: "Entrar / Login",
+      exportBackup: "Exportar Backup (JSON)",
+      importBackup: "Importar Backup (JSON)",
+      exportCSV: "Exportar Tabela (CSV)",
+      exportTXT: "Minha Checklist (TXT)",
+      exploreCountries: "Países em",
+      all: "Tudo"
     },
-    // ... rest of translations
     grid: {
       filters: "Filtros",
       results: "items",
@@ -210,7 +220,18 @@ export const translations = {
       install: "Installa App",
       myCollection: "Mia Collezione",
       websitesTitle: "Directory Mondiale",
-      websitesSubtitle: "Link Ufficiali"
+      websitesSubtitle: "Link Ufficiali",
+      home: "Inizio",
+      explore: "Esplora",
+      stats: "Statistiche",
+      about: "Info",
+      loginBtn: "Accedi / Login",
+      exportBackup: "Esporta Backup (JSON)",
+      importBackup: "Importa Backup (JSON)",
+      exportCSV: "Esporta Tabella (CSV)",
+      exportTXT: "Mia Checklist (TXT)",
+      exploreCountries: "Paesi in",
+      all: "Tutto"
     },
     grid: {
       filters: "Filtri",
@@ -256,7 +277,7 @@ export const translations = {
     upload: {
       title: "Catalogare",
       reviewTitle: "Revisione",
-      errorImage: "Solo immagini.",
+      errorImage: "Solo imagens.",
       errorFront: "Fronte obbligatorio.",
       errorAnalyze: "Errore análise.",
       success: "Fatto!",

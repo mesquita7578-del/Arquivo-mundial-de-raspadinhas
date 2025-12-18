@@ -61,10 +61,10 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
         <div className="flex flex-col">
           <h1 className="text-xl font-black text-white leading-none tracking-tight uppercase italic">
-            Arquivo Mundial
+            {t.title}
           </h1>
           <span className="text-[10px] text-brand-500 font-bold uppercase tracking-[0.1em] mt-1">
-            RASPADINHAS & LOTARIAS
+            {t.subtitle}
           </span>
         </div>
       </div>
@@ -75,12 +75,12 @@ export const Header: React.FC<HeaderProps> = ({
            onClick={() => onNavigate('home')}
            className={`px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all ${currentPage === 'home' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
          >
-           <Home className="w-4 h-4" /> Início
+           <Home className="w-4 h-4" /> {t.home}
          </button>
          
          <div className="relative group">
             <button className="px-4 py-2 rounded-full text-sm font-bold text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-2 transition-all">
-              <Globe className="w-4 h-4" /> Explorar <ChevronDown className="w-3 h-3 transition-transform group-hover:rotate-180" />
+              <Globe className="w-4 h-4" /> {t.explore} <ChevronDown className="w-3 h-3 transition-transform group-hover:rotate-180" />
             </button>
             
             {/* Dropdown de Continentes (Pai) */}
@@ -104,12 +104,12 @@ export const Header: React.FC<HeaderProps> = ({
                        {hasCountries && <ChevronRight className="w-3 h-3 opacity-50" />}
                      </button>
 
-                     {/* Submenu de Países (Filho) - Estilo Botão JSON */}
+                     {/* Submenu de Países (Filho) */}
                      {hasCountries && (
                         <div className="absolute left-full top-0 ml-1 w-64 bg-slate-900/95 backdrop-blur-xl border border-slate-700 rounded-xl shadow-2xl opacity-0 invisible group-hover/sub:opacity-100 group-hover/sub:visible transition-all p-2 max-h-[70vh] overflow-y-auto custom-scrollbar">
                            <div className="px-3 py-2 border-b border-slate-800 mb-2">
                               <span className="text-[10px] font-black text-brand-500 uppercase tracking-widest flex items-center gap-2">
-                                 <MapPin className="w-3 h-3" /> Países em {cont}
+                                 <MapPin className="w-3 h-3" /> {t.exploreCountries} {cont}
                               </span>
                            </div>
                            {countries.map(country => (
@@ -134,14 +134,14 @@ export const Header: React.FC<HeaderProps> = ({
            onClick={() => onNavigate('stats')}
            className={`px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all ${currentPage === 'stats' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
          >
-           <BarChart2 className="w-4 h-4" /> Estatísticas
+           <BarChart2 className="w-4 h-4" /> {t.stats}
          </button>
 
          <button 
            onClick={() => onNavigate('about')}
            className={`px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all ${currentPage === 'about' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
          >
-           <Info className="w-4 h-4" /> Sobre
+           <Info className="w-4 h-4" /> {t.about}
          </button>
       </nav>
 
@@ -152,20 +152,31 @@ export const Header: React.FC<HeaderProps> = ({
              onClick={onInstall} 
              className="hidden sm:flex items-center gap-2 bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-md text-xs font-black border border-brand-500 transition-all shadow-lg shadow-brand-900/40"
            >
-             <Smartphone className="w-4 h-4" /> Instalar App
+             <Smartphone className="w-4 h-4" /> {t.install}
            </button>
         )}
 
-        <div className="flex bg-slate-800 rounded-md p-1 border border-slate-700">
-          <button onClick={() => setLanguage('pt')} className={`px-2 py-1 rounded text-[10px] font-bold ${language === 'pt' ? 'bg-slate-600 text-white' : 'text-slate-500'}`}>PT</button>
-          <button onClick={() => setLanguage('it')} className={`px-2 py-1 rounded text-[10px] font-bold ${language === 'it' ? 'bg-slate-600 text-white' : 'text-slate-500'}`}>IT</button>
+        {/* SELETOR DE IDIOMA REFINADO */}
+        <div className="flex bg-slate-800/80 rounded-lg p-1 border border-slate-700 shadow-inner">
+          <button 
+            onClick={() => setLanguage('pt')} 
+            className={`px-3 py-1 rounded-md text-[10px] font-black transition-all ${language === 'pt' ? 'bg-slate-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+          >
+            PT
+          </button>
+          <button 
+            onClick={() => setLanguage('it')} 
+            className={`px-3 py-1 rounded-md text-[10px] font-black transition-all ${language === 'it' ? 'bg-slate-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+          >
+            IT
+          </button>
         </div>
 
         <button 
           onClick={onHistoryClick}
           className="flex items-center gap-2 px-4 py-2 bg-blue-900/30 text-blue-400 border border-blue-800 rounded-md hover:bg-blue-900/50 transition-all text-xs font-bold"
         >
-          <BookOpen className="w-4 h-4" /> Biblioteca
+          <BookOpen className="w-4 h-4" /> {t.history}
         </button>
 
         {/* Menu JSON/Backup para Admin */}
@@ -174,7 +185,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button 
                 onClick={() => setShowTools(!showTools)}
                 className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md border border-slate-700 transition-all flex items-center gap-2"
-                title="Backup JSON"
+                title={t.backup}
               >
                 <Database className="w-4 h-4" />
                 <span className="hidden xl:inline text-[10px] font-black uppercase">JSON</span>
@@ -184,16 +195,16 @@ export const Header: React.FC<HeaderProps> = ({
                     <div className="fixed inset-0 z-[-1]" onClick={() => setShowTools(false)}></div>
                     <div className="absolute right-0 mt-3 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2 animate-fade-in flex flex-col gap-1 z-[70]">
                        <button onClick={() => { onExport(); setShowTools(false); }} className="flex items-center gap-3 w-full px-4 py-3 text-xs font-bold text-slate-300 hover:bg-brand-600 hover:text-white rounded-lg transition-all">
-                          <FileJson className="w-4 h-4" /> Exportar Backup (JSON)
+                          <FileJson className="w-4 h-4" /> {t.exportBackup}
                        </button>
                        <button onClick={handleImportClick} className="flex items-center gap-3 w-full px-4 py-3 text-xs font-bold text-slate-300 hover:bg-blue-600 hover:text-white rounded-lg transition-all">
-                          <UploadCloud className="w-4 h-4" /> Importar Backup (JSON)
+                          <UploadCloud className="w-4 h-4" /> {t.importBackup}
                        </button>
                        <button onClick={() => { onExportCSV(); setShowTools(false); }} className="flex items-center gap-3 w-full px-4 py-3 text-xs font-bold text-slate-300 hover:bg-emerald-600 hover:text-white rounded-lg transition-all">
-                          <FileSpreadsheet className="w-4 h-4" /> Exportar Tabela (CSV)
+                          <FileSpreadsheet className="w-4 h-4" /> {t.exportCSV}
                        </button>
                        <button onClick={() => { onExportTXT(); setShowTools(false); }} className="flex items-center gap-3 w-full px-4 py-3 text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-white rounded-lg transition-all">
-                          <ClipboardList className="w-4 h-4" /> Minha Checklist (TXT)
+                          <ClipboardList className="w-4 h-4" /> {t.exportTXT}
                        </button>
                     </div>
                  </>
@@ -210,7 +221,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         ) : (
           <button onClick={onAdminToggle} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-md transition-all text-xs font-bold uppercase">
-            <Lock className="w-3.5 h-3.5" /> Entrar / Login
+            <Lock className="w-3.5 h-3.5" /> {t.loginBtn}
           </button>
         )}
       </div>
