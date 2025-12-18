@@ -14,7 +14,7 @@ import { AboutPage } from './components/AboutPage';
 import { WorldMap } from './components/WorldMap';
 import { DivineSignal, Signal, SignalType } from './components/DivineSignal';
 import { INITIAL_RASPADINHAS } from './constants';
-import { ScratchcardData, Continent, Category, CategoryItem } from './types';
+import { ScratchcardData, Continent, Category, CategoryItem, SiteMetadata } from './types';
 import { 
   Globe, Ticket, Sparkles, Loader2, Library, BookOpen, 
   PlusCircle, Info, Search, Filter, LayoutGrid, Map as MapIcon, Tag,
@@ -31,6 +31,7 @@ type PageType = 'home' | 'stats' | 'about' | 'europe' | 'america' | 'asia' | 'af
 function App() {
   const [allImagesCache, setAllImagesCache] = useState<ScratchcardData[]>([]);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [siteMetadata, setSiteMetadata] = useState<SiteMetadata>({ id: 'site_settings', founderPhotoUrl: '' });
   const [totalStats, setTotalStats] = useState({ total: 0, stats: {} as Record<string, number>, categoryStats: {} as Record<string, number>, countryStats: {} as Record<string, number>, stateStats: {} as Record<string, number>, collectorStats: {} as Record<string, number> });
   const [isLoadingDB, setIsLoadingDB] = useState(true);
   const [currentPage, setCurrentPage] = useState<PageType>('home');
@@ -86,6 +87,9 @@ function App() {
       await storageService.init();
       const cats = await storageService.getCategories();
       setCategories(cats);
+      
+      const meta = await storageService.getSiteMetadata();
+      setSiteMetadata(meta);
 
       const allItems = await storageService.getAll();
       if (allItems.length === 0) {
@@ -102,6 +106,12 @@ function App() {
     } finally { 
       setIsLoadingDB(false); 
     }
+  };
+
+  const handleUpdateSiteMetadata = async (newMeta: SiteMetadata) => {
+    await storageService.saveSiteMetadata(newMeta);
+    setSiteMetadata(newMeta);
+    triggerSignal("Definições do Site Atualizadas!", 'success');
   };
 
   const handleUpdateImage = async (updatedImage: ScratchcardData) => {
@@ -287,7 +297,7 @@ function App() {
           ) : currentPage === 'stats' ? (
             <StatsSection stats={totalStats.stats} categoryStats={totalStats.categoryStats as any} countryStats={totalStats.countryStats} stateStats={totalStats.stateStats} collectorStats={totalStats.collectorStats} totalRecords={totalStats.total} t={t.stats} currentUser={currentUser} />
           ) : currentPage === 'about' ? (
-            <AboutPage t={t} />
+            <AboutPage t={t} isAdmin={isAdmin} founderPhoto={siteMetadata.founderPhotoUrl} onUpdateFounderPhoto={(url) => handleUpdateSiteMetadata({ ...siteMetadata, founderPhotoUrl: url })} />
           ) : currentPage === 'map' ? (
             <div className="flex-1 p-4 md:p-8 animate-fade-in flex flex-col h-full">
                <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between shrink-0 gap-4">

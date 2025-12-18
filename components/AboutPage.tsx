@@ -1,8 +1,32 @@
 
-import React from 'react';
-import { Ticket, Globe, Users, Database, Sparkles, Mail, Hourglass, Save, Sunrise, HeartHandshake, Award, ShieldCheck, User } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Ticket, Globe, Users, Database, Sparkles, Mail, Hourglass, Save, Sunrise, HeartHandshake, Award, ShieldCheck, Camera, Edit2 } from 'lucide-react';
 
-export const AboutPage = ({ t }: { t: any }) => {
+interface AboutPageProps {
+  t: any;
+  isAdmin: boolean;
+  founderPhoto?: string;
+  onUpdateFounderPhoto?: (url: string) => void;
+}
+
+export const AboutPage: React.FC<AboutPageProps> = ({ t, isAdmin, founderPhoto, onUpdateFounderPhoto }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        onUpdateFounderPhoto?.(base64);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Foto real do Jorge ou placeholder caso não exista
+  const displayPhoto = founderPhoto || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&h=400&auto=format&fit=crop";
+
   return (
     <div className="w-full min-h-full animate-fade-in pb-20">
       {/* Hero Section */}
@@ -37,7 +61,7 @@ export const AboutPage = ({ t }: { t: any }) => {
         </div>
       </div>
 
-      {/* OS FUNDADORES - NOVO DESTAQUE PARA JORGE */}
+      {/* OS FUNDADORES */}
       <div className="max-w-7xl mx-auto px-6 py-24">
          <div className="flex flex-col items-center mb-16 text-center">
             <h2 className="text-[10px] font-black text-brand-500 uppercase tracking-[0.4em] mb-4">A Mente Criativa</h2>
@@ -53,13 +77,26 @@ export const AboutPage = ({ t }: { t: any }) => {
                   
                   <div className="relative z-10 flex flex-col items-center">
                      <div className="relative mb-8">
-                        <div className="w-48 h-48 md:w-56 md:h-56 rounded-[2.5rem] overflow-hidden border-4 border-slate-800 shadow-2xl group-hover:scale-105 transition-transform duration-700 bg-slate-950">
-                           {/* Placeholder da foto enviada - O utilizador pode trocar para o link final */}
+                        <div className="w-48 h-48 md:w-56 md:h-56 rounded-[2.5rem] overflow-hidden border-4 border-slate-800 shadow-2xl group-hover:scale-105 transition-transform duration-700 bg-slate-950 relative">
                            <img 
-                              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&h=400&auto=format&fit=crop" 
+                              src={displayPhoto} 
                               alt="Jorge Mesquita" 
                               className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
                            />
+                           
+                           {/* Botão de Editar Foto para Admin */}
+                           {isAdmin && (
+                              <>
+                                 <button 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity gap-2"
+                                 >
+                                    <Camera className="w-8 h-8" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Alterar Foto</span>
+                                 </button>
+                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handlePhotoUpload} />
+                              </>
+                           )}
                         </div>
                         <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-xl border-2 border-slate-900 flex items-center gap-2 whitespace-nowrap">
                            <Award className="w-3 h-3" /> Fundador Vitalício
