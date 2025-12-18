@@ -16,7 +16,8 @@ import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category, CategoryItem } from './types';
 import { 
   Globe, Ticket, Sparkles, Loader2, Library, BookOpen, 
-  PlusCircle, Info, Search, Filter, LayoutGrid, Map as MapIcon, Tag
+  PlusCircle, Info, Search, Filter, LayoutGrid, Map as MapIcon, Tag,
+  Navigation, MousePointer2
 } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
@@ -274,13 +275,24 @@ function App() {
             <AboutPage t={t} />
           ) : currentPage === 'map' ? (
             <div className="flex-1 p-4 md:p-8 animate-fade-in flex flex-col h-full overflow-hidden min-h-[600px]">
-               <div className="mb-6 flex items-center justify-between shrink-0">
+               <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between shrink-0 gap-4">
                   <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase flex items-center gap-4">
-                    <Globe className="w-8 h-8 text-brand-500" /> Mapa Mundial da Sorte
+                    <Globe className="w-8 h-8 text-brand-500" /> Cartografia da Sorte
                   </h2>
+                  <div className="flex items-center gap-3 bg-slate-900/50 p-2 rounded-2xl border border-slate-800">
+                     <Navigation className="w-4 h-4 text-blue-500" />
+                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Navegar por:</span>
+                     {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(c => (
+                        <button key={c} onClick={() => setActiveContinent(c as Continent)} className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all ${activeContinent === c ? 'bg-blue-600 text-white' : 'hover:text-white'}`}>{c}</button>
+                     ))}
+                  </div>
                </div>
-               <div className="flex-1 relative bg-slate-900/20 rounded-3xl border border-slate-800/50 overflow-hidden">
-                 <WorldMap images={allImagesCache} onCountrySelect={handleCountrySelectFromMap} t={t.grid} />
+               <div className="flex-1 relative bg-slate-900/20 rounded-[3rem] border border-slate-800/50 overflow-hidden shadow-inner">
+                 <div className="absolute top-6 right-6 z-30 flex items-center gap-3 bg-slate-950/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-800">
+                    <MousePointer2 className="w-3 h-3 text-brand-500" />
+                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Interativo • Clique num país</span>
+                 </div>
+                 <WorldMap images={allImagesCache} onCountrySelect={handleCountrySelectFromMap} activeContinent={activeContinent} t={t.grid} />
                </div>
             </div>
           ) : filteredImages.length === 0 ? (
