@@ -1,5 +1,5 @@
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { 
   Ticket, Lock, LogOut, BookOpen, Home, 
   BarChart2, ChevronDown, Globe, User, Smartphone, 
@@ -37,8 +37,21 @@ export const Header: React.FC<HeaderProps> = ({
   onCountrySelect
 }) => {
   const [showTools, setShowTools] = useState(false);
+  const [showExplore, setShowExplore] = useState(false);
   const [activeSubMenu, setActiveSubMenu] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const exploreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exploreRef.current && !exploreRef.current.contains(event.target as Node)) {
+        setShowExplore(false);
+        setActiveSubMenu(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleImportClick = () => {
     fileInputRef.current?.click();
@@ -51,10 +64,15 @@ export const Header: React.FC<HeaderProps> = ({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const selectCountry = (cont: Continent, country: string) => {
+    onCountrySelect?.(cont, country);
+    setShowExplore(false);
+    setActiveSubMenu(null);
+  };
+
   return (
-    <header className="flex items-center justify-between px-4 md:px-8 py-3 bg-slate-900 border-b border-slate-800 sticky top-0 z-50 shadow-md h-[70px]">
+    <header className="flex items-center justify-between px-4 md:px-8 py-3 bg-slate-900 border-b border-slate-800 sticky top-0 z-[100] shadow-xl h-[70px]">
       
-      {/* Lado Esquerdo: Logo */}
       <div className="flex items-center gap-3 cursor-pointer group shrink-0" onClick={() => onNavigate('home')}>
         <div className="bg-brand-600 p-2 rounded-lg shadow-lg">
           <Ticket className="w-6 h-6 text-white" />
@@ -69,7 +87,6 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Centro: Navegação Principal */}
       <nav className="hidden lg:flex items-center gap-1">
          <button 
            onClick={() => onNavigate('home')}
@@ -78,56 +95,62 @@ export const Header: React.FC<HeaderProps> = ({
            <Home className="w-4 h-4" /> {t.home}
          </button>
          
-         <div className="relative group">
-            <button className="px-4 py-2 rounded-full text-sm font-bold text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-2 transition-all">
-              <Globe className="w-4 h-4" /> {t.explore} <ChevronDown className="w-3 h-3 transition-transform group-hover:rotate-180" />
+         <div className="relative" ref={exploreRef}>
+            <button 
+              onClick={() => setShowExplore(!showExplore)}
+              className={`px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all ${showExplore ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+            >
+              <Globe className="w-4 h-4" /> {t.explore} <ChevronDown className={`w-3 h-3 transition-transform ${showExplore ? 'rotate-180' : ''}`} />
             </button>
             
-            {/* Dropdown de Continentes (Pai) */}
-            <div className="absolute top-full left-0 mt-2 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all p-2 z-[60]">
-               {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => {
-                 const countries = countriesByContinent[cont] || [];
-                 const hasCountries = countries.length > 0;
+            {showExplore && (
+              <div className="absolute top-full left-0 mt-2 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2 z-[110] animate-fade-in">
+                 {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => {
+                   const countries = countriesByContinent[cont] || [];
+                   const hasCountries = countries.length > 0;
+                   const isSubActive = activeSubMenu === cont;
 
-                 return (
-                   <div 
-                      key={cont} 
-                      className="relative group/sub"
-                      onMouseEnter={() => setActiveSubMenu(cont)}
-                      onMouseLeave={() => setActiveSubMenu(null)}
-                   >
-                     <button 
-                        onClick={() => onNavigate(cont.toLowerCase().replace('é', 'e').replace('á', 'a') as any)} 
-                        className="w-full text-left px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all flex items-center justify-between font-bold"
+                   return (
+                     <div 
+                        key={cont} 
+                        className="relative"
+                        onMouseEnter={() => setActiveSubMenu(cont)}
                      >
-                       {cont}
-                       {hasCountries && <ChevronRight className="w-3 h-3 opacity-50" />}
-                     </button>
+                       <button 
+                          onClick={() => { onNavigate(cont.toLowerCase().replace('é', 'e').replace('á', 'a') as any); setShowExplore(false); }} 
+                          className={`w-full text-left px-4 py-3 text-sm rounded-lg transition-all flex items-center justify-between font-black uppercase tracking-widest ${isSubActive ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}
+                       >
+                         {cont}
+                         {hasCountries && <ChevronRight className="w-4 h-4 opacity-50" />}
+                       </button>
 
-                     {/* Submenu de Países (Filho) */}
-                     {hasCountries && (
-                        <div className="absolute left-full top-0 ml-1 w-64 bg-slate-900/95 backdrop-blur-xl border border-slate-700 rounded-xl shadow-2xl opacity-0 invisible group-hover/sub:opacity-100 group-hover/sub:visible transition-all p-2 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                           <div className="px-3 py-2 border-b border-slate-800 mb-2">
-                              <span className="text-[10px] font-black text-brand-500 uppercase tracking-widest flex items-center gap-2">
-                                 <MapPin className="w-3 h-3" /> {t.exploreCountries} {cont}
-                              </span>
-                           </div>
-                           {countries.map(country => (
-                              <button 
-                                 key={country}
-                                 onClick={() => onCountrySelect?.(cont as Continent, country)}
-                                 className="w-full text-left px-4 py-2 text-xs font-bold text-slate-300 hover:text-white hover:bg-blue-600 rounded-lg transition-all flex items-center gap-3"
-                              >
-                                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                                 {country}
-                              </button>
-                           ))}
-                        </div>
-                     )}
-                   </div>
-                 );
-               })}
-            </div>
+                       {hasCountries && isSubActive && (
+                          <div className="absolute left-full top-0 ml-2 w-72 bg-slate-900/98 backdrop-blur-2xl border border-slate-700 rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.5)] p-2 max-h-[70vh] overflow-y-auto custom-scrollbar animate-fade-in">
+                             <div className="px-4 py-3 border-b border-slate-800 mb-2 flex items-center justify-between">
+                                <span className="text-[10px] font-black text-brand-500 uppercase tracking-widest flex items-center gap-2">
+                                   <MapPin className="w-3 h-3" /> {cont}
+                                </span>
+                                <span className="text-[9px] text-slate-600 font-bold">{countries.length} Países</span>
+                             </div>
+                             <div className="grid grid-cols-1 gap-1">
+                               {countries.map(country => (
+                                  <button 
+                                     key={country}
+                                     onClick={() => selectCountry(cont as Continent, country)}
+                                     className="w-full text-left px-4 py-2.5 text-xs font-black text-slate-300 hover:text-white hover:bg-brand-600 rounded-lg transition-all flex items-center gap-3 uppercase tracking-tighter"
+                                  >
+                                     <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0"></div>
+                                     {country}
+                                  </button>
+                               ))}
+                             </div>
+                          </div>
+                       )}
+                     </div>
+                   );
+                 })}
+              </div>
+            )}
          </div>
 
          <button 
@@ -145,7 +168,6 @@ export const Header: React.FC<HeaderProps> = ({
          </button>
       </nav>
 
-      {/* Lado Direito: Ações */}
       <div className="flex items-center gap-3">
         {onInstall && (
            <button 
@@ -156,37 +178,18 @@ export const Header: React.FC<HeaderProps> = ({
            </button>
         )}
 
-        {/* SELETOR DE IDIOMA REFINADO */}
         <div className="flex bg-slate-800/80 rounded-lg p-1 border border-slate-700 shadow-inner">
-          <button 
-            onClick={() => setLanguage('pt')} 
-            className={`px-3 py-1 rounded-md text-[10px] font-black transition-all ${language === 'pt' ? 'bg-slate-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
-          >
-            PT
-          </button>
-          <button 
-            onClick={() => setLanguage('it')} 
-            className={`px-3 py-1 rounded-md text-[10px] font-black transition-all ${language === 'it' ? 'bg-slate-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
-          >
-            IT
-          </button>
+          <button onClick={() => setLanguage('pt')} className={`px-3 py-1 rounded-md text-[10px] font-black transition-all ${language === 'pt' ? 'bg-slate-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}>PT</button>
+          <button onClick={() => setLanguage('it')} className={`px-3 py-1 rounded-md text-[10px] font-black transition-all ${language === 'it' ? 'bg-slate-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}>IT</button>
         </div>
 
-        <button 
-          onClick={onHistoryClick}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-900/30 text-blue-400 border border-blue-800 rounded-md hover:bg-blue-900/50 transition-all text-xs font-bold"
-        >
+        <button onClick={onHistoryClick} className="flex items-center gap-2 px-4 py-2 bg-blue-900/30 text-blue-400 border border-blue-800 rounded-md hover:bg-blue-900/50 transition-all text-xs font-bold">
           <BookOpen className="w-4 h-4" /> {t.history}
         </button>
 
-        {/* Menu JSON/Backup para Admin */}
         {isAdmin && (
            <div className="relative">
-              <button 
-                onClick={() => setShowTools(!showTools)}
-                className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md border border-slate-700 transition-all flex items-center gap-2"
-                title={t.backup}
-              >
+              <button onClick={() => setShowTools(!showTools)} className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md border border-slate-700 transition-all flex items-center gap-2">
                 <Database className="w-4 h-4" />
                 <span className="hidden xl:inline text-[10px] font-black uppercase">JSON</span>
               </button>
@@ -194,18 +197,10 @@ export const Header: React.FC<HeaderProps> = ({
                  <>
                     <div className="fixed inset-0 z-[-1]" onClick={() => setShowTools(false)}></div>
                     <div className="absolute right-0 mt-3 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2 animate-fade-in flex flex-col gap-1 z-[70]">
-                       <button onClick={() => { onExport(); setShowTools(false); }} className="flex items-center gap-3 w-full px-4 py-3 text-xs font-bold text-slate-300 hover:bg-brand-600 hover:text-white rounded-lg transition-all">
-                          <FileJson className="w-4 h-4" /> {t.exportBackup}
-                       </button>
-                       <button onClick={handleImportClick} className="flex items-center gap-3 w-full px-4 py-3 text-xs font-bold text-slate-300 hover:bg-blue-600 hover:text-white rounded-lg transition-all">
-                          <UploadCloud className="w-4 h-4" /> {t.importBackup}
-                       </button>
-                       <button onClick={() => { onExportCSV(); setShowTools(false); }} className="flex items-center gap-3 w-full px-4 py-3 text-xs font-bold text-slate-300 hover:bg-emerald-600 hover:text-white rounded-lg transition-all">
-                          <FileSpreadsheet className="w-4 h-4" /> {t.exportCSV}
-                       </button>
-                       <button onClick={() => { onExportTXT(); setShowTools(false); }} className="flex items-center gap-3 w-full px-4 py-3 text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-white rounded-lg transition-all">
-                          <ClipboardList className="w-4 h-4" /> {t.exportTXT}
-                       </button>
+                       <button onClick={() => { onExport(); setShowTools(false); }} className="flex items-center gap-3 w-full px-4 py-3 text-xs font-bold text-slate-300 hover:bg-brand-600 hover:text-white rounded-lg transition-all"><FileJson className="w-4 h-4" /> {t.exportBackup}</button>
+                       <button onClick={handleImportClick} className="flex items-center gap-3 w-full px-4 py-3 text-xs font-bold text-slate-300 hover:bg-blue-600 hover:text-white rounded-lg transition-all"><UploadCloud className="w-4 h-4" /> {t.importBackup}</button>
+                       <button onClick={() => { onExportCSV(); setShowTools(false); }} className="flex items-center gap-3 w-full px-4 py-3 text-xs font-bold text-slate-300 hover:bg-emerald-600 hover:text-white rounded-lg transition-all"><FileSpreadsheet className="w-4 h-4" /> {t.exportCSV}</button>
+                       <button onClick={() => { onExportTXT(); setShowTools(false); }} className="flex items-center gap-3 w-full px-4 py-3 text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-white rounded-lg transition-all"><ClipboardList className="w-4 h-4" /> {t.exportTXT}</button>
                     </div>
                  </>
               )}

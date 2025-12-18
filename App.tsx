@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
@@ -78,24 +77,24 @@ function App() {
     finally { setIsLoadingDB(false); }
   };
 
+  // Added handleInstallApp to handle PWA installation prompt
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
+
   const handleUploadComplete = async (newItem: ScratchcardData) => {
-    // Atualiza o cache local IMEDIATAMENTE para não parecer que sumiu nada
     setAllImagesCache(prev => {
       const exists = prev.find(img => img.id === newItem.id);
       if (exists) return prev.map(img => img.id === newItem.id ? newItem : img);
       return [...prev, newItem];
     });
-    // Depois recarrega estatísticas silenciosamente
     const freshStats = await storageService.getStats();
     setTotalStats(freshStats);
-  };
-
-  const handleInstallApp = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') setDeferredPrompt(null);
-    }
   };
 
   const countriesByContinent = useMemo(() => {
@@ -115,6 +114,9 @@ function App() {
     setCurrentPage('home');
     setActiveContinent(continent);
     setCountrySearch(country);
+    setSearchTerm('');
+    // Scroll para o topo ao selecionar país
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleExportJSON = async () => {
@@ -128,8 +130,8 @@ function App() {
   };
 
   const handleExportCSV = () => {
-    const headers = ["ID", "Nome", "Número", "País", "Estado", "Ano", "Preço", "Colecionador"];
-    const rows = allImagesCache.map(i => [i.customId, i.gameName, i.gameNumber, i.country, i.state, i.releaseDate, i.price || '', i.collector || '']);
+    const headers = ["ID", "Nome", "Número", "País", "Estado", "Ano", "Preço", "Linhas", "Colecionador"];
+    const rows = allImagesCache.map(i => [i.customId, i.gameName, i.gameNumber, i.country, i.state, i.releaseDate, i.price || '', i.lines || '', i.collector || '']);
     const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -197,6 +199,11 @@ function App() {
     }).sort((a, b) => a.gameNumber.localeCompare(b.gameNumber, undefined, { numeric: true }));
   }, [allImagesCache, activeContinent, activeCategory, filterRarity, filterPromo, filterWinners, countrySearch, searchTerm, currentPage, currentUser]);
 
+  // CHAVE DE RESET PARA A GRID: Sempre que os filtros mudarem, a grid volta à pág 1
+  const gridKey = useMemo(() => {
+    return `${currentPage}-${activeContinent}-${activeCategory}-${countrySearch}-${searchTerm}-${filterRarity}-${filterPromo}-${filterWinners}-${currentUser}`;
+  }, [currentPage, activeContinent, activeCategory, countrySearch, searchTerm, filterRarity, filterPromo, filterWinners, currentUser]);
+
   const handleNavigate = (p: PageType) => {
     setCurrentPage(p);
     setCountrySearch('');
@@ -235,10 +242,10 @@ function App() {
         {!(currentPage === 'stats' || currentPage === 'about') && (
           <div className="sticky top-0 z-30 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 shadow-xl">
             <div className="bg-slate-900/30 p-2 md:px-8 flex flex-wrap items-center gap-2">
-              <button onClick={() => setFilterRarity(!filterRarity)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterRarity ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400'}`}><Gem className="w-3.5 h-3.5" /> Raridades</button>
-              <button onClick={() => setFilterPromo(!filterPromo)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterPromo ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400'}`}><Gift className="w-3.5 h-3.5" /> Promo</button>
-              <button onClick={() => setFilterWinners(!filterWinners)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterWinners ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400'}`}><Trophy className="w-3.5 h-3.5" /> Premiadas</button>
-              <button onClick={() => handleNavigate(currentPage === 'my-collection' ? 'home' : 'my-collection')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${currentPage === 'my-collection' ? 'bg-brand-600 text-white' : 'bg-slate-800/50 text-slate-400'}`}><Heart className="w-3.5 h-3.5" /> Minha Coleção</button>
+              <button onClick={() => setFilterRarity(!filterRarity)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterRarity ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400'}`}><Gem className="w-3.5 h-3.5" /> Raridades</button>
+              <button onClick={() => setFilterPromo(!filterPromo)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterPromo ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400'}`}><Gift className="w-3.5 h-3.5" /> Promo</button>
+              <button onClick={() => setFilterWinners(!filterWinners)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterWinners ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-800/50 border-slate-700 text-slate-400'}`}><Trophy className="w-3.5 h-3.5" /> Premiadas</button>
+              <button onClick={() => handleNavigate(currentPage === 'my-collection' ? 'home' : 'my-collection')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${currentPage === 'my-collection' ? 'bg-brand-600 text-white shadow-lg' : 'bg-slate-800/50 text-slate-400'}`}><Heart className="w-3.5 h-3.5" /> Minha Coleção</button>
               <div className="flex items-center gap-1 bg-slate-900/50 border border-slate-800 p-1 rounded-lg">
                   {['all', 'raspadinha', 'lotaria', 'boletim', 'objeto'].map(cat => (
                     <button key={cat} onClick={() => setActiveCategory(cat as any)} className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${activeCategory === cat ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>{cat === 'all' ? 'Tudo' : cat}</button>
@@ -247,14 +254,14 @@ function App() {
             </div>
             <div className="px-4 md:px-8 py-3 bg-slate-950/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => { setActiveContinent('Mundo'); handleNavigate('home'); }} className={`px-4 py-2 rounded-full text-[11px] font-black flex items-center gap-2 border transition-all ${activeContinent === 'Mundo' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-500'}`}>Mundo <span className="bg-slate-800 text-[9px] px-1.5 rounded">{totalStats.total}</span></button>
+                <button onClick={() => { setActiveContinent('Mundo'); handleNavigate('home'); }} className={`px-4 py-2 rounded-full text-[11px] font-black flex items-center gap-2 border transition-all ${activeContinent === 'Mundo' ? 'bg-blue-600 text-white border-blue-400' : 'bg-slate-900 text-slate-500 border-slate-800'}`}>Mundo <span className="bg-slate-800 text-[9px] px-1.5 rounded">{totalStats.total}</span></button>
                 {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => (
-                    <button key={cont} onClick={() => { setActiveContinent(cont as Continent); if(currentPage === 'my-collection') handleNavigate('home'); }} className={`px-4 py-2 rounded-full text-[11px] font-black flex items-center gap-2 border transition-all ${activeContinent === cont ? 'bg-orange-600 text-white' : 'bg-slate-900 text-slate-500'}`}>{cont} <span className="bg-slate-800 text-[9px] px-1.5 rounded">{totalStats.stats[cont] || 0}</span></button>
+                    <button key={cont} onClick={() => { setActiveContinent(cont as Continent); if(currentPage === 'my-collection') handleNavigate('home'); }} className={`px-4 py-2 rounded-full text-[11px] font-black flex items-center gap-2 border transition-all ${activeContinent === cont ? 'bg-orange-600 text-white border-orange-400' : 'bg-slate-900 text-slate-500 border-slate-800'}`}>{cont} <span className="bg-slate-800 text-[9px] px-1.5 rounded">{totalStats.stats[cont] || 0}</span></button>
                 ))}
               </div>
               <div className="relative group w-full md:w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600" />
-                  <input type="text" placeholder="Procurar..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} className="bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-white outline-none w-full" />
+                  <input type="text" placeholder="Procurar no arquivo..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} className="bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-white outline-none w-full focus:border-blue-500 transition-all" />
               </div>
             </div>
           </div>
@@ -268,9 +275,9 @@ function App() {
           ) : (
             <div className="p-4 md:p-8 animate-fade-in min-h-[50vh]">
               {isLoadingDB ? (
-                  <div className="flex flex-col items-center justify-center py-20 gap-4"><Loader2 className="w-10 h-10 text-brand-500 animate-spin" /><p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Sincronizando...</p></div>
+                  <div className="flex flex-col items-center justify-center py-20 gap-4"><Loader2 className="w-10 h-10 text-brand-500 animate-spin" /><p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Sincronizando Arquivo...</p></div>
               ) : (
-                  <ImageGrid images={filteredImages} onImageClick={setSelectedImage} isAdmin={isAdmin} currentUser={currentUser} t={t.grid} />
+                  <ImageGrid key={gridKey} images={filteredImages} onImageClick={setSelectedImage} isAdmin={isAdmin} currentUser={currentUser} t={t.grid} />
               )}
             </div>
           )}
