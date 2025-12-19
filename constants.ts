@@ -44,5 +44,7 @@ export const OFFICIAL_LOTTERIES: (Partial<WebsiteLink> & { continent: string })[
   { name: "World Lottery Association (WLA)", url: "https://www.world-lotteries.org", country: "Global", category: "Global Organization", continent: "Mundo" },
   { name: "Jogos Santa Casa", url: "https://www.jogossantacasa.pt", country: "Portugal", category: "Official Operator", continent: "Europa" },
   { name: "Lottomatica", url: "https://www.lottomatica.it", country: "Itália", category: "Official Operator", continent: "Europa" },
-  { name: "ONCE", url: "https://www.juegosonce.es", country: "Espanha", category: "Official Operator", continent: "Europa" }
+  { name: "ONCE", url: "https://www.juegosonce.es", country: "Espanha", category: "Official Operator", continent: "Europa" },
+  { name: "Catalogue des Tickets (França)", url: "http://tickets.chez.com/", country: "França", category: "Catálogo Técnico / Referência", continent: "Europa" },
+  { name: "Française des Jeux (FDJ)", url: "https://www.fdj.fr", country: "França", category: "Official Operator", continent: "Europa" }
 ];

@@ -172,34 +172,47 @@ function App() {
 
   const filteredImages = useMemo(() => {
     return allImagesCache.filter(i => {
+      // 1. Continent Filter
       if (activeContinent !== 'Mundo' && i.continent !== activeContinent) return false;
-      if (activeCategory !== 'all' && i.category !== activeCategory) return false;
+      
+      // 2. Category Filter (Robust case-insensitive match)
+      const targetCat = activeCategory.toLowerCase();
+      const itemCat = (i.category || 'raspadinha').toLowerCase();
+      if (targetCat !== 'all' && itemCat !== targetCat) return false;
+      
+      // 3. Flags
       if (filterRarity && !i.isRarity) return false;
       if (filterWinners && !i.isWinner) return false;
+      
+      // 4. Page-specific logical filters
       if (currentPage === 'my-collection' && (!currentUser || !i.owners?.includes(currentUser))) return false;
       if (currentPage === 'new-arrivals') {
         const fortyEightHoursInMs = 48 * 60 * 60 * 1000;
         if ((Date.now() - i.createdAt) > fortyEightHoursInMs) return false;
       }
       
+      // 5. Search filters
       const search = (countrySearch || searchTerm).toLowerCase();
       if (search) {
         return i.gameName.toLowerCase().includes(search) || 
                i.country.toLowerCase().includes(search) || 
                i.gameNumber.toLowerCase().includes(search) ||
-               i.customId.toLowerCase().includes(search);
+               (i.customId || '').toLowerCase().includes(search);
       }
       return true;
     }).sort((a, b) => a.gameNumber.localeCompare(b.gameNumber, undefined, { numeric: true }));
   }, [allImagesCache, activeContinent, activeCategory, filterRarity, filterWinners, countrySearch, searchTerm, currentPage, currentUser]);
 
-  const handleNavigate = (p: PageType) => {
+  // FIXED: handleNavigate now optionally resets filters to avoid logic collisions with explicit filter buttons
+  const handleNavigate = (p: PageType, resetFilters: boolean = false) => {
     setCurrentPage(p);
-    setCountrySearch('');
-    setSearchTerm('');
-    if (p === 'home') {
-       setActiveContinent('Mundo');
-       setActiveCategory('all');
+    if (resetFilters) {
+      setCountrySearch('');
+      setSearchTerm('');
+      setActiveContinent('Mundo');
+      setActiveCategory('all');
+      setFilterRarity(false);
+      setFilterWinners(false);
     }
   };
 
@@ -209,7 +222,7 @@ function App() {
         isAdmin={isAdmin} 
         currentUser={currentUser} 
         onAdminToggle={() => setIsLoginModalOpen(true)}
-        onLogout={() => { setCurrentUser(null); setUserRole(null); handleNavigate('home'); }} 
+        onLogout={() => { setCurrentUser(null); setUserRole(null); handleNavigate('home', true); }} 
         onHistoryClick={() => setIsHistoryModalOpen(true)} 
         onExport={handleExportBackup}
         onExportCSV={() => {}}
@@ -227,10 +240,10 @@ function App() {
         }}
         language={language} setLanguage={setLanguage}
         currentPage={currentPage} 
-        onNavigate={handleNavigate} 
+        onNavigate={(p) => handleNavigate(p, true)} 
         t={t.header}
         countriesByContinent={countriesByContinent}
-        onCountrySelect={(cont, country) => { setCurrentPage('home'); setActiveContinent(cont); setCountrySearch(country); }}
+        onCountrySelect={(cont, country) => { handleNavigate('home', true); setActiveContinent(cont); setCountrySearch(country); }}
         recentCount={recentCount}
       />
 
@@ -244,9 +257,20 @@ function App() {
               <button onClick={() => setFilterWinners(!filterWinners)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterWinners ? 'bg-green-600 border-green-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-500'}`}>Premiadas</button>
               
               <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-lg">
-                  <button onClick={() => { setActiveCategory('all'); handleNavigate('home'); }} className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${activeCategory === 'all' && currentPage === 'home' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-slate-400'}`}>Tudo</button>
+                  <button 
+                    onClick={() => { setActiveCategory('all'); handleNavigate('home'); }} 
+                    className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${activeCategory === 'all' && currentPage === 'home' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-slate-400'}`}
+                  >
+                    Tudo
+                  </button>
                   {categories.map(cat => (
-                    <button key={cat.id} onClick={() => { setActiveCategory(cat.name); handleNavigate('home'); }} className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${activeCategory === cat.name && currentPage === 'home' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-slate-400'}`}>{cat.name}</button>
+                    <button 
+                      key={cat.id} 
+                      onClick={() => { setActiveCategory(cat.name); handleNavigate('home'); }} 
+                      className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${activeCategory.toLowerCase() === cat.name.toLowerCase() && currentPage === 'home' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-400'}`}
+                    >
+                      {cat.name}
+                    </button>
                   ))}
                   
                   {currentUser && (
@@ -297,7 +321,7 @@ function App() {
         </div>
       </main>
 
-      <Footer onNavigate={handleNavigate} onWebsitesClick={() => setIsWebsitesModalOpen(true)} onInstall={() => {}} />
+      <Footer onNavigate={(p) => handleNavigate(p, true)} onWebsitesClick={() => setIsWebsitesModalOpen(true)} onInstall={() => {}} />
 
       {isAdmin && (
         <button onClick={() => setIsUploadModalOpen(true)} className="fixed bottom-28 right-8 w-16 h-16 bg-brand-600 text-white rounded-2xl shadow-xl flex items-center justify-center z-40 border-2 border-brand-400/30">
