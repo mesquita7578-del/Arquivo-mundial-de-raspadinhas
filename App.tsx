@@ -49,7 +49,7 @@ const App: React.FC = () => {
   // Sinais e Notificações
   const [signals, setSignals] = useState<Signal[]>([]);
 
-  const t = translations[language];
+  const t = translations[language] || translations['pt'];
 
   useEffect(() => {
     const init = async () => {
@@ -61,7 +61,7 @@ const App: React.FC = () => {
         
         setImages(allImages || []);
         setCategories(allCats || []);
-        setSiteMetadata(meta);
+        setSiteMetadata(meta || null);
 
         // Lógica de sorteio diário (uma vez por sessão)
         if (allImages && allImages.length > 3 && !sessionStorage.getItem('chloe_raffle_done')) {
@@ -116,13 +116,17 @@ const App: React.FC = () => {
   const filteredImages = useMemo(() => {
     if (!images) return [];
     return images.filter(img => {
-      const matchesSearch = img.gameName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          img.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          img.gameNumber.includes(searchTerm);
+      const gName = img.gameName || "";
+      const gCountry = img.country || "";
+      const gNum = img.gameNumber || "";
+      
+      const matchesSearch = gName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          gCountry.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          gNum.includes(searchTerm);
       const matchesContinent = activeContinent === 'Mundo' || img.continent === activeContinent;
       const matchesCountry = !activeCountry || img.country === activeCountry;
       
-      const isRecent = (Date.now() - img.createdAt) < 86400000;
+      const isRecent = (Date.now() - (img.createdAt || 0)) < 86400000;
       const matchesPage = currentPage === 'new-arrivals' ? isRecent : true;
       
       return matchesSearch && matchesContinent && matchesCountry && matchesPage;
@@ -132,7 +136,7 @@ const App: React.FC = () => {
   const stats = useMemo(() => {
     const res: any = { Europa: 0, América: 0, Ásia: 0, África: 0, Oceania: 0 };
     if (images) {
-      images.forEach(img => { if(res[img.continent] !== undefined) res[img.continent]++; });
+      images.forEach(img => { if(img.continent && res[img.continent] !== undefined) res[img.continent]++; });
     }
     return res;
   }, [images]);
@@ -141,8 +145,10 @@ const App: React.FC = () => {
     const map: Record<string, string[]> = {};
     if (images) {
       images.forEach(img => {
-        if (!map[img.continent]) map[img.continent] = [];
-        if (!map[img.continent].includes(img.country)) map[img.continent].push(img.country);
+        if (img.continent && img.country) {
+          if (!map[img.continent]) map[img.continent] = [];
+          if (!map[img.continent].includes(img.country)) map[img.continent].push(img.country);
+        }
       });
     }
     return map;
@@ -191,7 +197,7 @@ const App: React.FC = () => {
             try {
               const count = await storageService.importData(e.target?.result as string);
               const all = await storageService.getAll();
-              setImages(all);
+              setImages(all || []);
               addSignal(`${count} itens integrados! hihi!`, "success");
             } catch (err) {
               addSignal("Ficheiro inválido! hihi!", "warning");
@@ -200,7 +206,7 @@ const App: React.FC = () => {
           reader.readAsText(file);
         }}
         t={t.header}
-        recentCount={images.filter(img => (Date.now() - img.createdAt) < 86400000).length}
+        recentCount={images.filter(img => (Date.now() - (img.createdAt || 0)) < 86400000).length}
         countriesByContinent={countriesByContinent}
         onCountrySelect={(cont, country) => {
           setActiveContinent(cont);
@@ -263,11 +269,11 @@ const App: React.FC = () => {
               lottery: images.filter(i => i.category === 'lotaria').length
             }}
             countryStats={images.reduce((acc: any, img) => {
-              acc[img.country] = (acc[img.country] || 0) + 1;
+              if (img.country) acc[img.country] = (acc[img.country] || 0) + 1;
               return acc;
             }, {})}
             stateStats={images.reduce((acc: any, img) => {
-              acc[img.state] = (acc[img.state] || 0) + 1;
+              if (img.state) acc[img.state] = (acc[img.state] || 0) + 1;
               return acc;
             }, {})}
             collectorStats={images.reduce((acc: any, img) => {
@@ -304,7 +310,7 @@ const App: React.FC = () => {
             founderQuote={siteMetadata?.founderQuote}
             milestones={siteMetadata?.milestones}
             onUpdateMetadata={async (data) => {
-              const newMeta = { ...siteMetadata, ...data, id: 'site_settings' } as SiteMetadata;
+              const newMeta = { ...(siteMetadata || {}), ...data, id: 'site_settings' } as SiteMetadata;
               await storageService.saveSiteMetadata(newMeta);
               setSiteMetadata(newMeta);
               addSignal("História atualizada! hihi!", "success");
