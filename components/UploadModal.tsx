@@ -120,24 +120,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       const backBase64 = backPreview ? backPreview.split(',')[1] : null;
       const result = await analyzeImage(frontBase64, backBase64, frontFile.type);
       
-      // Garantir que os dados da IA sobrescrevem o estado inicial corretamente
+      // Aplicar dados da IA ao formulário
       setFormData(prev => ({
         ...prev,
-        gameName: result.gameName || prev.gameName,
-        gameNumber: result.gameNumber || prev.gameNumber,
-        price: result.price || prev.price,
-        country: result.country || prev.country,
-        continent: result.continent || prev.continent,
-        operator: result.operator || prev.operator,
-        state: result.state || prev.state,
-        values: result.values || prev.values,
-        printer: result.printer || prev.printer,
-        size: result.size || prev.size,
-        releaseDate: result.releaseDate || prev.releaseDate,
-        closeDate: result.closeDate || prev.closeDate,
-        emission: result.emission || prev.emission,
-        winProbability: result.winProbability || prev.winProbability,
-        lines: result.lines || prev.lines,
+        ...result,
         aiGenerated: true
       }));
       
@@ -175,7 +161,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       state: (formData.state as ScratchcardState) || 'SC',
       country: formData.country || '',
       region: formData.region || '',
-      continent: formData.continent || 'Europa',
+      continent: (formData.continent as any) || 'Europa',
       category: formData.category || 'raspadinha',
       operator: formData.operator || '',
       printer: formData.printer || '',
@@ -259,7 +245,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                 </div>
 
                 <div className="space-y-8">
-                   {/* IDENTIDADE */}
                    <section className="space-y-4">
                       <h3 className="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em] flex items-center gap-2">
                         <User className="w-3 h-3" /> Identificação do Jogo
@@ -280,7 +265,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                       </div>
                    </section>
 
-                   {/* DADOS TÉCNICOS */}
                    <section className="space-y-4">
                       <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] flex items-center gap-2">
                         <ScanLine className="w-3 h-3" /> Especificações Técnicas
@@ -327,7 +311,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                       </div>
                    </section>
 
-                   {/* DATAS E VALORES */}
                    <section className="space-y-4">
                       <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] flex items-center gap-2">
                         <Calendar className="w-3 h-3" /> Datas e Custos
@@ -354,7 +337,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                       </div>
                    </section>
 
-                   {/* LOCALIZAÇÃO */}
                    <section className="space-y-4">
                       <h3 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] flex items-center gap-2">
                         <MapPin className="w-3 h-3" /> Origem Geográfica
