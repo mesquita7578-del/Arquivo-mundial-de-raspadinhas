@@ -59,12 +59,12 @@ const App: React.FC = () => {
         const allCats = await storageService.getCategories();
         const meta = await storageService.getSiteMetadata();
         
-        setImages(allImages);
-        setCategories(allCats);
+        setImages(allImages || []);
+        setCategories(allCats || []);
         setSiteMetadata(meta);
 
         // Lógica de sorteio diário (uma vez por sessão)
-        if (allImages.length > 3 && !sessionStorage.getItem('chloe_raffle_done')) {
+        if (allImages && allImages.length > 3 && !sessionStorage.getItem('chloe_raffle_done')) {
           const randomItem = allImages[Math.floor(Math.random() * allImages.length)];
           setTimeout(() => {
             setRaffleItem(randomItem);
@@ -114,6 +114,7 @@ const App: React.FC = () => {
   };
 
   const filteredImages = useMemo(() => {
+    if (!images) return [];
     return images.filter(img => {
       const matchesSearch = img.gameName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           img.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -130,16 +131,20 @@ const App: React.FC = () => {
 
   const stats = useMemo(() => {
     const res: any = { Europa: 0, América: 0, Ásia: 0, África: 0, Oceania: 0 };
-    images.forEach(img => { if(res[img.continent] !== undefined) res[img.continent]++; });
+    if (images) {
+      images.forEach(img => { if(res[img.continent] !== undefined) res[img.continent]++; });
+    }
     return res;
   }, [images]);
 
   const countriesByContinent = useMemo(() => {
     const map: Record<string, string[]> = {};
-    images.forEach(img => {
-      if (!map[img.continent]) map[img.continent] = [];
-      if (!map[img.continent].includes(img.country)) map[img.continent].push(img.country);
-    });
+    if (images) {
+      images.forEach(img => {
+        if (!map[img.continent]) map[img.continent] = [];
+        if (!map[img.continent].includes(img.country)) map[img.continent].push(img.country);
+      });
+    }
     return map;
   }, [images]);
 
