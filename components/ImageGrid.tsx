@@ -82,12 +82,12 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
           return (
             <div
               key={item.id}
-              className="group bg-slate-950 border border-slate-900 hover:border-blue-600/50 transition-all duration-300 cursor-pointer flex flex-col rounded-sm overflow-hidden shadow-2xl hover:shadow-blue-500/10 active:scale-95"
+              className="group bg-slate-950 border border-slate-900 hover:border-brand-500/50 transition-all duration-300 cursor-pointer flex flex-col rounded-sm overflow-hidden shadow-2xl hover:shadow-brand-500/10 active:scale-95"
               onClick={() => onImageClick(item)}
             >
               <div className="px-1.5 py-1 bg-black border-b border-slate-900 flex justify-between items-center text-[6px] font-black text-slate-600 uppercase tracking-widest">
                  <div className="flex items-center gap-0.5">
-                    <span className="text-blue-900">REF</span> {item.gameNumber}
+                    <span className="text-brand-600">REF</span> {item.gameNumber}
                  </div>
                  <span className="group-hover:text-slate-400 transition-colors">{item.releaseDate?.split('-')[0]}</span>
               </div>
@@ -121,13 +121,13 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                       </div>
                     )}
                     {itemIsRecent && (
-                       <div className="bg-cyan-500 backdrop-blur-md text-white px-2.5 py-1 rounded-sm shadow-[0_0_20px_rgba(6,182,212,0.8)] -rotate-6 border border-cyan-300 flex items-center gap-1 animate-pulse-slow" title="Adicionado nas últimas 24h!">
+                       <div className="bg-brand-500 backdrop-blur-md text-white px-2.5 py-1 rounded-sm shadow-[0_0_20px_rgba(0,168,255,0.8)] -rotate-6 border border-brand-400 flex items-center gap-1 animate-pulse-slow" title="Adicionado nas últimas 24h!">
                           <Zap className="w-3 h-3 fill-white" />
                           <span className="text-[8px] font-black uppercase tracking-widest">NOVO</span>
                        </div>
                     )}
                     {currentUser && item.owners?.includes(currentUser) && (
-                       <div className="bg-blue-600/80 backdrop-blur-sm text-white p-1 rounded-full shadow-lg border border-blue-400/50">
+                       <div className="bg-brand-500/80 backdrop-blur-sm text-white p-1 rounded-full shadow-lg border border-brand-400/50">
                           <CheckCircle2 className="w-2.5 h-2.5" />
                        </div>
                     )}
@@ -139,7 +139,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 
               <div className="p-1.5 bg-slate-950 flex flex-col flex-1 border-t border-slate-900/50">
                 <div className="flex justify-between items-start mb-1 gap-1">
-                  <h3 className="font-black text-slate-400 text-[9px] leading-tight truncate flex-1 uppercase tracking-tighter group-hover:text-blue-400 transition-colors" title={item.gameName}>{item.gameName}</h3>
+                  <h3 className="font-black text-slate-400 text-[9px] leading-tight truncate flex-1 uppercase tracking-tighter group-hover:text-brand-500 transition-colors" title={item.gameName}>{item.gameName}</h3>
                 </div>
                 <div className="mt-auto flex items-center justify-between">
                   <div className="flex items-center gap-0.5 text-[7px] text-slate-600 font-black uppercase tracking-widest">
@@ -158,7 +158,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
           <button 
             onClick={() => {setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo(0,0);}} 
             disabled={currentPage === 1} 
-            className="group flex items-center gap-2 px-6 py-2.5 bg-slate-900/40 backdrop-blur-xl text-slate-400 border border-slate-800/50 rounded-full disabled:opacity-10 hover:bg-blue-600/20 hover:text-blue-400 hover:border-blue-500/30 transition-all text-[10px] font-black uppercase tracking-widest shadow-2xl"
+            className="group flex items-center gap-2 px-6 py-2.5 bg-slate-900/40 backdrop-blur-xl text-slate-400 border border-slate-800/50 rounded-full disabled:opacity-10 hover:bg-brand-500/20 hover:text-brand-500 hover:border-brand-500/30 transition-all text-[10px] font-black uppercase tracking-widest shadow-2xl"
           >
              <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> {t.prev}
           </button>
@@ -170,7 +170,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
           <button 
             onClick={() => {setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo(0,0);}} 
             disabled={currentPage === totalPages} 
-            className="group flex items-center gap-2 px-6 py-2.5 bg-slate-900/40 backdrop-blur-xl text-slate-400 border border-slate-800/50 rounded-full disabled:opacity-10 hover:bg-blue-600/20 hover:text-blue-400 hover:border-blue-500/30 transition-all text-[10px] font-black uppercase tracking-widest shadow-2xl"
+            className="group flex items-center gap-2 px-6 py-2.5 bg-slate-900/40 backdrop-blur-xl text-slate-400 border border-slate-800/50 rounded-full disabled:opacity-10 hover:bg-brand-500/20 hover:text-brand-500 hover:border-brand-500/30 transition-all text-[10px] font-black uppercase tracking-widest shadow-2xl"
           >
              {t.next} <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>

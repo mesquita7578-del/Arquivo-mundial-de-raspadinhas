@@ -188,7 +188,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                 <input type="file" ref={backInputRef} className="hidden" accept="image/*" onChange={e => e.target.files?.[0] && handleBackSelect(e.target.files[0])} />
               </div>
            </div>
-           <button onClick={processImage} disabled={!frontFile || isAnalyzing} className="w-full bg-brand-600 hover:bg-brand-500 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl disabled:opacity-50">
+           <button onClick={processImage} disabled={!frontFile || isAnalyzing} className="w-full bg-brand-600 hover:bg-brand-500 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl disabled:opacity-50 neon-glow-blue">
              {isAnalyzing ? <Loader2 className="animate-spin w-5 h-5"/> : <Sparkles className="w-5 h-5"/>}
              {isAnalyzing ? "CHLOE A ANALISAR..." : "CHLOE: PREENCHER AUTOMATICAMENTE"}
            </button>
@@ -335,7 +335,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                         </label>
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Continente:</span>
-                           <select value={formData.continent} onChange={e => setFormData({...formData, continent: e.target.value as any})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500">
+                           <select value={formData.continent} onChange={e => setFormData({...formData, continent: e.target.value as any})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none">
                              {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(c => <option key={c} value={c}>{c}</option>)}
                            </select>
                         </label>
@@ -359,7 +359,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
           <div className="p-6 border-t border-slate-800 bg-slate-900 flex justify-end gap-4 shrink-0">
              <button onClick={onClose} className="px-8 py-3 bg-slate-800 text-slate-400 rounded-xl font-black text-xs uppercase hover:text-white transition-all">Cancelar</button>
-             <button onClick={handleSave} disabled={isSaving} className="px-12 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-black flex items-center gap-2 shadow-2xl active:scale-95 transition-all">
+             <button onClick={handleSave} disabled={isSaving} className="px-12 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-black flex items-center gap-2 shadow-2xl active:scale-95 transition-all neon-glow-blue">
                 {isSaving ? <Loader2 className="animate-spin w-5 h-5"/> : <Check className="w-5 h-5"/>}
                 Confirmar e Arquivar
              </button>
