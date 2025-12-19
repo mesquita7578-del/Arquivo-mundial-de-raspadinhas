@@ -3,7 +3,7 @@
 <html lang="pt-PT">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
     
     <!-- Site Title -->
     <title>Arquivo Mundial de Raspadinhas | Archivio Mondiale Gratta e Vinci</title>
@@ -90,6 +90,7 @@
       }
       html {
         scroll-behavior: smooth;
+        touch-action: manipulation;
       }
       .neon-glow-blue {
         box-shadow: 0 0 15px rgba(0, 168, 255, 0.6);
@@ -99,6 +100,11 @@
       }
       .neon-border-blue {
         border-color: rgba(0, 168, 255, 0.6);
+      }
+      /* Ajuste para evitar que o teclado mobile empurre o layout de forma errada */
+      @media (max-height: 450px) {
+        header { height: 50px !important; }
+        .logo-text { font-size: 0.8rem !important; }
       }
     </style>
   <script type="importmap">

@@ -253,63 +253,72 @@ function App() {
         <div className="absolute top-0 left-0 w-full h-[800px] bg-gradient-to-b from-brand-500/10 via-brand-600/5 to-transparent pointer-events-none z-0"></div>
 
         {!(currentPage === 'stats' || currentPage === 'about' || currentPage === 'map') && (
-          <div className="sticky top-0 z-30 bg-[#020617]/90 backdrop-blur-xl border-b border-slate-900 shadow-2xl">
-            {/* Barra de Filtros Unificada Azul Porto */}
-            <div className="px-4 md:px-8 py-3 flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
+          <div className="sticky top-0 z-30 bg-[#020617]/95 backdrop-blur-xl border-b border-slate-900 shadow-2xl overflow-hidden">
+            {/* NOVO: BARRA DE FILTROS UNIFICADA NUMA SÓ LINHA */}
+            <div className="px-4 md:px-8 py-3.5 flex items-center gap-4 overflow-x-auto no-scrollbar scroll-smooth">
               
-              <div className="flex flex-wrap items-center gap-2 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 lg:pb-0">
-                <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-xl shadow-inner shrink-0">
-                  <button onClick={() => setFilterRarity(!filterRarity)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${filterRarity ? 'bg-brand-500 text-white shadow-[0_0_10px_rgba(0,168,255,0.5)]' : 'text-slate-500 hover:text-slate-300'}`}>Raridades</button>
-                  <button onClick={() => setFilterWinners(!filterWinners)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${filterWinners ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>Premiadas</button>
-                </div>
+              {/* Grupo 1: Status (Raridades e Premiadas) */}
+              <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-xl shadow-inner shrink-0">
+                <button onClick={() => setFilterRarity(!filterRarity)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${filterRarity ? 'bg-brand-500 text-white shadow-[0_0_10px_rgba(0,168,255,0.5)]' : 'text-slate-500 hover:text-slate-300'}`}>Raridades</button>
+                <button onClick={() => setFilterWinners(!filterWinners)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${filterWinners ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>Premiadas</button>
+              </div>
 
-                <div className="h-6 w-px bg-slate-800 mx-1 hidden md:block"></div>
+              {/* Separador Visual */}
+              <div className="h-6 w-px bg-slate-800 shrink-0"></div>
 
-                <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-xl shadow-inner shrink-0">
+              {/* Grupo 2: Categorias */}
+              <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-xl shadow-inner shrink-0">
+                <button 
+                  onClick={() => { setActiveCategory('all'); handleNavigate('home'); }} 
+                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeCategory === 'all' && currentPage === 'home' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-600 hover:text-slate-400'}`}
+                >
+                  Tudo
+                </button>
+                {categories.map(cat => (
                   <button 
-                    onClick={() => { setActiveCategory('all'); handleNavigate('home'); }} 
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${activeCategory === 'all' && currentPage === 'home' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-600 hover:text-slate-400'}`}
+                    key={cat.id} 
+                    onClick={() => { setActiveCategory(cat.name); handleNavigate('home'); }} 
+                    className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeCategory.toLowerCase() === cat.name.toLowerCase() && currentPage === 'home' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-600 hover:text-slate-400'}`}
                   >
-                    Tudo
+                    {cat.name}
                   </button>
-                  {categories.map(cat => (
-                    <button 
-                      key={cat.id} 
-                      onClick={() => { setActiveCategory(cat.name); handleNavigate('home'); }} 
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${activeCategory.toLowerCase() === cat.name.toLowerCase() && currentPage === 'home' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-600 hover:text-slate-400'}`}
-                    >
-                      {cat.name}
-                    </button>
-                  ))}
-                </div>
+                ))}
+              </div>
 
-                <div className="h-6 w-px bg-slate-800 mx-1 hidden md:block"></div>
+              <div className="h-6 w-px bg-slate-800 shrink-0"></div>
 
-                <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-xl shadow-inner shrink-0">
-                   <button onClick={() => setActiveContinent('Mundo')} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${activeContinent === 'Mundo' ? 'bg-brand-500 text-white shadow-[0_0_10px_rgba(0,168,255,0.5)]' : 'text-slate-500 hover:text-slate-300'}`}>Mundo</button>
-                   {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => (
-                      <button key={cont} onClick={() => setActiveContinent(cont as Continent)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${activeContinent === cont ? 'bg-brand-500 text-white shadow-[0_0_10px_rgba(0,168,255,0.5)]' : 'text-slate-500 hover:text-slate-300'}`}>{cont}</button>
-                   ))}
-                </div>
+              {/* Grupo 3: Continentes */}
+              <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-xl shadow-inner shrink-0">
+                 <button onClick={() => setActiveContinent('Mundo')} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeContinent === 'Mundo' ? 'bg-brand-500 text-white shadow-[0_0_10px_rgba(0,168,255,0.5)]' : 'text-slate-500 hover:text-slate-300'}`}>Mundo</button>
+                 {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => (
+                    <button key={cont} onClick={() => setActiveContinent(cont as Continent)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeContinent === cont ? 'bg-brand-500 text-white shadow-[0_0_10px_rgba(0,168,255,0.5)]' : 'text-slate-500 hover:text-slate-300'}`}>{cont}</button>
+                 ))}
+              </div>
 
+              <div className="h-6 w-px bg-slate-800 shrink-0"></div>
+
+              {/* Grupo 4: Coleção / Novidades */}
+              <div className="flex gap-2 shrink-0">
                 {currentUser && (
-                  <button onClick={() => handleNavigate('my-collection')} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-1.5 border border-slate-800 ${currentPage === 'my-collection' ? 'bg-brand-600 text-white shadow-lg' : 'bg-slate-900/50 text-brand-400 hover:text-brand-300'}`}><UserCheck className="w-3.5 h-3.5" /> Minha Coleção</button>
+                  <button onClick={() => handleNavigate('my-collection')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-1.5 border border-slate-800 whitespace-nowrap ${currentPage === 'my-collection' ? 'bg-brand-600 text-white shadow-lg' : 'bg-slate-900/50 text-brand-400 hover:text-brand-300'}`}><UserCheck className="w-3.5 h-3.5" /> Minha Coleção</button>
                 )}
                 {recentCount > 0 && (
-                  <button onClick={() => handleNavigate('new-arrivals')} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-1.5 border border-brand-500/30 ${currentPage === 'new-arrivals' ? 'bg-brand-500 text-white shadow-[0_0_15px_rgba(0,168,255,0.6)]' : 'bg-slate-900/50 text-brand-500 hover:text-brand-400'}`}><Zap className="w-3.5 h-3.5 animate-pulse" /> Novidades ({recentCount})</button>
+                  <button onClick={() => handleNavigate('new-arrivals')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-1.5 border border-brand-500/30 whitespace-nowrap ${currentPage === 'new-arrivals' ? 'bg-brand-500 text-white shadow-[0_0_15px_rgba(0,168,255,0.6)]' : 'bg-slate-900/50 text-brand-500 hover:text-brand-400'}`}><Zap className="w-3.5 h-3.5 animate-pulse" /> Novidades ({recentCount})</button>
                 )}
               </div>
 
-              <div className="relative group lg:ml-auto min-w-[280px]">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
+              {/* Grupo 5: Campo de Procura (Alinhado à direita no final da linha) */}
+              <div className="relative group shrink-0 min-w-[200px] md:min-w-[300px] flex-1">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
                   <input 
                     type="text" 
-                    placeholder="Procurar no estádio mundial..." 
+                    placeholder="Procurar no estádio..." 
                     value={countrySearch} 
                     onChange={(e) => setCountrySearch(e.target.value)} 
-                    className="bg-slate-900/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-[11px] text-white outline-none w-full focus:border-brand-500 focus:bg-slate-900 transition-all shadow-inner" 
+                    className="bg-slate-900/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-[11px] text-white outline-none w-full focus:border-brand-500 focus:bg-slate-900 transition-all shadow-inner font-bold placeholder:text-slate-700" 
                   />
               </div>
+
             </div>
           </div>
         )}
