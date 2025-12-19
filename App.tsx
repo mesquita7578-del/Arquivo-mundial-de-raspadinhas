@@ -328,7 +328,7 @@ function App() {
         </div>
       </main>
 
-      <Footer onNavigate={(p) => handleNavigate(p, true)} onWebsitesClick={() => setIsWebsitesModalOpen(true)} onInstall={() => {}} />
+      <Footer onNavigate={(p) => handleNavigate(p, true)} onWebsitesClick={() => setIsWebsitesModalOpen(true)} />
 
       {/* Floating Actions */}
       <div className="fixed bottom-28 left-8 flex flex-col gap-4 z-40">
