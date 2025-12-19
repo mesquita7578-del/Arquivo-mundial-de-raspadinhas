@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Plus, Loader2, Sparkles } from 'lucide-react';
+import { Search, Plus, Loader2, Sparkles, Zap } from 'lucide-react';
 import { Header } from './components/Header';
 import { ImageGrid } from './components/ImageGrid';
 import { ImageViewer } from './components/ImageViewer';
@@ -69,11 +69,10 @@ const App: React.FC = () => {
           setTimeout(() => {
             setRaffleItem(randomItem);
             sessionStorage.setItem('chloe_raffle_done', 'true');
-          }, 4000);
+          }, 3000);
         }
       } catch (err) {
         console.error("Erro no carregamento:", err);
-        addSignal("Erro ao ligar ao arquivo! hihi!", "warning");
       } finally {
         setIsLoading(false);
       }
@@ -88,7 +87,7 @@ const App: React.FC = () => {
 
   const handleLogin = (user: string, pass: string | null, type: 'admin' | 'visitor') => {
     if (type === 'admin') {
-      if (pass === '123456') { // Senha padrão solicitada pelo vovô
+      if (pass === '123456') { 
         setIsAdmin(true);
         setCurrentUser(user);
         localStorage.setItem('archive_user', user);
@@ -122,7 +121,6 @@ const App: React.FC = () => {
       const matchesContinent = activeContinent === 'Mundo' || img.continent === activeContinent;
       const matchesCountry = !activeCountry || img.country === activeCountry;
       
-      // Se estiver na página de novidades, mostrar apenas as últimas 24h
       const isRecent = (Date.now() - img.createdAt) < 86400000;
       const matchesPage = currentPage === 'new-arrivals' ? isRecent : true;
       

@@ -1,3 +1,4 @@
+
 export type Language = 'pt' | 'it';
 
 export const translations = {
@@ -39,7 +40,6 @@ export const translations = {
       exploreCountries: "Países em",
       all: "Tudo"
     },
-    // Added missing 'history' section for HistoryModal
     history: {
       title: "Biblioteca Técnica",
       subtitle: "Documentos, Histórias e Catálogos de Lotarias",
@@ -217,7 +217,6 @@ export const translations = {
       noCountries: "Sem países.",
       restrictedAccess: "Apenas Administradores."
     },
-    // Added missing 'about' section
     about: {
       title: "Sobre",
       subtitle: "O Legado"
@@ -261,7 +260,6 @@ export const translations = {
       exploreCountries: "Paesi in",
       all: "Tutto"
     },
-    // Added missing 'history' section for HistoryModal
     history: {
       title: "Biblioteca Tecnica",
       subtitle: "Documenti e Cataloghi Storici",
@@ -377,7 +375,7 @@ export const translations = {
       saving: "Salvataggio...",
       category: "Tipo",
       typeScratch: "Gratta e Vinci",
-      typeLotteria: "Lotteria",
+      typeLottery: "Lotteria",
       typeBulletin: "Bollettino",
       typeObject: "Oggetto (Cat/Cal...)"
     },
@@ -439,7 +437,6 @@ export const translations = {
       noCountries: "Nessun paese.",
       restrictedAccess: "Solo Admin."
     },
-    // Added missing 'about' section
     about: {
       title: "Informazioni",
       subtitle: "L'Eredità"
