@@ -4,7 +4,7 @@ import {
   X, Upload, Sparkles, Check, Loader2, ArrowLeft, 
   Image as ImageIcon, ScanLine, Star, Hash, Globe, 
   Printer, Ruler, Banknote, Clock, Info, MapPin, 
-  Building2, Layers, User, Palette, Activity, Percent, Calendar
+  Building2, Layers, User, Palette, Activity, Percent, Calendar, AlertCircle
 } from 'lucide-react';
 import { ScratchcardData, Category, ScratchcardState, LineType, CategoryItem } from '../types';
 import { analyzeImage } from '../services/geminiService';
@@ -55,6 +55,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
   const [backPreview, setBackPreview] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<Partial<ScratchcardData>>({
     category: 'raspadinha',
@@ -100,6 +101,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     const reader = new FileReader();
     reader.onload = (e) => setFrontPreview(e.target?.result as string);
     reader.readAsDataURL(file);
+    setAnalysisError(null);
   };
 
   const handleBackSelect = (file: File) => {
@@ -112,6 +114,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
   const processImage = async () => {
     if (!frontFile || !frontPreview) return;
     setIsAnalyzing(true);
+    setAnalysisError(null);
     try {
       const frontBase64 = frontPreview.split(',')[1];
       const backBase64 = backPreview ? backPreview.split(',')[1] : null;
@@ -123,7 +126,9 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       setFormData(prev => ({ ...prev, ...result, customId: generatedId, aiGenerated: true }));
       setStep(2);
     } catch (err) {
-      setStep(2);
+      console.error("Erro no processamento:", err);
+      setAnalysisError("A Chloe não conseguiu ler os dados automaticamente. Pode tentar outra foto ou preencher manualmente.");
+      setStep(2); // Avançamos para o passo 2 mesmo com erro para permitir preenchimento manual
     } finally {
       setIsAnalyzing(false);
     }
@@ -192,6 +197,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
              {isAnalyzing ? <Loader2 className="animate-spin w-5 h-5"/> : <Sparkles className="w-5 h-5"/>}
              {isAnalyzing ? "CHLOE A ANALISAR..." : "CHLOE: PREENCHER AUTOMATICAMENTE"}
            </button>
+           {!frontFile && <p className="text-center text-[9px] text-slate-600 font-black uppercase tracking-widest mt-4 animate-pulse">Selecione pelo menos a frente para a Chloe ler! hihi!</p>}
         </div>
       </div>
     );
@@ -209,6 +215,13 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
           </div>
 
           <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-slate-950/20">
+             {analysisError && (
+               <div className="mb-6 p-4 bg-brand-600/20 border border-brand-500/30 rounded-2xl flex items-center gap-4 animate-bounce-in">
+                  <AlertCircle className="w-6 h-6 text-brand-400 shrink-0" />
+                  <p className="text-xs font-black text-brand-300 uppercase tracking-widest">{analysisError}</p>
+               </div>
+             )}
+
              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 <div className="space-y-4">
                    <div className="sticky top-0 space-y-4">

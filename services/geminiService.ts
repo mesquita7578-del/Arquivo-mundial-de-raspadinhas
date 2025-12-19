@@ -93,58 +93,54 @@ export const generateDocumentMetadata = async (fileName: string, title: string):
 export const analyzeImage = async (frontBase64: string, backBase64: string | null, mimeType: string): Promise<AnalysisResult> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
-    const prompt = `Analise esta raspadinha técnica. Extraia:
-    1. gameName (Nome do jogo)
-    2. country (País)
-    3. continent (Continente: Europa, América, Ásia, África, Oceania)
-    4. operator (Operador do jogo ex: SCML, ONCE, Sisal)
-    5. gameNumber (Jogo nº)
-    6. releaseDate (Data da primeira emissão)
-    7. closeDate (Data de encerramento)
-    8. lines (Cores das lines: azul, vermelho, multicolor, verde, etc)
-    9. price (Custo facial)
-    10. printer (Impresso por ex: Scientific Games, CBN)
-    11. size (Dimensões ex: 10x15cm)
-    12. state (SC para raspada, MINT para nova)
-    13. emission (Tiragem)
-    14. winProbability (Probabilidade de ganhar ex: 1 em 4.5)
-    15. values (NOTA/Observações adicionais)
-
-    Retorne JSON puro.`;
-
-    const parts: any[] = [{ inlineData: { mimeType: mimeType || "image/jpeg", data: frontBase64 } }];
-    if (backBase64) parts.push({ inlineData: { mimeType: mimeType || "image/jpeg", data: backBase64 } });
-    parts.push({ text: prompt });
+    // Garantir que temos um mimeType válido para o Gemini
+    const validMimeType = mimeType.startsWith('image/') ? mimeType : 'image/jpeg';
+    
+    const parts: any[] = [{ inlineData: { mimeType: validMimeType, data: frontBase64 } }];
+    if (backBase64) parts.push({ inlineData: { mimeType: validMimeType, data: backBase64 } });
+    
+    // Prompt de sistema focado em extração técnica
+    const systemInstruction = `Você é Chloe, uma assistente perita em colecionismo de raspadinhas e lotarias mundiais.
+Sua tarefa é extrair dados técnicos precisos das imagens fornecidas.
+- Procure pelo nome do jogo, país, operador (ex: SCML, ONCE), preço facial e número do jogo.
+- Identifique a data de emissão se visível.
+- Se a informação não estiver clara, deixe o campo vazio ou use sua base de conhecimento para sugerir (especialmente para Operador e Continente).
+- Retorne SEMPRE em formato JSON válido de acordo com o esquema definido.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
-      contents: { parts },
+      model: 'gemini-3-flash-preview',
+      contents: { parts: [...parts, { text: "Extraia todos os detalhes técnicos desta raspadinha." }] },
       config: {
+        systemInstruction,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            gameName: { type: Type.STRING },
-            gameNumber: { type: Type.STRING },
-            price: { type: Type.STRING },
-            country: { type: Type.STRING },
-            continent: { type: Type.STRING },
-            operator: { type: Type.STRING },
-            state: { type: Type.STRING },
-            values: { type: Type.STRING },
-            printer: { type: Type.STRING },
-            size: { type: Type.STRING },
-            releaseDate: { type: Type.STRING },
-            closeDate: { type: Type.STRING },
-            emission: { type: Type.STRING },
-            winProbability: { type: Type.STRING },
-            lines: { type: Type.STRING }
-          }
+            gameName: { type: Type.STRING, description: "Nome principal do jogo" },
+            gameNumber: { type: Type.STRING, description: "Número de série ou número do jogo" },
+            price: { type: Type.STRING, description: "Custo facial do bilhete" },
+            country: { type: Type.STRING, description: "País de origem" },
+            continent: { type: Type.STRING, description: "Continente de origem" },
+            operator: { type: Type.STRING, description: "Entidade emissora (ex: SCML, Lottomatica)" },
+            state: { type: Type.STRING, description: "MINT se nova, SC se raspada" },
+            values: { type: Type.STRING, description: "Resumo dos prêmios ou observações" },
+            printer: { type: Type.STRING, description: "Empresa que imprimiu (ex: Scientific Games)" },
+            size: { type: Type.STRING, description: "Dimensões aproximadas" },
+            releaseDate: { type: Type.STRING, description: "Ano ou data de lançamento" },
+            closeDate: { type: Type.STRING, description: "Data de validade ou encerramento" },
+            emission: { type: Type.STRING, description: "Quantidade total emitida" },
+            winProbability: { type: Type.STRING, description: "Probabilidade de ganho" },
+            lines: { type: Type.STRING, description: "Cores das linhas de segurança" }
+          },
+          required: ["gameName", "country"]
         }
       }
     });
 
-    const data = JSON.parse(response.text || "{}");
+    const text = response.text;
+    if (!text) throw new Error("A Chloe não recebeu resposta do servidor.");
+    
+    const data = JSON.parse(text);
     return {
       category: "raspadinha",
       gameName: data.gameName || "",
@@ -164,6 +160,19 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       lines: data.lines || ""
     } as AnalysisResult;
   } catch (error) {
-    return { category: "raspadinha", gameName: "", gameNumber: "", releaseDate: "", size: "", values: "", price: "", state: "SC", country: "Portugal", continent: "Europa" };
+    console.error("Erro na análise da Chloe:", error);
+    // Retornamos um objeto básico para não travar a UI, mas lançamos o erro para o log
+    return { 
+      category: "raspadinha", 
+      gameName: "Não identificado", 
+      gameNumber: "", 
+      releaseDate: "", 
+      size: "", 
+      values: "A Chloe teve dificuldade em ler esta imagem. Por favor, preencha manualmente.", 
+      price: "", 
+      state: "SC", 
+      country: "Portugal", 
+      continent: "Europa" 
+    };
   }
 };
