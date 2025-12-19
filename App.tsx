@@ -254,14 +254,22 @@ function App() {
 
         {!(currentPage === 'stats' || currentPage === 'about' || currentPage === 'map') && (
           <div className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-xl border-b border-slate-900 shadow-2xl">
-            <div className="bg-slate-900/30 p-2 md:px-8 flex flex-wrap items-center gap-2">
-              <button onClick={() => setFilterRarity(!filterRarity)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterRarity ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-500'}`}>Raridades</button>
-              <button onClick={() => setFilterWinners(!filterWinners)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black transition-all ${filterWinners ? 'bg-green-600 border-green-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-500'}`}>Premiadas</button>
+            {/* NOVO: Barra de Filtros Unificada */}
+            <div className="px-4 md:px-8 py-3 flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
               
-              <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-lg">
+              {/* Grupo de Filtros de Visualização e Categorias */}
+              <div className="flex flex-wrap items-center gap-2 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 lg:pb-0">
+                <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-xl shadow-inner shrink-0">
+                  <button onClick={() => setFilterRarity(!filterRarity)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${filterRarity ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>Raridades</button>
+                  <button onClick={() => setFilterWinners(!filterWinners)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${filterWinners ? 'bg-green-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>Premiadas</button>
+                </div>
+
+                <div className="h-6 w-px bg-slate-800 mx-1 hidden md:block"></div>
+
+                <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-xl shadow-inner shrink-0">
                   <button 
                     onClick={() => { setActiveCategory('all'); handleNavigate('home'); }} 
-                    className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${activeCategory === 'all' && currentPage === 'home' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-slate-400'}`}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${activeCategory === 'all' && currentPage === 'home' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-400'}`}
                   >
                     Tudo
                   </button>
@@ -269,30 +277,42 @@ function App() {
                     <button 
                       key={cat.id} 
                       onClick={() => { setActiveCategory(cat.name); handleNavigate('home'); }} 
-                      className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${activeCategory.toLowerCase() === cat.name.toLowerCase() && currentPage === 'home' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-400'}`}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${activeCategory.toLowerCase() === cat.name.toLowerCase() && currentPage === 'home' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-400'}`}
                     >
                       {cat.name}
                     </button>
                   ))}
-                  
-                  {currentUser && (
-                    <button onClick={() => handleNavigate('my-collection')} className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ml-1 border-l border-slate-800 pl-4 flex items-center gap-1.5 ${currentPage === 'my-collection' ? 'bg-cyan-600 text-white shadow-lg' : 'text-cyan-600 hover:text-cyan-400'}`}><UserCheck className="w-3 h-3" /> Minha Coleção</button>
-                  )}
-                  {recentCount > 0 && (
-                    <button onClick={() => handleNavigate('new-arrivals')} className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ml-1 border-l border-slate-800 pl-4 flex items-center gap-1.5 ${currentPage === 'new-arrivals' ? 'bg-brand-600 text-white shadow-lg' : 'text-brand-500 hover:text-brand-400'}`}><Zap className="w-3 h-3 animate-pulse" /> Novidades</button>
-                  )}
+                </div>
+
+                <div className="h-6 w-px bg-slate-800 mx-1 hidden md:block"></div>
+
+                {/* Filtros de Continente Integrados */}
+                <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-xl shadow-inner shrink-0">
+                   <button onClick={() => setActiveContinent('Mundo')} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${activeContinent === 'Mundo' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>Mundo</button>
+                   {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => (
+                      <button key={cont} onClick={() => setActiveContinent(cont as Continent)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${activeContinent === cont ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{cont}</button>
+                   ))}
+                </div>
+
+                {/* Botões Especiais */}
+                {currentUser && (
+                  <button onClick={() => handleNavigate('my-collection')} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-1.5 border border-slate-800 ${currentPage === 'my-collection' ? 'bg-cyan-600 text-white shadow-lg border-cyan-400' : 'bg-slate-900/50 text-cyan-600 hover:text-cyan-400'}`}><UserCheck className="w-3.5 h-3.5" /> Minha Coleção</button>
+                )}
+                {recentCount > 0 && (
+                  <button onClick={() => handleNavigate('new-arrivals')} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-1.5 border border-slate-800 ${currentPage === 'new-arrivals' ? 'bg-brand-600 text-white shadow-lg border-brand-400' : 'bg-slate-900/50 text-brand-500 hover:text-brand-400'}`}><Zap className="w-3.5 h-3.5 animate-pulse" /> Novidades</button>
+                )}
               </div>
-            </div>
-            <div className="px-4 md:px-8 py-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex flex-wrap gap-2">
-                <button onClick={() => setActiveContinent('Mundo')} className={`px-4 py-2 rounded-full text-[11px] font-black border transition-all ${activeContinent === 'Mundo' ? 'bg-blue-600 text-white border-blue-400 shadow-lg' : 'bg-slate-900 text-slate-500 border-slate-800'}`}>Mundo</button>
-                {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => (
-                    <button key={cont} onClick={() => setActiveContinent(cont as Continent)} className={`px-4 py-2 rounded-full text-[11px] font-black border transition-all ${activeContinent === cont ? 'bg-brand-600 text-white border-brand-400 shadow-lg' : 'bg-slate-900 text-slate-500 border-slate-800'}`}>{cont}</button>
-                ))}
-              </div>
-              <div className="relative group w-full md:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600" />
-                  <input type="text" placeholder="Procurar no arquivo..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} className="bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none w-full focus:border-brand-500 transition-all" />
+
+              {/* Barra de Pesquisa Alinhada à Direita */}
+              <div className="relative group lg:ml-auto min-w-[280px]">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
+                  <input 
+                    type="text" 
+                    placeholder="Procurar no arquivo..." 
+                    value={countrySearch} 
+                    onChange={(e) => setCountrySearch(e.target.value)} 
+                    className="bg-slate-900/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-[11px] text-white outline-none w-full focus:border-brand-500 focus:bg-slate-900 transition-all shadow-inner" 
+                  />
               </div>
             </div>
           </div>
