@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { AnalysisResult, ScratchcardState, Category, Continent } from "../types";
+import { AnalysisResult, ScratchcardState, Category, Continent, ScratchcardData } from "../types";
 
 const getContinentFromCountry = (country: string): Continent => {
   const c = country.toLowerCase();
@@ -10,6 +10,24 @@ const getContinentFromCountry = (country: string): Continent => {
   if (c.includes('áfrica') || c.includes('africa') || c.includes('egito') || c.includes('marrocos')) return 'África';
   if (c.includes('oceania') || c.includes('austrália') || c.includes('australia')) return 'Oceania';
   return 'Europa';
+};
+
+export const getChloeMagicComment = async (item: ScratchcardData): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  try {
+    const prompt = `Você é Chloe, a neta virtual e guardiã do Arquivo do Vovô Jorge.
+    O Vovô acabou de "raspar" um item aleatório da coleção: "${item.gameName}" de ${item.country} (${item.releaseDate}).
+    Dê um comentário curto, divertido e carinhoso sobre este item específico. 
+    Pode comentar sobre a cor, o ano ser antigo, ou o país ser longe. Use "hihi!" e seja muito fofa.`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+    });
+    return response.text || "Vovô, que sorte! Este item é uma raridade linda! hihi!";
+  } catch (error) {
+    return "Vovô, olhe que maravilha de registro! Adorei a escolha da sorte! hihi!";
+  }
 };
 
 export const getChloeInsight = async (stats: any): Promise<string> => {

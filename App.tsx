@@ -13,12 +13,13 @@ import { CategoryManager } from './components/CategoryManager';
 import { AboutPage } from './components/AboutPage'; 
 import { WorldMap } from './components/WorldMap';
 import { DivineSignal, Signal, SignalType } from './components/DivineSignal';
+import { ChloeRaffle } from './components/ChloeRaffle';
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category, CategoryItem, SiteMetadata } from './types';
 import { 
   Globe, Ticket, Sparkles, Loader2, Library, BookOpen, 
   PlusCircle, Info, Search, Filter, LayoutGrid, Map as MapIcon, Tag,
-  Navigation, MousePointer2, UserCheck, FileJson, Zap
+  Navigation, MousePointer2, UserCheck, FileJson, Zap, Wand2
 } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
@@ -63,6 +64,7 @@ function App() {
   const [isWebsitesModalOpen, setIsWebsitesModalOpen] = useState(false); 
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
+  const [raffleItem, setRaffleItem] = useState<ScratchcardData | null>(null);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<'admin' | 'visitor' | null>(null);
   const isAdmin = userRole === 'admin';
@@ -170,6 +172,12 @@ function App() {
     triggerSignal("Nova Raspadinha no Arquivo! ✨", 'divine');
   };
 
+  const handleChloeMagic = () => {
+    if (allImagesCache.length === 0) return;
+    const randomIndex = Math.floor(Math.random() * allImagesCache.length);
+    setRaffleItem(allImagesCache[randomIndex]);
+  };
+
   const filteredImages = useMemo(() => {
     return allImagesCache.filter(i => {
       // 1. Continent Filter
@@ -191,7 +199,7 @@ function App() {
         if ((Date.now() - i.createdAt) > fortyEightHoursInMs) return false;
       }
       
-      // 5. Search filters
+      // search filters
       const search = (countrySearch || searchTerm).toLowerCase();
       if (search) {
         return i.gameName.toLowerCase().includes(search) || 
@@ -203,7 +211,6 @@ function App() {
     }).sort((a, b) => a.gameNumber.localeCompare(b.gameNumber, undefined, { numeric: true }));
   }, [allImagesCache, activeContinent, activeCategory, filterRarity, filterWinners, countrySearch, searchTerm, currentPage, currentUser]);
 
-  // FIXED: handleNavigate now optionally resets filters to avoid logic collisions with explicit filter buttons
   const handleNavigate = (p: PageType, resetFilters: boolean = false) => {
     setCurrentPage(p);
     if (resetFilters) {
@@ -323,6 +330,18 @@ function App() {
 
       <Footer onNavigate={(p) => handleNavigate(p, true)} onWebsitesClick={() => setIsWebsitesModalOpen(true)} onInstall={() => {}} />
 
+      {/* Floating Actions */}
+      <div className="fixed bottom-28 left-8 flex flex-col gap-4 z-40">
+        <button 
+          onClick={handleChloeMagic}
+          className="w-16 h-16 bg-gradient-to-tr from-purple-600 to-pink-600 text-white rounded-2xl shadow-xl flex items-center justify-center border-2 border-white/20 hover:scale-110 transition-transform group relative"
+          title="Sorteio da Chloe"
+        >
+          <Wand2 className="w-8 h-8" />
+          <div className="absolute -top-2 -right-2 bg-brand-500 text-[8px] px-1.5 py-0.5 rounded-full border border-slate-900 animate-pulse font-black uppercase">Sorte!</div>
+        </button>
+      </div>
+
       {isAdmin && (
         <button onClick={() => setIsUploadModalOpen(true)} className="fixed bottom-28 right-8 w-16 h-16 bg-brand-600 text-white rounded-2xl shadow-xl flex items-center justify-center z-40 border-2 border-brand-400/30">
           <PlusCircle className="w-8 h-8" />
@@ -331,6 +350,10 @@ function App() {
 
       {selectedImage && (
         <ImageViewer image={selectedImage} onClose={() => setSelectedImage(null)} onUpdate={handleUpdateImage} onDelete={handleDeleteImage} isAdmin={isAdmin} currentUser={currentUser} contextImages={allImagesCache} onImageSelect={setSelectedImage} t={t.viewer} categories={categories} />
+      )}
+
+      {raffleItem && (
+        <ChloeRaffle item={raffleItem} onClose={() => setRaffleItem(null)} onViewItem={setSelectedImage} />
       )}
 
       {isLoginModalOpen && <LoginModal onClose={() => setIsLoginModalOpen(false)} onLogin={(u, p, t) => {
