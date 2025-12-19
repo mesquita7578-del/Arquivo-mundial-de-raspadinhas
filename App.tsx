@@ -20,7 +20,7 @@ import { ScratchcardData, Continent, Category, CategoryItem, SiteMetadata } from
 import { 
   Globe, Ticket, Sparkles, Loader2, Library, BookOpen, 
   PlusCircle, Info, Search, Filter, LayoutGrid, Map as MapIcon, Tag,
-  Navigation, MousePointer2, UserCheck, FileJson, Zap, Wand2, Archive, ArrowRight
+  Navigation, MousePointer2, UserCheck, FileJson, Zap, Wand2, Archive, ArrowRight, Radio
 } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
@@ -249,21 +249,19 @@ function App() {
       />
 
       <main className="flex-1 overflow-y-auto bg-[#020617] scroll-smooth custom-scrollbar flex flex-col relative">
-        {/* Camada de Decoração de Fundo Porto-Theme */}
         <div className="absolute top-0 left-0 w-full h-[800px] bg-gradient-to-b from-brand-500/10 via-brand-600/5 to-transparent pointer-events-none z-0"></div>
 
         {!(currentPage === 'stats' || currentPage === 'about' || currentPage === 'map') && (
           <div className="sticky top-0 z-30 bg-[#020617]/95 backdrop-blur-xl border-b border-slate-900 shadow-2xl overflow-hidden">
-            {/* NOVO: BARRA DE FILTROS UNIFICADA NUMA SÓ LINHA */}
+            {/* BARRA DE FILTROS LIMPA */}
             <div className="px-4 md:px-8 py-3.5 flex items-center gap-4 overflow-x-auto no-scrollbar scroll-smooth">
               
-              {/* Grupo 1: Status (Raridades e Premiadas) */}
+              {/* Grupo 1: Status */}
               <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-xl shadow-inner shrink-0">
                 <button onClick={() => setFilterRarity(!filterRarity)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${filterRarity ? 'bg-brand-500 text-white shadow-[0_0_10px_rgba(0,168,255,0.5)]' : 'text-slate-500 hover:text-slate-300'}`}>Raridades</button>
                 <button onClick={() => setFilterWinners(!filterWinners)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${filterWinners ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>Premiadas</button>
               </div>
 
-              {/* Separador Visual */}
               <div className="h-6 w-px bg-slate-800 shrink-0"></div>
 
               {/* Grupo 2: Categorias */}
@@ -297,17 +295,14 @@ function App() {
 
               <div className="h-6 w-px bg-slate-800 shrink-0"></div>
 
-              {/* Grupo 4: Coleção / Novidades */}
-              <div className="flex gap-2 shrink-0">
-                {currentUser && (
+              {/* Grupo 4: Coleção (Apenas se logado) */}
+              {currentUser && (
+                <div className="flex shrink-0">
                   <button onClick={() => handleNavigate('my-collection')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-1.5 border border-slate-800 whitespace-nowrap ${currentPage === 'my-collection' ? 'bg-brand-600 text-white shadow-lg' : 'bg-slate-900/50 text-brand-400 hover:text-brand-300'}`}><UserCheck className="w-3.5 h-3.5" /> Minha Coleção</button>
-                )}
-                {recentCount > 0 && (
-                  <button onClick={() => handleNavigate('new-arrivals')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-1.5 border border-brand-500/30 whitespace-nowrap ${currentPage === 'new-arrivals' ? 'bg-brand-500 text-white shadow-[0_0_15px_rgba(0,168,255,0.6)]' : 'bg-slate-900/50 text-brand-500 hover:text-brand-400'}`}><Zap className="w-3.5 h-3.5 animate-pulse" /> Novidades ({recentCount})</button>
-                )}
-              </div>
+                </div>
+              )}
 
-              {/* Grupo 5: Campo de Procura (Alinhado à direita no final da linha) */}
+              {/* Grupo 5: Pesquisa */}
               <div className="relative group shrink-0 min-w-[200px] md:min-w-[300px] flex-1">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
                   <input 
@@ -347,7 +342,7 @@ function App() {
 
       <Footer onNavigate={(p) => handleNavigate(p, true)} onWebsitesClick={() => setIsWebsitesModalOpen(true)} />
 
-      {/* Floating Actions Porto Style */}
+      {/* Floating Actions */}
       <div className="fixed bottom-32 left-8 flex flex-col gap-4 z-40">
         <button 
           onClick={handleChloeMagic}

@@ -71,7 +71,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="flex items-center justify-between px-3 lg:px-8 py-2 bg-[#020617] border-b border-slate-900 sticky top-0 z-[100] shadow-xl h-[65px] md:h-[75px]">
       
-      {/* Logo Area - More compact on mobile */}
+      {/* Logo Area */}
       <div className="flex items-center gap-2 md:gap-3 cursor-pointer group shrink-0" onClick={() => onNavigate('home')}>
         <div className="bg-brand-500 p-1.5 md:p-2 rounded-lg shadow-[0_0_15px_rgba(0,168,255,0.4)] relative border border-white/20 group-hover:scale-105 transition-transform">
           <Ticket className="w-5 h-5 md:w-6 md:h-6 text-white" />
@@ -89,20 +89,31 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Desktop Navigation - Hidden on lg (1024px) to give space for tablets */}
+      {/* Desktop Navigation */}
       <nav className="hidden lg:flex items-center gap-1">
-         <button 
-           onClick={onRadioClick}
-           className="px-3 py-2 rounded-full text-[10px] font-black flex items-center gap-1.5 transition-all bg-brand-500/10 text-brand-400 border border-brand-500/30 hover:bg-brand-500 hover:text-white mr-1 group neon-glow-blue"
-         >
-           <Radio className="w-3.5 h-3.5 group-hover:animate-pulse" /> Rádios
-         </button>
-
          <button 
            onClick={() => onNavigate('home')}
            className={`px-3 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all relative ${currentPage === 'home' ? 'bg-brand-500 text-white shadow-[0_0_15px_rgba(0,168,255,0.4)]' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
          >
            <Home className="w-3.5 h-3.5" /> {t.home}
+         </button>
+
+         {/* BOTÃO NOVIDADES NO TOPO */}
+         {recentCount > 0 && (
+           <button 
+             onClick={() => onNavigate('new-arrivals')}
+             className={`px-3 py-2 rounded-full text-xs font-black flex items-center gap-1.5 transition-all animate-neon-fast border ${currentPage === 'new-arrivals' ? 'bg-brand-500 text-white border-brand-400' : 'bg-brand-500/10 text-brand-400 border-brand-500/30'}`}
+           >
+             <Zap className="w-3.5 h-3.5" /> Novidades ({recentCount})
+           </button>
+         )}
+
+         {/* BOTÃO RÁDIOS NO TOPO */}
+         <button 
+           onClick={onRadioClick}
+           className="px-3 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white hover:bg-slate-800"
+         >
+           <Radio className="w-3.5 h-3.5 text-brand-500" /> Rádios
          </button>
          
          <div className="relative" ref={exploreRef}>
@@ -143,14 +154,13 @@ export const Header: React.FC<HeaderProps> = ({
          </button>
       </nav>
 
-      {/* Right Actions - Compact for Mobile */}
+      {/* Right Actions */}
       <div className="flex items-center gap-1.5 md:gap-3">
         <div className="hidden lg:flex bg-slate-800/80 rounded-lg p-1 border border-slate-700">
           <button onClick={() => setLanguage('pt')} className={`px-2 py-0.5 rounded-md text-[10px] font-black transition-all ${language === 'pt' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-500'}`}>PT</button>
           <button onClick={() => setLanguage('it')} className={`px-2 py-0.5 rounded-md text-[10px] font-black transition-all ${language === 'it' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-500'}`}>IT</button>
         </div>
 
-        {/* Library button hidden on mobile screens, moved to mobile menu */}
         <button onClick={onHistoryClick} className="hidden sm:flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-brand-500/10 text-brand-400 border border-brand-500/30 rounded-md hover:bg-brand-500 hover:text-white transition-all text-[10px] md:text-xs font-bold uppercase tracking-widest shrink-0">
           <BookOpen className="w-3.5 h-3.5 md:w-4 md:h-4" /> <span className="hidden xl:inline">{t.history}</span>
         </button>
@@ -189,14 +199,19 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
       </div>
 
-      {/* Full Screen Mobile Menu Overlay - Accessible on both mobile and tablets */}
+      {/* Mobile Menu */}
       {showMobileMenu && (
         <div className="fixed inset-0 top-[65px] md:top-[75px] bg-[#020617]/98 backdrop-blur-2xl z-[99] flex flex-col p-6 gap-3 animate-fade-in lg:hidden overflow-y-auto">
           <button onClick={() => { onNavigate('home'); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><Home className="w-5 h-5 text-brand-500" /> {t.home}</button>
+          
+          {recentCount > 0 && (
+            <button onClick={() => { onNavigate('new-arrivals'); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-white p-4 bg-brand-500 border border-brand-400 rounded-2xl animate-neon-fast transition-all"><Zap className="w-5 h-5" /> Novidades ({recentCount})</button>
+          )}
+
+          <button onClick={() => { onRadioClick(); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><Radio className="w-5 h-5 text-brand-500" /> Rádios PT</button>
           <button onClick={() => { onNavigate('map'); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><MapIcon className="w-5 h-5 text-brand-500" /> Mapa Mundial</button>
           <button onClick={() => { onNavigate('stats'); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><BarChart2 className="w-5 h-5 text-brand-500" /> Estatísticas</button>
           <button onClick={() => { onHistoryClick(); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><BookOpen className="w-5 h-5 text-brand-500" /> Biblioteca (PDF)</button>
-          <button onClick={() => { onRadioClick(); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><Radio className="w-5 h-5 text-brand-500" /> Rádios PT</button>
           <button onClick={() => { onNavigate('about'); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><Info className="w-5 h-5 text-brand-500" /> Sobre o Arquivo</button>
           
           <div className="mt-auto flex justify-between gap-3 p-2">
