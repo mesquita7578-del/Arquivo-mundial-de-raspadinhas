@@ -3,7 +3,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { 
   Ticket, Lock, LogOut, BookOpen, Home, 
   BarChart2, ChevronDown, Globe, User, Smartphone, 
-  Info, Database, FileJson, FileSpreadsheet, ClipboardList, UploadCloud, ChevronRight, MapPin, Map as MapIcon, Zap
+  Info, Database, FileJson, FileSpreadsheet, ClipboardList, UploadCloud, ChevronRight, MapPin, Map as MapIcon, Zap, Radio
 } from 'lucide-react';
 import { Language } from '../translations';
 import { Continent } from '../types';
@@ -14,6 +14,7 @@ interface HeaderProps {
   onAdminToggle: () => void;
   onLogout: () => void;
   onHistoryClick: () => void;
+  onRadioClick: () => void; // Nova prop
   onExport: () => void;
   onExportCSV: () => void;
   onExportTXT: () => void;
@@ -31,7 +32,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ 
   isAdmin, currentUser, onAdminToggle, onLogout, 
-  onHistoryClick, onExport, onExportCSV, onExportTXT, onImport,
+  onHistoryClick, onRadioClick, onExport, onExportCSV, onExportTXT, onImport,
   language, setLanguage,
   currentPage, onNavigate, t, onInstall,
   countriesByContinent = {},
@@ -70,7 +71,7 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="flex items-center justify-between px-4 md:px-8 py-3 bg-slate-900 border-b border-slate-800 sticky top-0 z-[100] shadow-xl h-[70px]">
       
       <div className="flex items-center gap-3 cursor-pointer group shrink-0" onClick={() => onNavigate('home')}>
-        <div className="bg-brand-600 p-2 rounded-lg shadow-lg relative">
+        <div className="bg-brand-600 p-2 rounded-lg shadow-lg relative border border-white/10">
           <Ticket className="w-6 h-6 text-white" />
           {recentCount > 0 && (
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-slate-900 animate-pulse"></div>
@@ -87,6 +88,14 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <nav className="hidden lg:flex items-center gap-1">
+         {/* Botão Rádios PT à esquerda do Início */}
+         <button 
+           onClick={onRadioClick}
+           className="px-4 py-2 rounded-full text-xs font-black flex items-center gap-2 transition-all bg-brand-900/20 text-brand-400 border border-brand-500/30 hover:bg-brand-600 hover:text-white mr-2 group"
+         >
+           <Radio className="w-4 h-4 group-hover:animate-pulse" /> Rádios PT
+         </button>
+
          <button 
            onClick={() => onNavigate('home')}
            className={`px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all relative ${currentPage === 'home' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}

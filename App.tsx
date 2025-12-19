@@ -12,6 +12,7 @@ import { WebsitesModal } from './components/WebsitesModal';
 import { CategoryManager } from './components/CategoryManager';
 import { AboutPage } from './components/AboutPage'; 
 import { WorldMap } from './components/WorldMap';
+import { RadioModal } from './components/RadioModal';
 import { DivineSignal, Signal, SignalType } from './components/DivineSignal';
 import { ChloeRaffle } from './components/ChloeRaffle';
 import { INITIAL_RASPADINHAS } from './constants';
@@ -63,6 +64,7 @@ function App() {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); 
   const [isWebsitesModalOpen, setIsWebsitesModalOpen] = useState(false); 
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
+  const [isRadioModalOpen, setIsRadioModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
   const [raffleItem, setRaffleItem] = useState<ScratchcardData | null>(null);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
@@ -222,6 +224,7 @@ function App() {
         onAdminToggle={() => setIsLoginModalOpen(true)}
         onLogout={() => { setCurrentUser(null); setUserRole(null); handleNavigate('home', true); }} 
         onHistoryClick={() => setIsHistoryModalOpen(true)} 
+        onRadioClick={() => setIsRadioModalOpen(true)}
         onExport={handleExportBackup}
         onExportCSV={() => {}}
         onExportTXT={() => {}}
@@ -360,6 +363,7 @@ function App() {
       {isUploadModalOpen && <UploadModal onClose={() => setIsUploadModalOpen(false)} onUploadComplete={handleUploadComplete} existingImages={allImagesCache} initialFile={null} currentUser={currentUser} t={t.upload} categories={categories} />}
       {isHistoryModalOpen && <HistoryModal onClose={() => setIsHistoryModalOpen(false)} isAdmin={isAdmin} t={t.header} />}
       {isWebsitesModalOpen && <WebsitesModal onClose={() => setIsWebsitesModalOpen(false)} isAdmin={isAdmin} t={t.header} />}
+      {isRadioModalOpen && <RadioModal onClose={() => setIsRadioModalOpen(false)} />}
 
       <DivineSignal signals={signals} onRemove={removeSignal} />
     </div>
