@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Heart, RefreshCw, User, ShieldCheck } from 'lucide-react';
+import { Heart, RefreshCw, User, ShieldCheck, Smartphone, Download } from 'lucide-react';
 import { ChloeClock } from './ChloeClock';
 
 interface FooterProps {
@@ -9,7 +9,7 @@ interface FooterProps {
   onInstall?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onInstall }) => {
   const currentYear = new Date().getFullYear();
 
   return (
@@ -50,12 +50,20 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick }) =
             <span className="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em]">
               © {currentYear} ARQUIVO MUNDIAL • PORTO É NAÇÃO 🐉
             </span>
-            <button 
-              onClick={onWebsitesClick}
-              className="text-[8px] font-black text-slate-500 hover:text-brand-400 uppercase tracking-[0.1em] transition-colors border-l border-slate-800 pl-4"
-            >
-              Diretório Mundial
-            </button>
+            <div className="flex items-center border-l border-slate-800 pl-4 gap-4">
+              <button 
+                onClick={onWebsitesClick}
+                className="text-[8px] font-black text-slate-500 hover:text-brand-400 uppercase tracking-[0.1em] transition-colors"
+              >
+                Diretório Mundial
+              </button>
+              <button 
+                onClick={onInstall}
+                className="text-[8px] font-black text-brand-500 hover:text-brand-400 uppercase tracking-[0.1em] transition-all flex items-center gap-1.5 bg-brand-500/5 px-2 py-1 rounded-md border border-brand-500/20"
+              >
+                <Smartphone className="w-2.5 h-2.5" /> Descarregar APP
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-4">

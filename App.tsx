@@ -14,7 +14,6 @@ import { AboutPage } from './components/AboutPage';
 import { WorldMap } from './components/WorldMap';
 import { RadioModal } from './components/RadioModal';
 import { DivineSignal, Signal, SignalType } from './components/DivineSignal';
-import { ChloeRaffle } from './components/ChloeRaffle';
 import { INITIAL_RASPADINHAS } from './constants';
 import { ScratchcardData, Continent, Category, CategoryItem, SiteMetadata } from './types';
 import { 
@@ -66,7 +65,6 @@ function App() {
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
   const [isRadioModalOpen, setIsRadioModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
-  const [raffleItem, setRaffleItem] = useState<ScratchcardData | null>(null);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<'admin' | 'visitor' | null>(null);
   const isAdmin = userRole === 'admin';
@@ -174,12 +172,6 @@ function App() {
     triggerSignal("Golo no Arquivo! Nova Raspadinha! 🐉✨", 'divine');
   };
 
-  const handleChloeMagic = () => {
-    if (allImagesCache.length === 0) return;
-    const randomIndex = Math.floor(Math.random() * allImagesCache.length);
-    setRaffleItem(allImagesCache[randomIndex]);
-  };
-
   const filteredImages = useMemo(() => {
     return allImagesCache.filter(i => {
       if (activeContinent !== 'Mundo' && i.continent !== activeContinent) return false;
@@ -253,67 +245,35 @@ function App() {
 
         {!(currentPage === 'stats' || currentPage === 'about' || currentPage === 'map') && (
           <div className="sticky top-0 z-30 bg-[#020617]/95 backdrop-blur-xl border-b border-slate-900 shadow-2xl overflow-hidden">
-            {/* BARRA DE FILTROS LIMPA */}
             <div className="px-4 md:px-8 py-3.5 flex items-center gap-4 overflow-x-auto no-scrollbar scroll-smooth">
-              
-              {/* Grupo 1: Status */}
               <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-xl shadow-inner shrink-0">
                 <button onClick={() => setFilterRarity(!filterRarity)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${filterRarity ? 'bg-brand-500 text-white shadow-[0_0_10px_rgba(0,168,255,0.5)]' : 'text-slate-500 hover:text-slate-300'}`}>Raridades</button>
                 <button onClick={() => setFilterWinners(!filterWinners)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${filterWinners ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>Premiadas</button>
               </div>
-
               <div className="h-6 w-px bg-slate-800 shrink-0"></div>
-
-              {/* Grupo 2: Categorias */}
               <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-xl shadow-inner shrink-0">
-                <button 
-                  onClick={() => { setActiveCategory('all'); handleNavigate('home'); }} 
-                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeCategory === 'all' && currentPage === 'home' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-600 hover:text-slate-400'}`}
-                >
-                  Tudo
-                </button>
+                <button onClick={() => { setActiveCategory('all'); handleNavigate('home'); }} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeCategory === 'all' && currentPage === 'home' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-600 hover:text-slate-400'}`}>Tudo</button>
                 {categories.map(cat => (
-                  <button 
-                    key={cat.id} 
-                    onClick={() => { setActiveCategory(cat.name); handleNavigate('home'); }} 
-                    className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeCategory.toLowerCase() === cat.name.toLowerCase() && currentPage === 'home' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-600 hover:text-slate-400'}`}
-                  >
-                    {cat.name}
-                  </button>
+                  <button key={cat.id} onClick={() => { setActiveCategory(cat.name); handleNavigate('home'); }} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeCategory.toLowerCase() === cat.name.toLowerCase() && currentPage === 'home' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-600 hover:text-slate-400'}`}>{cat.name}</button>
                 ))}
               </div>
-
               <div className="h-6 w-px bg-slate-800 shrink-0"></div>
-
-              {/* Grupo 3: Continentes */}
               <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-xl shadow-inner shrink-0">
                  <button onClick={() => setActiveContinent('Mundo')} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeContinent === 'Mundo' ? 'bg-brand-500 text-white shadow-[0_0_10px_rgba(0,168,255,0.5)]' : 'text-slate-500 hover:text-slate-300'}`}>Mundo</button>
                  {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => (
                     <button key={cont} onClick={() => setActiveContinent(cont as Continent)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeContinent === cont ? 'bg-brand-500 text-white shadow-[0_0_10px_rgba(0,168,255,0.5)]' : 'text-slate-500 hover:text-slate-300'}`}>{cont}</button>
                  ))}
               </div>
-
               <div className="h-6 w-px bg-slate-800 shrink-0"></div>
-
-              {/* Grupo 4: Coleção (Apenas se logado) */}
               {currentUser && (
                 <div className="flex shrink-0">
                   <button onClick={() => handleNavigate('my-collection')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-1.5 border border-slate-800 whitespace-nowrap ${currentPage === 'my-collection' ? 'bg-brand-600 text-white shadow-lg' : 'bg-slate-900/50 text-brand-400 hover:text-brand-300'}`}><UserCheck className="w-3.5 h-3.5" /> Minha Coleção</button>
                 </div>
               )}
-
-              {/* Grupo 5: Pesquisa */}
               <div className="relative group shrink-0 min-w-[200px] md:min-w-[300px] flex-1">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
-                  <input 
-                    type="text" 
-                    placeholder="Procurar no estádio..." 
-                    value={countrySearch} 
-                    onChange={(e) => setCountrySearch(e.target.value)} 
-                    className="bg-slate-900/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-[11px] text-white outline-none w-full focus:border-brand-500 focus:bg-slate-900 transition-all shadow-inner font-bold placeholder:text-slate-700" 
-                  />
+                  <input type="text" placeholder="Procurar no estádio..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} className="bg-slate-900/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-[11px] text-white outline-none w-full focus:border-brand-500 focus:bg-slate-900 transition-all shadow-inner font-bold placeholder:text-slate-700" />
               </div>
-
             </div>
           </div>
         )}
@@ -340,19 +300,11 @@ function App() {
         </div>
       </main>
 
-      <Footer onNavigate={(p) => handleNavigate(p, true)} onWebsitesClick={() => setIsWebsitesModalOpen(true)} />
-
-      {/* Floating Actions */}
-      <div className="fixed bottom-32 left-8 flex flex-col gap-4 z-40">
-        <button 
-          onClick={handleChloeMagic}
-          className="w-16 h-16 bg-gradient-to-tr from-brand-500 to-brand-600 text-white rounded-2xl shadow-[0_0_25px_rgba(0,168,255,0.4)] flex items-center justify-center border-2 border-white/20 hover:scale-110 transition-transform group relative"
-          title="Sorteio da Chloe"
-        >
-          <Wand2 className="w-8 h-8" />
-          <div className="absolute -top-2 -right-2 bg-white text-brand-600 text-[8px] px-1.5 py-0.5 rounded-full border border-brand-600 animate-pulse font-black uppercase shadow-lg">Porto!</div>
-        </button>
-      </div>
+      <Footer 
+        onNavigate={(p) => handleNavigate(p, true)} 
+        onWebsitesClick={() => setIsWebsitesModalOpen(true)} 
+        onInstall={() => triggerSignal("Função de instalação em desenvolvimento... 📱", "info")}
+      />
 
       {isAdmin && (
         <button onClick={() => setIsUploadModalOpen(true)} className="fixed bottom-32 right-8 w-16 h-16 bg-brand-500 text-white rounded-2xl shadow-[0_0_20px_rgba(0,168,255,0.5)] flex items-center justify-center z-40 border-2 border-white/20 active:scale-95 transition-all">
@@ -362,10 +314,6 @@ function App() {
 
       {selectedImage && (
         <ImageViewer image={selectedImage} onClose={() => setSelectedImage(null)} onUpdate={handleUpdateImage} onDelete={handleDeleteImage} isAdmin={isAdmin} currentUser={currentUser} contextImages={allImagesCache} onImageSelect={setSelectedImage} t={t.viewer} categories={categories} />
-      )}
-
-      {raffleItem && (
-        <ChloeRaffle item={raffleItem} onClose={() => setRaffleItem(null)} onViewItem={setSelectedImage} />
       )}
 
       {isLoginModalOpen && <LoginModal onClose={() => setIsLoginModalOpen(false)} onLogin={(u, p, t) => {
