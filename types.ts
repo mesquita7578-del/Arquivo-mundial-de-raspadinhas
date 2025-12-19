@@ -1,18 +1,19 @@
 
-export type ScratchcardState = 'AMOSTRA' | 'VOID' | 'SAMPLE' | 'MUESTRA' | 'CAMPIONE' | 'SPECIMEN' | 'MUSTER' | 'ÉCHANTILLON' | '견본' | 'STEEKPROEF' | 'PRØVE' | 'PROV' | '样本' | 'MINT' | 'CS' | 'SC';
+// Types for the global archive system
 
 export type Continent = 'Europa' | 'América' | 'Ásia' | 'África' | 'Oceania' | 'Mundo';
 
-export type Category = string;
+export type ScratchcardState = 'MINT' | 'SC' | 'CS' | 'AMOSTRA' | 'VOID' | 'SAMPLE' | 'MUESTRA' | 'CAMPIONE' | '样本' | 'MUSTER' | 'PRØVE';
 
-export type LineType = 'blue' | 'red' | 'multicolor' | 'none' | 'green' | 'brown' | 'pink' | 'purple' | 'yellow' | 'gray' | string;
+export type LineType = 'blue' | 'red' | 'multicolor' | 'green' | 'brown' | 'pink' | 'purple' | 'yellow' | 'gray' | 'none';
+
+export type Category = string;
 
 export interface ScratchcardData {
   id: string;
   customId: string;
   frontUrl: string;
   backUrl?: string;
-  extraImages?: string[];
   gameName: string;
   gameNumber: string;
   releaseDate: string;
@@ -24,45 +25,36 @@ export interface ScratchcardData {
   country: string;
   region?: string;
   continent: Continent;
-  collector?: string;
-  operator?: string;
-  emission?: string;
-  printer?: string;
-  isSeries?: boolean;
-  seriesDetails?: string;
-  seriesGroupId?: string;
-  lines?: LineType;
-  isRarity?: boolean;
-  isPromotional?: boolean;
-  isFeatured?: boolean;
-  isWinner?: boolean;
-  prizeAmount?: string;
+  category: string;
+  operator: string;
+  printer: string;
+  emission: string;
   winProbability?: string;
-  owners?: string[];
-  category: Category;
+  lines: LineType;
+  collector: string;
   aiGenerated: boolean;
   createdAt: number;
+  owners?: string[];
+  isWinner?: boolean;
+  isSeries?: boolean;
+  seriesGroupId?: string;
 }
 
-export interface CategoryItem {
-  id: string;
-  name: string;
-  isDefault: boolean;
-  createdAt: number;
-}
-
-export interface DocumentItem {
-  id: string;
-  title: string;
-  description?: string;
-  fileUrl: string;
-  fileName: string;
-  createdAt: number;
-  gameNumber?: string;
-  year?: string;
-  printer?: string;
-  measures?: string;
-  expiration?: string;
+export interface AnalysisResult {
+  category: string;
+  gameName: string;
+  gameNumber: string;
+  releaseDate: string;
+  size: string;
+  values: string;
+  price: string;
+  state: string;
+  country: string;
+  continent: string;
+  operator: string;
+  printer: string;
+  emission: string;
+  lines: string;
 }
 
 export interface WebsiteLink {
@@ -71,8 +63,36 @@ export interface WebsiteLink {
   url: string;
   logoUrl?: string;
   country: string;
-  category?: string;
+  category: string;
   continent?: string;
+}
+
+export interface CategoryItem {
+  id: string;
+  name: string;
+  isDefault?: boolean;
+  createdAt: number;
+}
+
+export interface DocumentItem {
+  id: string;
+  title: string;
+  description: string;
+  fileName: string;
+  fileUrl: string;
+  createdAt: number;
+  gameNumber?: string;
+  year?: string;
+  printer?: string;
+  measures?: string;
+}
+
+export interface SiteMetadata {
+  id: string;
+  founderPhotoUrl?: string;
+  founderBio?: string;
+  founderQuote?: string;
+  milestones?: Milestone[];
 }
 
 export interface Milestone {
@@ -81,31 +101,18 @@ export interface Milestone {
   description: string;
 }
 
-export interface SiteMetadata {
-  id: 'site_settings';
-  founderPhotoUrl: string;
-  founderBio?: string;
-  founderQuote?: string;
-  milestones?: Milestone[];
+export interface ArchiveImage {
+  id: string;
+  url: string;
+  title: string;
+  description: string;
+  tags: string[];
+  category: string;
+  date: string;
+  createdAt: number;
 }
 
-export interface AnalysisResult {
-  gameName: string;
-  gameNumber: string;
-  releaseDate: string;
-  closeDate?: string;
-  size: string;
-  values: string;
-  price?: string;
-  state: ScratchcardState;
-  country: string;
-  region?: string;
-  continent: Continent;
-  operator?: string;
-  emission?: string;
-  printer?: string;
-  category: Category;
-  seriesDetails?: string;
-  lines?: string;
-  winProbability?: string;
+export interface Album {
+  id: string;
+  name: string;
 }

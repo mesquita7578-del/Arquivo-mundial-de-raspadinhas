@@ -1,78 +1,36 @@
 
 <!DOCTYPE html>
 <html lang="pt-PT">
-  <head>
+<head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-    
-    <!-- Site Title -->
-    <title>Arquivo Mundial de Raspadinhas | Archivio Mondiale Gratta e Vinci</title>
-    
-    <!-- SEO Description (Bilingual) -->
-    <meta name="description" content="O maior catálogo digital para colecionadores de raspadinhas e lotarias. Organize, analise com IA e preserve a história da sorte instantânea." />
-    <meta name="keywords" content="raspadinha, gratta e vinci, scratchcard, lotaria, lottery, coleção, arquivo mundial, jorge mesquita, fabio pagni" />
-    <meta name="author" content="Jorge Mesquita & Fabio Pagni" />
-
-    <!-- PWA / Mobile App Settings -->
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Arquivo Mundial" />
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2662/2662503.png" />
-
-    <!-- Open Graph / Facebook / WhatsApp -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://arquivo-mundial.app/" />
-    <meta property="og:title" content="Arquivo Mundial de Raspadinhas 🌍" />
-    <meta property="og:description" content="Catálogo digital inteligente com IA para colecionadores. Junte-se a nós para preservar a história mundial das lotarias." />
-    <meta property="og:image" content="https://images.unsplash.com/photo-1594902360217-194363228a47?q=80&w=1200&h=630&auto=format&fit=crop" />
-    <meta property="og:locale" content="pt_PT" />
-    
-    <!-- Mobile Theme Color -->
-    <meta name="theme-color" content="#020617" />
-    
-    <!-- Favicon (Ticket Emoji) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎟️</text></svg>">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visionary Archive | O Seu Legado Digital</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
-              brand: {
-                50: '#f0f9ff',
-                100: '#e0f2fe',
-                400: '#38bdf8',
-                500: '#00a8ff', /* Azul Neon Porto */
-                600: '#004797', /* Azul Porto Oficial */
-                900: '#0c4a6e',
+              zinc: {
+                950: '#09090b',
               },
-              gold: {
-                400: '#fbbf24',
-                500: '#f59e0b',
+              brand: {
+                500: '#6366f1',
+                600: '#4f46e5',
               }
             },
             animation: {
-              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-              'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-              'neon-fast': 'neonPulse 0.8s ease-in-out infinite',
-              'fade-in': 'fadeIn 0.3s ease-out forwards',
-              'bounce-in': 'bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards',
+              'fade-in': 'fadeIn 0.5s ease-out forwards',
+              'slide-up': 'slideUp 0.4s ease-out forwards',
             },
             keyframes: {
               fadeIn: {
                 '0%': { opacity: '0' },
                 '100%': { opacity: '1' },
               },
-              bounceIn: {
-                '0%': { transform: 'scale(0.8)', opacity: '0' },
-                '100%': { transform: 'scale(1)', opacity: '1' },
-              },
-              neonPulse: {
-                '0%, 100%': { boxShadow: '0 0 5px rgba(0, 168, 255, 0.4)', filter: 'brightness(1)' },
-                '50%': { boxShadow: '0 0 20px rgba(0, 168, 255, 0.8)', filter: 'brightness(1.5)', transform: 'scale(1.02)' },
+              slideUp: {
+                '0%': { transform: 'translateY(20px)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
               }
             }
           }
@@ -80,63 +38,46 @@
       }
     </script>
     <style>
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #09090b;
+        color: #f4f4f5;
+        overflow-x: hidden;
       }
-      ::-webkit-scrollbar-track {
-        background: #020617;
+      .masonry-grid {
+        column-count: 1;
+        column-gap: 1.5rem;
       }
-      ::-webkit-scrollbar-thumb {
-        background: #004797;
-        border-radius: 4px;
+      @media (min-width: 640px) { .masonry-grid { column-count: 2; } }
+      @media (min-width: 1024px) { .masonry-grid { column-count: 3; } }
+      @media (min-width: 1280px) { .masonry-grid { column-count: 4; } }
+      
+      .masonry-item {
+        break-inside: avoid;
+        margin-bottom: 1.5rem;
       }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #00a8ff;
-      }
-      html {
-        scroll-behavior: smooth;
-        touch-action: manipulation;
-      }
-      .neon-glow-blue {
-        box-shadow: 0 0 15px rgba(0, 168, 255, 0.6);
-      }
-      .neon-glow-blue-strong {
-        box-shadow: 0 0 25px rgba(0, 168, 255, 0.8);
-      }
-      .neon-border-blue {
-        border-color: rgba(0, 168, 255, 0.6);
-      }
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
-      /* Ajuste para evitar que o teclado mobile empurre o layout de forma errada */
-      @media (max-height: 450px) {
-        header { height: 50px !important; }
-        .logo-text { font-size: 0.8rem !important; }
-      }
+
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: #09090b; }
+      ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+      ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
     </style>
-  <script type="importmap">
+    <script type="importmap">
 {
   "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "lucide-react": "https://esm.sh/lucide-react@0.344.0",
+    "@google/genai": "https://esm.sh/@google/genai@1.33.0",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
-    "uuid": "https://esm.sh/uuid@^13.0.0",
-    "react-simple-maps": "https://esm.sh/react-simple-maps@3.0.0",
-    "d3-scale": "https://esm.sh/d3-scale@4.0.2",
-    "react-tooltip": "https://esm.sh/react-tooltip@5.26.0"
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
   }
 }
 </script>
 </head>
-  <body class="bg-[#020617] text-slate-100 font-sans antialiased selection:bg-brand-500 selection:text-white">
-    <div id="root" class="min-h-screen w-full flex flex-col"></div>
-  </body>
+<body>
+    <div id="root"></div>
+    <script type="module" src="index.tsx"></script>
+</body>
 </html>

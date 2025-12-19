@@ -1,341 +1,242 @@
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { Header } from './components/Header';
-import { Footer } from './components/Footer';
-import { ImageGrid } from './components/ImageGrid';
-import { UploadModal } from './components/UploadModal';
-import { ImageViewer } from './components/ImageViewer';
-import { LoginModal } from './components/LoginModal';
-import { StatsSection } from './components/StatsSection';
-import { HistoryModal } from './components/HistoryModal'; 
-import { WebsitesModal } from './components/WebsitesModal';
-import { CategoryManager } from './components/CategoryManager';
-import { AboutPage } from './components/AboutPage'; 
-import { WorldMap } from './components/WorldMap';
-import { RadioModal } from './components/RadioModal';
-import { DivineSignal, Signal, SignalType } from './components/DivineSignal';
-import { INITIAL_RASPADINHAS } from './constants';
-import { ScratchcardData, Continent, Category, CategoryItem, SiteMetadata } from './types';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  Globe, Ticket, Sparkles, Loader2, Library, BookOpen, 
-  PlusCircle, Info, Search, Filter, LayoutGrid, Map as MapIcon, Tag,
-  Navigation, MousePointer2, UserCheck, FileJson, Zap, Wand2, Archive, ArrowRight, Radio
+  Plus, Search, Image as ImageIcon, Trash2, 
+  X, Sparkles, FolderOpen, LayoutGrid, 
+  ArrowUpCircle, Info, Tag as TagIcon, Loader2
 } from 'lucide-react';
-import { translations, Language } from './translations';
-import { storageService } from './services/storage';
+import { GoogleGenAI, Type } from "@google/genai";
+import { storage } from './storage';
+import { ArchiveImage } from './types';
 
-const AUTHORIZED_ADMINS = ["JORGE MESQUITA", "FABIO PAGNI", "CHLOE", "IA", "SYSTEM", "PEDRO RODRIGO"];
-const ADMIN_PASSWORD = "123456";
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-type PageType = 'home' | 'stats' | 'about' | 'europe' | 'america' | 'asia' | 'africa' | 'oceania' | 'showcase' | 'my-collection' | 'map' | 'new-arrivals';
-
-function App() {
-  const [allImagesCache, setAllImagesCache] = useState<ScratchcardData[]>([]);
-  const [categories, setCategories] = useState<CategoryItem[]>([]);
-  const [siteMetadata, setSiteMetadata] = useState<SiteMetadata>({ 
-    id: 'site_settings', 
-    founderPhotoUrl: '',
-    founderBio: `Nascido a 16 de julho de 1967 na rua de Bonjóia, em Campanhã, no coração do Porto, Jorge Manuel Cardoso Mesquita carrega no sangue a passion pelo detalhe e a alma azul e branca. Filho de Custódio Mateus Mesquita e Ana Conceição Jesus Cardoso, Jorge descobriu o encanto do colecionismo através do seu falecido pai, que dedicava horas aos álbuns de cromos da Panini.\n\nO que começou com latas de bebidas, isqueiros e miniaturas de carros, evoluiu para a numismática e, finalmente, para o encontro que mudaria o seu destino: a descoberta das "Gratta e Vinci" em Itália. Ali, entre a arte italiana e os exemplares que já possuía em Portugal, Jorge mergulhou de cabeça no mundo da sorte instantânea.\n\nA jornada não foi fácil. A falta de informação sobre as emissões da SCML em Portugal motivou uma busca incessante que o levou a conhecer David Vázquez Trujillo, o maior colecionador mundial de lotarias. Sob a mentoria de David, Fabio Pagni e Kurt Böhmer, Jorge transformou-se de um entusiasta num verdadeiro guardião da história mundial das raspadinhas.\n\nA viver e trabalhar na Suíça, Jorge dedica 99,9% da sua alma ao colecionismo de raspadinhas, mantendo o espírito vivo para que este arquivo digital seja um legado eterno para as futuras gerações, incluindo a sua neta Chloe, que herdou o seu amor pelo F.C. Porto.`,
-    founderQuote: "Dedico 99,9% da minha alma às raspadinhas; o resto é a história de uma vida azul e branca a colecionar sonhos.",
-    milestones: [
-      { year: '1967', title: 'O Início no Porto', description: 'Nascimento na Rua de Bonjóia, Campanhã. O início de uma jornada marcada pela curiosidade na Invicta.' },
-      { year: '1980', title: 'A Herança de Custódio', description: 'A descoberta dos cromos Panini e o despertar do "vício" saudável do colecionismo pelas mãos do pai.' },
-      { year: '1983', title: 'O Primeiro Passo Profissional', description: 'Início da vida laboral, mantendo sempre o "bichinho" das moedas e notas do mundo.' },
-      { year: 'Itália', title: 'O Despertar da Sorte', description: 'A descoberta das "Gratta e Vinci" e a decisão de catalogar sistematicamente as raspadinhas mundiais.' },
-      { year: '2013', title: 'A Conexão Mundial', description: 'O encontro com David Vázquez Trujillo e o início da grande caminhada com mentores globais.' },
-      { year: '2025', title: 'O Arquivo Digital', description: 'A viver na Suíça, consolida o seu legado digital azul e branco para garantir que a história nunca se perca.' }
-    ]
-  });
-  const [totalStats, setTotalStats] = useState({ total: 0, stats: {} as Record<string, number>, categoryStats: {} as Record<string, number>, countryStats: {} as Record<string, number>, stateStats: {} as Record<string, number>, collectorStats: {} as Record<string, number> });
-  const [isLoadingDB, setIsLoadingDB] = useState(true);
-  const [currentPage, setCurrentPage] = useState<PageType>('home');
-  const [signals, setSignals] = useState<Signal[]>([]);
-  
-  const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
-  const [activeContinent, setActiveContinent] = useState<Continent | 'Mundo'>('Mundo');
-  const [filterRarity, setFilterRarity] = useState(false);
-  const [filterWinners, setFilterWinners] = useState(false);
-  const [countrySearch, setCountrySearch] = useState('');
+const App: React.FC = () => {
+  const [images, setImages] = useState<ArchiveImage[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); 
-  const [isWebsitesModalOpen, setIsWebsitesModalOpen] = useState(false); 
-  const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
-  const [isRadioModalOpen, setIsRadioModalOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<'admin' | 'visitor' | null>(null);
-  const isAdmin = userRole === 'admin';
-  const [language, setLanguage] = useState<Language>('pt');
-  const t = translations[language];
-
-  const recentCount = useMemo(() => {
-    const startOfToday = new Date().setHours(0, 0, 0, 0);
-    return allImagesCache.filter(img => img.createdAt >= startOfToday).length;
-  }, [allImagesCache]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<ArchiveImage | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
-  }, []);
-
-  const triggerSignal = useCallback((message: string, type: SignalType = 'info') => {
-    const id = Math.random().toString(36).substr(2, 9);
-    setSignals(prev => [...prev, { id, message, type }]);
-  }, []);
-
-  const removeSignal = useCallback((id: string) => {
-    setSignals(prev => prev.filter(s => s.id !== id));
-  }, []);
-
-  const loadData = async () => {
-    try {
-      await storageService.init();
-      const cats = await storageService.getCategories();
-      setCategories(cats);
-      
-      const meta = await storageService.getSiteMetadata();
-      if (meta && meta.founderBio) setSiteMetadata(meta);
-
-      const allItems = await storageService.getAll();
-      if (allItems.length === 0) {
-        await storageService.syncInitialItems(INITIAL_RASPADINHAS);
-        const firstItems = await storageService.getAll();
-        setAllImagesCache(firstItems);
-      } else {
-        setAllImagesCache(allItems);
-      }
-      const freshStats = await storageService.getStats();
-      setTotalStats(freshStats);
-    } catch (error) { 
-      console.error("DB Error:", error); 
-    } finally { 
-      setIsLoadingDB(false); 
-    }
-  };
-
-  const handleExportBackup = async () => {
-    try {
-      const data = await storageService.exportData();
-      const blob = new Blob([data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `backup-arquivo-porto-${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-      triggerSignal("DNA Azul e Branco Exportado! 🐉", 'success');
-    } catch (err) {
-      triggerSignal("Erro ao gerar backup", 'warning');
-    }
-  };
-
-  const handleUpdateImage = async (updatedImage: ScratchcardData) => {
-    await storageService.save(updatedImage);
-    setAllImagesCache(prev => prev.map(img => img.id === updatedImage.id ? updatedImage : img));
-    const freshStats = await storageService.getStats();
-    setTotalStats(freshStats);
-    triggerSignal("Item Atualizado", 'success');
-  };
-
-  const handleDeleteImage = async (id: string) => {
-    await storageService.delete(id);
-    setAllImagesCache(prev => prev.filter(img => img.id !== id));
-    setSelectedImage(null);
-    const freshStats = await storageService.getStats();
-    setTotalStats(freshStats);
-    triggerSignal("Item Removido", 'warning');
-  };
-
-  const countriesByContinent = useMemo(() => {
-    const map: Record<string, string[]> = { 'Europa': [], 'América': [], 'Ásia': [], 'África': [], 'Oceania': [] };
-    allImagesCache.forEach(img => {
-      if (img.continent && map[img.continent] && !map[img.continent].includes(img.country)) {
-        map[img.continent].push(img.country);
-      }
+    storage.init().then(async () => {
+      const all = await storage.getAllImages();
+      setImages(all.sort((a, b) => b.createdAt - a.createdAt));
+      setIsLoading(false);
     });
-    Object.keys(map).forEach(cont => map[cont].sort());
-    return map;
-  }, [allImagesCache]);
+  }, []);
 
-  const handleCountrySelectFromMap = (country: string) => {
-    setCurrentPage('home');
-    const img = allImagesCache.find(i => i.country === country);
-    if (img) setActiveContinent(img.continent);
-    setCountrySearch(country);
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+      const base64 = reader.result as string;
+      
+      try {
+        const response = await ai.models.generateContent({
+          model: 'gemini-3-flash-preview',
+          contents: [
+            {
+              inlineData: {
+                mimeType: file.type,
+                data: base64.split(',')[1],
+              },
+            },
+            { text: "Analisa esta imagem e sugere um título curto, uma descrição detalhada e 5 etiquetas (tags) relevantes. Responde apenas em JSON." }
+          ],
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                title: { type: Type.STRING },
+                description: { type: Type.STRING },
+                tags: { type: Type.ARRAY, items: { type: Type.STRING } }
+              }
+            }
+          }
+        });
+
+        const aiData = JSON.parse(response.text || '{}');
+        const newImg: ArchiveImage = {
+          id: crypto.randomUUID(),
+          url: base64,
+          title: aiData.title || file.name,
+          description: aiData.description || 'Sem descrição.',
+          tags: aiData.tags || [],
+          category: 'Geral',
+          date: new Date().toLocaleDateString(),
+          createdAt: Date.now()
+        };
+
+        await storage.saveImage(newImg);
+        setImages([newImg, ...images]);
+      } catch (err) {
+        console.error("Erro na IA:", err);
+      } finally {
+        setIsUploading(false);
+      }
+    };
   };
 
-  const handleUploadComplete = async (newItem: ScratchcardData) => {
-    setAllImagesCache(prev => [newItem, ...prev]);
-    const freshStats = await storageService.getStats();
-    setTotalStats(freshStats);
-    triggerSignal("Golo no Arquivo! Nova Raspadinha! 🐉✨", 'divine');
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm("Deseja remover esta imagem do arquivo?")) {
+      await storage.deleteImage(id);
+      setImages(images.filter(img => img.id !== id));
+      if (selectedImage?.id === id) setSelectedImage(null);
+    }
   };
 
   const filteredImages = useMemo(() => {
-    return allImagesCache.filter(i => {
-      if (activeContinent !== 'Mundo' && i.continent !== activeContinent) return false;
-      const targetCat = activeCategory.toLowerCase();
-      const itemCat = (i.category || 'raspadinha').toLowerCase();
-      if (targetCat !== 'all' && itemCat !== targetCat) return false;
-      if (filterRarity && !i.isRarity) return false;
-      if (filterWinners && !i.isWinner) return false;
-      if (currentPage === 'my-collection' && (!currentUser || !i.owners?.includes(currentUser))) return false;
-      if (currentPage === 'new-arrivals') {
-        const startOfToday = new Date().setHours(0, 0, 0, 0);
-        if (i.createdAt < startOfToday) return false;
-      }
-      const search = (countrySearch || searchTerm).toLowerCase();
-      if (search) {
-        return i.gameName.toLowerCase().includes(search) || 
-               i.country.toLowerCase().includes(search) || 
-               i.gameNumber.toLowerCase().includes(search) ||
-               (i.customId || '').toLowerCase().includes(search);
-      }
-      return true;
-    }).sort((a, b) => a.gameNumber.localeCompare(b.gameNumber, undefined, { numeric: true }));
-  }, [allImagesCache, activeContinent, activeCategory, filterRarity, filterWinners, countrySearch, searchTerm, currentPage, currentUser]);
-
-  const handleNavigate = (p: PageType, resetFilters: boolean = false) => {
-    setCurrentPage(p);
-    if (resetFilters) {
-      setCountrySearch('');
-      setSearchTerm('');
-      setActiveContinent('Mundo');
-      setActiveCategory('all');
-      setFilterRarity(false);
-      setFilterWinners(false);
-    }
-  };
+    return images.filter(img => 
+      img.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      img.tags.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [images, searchTerm]);
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#020617] text-slate-100 overflow-hidden font-sans">
-      <Header 
-        isAdmin={isAdmin} 
-        currentUser={currentUser} 
-        onAdminToggle={() => setIsLoginModalOpen(true)}
-        onLogout={() => { setCurrentUser(null); setUserRole(null); handleNavigate('home', true); }} 
-        onHistoryClick={() => setIsHistoryModalOpen(true)} 
-        onRadioClick={() => setIsRadioModalOpen(true)}
-        onExport={handleExportBackup}
-        onExportCSV={() => {}}
-        onExportTXT={() => {}}
-        onImport={(file) => {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-              try {
-                const count = await storageService.importData(e.target?.result as string);
-                triggerSignal(`${count} Novos Itens Sincronizados! 🐉`, 'divine');
-                loadData();
-              } catch (err) { triggerSignal("Erro na restauração", 'warning'); }
-            };
-            reader.readAsText(file);
-        }}
-        language={language} setLanguage={setLanguage}
-        currentPage={currentPage} 
-        onNavigate={(p) => handleNavigate(p, true)} 
-        t={translations[language].header}
-        countriesByContinent={countriesByContinent}
-        onCountrySelect={(cont, country) => { handleNavigate('home', true); setActiveContinent(cont); setCountrySearch(country); }}
-        recentCount={recentCount}
-      />
+    <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-900 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-brand-500 p-2 rounded-xl">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-xl font-black uppercase tracking-tighter italic">Visionary Archive</h1>
+          </div>
 
-      <main className="flex-1 overflow-y-auto bg-[#020617] scroll-smooth custom-scrollbar flex flex-col relative">
-        <div className="absolute top-0 left-0 w-full h-[800px] bg-gradient-to-b from-brand-500/10 via-brand-600/5 to-transparent pointer-events-none z-0"></div>
+          <div className="flex-1 max-w-xl relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-brand-500 transition-colors" />
+            <input 
+              type="text" 
+              placeholder="Procurar memórias ou etiquetas..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl pl-12 pr-4 py-3 text-sm focus:border-brand-500 outline-none transition-all"
+            />
+          </div>
 
-        {!(currentPage === 'stats' || currentPage === 'about' || currentPage === 'map') && (
-          <div className="sticky top-0 z-30 bg-[#020617]/95 backdrop-blur-xl border-b border-slate-900 shadow-2xl overflow-hidden">
-            <div className="px-4 md:px-8 py-3.5 flex items-center gap-4 overflow-x-auto no-scrollbar scroll-smooth">
-              <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-xl shadow-inner shrink-0">
-                <button onClick={() => setFilterRarity(!filterRarity)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${filterRarity ? 'bg-brand-500 text-white shadow-[0_0_10px_rgba(0,168,255,0.5)]' : 'text-slate-500 hover:text-slate-300'}`}>Raridades</button>
-                <button onClick={() => setFilterWinners(!filterWinners)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${filterWinners ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>Premiadas</button>
-              </div>
-              <div className="h-6 w-px bg-slate-800 shrink-0"></div>
-              <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-xl shadow-inner shrink-0">
-                <button onClick={() => { setActiveCategory('all'); handleNavigate('home'); }} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeCategory === 'all' && currentPage === 'home' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-600 hover:text-slate-400'}`}>Tudo</button>
-                {categories.map(cat => (
-                  <button key={cat.id} onClick={() => { setActiveCategory(cat.name); handleNavigate('home'); }} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeCategory.toLowerCase() === cat.name.toLowerCase() && currentPage === 'home' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-600 hover:text-slate-400'}`}>{cat.name}</button>
-                ))}
-              </div>
-              <div className="h-6 w-px bg-slate-800 shrink-0"></div>
-              <div className="flex bg-slate-900/50 border border-slate-800 p-1 rounded-xl shadow-inner shrink-0">
-                 <button onClick={() => setActiveContinent('Mundo')} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeContinent === 'Mundo' ? 'bg-brand-500 text-white shadow-[0_0_10px_rgba(0,168,255,0.5)]' : 'text-slate-500 hover:text-slate-300'}`}>Mundo</button>
-                 {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => (
-                    <button key={cont} onClick={() => setActiveContinent(cont as Continent)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeContinent === cont ? 'bg-brand-500 text-white shadow-[0_0_10px_rgba(0,168,255,0.5)]' : 'text-slate-500 hover:text-slate-300'}`}>{cont}</button>
-                 ))}
-              </div>
-              <div className="h-6 w-px bg-slate-800 shrink-0"></div>
-              {currentUser && (
-                <div className="flex shrink-0">
-                  <button onClick={() => handleNavigate('my-collection')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-1.5 border border-slate-800 whitespace-nowrap ${currentPage === 'my-collection' ? 'bg-brand-600 text-white shadow-lg' : 'bg-slate-900/50 text-brand-400 hover:text-brand-300'}`}><UserCheck className="w-3.5 h-3.5" /> Minha Coleção</button>
+          <div className="flex items-center gap-3">
+            <label className="bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-2xl font-bold text-sm cursor-pointer transition-all flex items-center gap-2 shadow-lg shadow-brand-500/20 active:scale-95">
+              {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              {isUploading ? "Chloe a Analisar..." : "Arquivar Imagem"}
+              <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={isUploading} />
+            </label>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 max-w-7xl mx-auto w-full p-6">
+        {isLoading ? (
+          <div className="h-96 flex flex-col items-center justify-center gap-4 text-zinc-500">
+            <Loader2 className="w-10 h-10 animate-spin text-brand-500" />
+            <p className="font-bold uppercase tracking-widest text-xs">A carregar arquivo...</p>
+          </div>
+        ) : filteredImages.length === 0 ? (
+          <div className="h-96 flex flex-col items-center justify-center gap-6 text-zinc-500 border-2 border-dashed border-zinc-900 rounded-[3rem]">
+            <ImageIcon className="w-16 h-16 opacity-20" />
+            <div className="text-center">
+              <p className="font-black uppercase tracking-[0.2em] text-sm">O seu arquivo está vazio</p>
+              <p className="text-xs mt-1">Carregue a sua primeira imagem para começar hihi!</p>
+            </div>
+          </div>
+        ) : (
+          <div className="masonry-grid animate-fade-in">
+            {filteredImages.map((img) => (
+              <div 
+                key={img.id}
+                onClick={() => setSelectedImage(img)}
+                className="masonry-item group relative bg-zinc-900 rounded-2xl overflow-hidden cursor-zoom-in border border-zinc-800 hover:border-brand-500/50 transition-all shadow-xl"
+              >
+                <img src={img.url} alt={img.title} className="w-full h-auto block group-hover:scale-105 transition-transform duration-700" />
+                
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-5">
+                  <h3 className="text-white font-bold text-lg mb-1">{img.title}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {img.tags.slice(0, 3).map(tag => (
+                      <span key={tag} className="text-[9px] font-black uppercase tracking-widest bg-brand-500 text-white px-2 py-0.5 rounded-full">#{tag}</span>
+                    ))}
+                  </div>
+                  <button 
+                    onClick={(e) => handleDelete(img.id, e)}
+                    className="absolute top-4 right-4 bg-red-500/80 hover:bg-red-500 text-white p-2 rounded-xl backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
-              )}
-              <div className="relative group shrink-0 min-w-[200px] md:min-w-[300px] flex-1">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
-                  <input type="text" placeholder="Procurar no estádio..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} className="bg-slate-900/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-[11px] text-white outline-none w-full focus:border-brand-500 focus:bg-slate-900 transition-all shadow-inner font-bold placeholder:text-slate-700" />
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* Image Viewer Modal */}
+      {selectedImage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-950/95 backdrop-blur-xl animate-fade-in" onClick={() => setSelectedImage(null)}>
+          <div className="w-full max-w-6xl max-h-[90vh] bg-zinc-900 border border-zinc-800 rounded-[2.5rem] overflow-hidden flex flex-col lg:flex-row shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex-1 bg-black flex items-center justify-center p-4">
+              <img src={selectedImage.url} alt={selectedImage.title} className="max-w-full max-h-full object-contain rounded-xl" />
+            </div>
+            
+            <div className="w-full lg:w-[400px] p-8 flex flex-col gap-6 overflow-y-auto">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em]">{selectedImage.category}</span>
+                <button onClick={() => setSelectedImage(null)} className="p-2 hover:bg-zinc-800 rounded-full transition-colors"><X className="w-6 h-6" /></button>
+              </div>
+
+              <div>
+                <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase mb-4">{selectedImage.title}</h2>
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {selectedImage.tags.map(tag => (
+                    <span key={tag} className="flex items-center gap-1.5 text-[10px] font-bold bg-zinc-800 text-zinc-400 px-3 py-1.5 rounded-full border border-zinc-700">
+                      <TagIcon className="w-3 h-3" /> {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-zinc-950/50 p-6 rounded-3xl border border-zinc-800">
+                <div className="flex items-center gap-2 mb-3 text-zinc-500">
+                  <Info className="w-4 h-4" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Descrição da Memória</span>
+                </div>
+                <p className="text-sm text-zinc-300 leading-relaxed italic">
+                  "{selectedImage.description}"
+                </p>
+              </div>
+
+              <div className="mt-auto pt-6 border-t border-zinc-800 flex items-center justify-between text-zinc-600">
+                <div className="flex items-center gap-2">
+                  <LayoutGrid className="w-4 h-4" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">{selectedImage.date}</span>
+                </div>
+                <button 
+                  onClick={(e) => handleDelete(selectedImage.id, e as any)}
+                  className="flex items-center gap-2 text-red-500/50 hover:text-red-500 transition-colors text-[10px] font-black uppercase tracking-widest"
+                >
+                  <Trash2 className="w-3 h-3" /> Remover
+                </button>
               </div>
             </div>
           </div>
-        )}
-
-        <div className="relative flex-1 flex flex-col min-h-0 z-10">
-          {isLoadingDB ? (
-            <div className="flex flex-col items-center justify-center flex-1 min-h-[400px] gap-6 animate-pulse">
-                <Loader2 className="w-16 h-16 text-brand-500 animate-spin" />
-                <p className="text-white font-black uppercase tracking-[0.3em] text-sm italic">O Dragão está a acordar...</p>
-            </div>
-          ) : currentPage === 'stats' ? (
-            <StatsSection stats={totalStats.stats} categoryStats={totalStats.categoryStats as any} countryStats={totalStats.countryStats} stateStats={totalStats.stateStats} collectorStats={totalStats.collectorStats} totalRecords={totalStats.total} t={t.stats} currentUser={currentUser} />
-          ) : currentPage === 'about' ? (
-            <AboutPage t={t} isAdmin={isAdmin} founderPhoto={siteMetadata.founderPhotoUrl} founderBio={siteMetadata.founderBio} founderQuote={siteMetadata.founderQuote} milestones={siteMetadata.milestones} onUpdateFounderPhoto={(url) => storageService.saveSiteMetadata({...siteMetadata, founderPhotoUrl: url}).then(() => loadData())} onUpdateMetadata={(data) => storageService.saveSiteMetadata({...siteMetadata, ...data}).then(() => loadData())} />
-          ) : currentPage === 'map' ? (
-            <div className="flex-1 p-4 md:p-8 animate-fade-in flex flex-col h-full">
-               <WorldMap images={allImagesCache} onCountrySelect={handleCountrySelectFromMap} activeContinent={activeContinent} t={t.grid} />
-            </div>
-          ) : (
-            <div className="p-4 md:p-8 animate-fade-in min-h-[50vh]">
-               <ImageGrid images={filteredImages} onImageClick={setSelectedImage} isAdmin={isAdmin} currentUser={currentUser} t={t.grid} />
-            </div>
-          )}
         </div>
-      </main>
-
-      <Footer 
-        onNavigate={(p) => handleNavigate(p, true)} 
-        onWebsitesClick={() => setIsWebsitesModalOpen(true)} 
-        onInstall={() => triggerSignal("Função de instalação em desenvolvimento... 📱", "info")}
-      />
-
-      {isAdmin && (
-        <button onClick={() => setIsUploadModalOpen(true)} className="fixed bottom-32 right-8 w-16 h-16 bg-brand-500 text-white rounded-2xl shadow-[0_0_20px_rgba(0,168,255,0.5)] flex items-center justify-center z-40 border-2 border-white/20 active:scale-95 transition-all">
-          <PlusCircle className="w-8 h-8" />
-        </button>
       )}
 
-      {selectedImage && (
-        <ImageViewer image={selectedImage} onClose={() => setSelectedImage(null)} onUpdate={handleUpdateImage} onDelete={handleDeleteImage} isAdmin={isAdmin} currentUser={currentUser} contextImages={allImagesCache} onImageSelect={setSelectedImage} t={t.viewer} categories={categories} />
-      )}
-
-      {isLoginModalOpen && <LoginModal onClose={() => setIsLoginModalOpen(false)} onLogin={(u, p, t) => {
-        if (t === 'admin') {
-          const clean = u.trim().toUpperCase();
-          if (AUTHORIZED_ADMINS.includes(clean) && p === ADMIN_PASSWORD) { 
-            setCurrentUser(u); setUserRole('admin'); triggerSignal(`Bem-vindo ao Estádio, ${u.split(' ')[0]} 🐉`, 'divine'); return true; 
-          }
-          return false;
-        } else { 
-          setCurrentUser(u); setUserRole('visitor'); triggerSignal(`Entrada Registada: ${u} 💙`, 'info'); return true; 
-        }
-      }} t={t.login} />}
-      
-      {isUploadModalOpen && <UploadModal onClose={() => setIsUploadModalOpen(false)} onUploadComplete={handleUploadComplete} existingImages={allImagesCache} initialFile={null} currentUser={currentUser} t={t.upload} categories={categories} />}
-      {isHistoryModalOpen && <HistoryModal onClose={() => setIsHistoryModalOpen(false)} isAdmin={isAdmin} t={t.header} />}
-      {isWebsitesModalOpen && <WebsitesModal onClose={() => setIsWebsitesModalOpen(false)} isAdmin={isAdmin} t={t.header} />}
-      {isRadioModalOpen && <RadioModal onClose={() => setIsRadioModalOpen(false)} />}
-
-      <DivineSignal signals={signals} onRemove={removeSignal} />
+      {/* Footer */}
+      <footer className="bg-zinc-950 px-6 py-8 border-t border-zinc-900 text-center">
+        <p className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.4em]">
+          Visionary Archive © {new Date().getFullYear()} • Organizado pela Chloe hihi!
+        </p>
+      </footer>
     </div>
   );
-}
+};
 
 export default App;
