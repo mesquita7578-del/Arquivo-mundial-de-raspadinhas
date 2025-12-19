@@ -1,4 +1,3 @@
-
 export type Language = 'pt' | 'it';
 
 export const translations = {
@@ -39,6 +38,28 @@ export const translations = {
       exportTXT: "Minha Checklist (TXT)",
       exploreCountries: "Países em",
       all: "Tudo"
+    },
+    // Added missing 'history' section for HistoryModal
+    history: {
+      title: "Biblioteca Técnica",
+      subtitle: "Documentos, Histórias e Catálogos de Lotarias",
+      tabCollection: "Arquivo de PDF",
+      tabCatalogs: "Catálogos Digitais",
+      backToList: "Voltar ao Índice",
+      docTitlePlaceholder: "Ex: Catálogo Verão 1998",
+      docDescPlaceholder: "Breve descrição técnica do documento...",
+      fileTooBig: "O ficheiro é demasiado grande (limite 50MB).",
+      addDocSuccess: "Documento adicionado ao arquivo!",
+      deleteDocConfirm: "Deseja eliminar permanentemente este documento?",
+      documentsTitle: "Documentos Disponíveis",
+      noDocs: "Nenhum documento registado ainda.",
+      viewPdf: "Visualizar Conteúdo",
+      articlesTitle: "Artigos e Curiosidades",
+      close: "Fechar Biblioteca",
+      catalogTitle: "Catálogo David (Anyflip)",
+      catalogSubtitle: "A maior base de dados visual do mundo.",
+      catalogDavid: "Coleção gerida por David de Almeida.",
+      openCatalog: "Abrir Biblioteca Externa"
     },
     grid: {
       filters: "Filtros",
@@ -240,6 +261,28 @@ export const translations = {
       exploreCountries: "Paesi in",
       all: "Tutto"
     },
+    // Added missing 'history' section for HistoryModal
+    history: {
+      title: "Biblioteca Tecnica",
+      subtitle: "Documenti e Cataloghi Storici",
+      tabCollection: "Archivio Documenti",
+      tabCatalogs: "Cataloghi Digitali",
+      backToList: "Torna alla Lista",
+      docTitlePlaceholder: "Es: Catalogo Estate 1998",
+      docDescPlaceholder: "Breve descrizione del contenuto...",
+      fileTooBig: "Il file è troppo grande (limite 50MB).",
+      addDocSuccess: "Documento aggiunto con successo!",
+      deleteDocConfirm: "Sei sicuro di voler eliminare questo documento?",
+      documentsTitle: "Documenti Disponibili",
+      noDocs: "Nessun documento registrato.",
+      viewPdf: "Visualizza PDF",
+      articlesTitle: "Articoli e Storia",
+      close: "Chiudi Biblioteca",
+      catalogTitle: "Catalogo David (Anyflip)",
+      catalogSubtitle: "Il massimo riferimento visivo mondiale.",
+      catalogDavid: "Collezione curata da David de Almeida.",
+      openCatalog: "Apri Biblioteca Esterna"
+    },
     grid: {
       filters: "Filtri",
       results: "risultati",
@@ -334,7 +377,7 @@ export const translations = {
       saving: "Salvataggio...",
       category: "Tipo",
       typeScratch: "Gratta e Vinci",
-      typeLottery: "Lotteria",
+      typeLotteria: "Lotteria",
       typeBulletin: "Bollettino",
       typeObject: "Oggetto (Cat/Cal...)"
     },

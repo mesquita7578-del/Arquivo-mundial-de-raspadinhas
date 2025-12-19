@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-// Added missing icon imports
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Loader2, Sparkles } from 'lucide-react';
 import { Header } from './components/Header';
 import { ImageGrid } from './components/ImageGrid';
 import { ImageViewer } from './components/ImageViewer';
@@ -12,9 +11,9 @@ import { WorldMap } from './components/WorldMap';
 import { HistoryModal } from './components/HistoryModal';
 import { WebsitesModal } from './components/WebsitesModal';
 import { AboutPage } from './components/AboutPage';
-import { CategoryManager } from './components/CategoryManager';
 import { DivineSignal, Signal } from './components/DivineSignal';
 import { ChloeRaffle } from './components/ChloeRaffle';
+import { RadioModal } from './components/RadioModal';
 import { Footer } from './components/Footer';
 import { storageService } from './services/storage';
 import { ScratchcardData, CategoryItem, SiteMetadata, Continent } from './types';
@@ -32,6 +31,7 @@ const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeContinent, setActiveContinent] = useState<Continent | 'Mundo'>('Mundo');
   const [activeCountry, setActiveCountry] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
   
   // Estados de Modais
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
@@ -39,11 +39,11 @@ const App: React.FC = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showWebsites, setShowWebsites] = useState(false);
-  const [showCatManager, setShowCatManager] = useState(false);
+  const [showRadio, setShowRadio] = useState(false);
   const [raffleItem, setRaffleItem] = useState<ScratchcardData | null>(null);
   
   // Estados de Autenticação
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(localStorage.getItem('archive_admin') === 'true');
   const [currentUser, setCurrentUser] = useState<string | null>(localStorage.getItem('archive_user'));
 
   // Sinais e Notificações
@@ -53,22 +53,29 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const init = async () => {
-      await storageService.init();
-      const allImages = await storageService.getAll();
-      const allCats = await storageService.getCategories();
-      const meta = await storageService.getSiteMetadata();
-      
-      setImages(allImages);
-      setCategories(allCats);
-      setSiteMetadata(meta);
+      try {
+        await storageService.init();
+        const allImages = await storageService.getAll();
+        const allCats = await storageService.getCategories();
+        const meta = await storageService.getSiteMetadata();
+        
+        setImages(allImages);
+        setCategories(allCats);
+        setSiteMetadata(meta);
 
-      // Lógica de sorteio diário (uma vez por sessão)
-      if (allImages.length > 5 && !sessionStorage.getItem('chloe_raffle_done')) {
-        const randomItem = allImages[Math.floor(Math.random() * allImages.length)];
-        setTimeout(() => {
-          setRaffleItem(randomItem);
-          sessionStorage.setItem('chloe_raffle_done', 'true');
-        }, 3000);
+        // Lógica de sorteio diário (uma vez por sessão)
+        if (allImages.length > 3 && !sessionStorage.getItem('chloe_raffle_done')) {
+          const randomItem = allImages[Math.floor(Math.random() * allImages.length)];
+          setTimeout(() => {
+            setRaffleItem(randomItem);
+            sessionStorage.setItem('chloe_raffle_done', 'true');
+          }, 4000);
+        }
+      } catch (err) {
+        console.error("Erro no carregamento:", err);
+        addSignal("Erro ao ligar ao arquivo! hihi!", "warning");
+      } finally {
+        setIsLoading(false);
       }
     };
     init();
@@ -81,10 +88,11 @@ const App: React.FC = () => {
 
   const handleLogin = (user: string, pass: string | null, type: 'admin' | 'visitor') => {
     if (type === 'admin') {
-      if (pass === '123456') { // Senha padrão do vovô
+      if (pass === '123456') { // Senha padrão solicitada pelo vovô
         setIsAdmin(true);
         setCurrentUser(user);
         localStorage.setItem('archive_user', user);
+        localStorage.setItem('archive_admin', 'true');
         addSignal(`Bem-vindo, Comandante ${user}! hihi!`, 'divine');
         return true;
       }
@@ -92,6 +100,7 @@ const App: React.FC = () => {
     } else {
       setCurrentUser(user);
       localStorage.setItem('archive_user', user);
+      localStorage.setItem('archive_admin', 'false');
       addSignal(`Olá, ${user}! Bom ver-te no arquivo! hihi!`, 'success');
       return true;
     }
@@ -101,6 +110,7 @@ const App: React.FC = () => {
     setIsAdmin(false);
     setCurrentUser(null);
     localStorage.removeItem('archive_user');
+    localStorage.removeItem('archive_admin');
     addSignal("Até à próxima, vovô! hihi!");
   };
 
@@ -112,15 +122,42 @@ const App: React.FC = () => {
       const matchesContinent = activeContinent === 'Mundo' || img.continent === activeContinent;
       const matchesCountry = !activeCountry || img.country === activeCountry;
       
-      return matchesSearch && matchesContinent && matchesCountry;
+      // Se estiver na página de novidades, mostrar apenas as últimas 24h
+      const isRecent = (Date.now() - img.createdAt) < 86400000;
+      const matchesPage = currentPage === 'new-arrivals' ? isRecent : true;
+      
+      return matchesSearch && matchesContinent && matchesCountry && matchesPage;
     });
-  }, [images, searchTerm, activeContinent, activeCountry]);
+  }, [images, searchTerm, activeContinent, activeCountry, currentPage]);
 
   const stats = useMemo(() => {
     const res: any = { Europa: 0, América: 0, Ásia: 0, África: 0, Oceania: 0 };
     images.forEach(img => { if(res[img.continent] !== undefined) res[img.continent]++; });
     return res;
   }, [images]);
+
+  const countriesByContinent = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    images.forEach(img => {
+      if (!map[img.continent]) map[img.continent] = [];
+      if (!map[img.continent].includes(img.country)) map[img.continent].push(img.country);
+    });
+    return map;
+  }, [images]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#020617] text-slate-100 gap-6">
+        <div className="relative">
+          <Loader2 className="w-16 h-16 animate-spin text-brand-500" />
+          <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-brand-400 animate-pulse" />
+        </div>
+        <p className="font-black uppercase tracking-[0.3em] text-xs text-brand-400 animate-pulse">
+          Chloe está a carregar o seu mundo azul... hihi!
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#020617] text-slate-100">
@@ -134,7 +171,7 @@ const App: React.FC = () => {
         onAdminToggle={() => setShowLogin(true)}
         onLogout={handleLogout}
         onHistoryClick={() => setShowHistory(true)}
-        onRadioClick={() => addSignal("A Chloe está a sintonizar... Use o menu lateral! hihi!")} // Placeholder para simplicidade
+        onRadioClick={() => setShowRadio(true)}
         onExport={async () => {
           const data = await storageService.exportData();
           const blob = new Blob([data], { type: 'application/json' });
@@ -143,20 +180,25 @@ const App: React.FC = () => {
           a.href = url;
           a.download = `arquivo-dna-${new Date().toISOString().split('T')[0]}.json`;
           a.click();
-          addSignal("DNA do Arquivo exportado com sucesso!", "divine");
+          addSignal("Backup exportado! hihi!", "divine");
         }}
         onImport={(file) => {
           const reader = new FileReader();
           reader.onload = async (e) => {
-            const count = await storageService.importData(e.target?.result as string);
-            const all = await storageService.getAll();
-            setImages(all);
-            addSignal(`${count} itens integrados no arquivo! hihi!`, "success");
+            try {
+              const count = await storageService.importData(e.target?.result as string);
+              const all = await storageService.getAll();
+              setImages(all);
+              addSignal(`${count} itens integrados! hihi!`, "success");
+            } catch (err) {
+              addSignal("Ficheiro inválido! hihi!", "warning");
+            }
           };
           reader.readAsText(file);
         }}
         t={t.header}
         recentCount={images.filter(img => (Date.now() - img.createdAt) < 86400000).length}
+        countriesByContinent={countriesByContinent}
         onCountrySelect={(cont, country) => {
           setActiveContinent(cont);
           setActiveCountry(country);
@@ -166,8 +208,8 @@ const App: React.FC = () => {
         onExportTXT={() => {}}
       />
 
-      <main className="flex-1 flex flex-col">
-        {currentPage === 'home' && (
+      <main className="flex-1 flex flex-col min-h-0">
+        {(currentPage === 'home' || currentPage === 'new-arrivals') && (
           <div className="p-4 md:p-8 space-y-8 animate-fade-in">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-b border-slate-900 pb-6">
               <div className="relative w-full max-w-2xl group">
@@ -180,9 +222,20 @@ const App: React.FC = () => {
                   className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-12 pr-4 py-4 text-sm focus:border-brand-500 outline-none transition-all shadow-inner"
                 />
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
+                {activeCountry && (
+                  <button 
+                    onClick={() => setActiveCountry('')}
+                    className="text-[10px] font-black uppercase tracking-widest bg-slate-800 px-4 py-2 rounded-full border border-slate-700 text-slate-400 hover:text-white transition-all"
+                  >
+                    País: {activeCountry} (Limpar)
+                  </button>
+                )}
                 {isAdmin && (
-                  <button onClick={() => setShowUpload(true)} className="bg-brand-500 hover:bg-brand-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 shadow-xl shadow-brand-500/20 active:scale-95">
+                  <button 
+                    onClick={() => setShowUpload(true)} 
+                    className="bg-brand-500 hover:bg-brand-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 shadow-xl shadow-brand-500/20 active:scale-95"
+                  >
                     <Plus className="w-4 h-4" /> Arquivar Item
                   </button>
                 )}
@@ -226,7 +279,7 @@ const App: React.FC = () => {
         )}
 
         {currentPage === 'map' && (
-          <div className="p-8 h-full">
+          <div className="p-8 h-full min-h-[600px]">
             <WorldMap 
               images={images}
               activeContinent={activeContinent}
@@ -242,17 +295,16 @@ const App: React.FC = () => {
         {currentPage === 'about' && (
           <AboutPage 
             isAdmin={isAdmin}
-            // Fix: Fallback to empty object if t.about is missing to prevent errors
-            t={t.about || {}}
+            t={t.about || { title: "Sobre", subtitle: "O Legado" }}
             founderBio={siteMetadata?.founderBio}
             founderPhoto={siteMetadata?.founderPhotoUrl}
             founderQuote={siteMetadata?.founderQuote}
             milestones={siteMetadata?.milestones}
             onUpdateMetadata={async (data) => {
-              const newMeta = { ...siteMetadata, ...data, id: 'site_settings' };
+              const newMeta = { ...siteMetadata, ...data, id: 'site_settings' } as SiteMetadata;
               await storageService.saveSiteMetadata(newMeta);
               setSiteMetadata(newMeta);
-              addSignal("História do Guardião atualizada!", "success");
+              addSignal("História atualizada! hihi!", "success");
             }}
           />
         )}
@@ -287,13 +339,13 @@ const App: React.FC = () => {
             await storageService.save(data);
             setImages(images.map(img => img.id === data.id ? data : img));
             setSelectedImage(data);
-            addSignal("Registo atualizado!", "info");
+            addSignal("Registo atualizado! hihi!", "info");
           }}
           onDelete={async (id) => {
             await storageService.delete(id);
             setImages(images.filter(img => img.id !== id));
             setSelectedImage(null);
-            addSignal("Item removido do arquivo.", "warning");
+            addSignal("Item removido.", "warning");
           }}
           isAdmin={isAdmin}
           currentUser={currentUser}
@@ -307,7 +359,11 @@ const App: React.FC = () => {
       {showLogin && (
         <LoginModal 
           onClose={() => setShowLogin(false)}
-          onLogin={handleLogin}
+          onLogin={(u, p, type) => {
+            const res = handleLogin(u, p, type);
+            if (res) setShowLogin(false);
+            return res;
+          }}
           t={t.login}
         />
       )}
@@ -316,7 +372,7 @@ const App: React.FC = () => {
         <HistoryModal 
           onClose={() => setShowHistory(false)}
           isAdmin={isAdmin}
-          t={t.header}
+          t={{...t.header, ...t.history}}
         />
       )}
 
@@ -326,6 +382,10 @@ const App: React.FC = () => {
           isAdmin={isAdmin}
           t={t.header}
         />
+      )}
+
+      {showRadio && (
+        <RadioModal onClose={() => setShowRadio(false)} />
       )}
 
       {raffleItem && (

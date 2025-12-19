@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   X, Upload, Sparkles, Check, Loader2, ArrowLeft, 
@@ -120,11 +119,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       const backBase64 = backPreview ? backPreview.split(',')[1] : null;
       const result = await analyzeImage(frontBase64, backBase64, frontFile.type);
       
-      // Fix: Cast result.state to ScratchcardState to match ScratchcardData type
+      // Fix: Cast result.state to ScratchcardState and result.lines to LineType to match ScratchcardData type
       setFormData(prev => ({
         ...prev,
         ...result,
         state: result.state as ScratchcardState,
+        lines: result.lines as LineType,
         aiGenerated: true
       }));
       
