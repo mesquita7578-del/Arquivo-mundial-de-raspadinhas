@@ -49,18 +49,18 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
       const msg = await getChloeInsight({ total: totalRecords, stats, countryStats, categoryStats });
       setChloeMessage(msg);
     } catch (err) {
-      setChloeMessage("Vovô, os registos estão tão bons que até me faltam as palavras! hihi!");
+      setChloeMessage("Vovô, os registos estão tão bons que até me faltam as palavras azul e brancas! hihi!");
     } finally {
       setIsAskingChloe(false);
     }
   };
 
   const continentsConfig: { key: Continent; label: string; color: string; gradient: string }[] = [
-    { key: 'Europa', label: 'Europa', color: 'bg-blue-500', gradient: 'from-blue-500 to-indigo-600' },
-    { key: 'América', label: 'América', color: 'bg-red-500', gradient: 'from-red-500 to-pink-600' },
-    { key: 'Ásia', label: 'Ásia', color: 'bg-yellow-500', gradient: 'from-yellow-400 to-orange-500' },
-    { key: 'África', label: 'África', color: 'bg-green-500', gradient: 'from-green-500 to-emerald-600' },
-    { key: 'Oceania', label: 'Oceania', color: 'bg-purple-500', gradient: 'from-purple-500 to-violet-600' },
+    { key: 'Europa', label: 'Europa', color: 'bg-brand-500', gradient: 'from-brand-500 to-brand-600' },
+    { key: 'América', label: 'América', color: 'bg-slate-500', gradient: 'from-slate-500 to-slate-700' },
+    { key: 'Ásia', label: 'Ásia', color: 'bg-cyan-500', gradient: 'from-cyan-400 to-cyan-600' },
+    { key: 'África', label: 'África', color: 'bg-indigo-500', gradient: 'from-indigo-500 to-indigo-700' },
+    { key: 'Oceania', label: 'Oceania', color: 'bg-blue-400', gradient: 'from-blue-400 to-blue-600' },
   ];
 
   const stateDonutData = useMemo(() => {
@@ -91,58 +91,58 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
   const isChloe = currentUser?.toUpperCase() === 'CHLOE';
 
   return (
-    <div className="w-full bg-slate-950 border-t border-slate-900 py-12 pb-32 animate-fade-in relative">
-      <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-blue-900/10 via-transparent to-transparent pointer-events-none"></div>
+    <div className="w-full bg-[#020617] py-12 pb-32 animate-fade-in relative">
+      <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-brand-600/10 via-transparent to-transparent pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         
-        {/* Collector Welcome Card */}
-        <div className="mb-12 bg-slate-900/50 border border-slate-800 rounded-[2.5rem] p-8 md:p-10 flex flex-col md:flex-row items-center gap-8 shadow-2xl backdrop-blur-sm overflow-hidden group relative">
+        {/* Collector Welcome Card Blue Porto */}
+        <div className="mb-12 bg-slate-900/40 border border-brand-500/20 rounded-[2.5rem] p-8 md:p-10 flex flex-col md:flex-row items-center gap-8 shadow-2xl backdrop-blur-sm overflow-hidden group relative">
            <div className="relative">
-              <div className={`w-24 h-24 rounded-3xl flex items-center justify-center border-2 rotate-3 group-hover:rotate-0 transition-all duration-500 ${isChloe ? 'bg-pink-600/20 border-pink-500 shadow-[0_0_30px_rgba(236,72,153,0.3)]' : 'bg-blue-600/20 border-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.3)]'}`}>
-                 {isChloe ? <Sparkles className="w-10 h-10 text-pink-500" /> : <User className="w-10 h-10 text-blue-500" />}
+              <div className={`w-24 h-24 rounded-3xl flex items-center justify-center border-2 rotate-3 group-hover:rotate-0 transition-all duration-500 bg-brand-500/10 border-brand-500 shadow-[0_0_30px_rgba(0,168,255,0.3)]`}>
+                 {isChloe ? <Sparkles className="w-10 h-10 text-white" /> : <User className="w-10 h-10 text-white" />}
               </div>
-              <div className="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 rounded-full border-4 border-slate-900 animate-pulse"></div>
+              <div className="absolute -bottom-2 -right-2 bg-brand-400 w-6 h-6 rounded-full border-4 border-[#020617] animate-pulse"></div>
            </div>
            <div className="flex-1 text-center md:text-left">
               <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
                  <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">
-                   {isChloe ? 'Bem-vinda, Guardiã Chloe' : `Painel de ${currentUser || 'Curador'}`}
+                   {isChloe ? 'Bem-vinda, Guardiã Chloe 🐉' : `Painel do Dragão, ${currentUser || 'Curador'}`}
                  </h2>
-                 <Crown className={`w-6 h-6 ${isChloe ? 'text-pink-500' : 'text-yellow-500'}`} />
+                 <Crown className={`w-6 h-6 text-brand-400`} />
               </div>
-              <p className="text-slate-400 text-sm font-medium leading-relaxed max-w-xl">
-                 O arquivo mundial está sob sua supervisão. Você catalogou <span className="text-white font-black">{totalRecords} itens</span> até agora. Continue preservando a história da sorte.
+              <p className="text-slate-400 text-sm font-black leading-relaxed max-w-xl uppercase tracking-widest">
+                 O estádio mundial de raspadinhas tem <span className="text-white font-black">{totalRecords} tesouros</span> em campo. Somos Porto!
               </p>
            </div>
            <div className="flex flex-col gap-2">
               <button 
                 onClick={handleAskChloe}
                 disabled={isAskingChloe}
-                className="flex items-center gap-2 bg-pink-600 hover:bg-pink-500 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-pink-900/20 transition-all active:scale-95 disabled:opacity-50"
+                className="flex items-center gap-2 bg-brand-500 hover:bg-brand-400 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-[0_0_15px_rgba(0,168,255,0.4)] transition-all active:scale-95 disabled:opacity-50"
               >
                 {isAskingChloe ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
-                O que a Chloe acha?
+                O que a Chloe acha? hihi!
               </button>
            </div>
         </div>
 
-        {/* Chloe's Insight Card */}
+        {/* Chloe's Insight Card Neon Blue */}
         {chloeMessage && (
-          <div className="mb-12 bg-gradient-to-br from-pink-900/20 via-slate-900 to-purple-900/20 border border-pink-500/30 rounded-[2.5rem] p-8 md:p-10 shadow-2xl animate-bounce-in relative overflow-hidden">
+          <div className="mb-12 bg-gradient-to-br from-brand-600/20 via-slate-900 to-brand-500/10 border border-brand-500/30 rounded-[2.5rem] p-8 md:p-10 shadow-2xl animate-bounce-in relative overflow-hidden">
              <div className="absolute -top-10 -right-10 opacity-10 rotate-12">
-                <Sparkles className="w-40 h-40 text-pink-500" />
+                <Sparkles className="w-40 h-40 text-brand-400" />
              </div>
              <div className="flex items-start gap-6 relative z-10">
-                <div className="bg-pink-600 p-3 rounded-2xl shadow-lg">
+                <div className="bg-brand-500 p-3 rounded-2xl shadow-lg">
                    <Sparkles className="w-6 h-6 text-white" />
                 </div>
                 <div className="space-y-4">
-                   <h4 className="text-[10px] font-black text-pink-500 uppercase tracking-[0.4em]">Análise da Guardiã Chloe</h4>
-                   <p className="text-lg md:text-xl text-slate-100 font-medium italic leading-relaxed">
+                   <h4 className="text-[10px] font-black text-brand-400 uppercase tracking-[0.4em]">Análise da Guardiã Azul e Branca</h4>
+                   <p className="text-lg md:text-xl text-slate-100 font-black italic leading-relaxed uppercase tracking-tighter">
                       "{chloeMessage}"
                    </p>
-                   <button onClick={() => setChloeMessage(null)} className="text-[10px] font-black text-slate-500 uppercase hover:text-white transition-colors">Fechar Parecer</button>
+                   <button onClick={() => setChloeMessage(null)} className="text-[10px] font-black text-brand-500 uppercase hover:text-white transition-colors">Fechar Parecer do Dragão</button>
                 </div>
              </div>
           </div>
@@ -154,18 +154,18 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                 <BarChart3 className="w-6 h-6" />
                 <h2 className="text-sm font-black uppercase tracking-[0.3em]">{t.title}</h2>
               </div>
-              <h3 className="text-4xl md:text-5xl font-black text-white italic tracking-tighter">Fluxo do Arquivo</h3>
-              <p className="text-slate-500 text-xs font-black uppercase tracking-widest mt-2 ml-1">Análise volumétrica global em tempo real</p>
+              <h3 className="text-4xl md:text-5xl font-black text-white italic tracking-tighter">Arquivo na Invicta</h3>
+              <p className="text-slate-500 text-xs font-black uppercase tracking-widest mt-2 ml-1">Volume total em tons de azul</p>
            </div>
-           <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 rounded-full px-5 py-2.5 backdrop-blur-md">
-              <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sincronizado</span>
+           <div className="flex items-center gap-2 bg-slate-900 border border-brand-500/20 rounded-full px-5 py-2.5 backdrop-blur-md">
+              <div className="w-2.5 h-2.5 rounded-full bg-brand-400 animate-pulse shadow-[0_0_8px_rgba(0,168,255,0.6)]"></div>
+              <span className="text-[10px] font-black text-brand-400 uppercase tracking-widest">Sincronizado</span>
            </div>
         </div>
 
-        {/* Top Cards */}
+        {/* Top Cards Porto Style */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-           <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl group hover:border-brand-500/40 transition-all shadow-2xl">
+           <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl group hover:border-brand-500 transition-all shadow-2xl">
               <div className="p-3 bg-brand-500/10 w-fit rounded-2xl text-brand-500 mb-6 group-hover:scale-110 transition-transform">
                  <Database className="w-6 h-6" />
               </div>
@@ -173,43 +173,42 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
               <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{t.totalRecords}</p>
            </div>
 
-           <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl group hover:border-blue-500/40 transition-all shadow-2xl">
-              <div className="p-3 bg-blue-500/10 w-fit rounded-2xl text-blue-500 mb-6 group-hover:scale-110 transition-transform">
-                 <Map className="w-6 h-6" />
+           <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl group hover:border-brand-400 transition-all shadow-2xl">
+              <div className="p-3 bg-brand-400/10 w-fit rounded-2xl text-brand-400 mb-6 group-hover:scale-110 transition-transform">
+                 <Globe className="w-6 h-6" />
               </div>
               <div className="text-5xl font-black text-white mb-2 font-mono tracking-tighter">{Object.keys(countryStats).length}</div>
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Nações Unidas</p>
+              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Países Aliados</p>
            </div>
 
-           <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl group hover:border-brand-500/40 transition-all shadow-2xl">
+           <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl group hover:border-brand-500 transition-all shadow-2xl">
               <div className="flex justify-between items-center mb-6">
                  <Coins className="w-6 h-6 text-brand-500" />
-                 <span className="text-[9px] font-black text-brand-400 bg-brand-900/30 px-2 py-0.5 rounded border border-brand-500/20">RASP.</span>
+                 <span className="text-[9px] font-black text-brand-500 bg-brand-500/10 px-2 py-0.5 rounded border border-brand-500/20 uppercase tracking-widest">RASP.</span>
               </div>
               <div className="text-4xl font-black text-white mb-4 tracking-tighter">{categoryStats.scratch}</div>
               <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-brand-500 transition-all duration-1000" style={{ width: `${animate ? scratchPct : 0}%` }}></div>
+                <div className="h-full bg-brand-500 transition-all duration-1000 shadow-[0_0_8px_rgba(0,168,255,0.6)]" style={{ width: `${animate ? scratchPct : 0}%` }}></div>
               </div>
            </div>
 
-           <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl group hover:border-purple-500/40 transition-all shadow-2xl">
+           <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl group hover:border-white transition-all shadow-2xl">
               <div className="flex justify-between items-center mb-6">
-                 <Ticket className="w-6 h-6 text-purple-500" />
-                 <span className="text-[9px] font-black text-purple-400 bg-purple-900/30 px-2 py-0.5 rounded border border-purple-500/20">LOT.</span>
+                 <Ticket className="w-6 h-6 text-white" />
+                 <span className="text-[9px] font-black text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 uppercase tracking-widest">LOT.</span>
               </div>
               <div className="text-4xl font-black text-white mb-4 tracking-tighter">{categoryStats.lottery}</div>
               <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-purple-500 transition-all duration-1000" style={{ width: `${animate ? lotteryPct : 0}%` }}></div>
+                <div className="h-full bg-white transition-all duration-1000" style={{ width: `${animate ? lotteryPct : 0}%` }}></div>
               </div>
            </div>
         </div>
 
-        {/* Main Grid Charts */}
+        {/* Main Grid Charts - Only Blue & White gradients */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-[2rem] p-10 shadow-2xl relative overflow-hidden flex flex-col min-h-[450px]">
+          <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden flex flex-col min-h-[450px]">
             <h3 className="text-sm font-black text-slate-400 mb-16 flex items-center gap-3 uppercase tracking-[0.2em]">
-               <Globe className="w-5 h-5" /> Distribuição Continental
+               <Globe className="w-5 h-5 text-brand-500" /> Distribuição por Continente
             </h3>
             
             <div className="flex-1 flex items-end justify-around gap-2 md:gap-8 relative z-10">
@@ -224,7 +223,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                         {count}
                     </div>
                     <div 
-                        className={`w-full max-w-[50px] rounded-t-2xl bg-gradient-to-t ${c.gradient} transition-all duration-[1200ms] ease-out relative group-hover:scale-x-110 origin-bottom`}
+                        className={`w-full max-w-[50px] rounded-t-2xl bg-gradient-to-t ${c.gradient} transition-all duration-[1200ms] ease-out relative group-hover:scale-x-110 origin-bottom group-hover:shadow-[0_0_15px_rgba(0,168,255,0.4)]`}
                         style={{ height: `${height}%` }}
                     >
                         <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -234,48 +233,42 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                 );
               })}
             </div>
-            <div className="absolute inset-0 px-10 py-24 pointer-events-none flex flex-col justify-between opacity-[0.03]">
-               <div className="w-full h-px bg-white"></div>
-               <div className="w-full h-px bg-white"></div>
-               <div className="w-full h-px bg-white"></div>
-               <div className="w-full h-px bg-white"></div>
-            </div>
           </div>
 
           <div className="flex flex-col gap-8">
-             <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-8 shadow-2xl">
+             <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 shadow-2xl">
                 <h3 className="text-[10px] font-black text-slate-400 mb-8 flex items-center gap-2 uppercase tracking-widest">
-                   <PieChart className="w-4 h-4 text-brand-500" /> Estados Físicos
+                   <PieChart className="w-4 h-4 text-brand-500" /> Estados da Coleção
                 </h3>
                 <div className="flex items-center justify-between gap-8">
                    <div 
-                     className={`w-28 h-28 rounded-full relative flex items-center justify-center shrink-0 border-4 border-slate-950 shadow-2xl transition-transform duration-[2000ms] ${animate ? 'rotate-0' : 'rotate-180'}`}
+                     className={`w-28 h-28 rounded-full relative flex items-center justify-center shrink-0 border-4 border-[#020617] shadow-2xl transition-transform duration-[2000ms] ${animate ? 'rotate-0' : 'rotate-180'}`}
                      style={{ 
                         background: `conic-gradient(
-                           #22c55e 0% ${stateDonutData.stop1}%, 
-                           #3b82f6 ${stateDonutData.stop1}% ${stateDonutData.stop2}%,
-                           #f59e0b ${stateDonutData.stop2}% ${stateDonutData.stop3}%,
-                           #ec4899 ${stateDonutData.stop3}% 100%
+                           #00a8ff 0% ${stateDonutData.stop1}%, 
+                           #004797 ${stateDonutData.stop1}% ${stateDonutData.stop2}%,
+                           #ffffff ${stateDonutData.stop2}% ${stateDonutData.stop3}%,
+                           #1e293b ${stateDonutData.stop3}% 100%
                         )` 
                      }}
                    >
-                      <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center border border-slate-800/50 shadow-inner">
+                      <div className="w-16 h-16 bg-slate-950 rounded-full flex items-center justify-center border border-slate-800/50 shadow-inner">
                          <div className="flex flex-col items-center">
                             <span className="text-[16px] font-black text-white leading-none">{stateDonutData.total}</span>
-                            <span className="text-[7px] font-black text-slate-600 uppercase">Total</span>
+                            <span className="text-[7px] font-black text-slate-600 uppercase">Itens</span>
                          </div>
                       </div>
                    </div>
                    <div className="flex-1 space-y-3">
                       {[
-                        { label: 'MINT', color: 'bg-green-500', pct: stateDonutData.pMint },
-                        { label: 'SC', color: 'bg-blue-500', pct: stateDonutData.pSC },
-                        { label: 'CS', color: 'bg-orange-500', pct: stateDonutData.pCS },
-                        { label: 'Outros', color: 'bg-pink-500', pct: stateDonutData.pAmostra }
+                        { label: 'MINT', color: 'bg-brand-500', pct: stateDonutData.pMint },
+                        { label: 'SC', color: 'bg-brand-600', pct: stateDonutData.pSC },
+                        { label: 'CS', color: 'bg-white', pct: stateDonutData.pCS },
+                        { label: 'Outros', color: 'bg-slate-700', pct: stateDonutData.pAmostra }
                       ].map(item => (
                         <div key={item.label} className="flex items-center justify-between group">
                            <div className="flex items-center gap-2">
-                              <div className={`w-2 h-2 rounded-full ${item.color} group-hover:scale-125 transition-transform`}></div>
+                              <div className={`w-2 h-2 rounded-full ${item.color} group-hover:scale-150 transition-transform shadow-[0_0_5px_rgba(0,168,255,0.4)]`}></div>
                               <span className="text-[10px] font-black text-slate-400 uppercase">{item.label}</span>
                            </div>
                            <span className="text-[10px] font-mono font-black text-slate-200">{Math.round(item.pct)}%</span>
@@ -285,9 +278,9 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                 </div>
              </div>
 
-             <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-8 shadow-2xl flex-1">
+             <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 shadow-2xl flex-1">
                 <h3 className="text-[10px] font-black text-slate-400 mb-8 flex items-center gap-2 uppercase tracking-widest">
-                   <Flag className="w-4 h-4 text-blue-500" /> Principais Nações
+                   <Flag className="w-4 h-4 text-brand-500" /> Nações Líderes
                 </h3>
                 <div className="space-y-5">
                    {Object.entries(countryStats)
@@ -300,10 +293,10 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                         <div key={country} className="space-y-2">
                            <div className="flex justify-between text-[10px] font-black text-slate-300 uppercase tracking-tighter">
                               <span>{i + 1}. {country}</span>
-                              <span className="text-blue-500">{count}</span>
+                              <span className="text-brand-500">{count}</span>
                            </div>
-                           <div className="w-full h-1 bg-slate-950 rounded-full overflow-hidden">
-                              <div className="h-full bg-blue-600 transition-all duration-1000" style={{ width: `${animate ? pct : 0}%` }}></div>
+                           <div className="w-full h-1 bg-[#020617] rounded-full overflow-hidden">
+                              <div className="h-full bg-brand-500 transition-all duration-1000 shadow-[0_0_5px_rgba(0,168,255,0.4)]" style={{ width: `${animate ? pct : 0}%` }}></div>
                            </div>
                         </div>
                       );
@@ -314,8 +307,8 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
         </div>
 
         <div className="mt-24 pt-12 border-t border-slate-900 flex flex-col items-center justify-center opacity-30">
-            <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.4em]">
-              © {new Date().getFullYear()} • Arquivo Mundial de Raspadinhas
+            <p className="text-brand-500 text-[9px] font-black uppercase tracking-[0.4em]">
+              © {new Date().getFullYear()} • Arquivo Mundial de Raspadinhas • Somos Porto! 🐉
             </p>
         </div>
       </div>

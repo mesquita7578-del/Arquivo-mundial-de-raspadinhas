@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-PT">
   <head>
@@ -20,21 +21,13 @@
     <meta name="apple-mobile-web-app-title" content="Arquivo Mundial" />
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2662/2662503.png" />
 
-    <!-- Open Graph / Facebook / WhatsApp (The "Professional" Look) -->
+    <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://arquivo-mundial.app/" />
     <meta property="og:title" content="Arquivo Mundial de Raspadinhas 🌍" />
     <meta property="og:description" content="Catálogo digital inteligente com IA para colecionadores. Junte-se a nós para preservar a história mundial das lotarias." />
     <meta property="og:image" content="https://images.unsplash.com/photo-1594902360217-194363228a47?q=80&w=1200&h=630&auto=format&fit=crop" />
     <meta property="og:locale" content="pt_PT" />
-    <meta property="og:locale:alternate" content="it_IT" />
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://arquivo-mundial.app/" />
-    <meta property="twitter:title" content="Arquivo Mundial de Raspadinhas" />
-    <meta property="twitter:description" content="O maior catálogo digital colaborativo para colecionadores de raspadinhas e lotarias." />
-    <meta property="twitter:image" content="https://images.unsplash.com/photo-1594902360217-194363228a47?q=80&w=1200&h=630&auto=format&fit=crop" />
     
     <!-- Mobile Theme Color -->
     <meta name="theme-color" content="#020617" />
@@ -49,11 +42,12 @@
           extend: {
             colors: {
               brand: {
-                50: '#fff1f2',
-                100: '#ffe4e6',
-                500: '#f43f5e',
-                600: '#e11d48',
-                900: '#881337',
+                50: '#f0f9ff',
+                100: '#e0f2fe',
+                400: '#38bdf8',
+                500: '#00a8ff', /* Azul Neon Porto */
+                600: '#004797', /* Azul Porto Oficial */
+                900: '#0c4a6e',
               },
               gold: {
                 400: '#fbbf24',
@@ -80,25 +74,28 @@
       }
     </script>
     <style>
-      /* Custom scrollbar for better aesthetics - Updated colors */
       ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
       }
       ::-webkit-scrollbar-track {
-        background: #0f172a; /* slate-900 */
+        background: #020617;
       }
       ::-webkit-scrollbar-thumb {
-        background: #334155; /* slate-700 */
+        background: #004797;
         border-radius: 4px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #475569; /* slate-600 */
+        background: #00a8ff;
       }
-      
-      /* Smooth scrolling for the whole page */
       html {
         scroll-behavior: smooth;
+      }
+      .neon-glow-blue {
+        box-shadow: 0 0 15px rgba(0, 168, 255, 0.4);
+      }
+      .neon-border-blue {
+        border-color: rgba(0, 168, 255, 0.5);
       }
     </style>
   <script type="importmap">
@@ -117,7 +114,7 @@
 }
 </script>
 </head>
-  <body class="bg-slate-950 text-slate-100 font-sans antialiased overflow-hidden selection:bg-brand-500 selection:text-white">
+  <body class="bg-[#020617] text-slate-100 font-sans antialiased overflow-hidden selection:bg-brand-500 selection:text-white">
     <div id="root" class="h-screen w-screen flex flex-col"></div>
   </body>
 </html>
