@@ -1,5 +1,22 @@
 
-// Types for the global archive system
+export interface ArchiveImage {
+  id: string;
+  url: string;
+  title: string;
+  description: string;
+  tags: string[];
+  albumId: string;
+  date: string;
+  createdAt: number;
+}
+
+export interface Album {
+  id: string;
+  name: string;
+  createdAt: number;
+}
+
+// Missing types for the Scratchcard Archive functionality
 
 export type Continent = 'Europa' | 'América' | 'Ásia' | 'África' | 'Oceania' | 'Mundo';
 
@@ -7,7 +24,7 @@ export type ScratchcardState = 'MINT' | 'SC' | 'CS' | 'AMOSTRA' | 'VOID' | 'SAMP
 
 export type LineType = 'blue' | 'red' | 'multicolor' | 'green' | 'brown' | 'pink' | 'purple' | 'yellow' | 'gray' | 'none';
 
-export type Category = string;
+export type Category = 'raspadinha' | 'lotaria' | 'boletim' | 'objeto' | string;
 
 export interface ScratchcardData {
   id: string;
@@ -26,9 +43,9 @@ export interface ScratchcardData {
   region?: string;
   continent: Continent;
   category: string;
-  operator: string;
-  printer: string;
-  emission: string;
+  operator?: string;
+  printer?: string;
+  emission?: string;
   winProbability?: string;
   lines: LineType;
   collector: string;
@@ -36,8 +53,8 @@ export interface ScratchcardData {
   createdAt: number;
   owners?: string[];
   isWinner?: boolean;
-  isSeries?: boolean;
   seriesGroupId?: string;
+  isSeries?: boolean;
 }
 
 export interface AnalysisResult {
@@ -50,7 +67,7 @@ export interface AnalysisResult {
   price: string;
   state: string;
   country: string;
-  continent: string;
+  continent: Continent;
   operator: string;
   printer: string;
   emission: string;
@@ -70,7 +87,7 @@ export interface WebsiteLink {
 export interface CategoryItem {
   id: string;
   name: string;
-  isDefault?: boolean;
+  isDefault: boolean;
   createdAt: number;
 }
 
@@ -89,7 +106,7 @@ export interface DocumentItem {
 
 export interface SiteMetadata {
   id: string;
-  founderPhotoUrl?: string;
+  founderPhotoUrl: string;
   founderBio?: string;
   founderQuote?: string;
   milestones?: Milestone[];
@@ -99,20 +116,4 @@ export interface Milestone {
   year: string;
   title: string;
   description: string;
-}
-
-export interface ArchiveImage {
-  id: string;
-  url: string;
-  title: string;
-  description: string;
-  tags: string[];
-  category: string;
-  date: string;
-  createdAt: number;
-}
-
-export interface Album {
-  id: string;
-  name: string;
 }
