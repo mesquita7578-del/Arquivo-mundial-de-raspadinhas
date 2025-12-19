@@ -1,3 +1,4 @@
+
 {
   "name": "Arquivo Mundial de Raspadinhas",
   "short_name": "Arquivo Mundial",
@@ -6,7 +7,7 @@
   "display": "standalone",
   "background_color": "#020617",
   "theme_color": "#020617",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/2662/2662503.png",
