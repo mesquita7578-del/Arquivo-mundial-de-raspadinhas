@@ -19,7 +19,7 @@ import { ScratchcardData, Continent, Category, CategoryItem, SiteMetadata } from
 import { 
   Globe, Ticket, Sparkles, Loader2, Library, BookOpen, 
   PlusCircle, Info, Search, Filter, LayoutGrid, Map as MapIcon, Tag,
-  Navigation, MousePointer2, UserCheck, FileJson, Zap, Wand2
+  Navigation, MousePointer2, UserCheck, FileJson, Zap, Wand2, Archive, ArrowRight
 } from 'lucide-react';
 import { translations, Language } from './translations';
 import { storageService } from './services/storage';
@@ -180,26 +180,17 @@ function App() {
 
   const filteredImages = useMemo(() => {
     return allImagesCache.filter(i => {
-      // 1. Continent Filter
       if (activeContinent !== 'Mundo' && i.continent !== activeContinent) return false;
-      
-      // 2. Category Filter (Robust case-insensitive match)
       const targetCat = activeCategory.toLowerCase();
       const itemCat = (i.category || 'raspadinha').toLowerCase();
       if (targetCat !== 'all' && itemCat !== targetCat) return false;
-      
-      // 3. Flags
       if (filterRarity && !i.isRarity) return false;
       if (filterWinners && !i.isWinner) return false;
-      
-      // 4. Page-specific logical filters
       if (currentPage === 'my-collection' && (!currentUser || !i.owners?.includes(currentUser))) return false;
       if (currentPage === 'new-arrivals') {
         const fortyEightHoursInMs = 48 * 60 * 60 * 1000;
         if ((Date.now() - i.createdAt) > fortyEightHoursInMs) return false;
       }
-      
-      // search filters
       const search = (countrySearch || searchTerm).toLowerCase();
       if (search) {
         return i.gameName.toLowerCase().includes(search) || 
@@ -254,8 +245,9 @@ function App() {
         recentCount={recentCount}
       />
 
-      <main className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-950 to-[#020617] scroll-smooth custom-scrollbar flex flex-col relative">
-        <div className="absolute top-0 left-0 w-full h-[500px] bg-brand-600/5 blur-[100px] pointer-events-none z-0"></div>
+      <main className="flex-1 overflow-y-auto bg-[#020617] scroll-smooth custom-scrollbar flex flex-col relative">
+        {/* Camada de Decoração de Fundo */}
+        <div className="absolute top-0 left-0 w-full h-[800px] bg-gradient-to-b from-blue-600/10 via-brand-600/5 to-transparent pointer-events-none z-0"></div>
 
         {!(currentPage === 'stats' || currentPage === 'about' || currentPage === 'map') && (
           <div className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-xl border-b border-slate-900 shadow-2xl">
@@ -286,9 +278,6 @@ function App() {
                   {recentCount > 0 && (
                     <button onClick={() => handleNavigate('new-arrivals')} className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ml-1 border-l border-slate-800 pl-4 flex items-center gap-1.5 ${currentPage === 'new-arrivals' ? 'bg-brand-600 text-white shadow-lg' : 'text-brand-500 hover:text-brand-400'}`}><Zap className="w-3 h-3 animate-pulse" /> Novidades</button>
                   )}
-                  {isAdmin && (
-                    <button onClick={handleExportBackup} className="px-3 py-1 rounded text-[10px] font-black uppercase transition-all ml-1 border-l border-slate-800 pl-4 text-slate-500 hover:text-brand-500 flex items-center gap-1.5" title="Backup Rápido JSON"><FileJson className="w-3 h-3" /> [JSON]</button>
-                  )}
               </div>
             </div>
             <div className="px-4 md:px-8 py-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -300,7 +289,7 @@ function App() {
               </div>
               <div className="relative group w-full md:w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600" />
-                  <input type="text" placeholder="Procurar no arquivo..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} className="bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none w-full focus:border-brand-500" />
+                  <input type="text" placeholder="Procurar no arquivo..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} className="bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none w-full focus:border-brand-500 transition-all" />
               </div>
             </div>
           </div>
@@ -331,7 +320,7 @@ function App() {
       <Footer onNavigate={(p) => handleNavigate(p, true)} onWebsitesClick={() => setIsWebsitesModalOpen(true)} />
 
       {/* Floating Actions */}
-      <div className="fixed bottom-28 left-8 flex flex-col gap-4 z-40">
+      <div className="fixed bottom-32 left-8 flex flex-col gap-4 z-40">
         <button 
           onClick={handleChloeMagic}
           className="w-16 h-16 bg-gradient-to-tr from-purple-600 to-pink-600 text-white rounded-2xl shadow-xl flex items-center justify-center border-2 border-white/20 hover:scale-110 transition-transform group relative"
@@ -343,7 +332,7 @@ function App() {
       </div>
 
       {isAdmin && (
-        <button onClick={() => setIsUploadModalOpen(true)} className="fixed bottom-28 right-8 w-16 h-16 bg-brand-600 text-white rounded-2xl shadow-xl flex items-center justify-center z-40 border-2 border-brand-400/30">
+        <button onClick={() => setIsUploadModalOpen(true)} className="fixed bottom-32 right-8 w-16 h-16 bg-brand-600 text-white rounded-2xl shadow-xl flex items-center justify-center z-40 border-2 border-brand-400/30 active:scale-95 transition-all">
           <PlusCircle className="w-8 h-8" />
         </button>
       )}

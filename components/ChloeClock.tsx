@@ -64,7 +64,7 @@ export const ChloeClock: React.FC = () => {
         {timeData.isEventDay ? (
           <div className="flex items-center gap-2 animate-pulse">
             <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
-            <span className="text-[9px] font-black text-white uppercase tracking-widest italic">Festas Felizes! hihi!</span>
+            <span className="text-[9px] font-black text-white uppercase tracking-widest italic">Festas Felizes!</span>
           </div>
         ) : (
           <div className="flex items-center gap-3">
