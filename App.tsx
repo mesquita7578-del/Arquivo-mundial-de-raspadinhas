@@ -1,5 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+// Added missing icon imports
+import { Search, Plus } from 'lucide-react';
 import { Header } from './components/Header';
 import { ImageGrid } from './components/ImageGrid';
 import { ImageViewer } from './components/ImageViewer';
@@ -240,7 +242,8 @@ const App: React.FC = () => {
         {currentPage === 'about' && (
           <AboutPage 
             isAdmin={isAdmin}
-            t={t.about}
+            // Fix: Fallback to empty object if t.about is missing to prevent errors
+            t={t.about || {}}
             founderBio={siteMetadata?.founderBio}
             founderPhoto={siteMetadata?.founderPhotoUrl}
             founderQuote={siteMetadata?.founderQuote}

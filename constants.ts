@@ -20,6 +20,8 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     collector: 'Jorge Mesquita',
     aiGenerated: false,
     createdAt: Date.now() - 100000,
+    // Added missing required field 'lines'
+    lines: 'none',
   },
   {
     id: '8',
@@ -37,6 +39,8 @@ export const INITIAL_RASPADINHAS: ScratchcardData[] = [
     collector: 'Chloe',
     aiGenerated: true,
     createdAt: Date.now() - 5000,
+    // Added missing required field 'lines'
+    lines: 'none',
   }
 ];
 

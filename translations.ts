@@ -195,6 +195,11 @@ export const translations = {
       countriesIncluded: "Países:",
       noCountries: "Sem países.",
       restrictedAccess: "Apenas Administradores."
+    },
+    // Added missing 'about' section
+    about: {
+      title: "Sobre",
+      subtitle: "O Legado"
     }
   },
   it: {
@@ -390,6 +395,11 @@ export const translations = {
       countriesIncluded: "Paesi:",
       noCountries: "Nessun paese.",
       restrictedAccess: "Solo Admin."
+    },
+    // Added missing 'about' section
+    about: {
+      title: "Informazioni",
+      subtitle: "L'Eredità"
     }
   }
 };

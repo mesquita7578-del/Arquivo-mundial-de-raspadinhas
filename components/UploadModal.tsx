@@ -120,10 +120,11 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       const backBase64 = backPreview ? backPreview.split(',')[1] : null;
       const result = await analyzeImage(frontBase64, backBase64, frontFile.type);
       
-      // Aplicar dados da IA ao formulário
+      // Fix: Cast result.state to ScratchcardState to match ScratchcardData type
       setFormData(prev => ({
         ...prev,
         ...result,
+        state: result.state as ScratchcardState,
         aiGenerated: true
       }));
       
