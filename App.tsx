@@ -73,9 +73,10 @@ function App() {
   const [language, setLanguage] = useState<Language>('pt');
   const t = translations[language];
 
+  // Novidades agora contam apenas itens registados HOJE (desde as 00:00)
   const recentCount = useMemo(() => {
-    const fortyEightHoursInMs = 48 * 60 * 60 * 1000;
-    return allImagesCache.filter(img => (Date.now() - img.createdAt) < fortyEightHoursInMs).length;
+    const startOfToday = new Date().setHours(0, 0, 0, 0);
+    return allImagesCache.filter(img => img.createdAt >= startOfToday).length;
   }, [allImagesCache]);
 
   useEffect(() => {
@@ -190,8 +191,8 @@ function App() {
       if (filterWinners && !i.isWinner) return false;
       if (currentPage === 'my-collection' && (!currentUser || !i.owners?.includes(currentUser))) return false;
       if (currentPage === 'new-arrivals') {
-        const fortyEightHoursInMs = 48 * 60 * 60 * 1000;
-        if ((Date.now() - i.createdAt) > fortyEightHoursInMs) return false;
+        const startOfToday = new Date().setHours(0, 0, 0, 0);
+        if (i.createdAt < startOfToday) return false;
       }
       const search = (countrySearch || searchTerm).toLowerCase();
       if (search) {
@@ -299,7 +300,7 @@ function App() {
                   <button onClick={() => handleNavigate('my-collection')} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-1.5 border border-slate-800 ${currentPage === 'my-collection' ? 'bg-cyan-600 text-white shadow-lg border-cyan-400' : 'bg-slate-900/50 text-cyan-600 hover:text-cyan-400'}`}><UserCheck className="w-3.5 h-3.5" /> Minha Coleção</button>
                 )}
                 {recentCount > 0 && (
-                  <button onClick={() => handleNavigate('new-arrivals')} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-1.5 border border-slate-800 ${currentPage === 'new-arrivals' ? 'bg-brand-600 text-white shadow-lg border-brand-400' : 'bg-slate-900/50 text-brand-500 hover:text-brand-400'}`}><Zap className="w-3.5 h-3.5 animate-pulse" /> Novidades</button>
+                  <button onClick={() => handleNavigate('new-arrivals')} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-1.5 border border-slate-800 ${currentPage === 'new-arrivals' ? 'bg-brand-600 text-white shadow-lg border-brand-400' : 'bg-slate-900/50 text-brand-500 hover:text-brand-400'}`}><Zap className="w-3.5 h-3.5 animate-pulse" /> Novidades ({recentCount})</button>
                 )}
               </div>
 

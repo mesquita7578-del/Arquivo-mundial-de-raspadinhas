@@ -58,9 +58,10 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
     return sortedImages.slice(start, start + ITEMS_PER_PAGE);
   }, [sortedImages, currentPage]);
 
+  // Alerta NOVO agora limitado a 24 horas
   const isRecent = (createdAt: number) => {
-    const fortyEightHoursInMs = 48 * 60 * 60 * 1000;
-    return (Date.now() - createdAt) < fortyEightHoursInMs;
+    const twentyFourHoursInMs = 24 * 60 * 60 * 1000;
+    return (Date.now() - createdAt) < twentyFourHoursInMs;
   };
 
   if (images.length === 0) {
@@ -120,9 +121,9 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                       </div>
                     )}
                     {itemIsRecent && (
-                       <div className="bg-blue-600/20 backdrop-blur-md text-red-500 px-2 py-0.5 rounded-sm shadow-[0_0_15px_rgba(59,130,246,0.3)] -rotate-12 border border-blue-500/30 flex items-center gap-1 animate-pulse" title="Adicionado nas últimas 48h!">
-                          <Zap className="w-2.5 h-2.5 fill-current drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]" />
-                          <span className="text-[7px] font-black uppercase tracking-widest drop-shadow-[0_0_2px_rgba(239,68,68,0.8)]">NOVO</span>
+                       <div className="bg-red-600 backdrop-blur-md text-white px-2.5 py-1 rounded-sm shadow-[0_0_20px_rgba(220,38,38,0.6)] -rotate-6 border border-red-400 flex items-center gap-1 animate-pulse-slow" title="Adicionado nas últimas 24h!">
+                          <Zap className="w-3 h-3 fill-white" />
+                          <span className="text-[8px] font-black uppercase tracking-widest">NOVO</span>
                        </div>
                     )}
                     {currentUser && item.owners?.includes(currentUser) && (
