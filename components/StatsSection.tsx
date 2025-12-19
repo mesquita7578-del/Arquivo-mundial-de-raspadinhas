@@ -5,8 +5,9 @@ import {
   BarChart3, Database, Map, PieChart, Users, Award, Ticket, 
   Coins, Crown, Star, Sparkles, Flag, Globe, Mail, 
   ShieldCheck, LayoutGrid, CheckCircle2, RotateCcw, 
-  User, Zap, TrendingUp
+  User, Zap, TrendingUp, MessageCircle, Loader2
 } from 'lucide-react';
+import { getChloeInsight } from '../services/geminiService';
 
 interface StatsSectionProps {
   stats: Record<string, number>;
@@ -21,6 +22,8 @@ interface StatsSectionProps {
 
 export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats, countryStats, stateStats, collectorStats, totalRecords, t, currentUser }) => {
   const [animate, setAnimate] = useState(false);
+  const [chloeMessage, setChloeMessage] = useState<string | null>(null);
+  const [isAskingChloe, setIsAskingChloe] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setAnimate(true), 150);
@@ -32,7 +35,6 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
     return vals.length > 0 ? Math.max(...vals) : 1;
   }, [stats]);
 
-  // FIX: Calculate percentages for categories to be used in progress bars
   const { scratchPct, lotteryPct } = useMemo(() => {
     const total = totalRecords || 1;
     return {
@@ -40,6 +42,18 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
       lotteryPct: (categoryStats.lottery / total) * 100
     };
   }, [categoryStats, totalRecords]);
+
+  const handleAskChloe = async () => {
+    setIsAskingChloe(true);
+    try {
+      const msg = await getChloeInsight({ total: totalRecords, stats, countryStats, categoryStats });
+      setChloeMessage(msg);
+    } catch (err) {
+      setChloeMessage("Vovô, os registos estão tão bons que até me faltam as palavras! hihi!");
+    } finally {
+      setIsAskingChloe(false);
+    }
+  };
 
   const continentsConfig: { key: Continent; label: string; color: string; gradient: string }[] = [
     { key: 'Europa', label: 'Europa', color: 'bg-blue-500', gradient: 'from-blue-500 to-indigo-600' },
@@ -83,7 +97,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         
         {/* Collector Welcome Card */}
-        <div className="mb-12 bg-slate-900/50 border border-slate-800 rounded-[2.5rem] p-8 md:p-10 flex flex-col md:flex-row items-center gap-8 shadow-2xl backdrop-blur-sm overflow-hidden group">
+        <div className="mb-12 bg-slate-900/50 border border-slate-800 rounded-[2.5rem] p-8 md:p-10 flex flex-col md:flex-row items-center gap-8 shadow-2xl backdrop-blur-sm overflow-hidden group relative">
            <div className="relative">
               <div className={`w-24 h-24 rounded-3xl flex items-center justify-center border-2 rotate-3 group-hover:rotate-0 transition-all duration-500 ${isChloe ? 'bg-pink-600/20 border-pink-500 shadow-[0_0_30px_rgba(236,72,153,0.3)]' : 'bg-blue-600/20 border-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.3)]'}`}>
                  {isChloe ? <Sparkles className="w-10 h-10 text-pink-500" /> : <User className="w-10 h-10 text-blue-500" />}
@@ -101,17 +115,38 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                  O arquivo mundial está sob sua supervisão. Você catalogou <span className="text-white font-black">{totalRecords} itens</span> até agora. Continue preservando a história da sorte.
               </p>
            </div>
-           <div className="hidden lg:flex gap-4">
-              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col items-center">
-                 <TrendingUp className="w-5 h-5 text-emerald-500 mb-1" />
-                 <span className="text-[10px] font-black text-slate-500 uppercase">Tendência</span>
-              </div>
-              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col items-center">
-                 <Zap className="w-5 h-5 text-blue-500 mb-1" />
-                 <span className="text-[10px] font-black text-slate-500 uppercase">Atividade</span>
-              </div>
+           <div className="flex flex-col gap-2">
+              <button 
+                onClick={handleAskChloe}
+                disabled={isAskingChloe}
+                className="flex items-center gap-2 bg-pink-600 hover:bg-pink-500 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-pink-900/20 transition-all active:scale-95 disabled:opacity-50"
+              >
+                {isAskingChloe ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
+                O que a Chloe acha?
+              </button>
            </div>
         </div>
+
+        {/* Chloe's Insight Card */}
+        {chloeMessage && (
+          <div className="mb-12 bg-gradient-to-br from-pink-900/20 via-slate-900 to-purple-900/20 border border-pink-500/30 rounded-[2.5rem] p-8 md:p-10 shadow-2xl animate-bounce-in relative overflow-hidden">
+             <div className="absolute -top-10 -right-10 opacity-10 rotate-12">
+                <Sparkles className="w-40 h-40 text-pink-500" />
+             </div>
+             <div className="flex items-start gap-6 relative z-10">
+                <div className="bg-pink-600 p-3 rounded-2xl shadow-lg">
+                   <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <div className="space-y-4">
+                   <h4 className="text-[10px] font-black text-pink-500 uppercase tracking-[0.4em]">Análise da Guardiã Chloe</h4>
+                   <p className="text-lg md:text-xl text-slate-100 font-medium italic leading-relaxed">
+                      "{chloeMessage}"
+                   </p>
+                   <button onClick={() => setChloeMessage(null)} className="text-[10px] font-black text-slate-500 uppercase hover:text-white transition-colors">Fechar Parecer</button>
+                </div>
+             </div>
+          </div>
+        )}
 
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
            <div>

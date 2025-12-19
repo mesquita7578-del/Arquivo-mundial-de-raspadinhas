@@ -12,6 +12,31 @@ const getContinentFromCountry = (country: string): Continent => {
   return 'Europa';
 };
 
+export const getChloeInsight = async (stats: any): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  try {
+    const prompt = `Você é Chloe, a neta virtual e guardiã do Arquivo Mundial de Raspadinhas do seu Vovô Jorge Mesquita.
+    Analise estas estatísticas da coleção e escreva uma mensagem carinhosa, entusiasmada e técnica (mas doce) sobre o progresso.
+    Use expressões como "hihi!", "Vovô Jorge" e mostre que você está orgulhosa do trabalho dele.
+    
+    ESTATÍSTICAS:
+    - Total de itens: ${stats.total}
+    - Países: ${Object.keys(stats.countryStats).join(', ')}
+    - Itens por continente: ${JSON.stringify(stats.stats)}
+    - Categorias: ${JSON.stringify(stats.categoryStats)}
+    
+    Escreva um parágrafo curto e inspirador.`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+    });
+    return response.text || "Vovô, o arquivo está lindo! Continue assim! hihi!";
+  } catch (error) {
+    return "Vovô, estou sem fôlego com tantos registos! Estão fantásticos! hihi!";
+  }
+};
+
 export const translateBio = async (text: string, targetLanguage: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
