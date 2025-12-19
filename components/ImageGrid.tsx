@@ -58,7 +58,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
     return sortedImages.slice(start, start + ITEMS_PER_PAGE);
   }, [sortedImages, currentPage]);
 
-  // Alerta NOVO agora limitado a 24 horas
+  // Alerta NOVO limitado a 24 horas
   const isRecent = (createdAt: number) => {
     const twentyFourHoursInMs = 24 * 60 * 60 * 1000;
     return (Date.now() - createdAt) < twentyFourHoursInMs;
@@ -121,7 +121,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                       </div>
                     )}
                     {itemIsRecent && (
-                       <div className="bg-red-600 backdrop-blur-md text-white px-2.5 py-1 rounded-sm shadow-[0_0_20px_rgba(220,38,38,0.6)] -rotate-6 border border-red-400 flex items-center gap-1 animate-pulse-slow" title="Adicionado nas últimas 24h!">
+                       <div className="bg-cyan-500 backdrop-blur-md text-white px-2.5 py-1 rounded-sm shadow-[0_0_20px_rgba(6,182,212,0.8)] -rotate-6 border border-cyan-300 flex items-center gap-1 animate-pulse-slow" title="Adicionado nas últimas 24h!">
                           <Zap className="w-3 h-3 fill-white" />
                           <span className="text-[8px] font-black uppercase tracking-widest">NOVO</span>
                        </div>
