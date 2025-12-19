@@ -120,15 +120,32 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       const backBase64 = backPreview ? backPreview.split(',')[1] : null;
       const result = await analyzeImage(frontBase64, backBase64, frontFile.type);
       
-      const countryCode = (result.country || 'PT').substring(0, 2).toUpperCase();
-      const generatedId = `${countryCode}-${Math.floor(10000 + Math.random() * 89999)}`;
-
-      setFormData(prev => ({ ...prev, ...result, customId: generatedId, aiGenerated: true }));
+      // Garantir que os dados da IA sobrescrevem o estado inicial corretamente
+      setFormData(prev => ({
+        ...prev,
+        gameName: result.gameName || prev.gameName,
+        gameNumber: result.gameNumber || prev.gameNumber,
+        price: result.price || prev.price,
+        country: result.country || prev.country,
+        continent: result.continent || prev.continent,
+        operator: result.operator || prev.operator,
+        state: result.state || prev.state,
+        values: result.values || prev.values,
+        printer: result.printer || prev.printer,
+        size: result.size || prev.size,
+        releaseDate: result.releaseDate || prev.releaseDate,
+        closeDate: result.closeDate || prev.closeDate,
+        emission: result.emission || prev.emission,
+        winProbability: result.winProbability || prev.winProbability,
+        lines: result.lines || prev.lines,
+        aiGenerated: true
+      }));
+      
       setStep(2);
     } catch (err) {
       console.error("Erro no processamento:", err);
-      setAnalysisError("A Chloe não conseguiu ler os dados automaticamente. Pode tentar outra foto ou preencher manualmente.");
-      setStep(2); // Avançamos para o passo 2 mesmo com erro para permitir preenchimento manual
+      setAnalysisError("A Chloe teve dificuldade em extrair os dados. Vamos preencher manualmente!");
+      setStep(2);
     } finally {
       setIsAnalyzing(false);
     }
@@ -138,9 +155,14 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     if (!formData.gameName || !formData.country) return;
     setIsSaving(true);
     const timestamp = Date.now();
+    
+    // Gerar ID personalizado
+    const countryCode = (formData.country || 'PT').substring(0, 2).toUpperCase();
+    const generatedId = `${countryCode}-${Math.floor(10000 + Math.random() * 89999)}`;
+
     const newItem: ScratchcardData = {
       id: timestamp.toString(),
-      customId: formData.customId || `ID-${timestamp}`,
+      customId: formData.customId || generatedId,
       frontUrl: frontPreview || '',
       backUrl: backPreview || undefined,
       gameName: formData.gameName || '',
@@ -253,7 +275,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                         </label>
                         <label className="block">
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Codigo / ID:</span>
-                           <input type="text" value={formData.customId} onChange={e => setFormData({...formData, customId: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" />
+                           <input type="text" value={formData.customId} onChange={e => setFormData({...formData, customId: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" placeholder="Gerado automaticamente" />
                         </label>
                       </div>
                    </section>
