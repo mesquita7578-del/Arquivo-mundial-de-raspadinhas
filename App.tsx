@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, Plus, Loader2, Sparkles, Zap, LayoutGrid, Trophy, Star, 
-  Ticket, Layers, Box, MapPin, X, Diamond, Crown, CheckCircle2, Users, Clock, ChevronDown, ChevronRight
+  Ticket, Layers, Box, MapPin, X, Diamond, Crown, CheckCircle2, Users, Clock, ChevronDown, ChevronRight,
+  Ship, Landmark
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { ImageGrid } from './components/ImageGrid';
@@ -39,6 +40,7 @@ const App: React.FC = () => {
   const [showWinnersOnly, setShowWinnersOnly] = useState(false);
   const [showNewOnly, setShowNewOnly] = useState(false);
   const [showNewSubmenu, setShowNewSubmenu] = useState(false);
+  const [activeNewCountrySub, setActiveNewCountrySub] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
@@ -61,6 +63,7 @@ const App: React.FC = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (newSubmenuRef.current && !newSubmenuRef.current.contains(event.target as Node)) {
         setShowNewSubmenu(false);
+        setActiveNewCountrySub(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -182,16 +185,27 @@ const App: React.FC = () => {
     });
   }, [images, searchTerm, activeContinent, activeCountry, activeCategory, showRaritiesOnly, showWinnersOnly, showNewOnly, currentPage, currentUser]);
 
-  // Lógica para descobrir quais países têm novidades (últimas 24h)
-  const countriesWithNewEntries = useMemo(() => {
+  // Lógica para descobrir países com novidades e detalhes técnicos de Portugal
+  const newsDetailed = useMemo(() => {
     const threshold = Date.now() - 86400000;
     const newItems = images.filter(img => (img.createdAt || 0) > threshold);
+    
     const countrySet = new Set<string>();
+    const portugalSubNews = {
+      scml: newItems.some(i => i.country === 'Portugal' && !i.island && i.category === 'raspadinha'),
+      acores: newItems.some(i => i.island === 'Açores'),
+      madeira: newItems.some(i => i.island === 'Madeira'),
+      lotarias: newItems.some(i => i.country === 'Portugal' && i.category === 'lotaria')
+    };
+
     newItems.forEach(img => {
       countrySet.add(img.country);
-      if (img.island) countrySet.add(img.island);
     });
-    return Array.from(countrySet).sort();
+
+    return {
+      countries: Array.from(countrySet).sort(),
+      portugal: portugalSubNews
+    };
   }, [images]);
 
   const collectionCount = useMemo(() => {
@@ -293,13 +307,13 @@ const App: React.FC = () => {
             <div className="flex flex-wrap items-center justify-center gap-1 md:gap-1.5">
                <div className="flex items-center gap-1 border-r border-white/10 pr-1 mr-0.5">
                  <button 
-                   onClick={() => setShowRaritiesOnly(!showRaritiesOnly)} 
+                   onClick={() => { setShowRaritiesOnly(!showRaritiesOnly); setActiveCategory('all'); setActiveCountry(''); }} 
                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-amber-400'}`}
                  >
                    <Diamond className="w-3 h-3" /> Raridades
                  </button>
                  <button 
-                   onClick={() => setShowWinnersOnly(!showWinnersOnly)} 
+                   onClick={() => { setShowWinnersOnly(!showWinnersOnly); setActiveCategory('all'); setActiveCountry(''); }} 
                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-emerald-400'}`}
                  >
                    <Trophy className="w-3 h-3" /> Premiadas
@@ -316,46 +330,88 @@ const App: React.FC = () => {
                   ].map(cat => (
                     <button 
                       key={cat.id} 
-                      onClick={() => setActiveCategory(cat.id)} 
+                      onClick={() => { setActiveCategory(cat.id); setShowRaritiesOnly(false); setShowWinnersOnly(false); setShowNewOnly(false); setActiveCountry(''); }} 
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white border border-brand-400/30' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-brand-400'}`}
                     >
                       <cat.icon className="w-3 h-3" /> {cat.label}
                     </button>
                   ))}
                   
-                  {/* Botão de Novas Entradas (Rosa Chloe) com Submenu Automático */}
+                  {/* Botão de Novas Entradas (Rosa Chloe) com Submenu de Nível 2 */}
                   <div className="relative" ref={newSubmenuRef}>
                     <button 
-                      onClick={() => setShowNewOnly(!showNewOnly)} 
+                      onClick={() => { setShowNewOnly(!showNewOnly); setShowRaritiesOnly(false); setShowWinnersOnly(false); setActiveCategory('all'); setActiveCountry(''); }} 
                       onMouseEnter={() => setShowNewSubmenu(true)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ml-0.5 ${showNewOnly || showNewSubmenu ? 'bg-pink-600 text-white shadow-[0_0_15px_rgba(219,39,119,0.5)] border border-pink-400/30' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-pink-400'}`}
                     >
                       <Clock className="w-3 h-3" /> Novas Entradas
-                      {countriesWithNewEntries.length > 0 && <ChevronDown className={`w-2.5 h-2.5 transition-transform ${showNewSubmenu ? 'rotate-180' : ''}`} />}
+                      {newsDetailed.countries.length > 0 && <ChevronDown className={`w-2.5 h-2.5 transition-transform ${showNewSubmenu ? 'rotate-180' : ''}`} />}
                     </button>
 
-                    {showNewSubmenu && countriesWithNewEntries.length > 0 && (
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-44 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-1.5 z-[100] animate-bounce-in backdrop-blur-3xl">
-                         <div className="text-[7px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 py-1.5 border-b border-white/5 mb-1 flex items-center gap-2">
-                           <Sparkles className="w-2.5 h-2.5 text-pink-500" /> Novidades por País
-                         </div>
-                         <div className="max-h-[250px] overflow-y-auto custom-scrollbar">
-                           {countriesWithNewEntries.map(country => (
+                    {showNewSubmenu && newsDetailed.countries.length > 0 && (
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 flex z-[100] animate-bounce-in">
+                        <div className="w-44 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-1.5 backdrop-blur-3xl h-fit">
+                           <div className="text-[7px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 py-1.5 border-b border-white/5 mb-1 flex items-center gap-2">
+                             <Sparkles className="w-2.5 h-2.5 text-pink-500" /> Países
+                           </div>
+                           {newsDetailed.countries.map(country => (
                              <button
                                key={country}
+                               onMouseEnter={() => setActiveNewCountrySub(country)}
                                onClick={() => {
                                  setActiveCountry(country);
                                  setShowNewOnly(true);
                                  setShowNewSubmenu(false);
                                  setCurrentPage('home');
                                }}
-                               className="w-full text-left px-3 py-1.5 text-[8px] text-slate-400 hover:text-white hover:bg-pink-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center justify-between group"
+                               className={`w-full text-left px-3 py-1.5 text-[8px] rounded-lg transition-all font-black uppercase tracking-widest flex items-center justify-between group ${activeNewCountrySub === country ? 'bg-pink-600 text-white' : 'text-slate-400 hover:text-white'}`}
                              >
                                {country}
-                               <ChevronRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                               <ChevronRight className={`w-2.5 h-2.5 transition-opacity ${activeNewCountrySub === country ? 'opacity-100 translate-x-1' : 'opacity-0'}`} />
                              </button>
                            ))}
-                         </div>
+                        </div>
+
+                        {/* Sub-menu Especial de Portugal */}
+                        {activeNewCountrySub === 'Portugal' && (
+                          <div className="w-48 ml-1 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-1.5 backdrop-blur-3xl animate-fade-in h-fit">
+                             <div className="text-[7px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 py-1.5 border-b border-white/5 mb-1 flex items-center gap-2">
+                               <MapPin className="w-2.5 h-2.5 text-blue-500" /> Filtrar Portugal
+                             </div>
+                             
+                             <button 
+                               onClick={() => { setActiveCountry('Portugal'); setActiveCategory('raspadinha'); setShowNewOnly(true); setShowNewSubmenu(false); }}
+                               className={`w-full text-left px-3 py-2 text-[8px] rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2 ${newsDetailed.portugal.scml ? 'text-slate-200 hover:bg-pink-600 hover:text-white' : 'opacity-30 cursor-not-allowed'}`}
+                               disabled={!newsDetailed.portugal.scml}
+                             >
+                               <Landmark className="w-3 h-3 text-blue-400" /> SCML (Continente)
+                             </button>
+
+                             <button 
+                               onClick={() => { setActiveCountry('Açores'); setShowNewOnly(true); setShowNewSubmenu(false); }}
+                               className={`w-full text-left px-3 py-2 text-[8px] rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2 ${newsDetailed.portugal.acores ? 'text-slate-200 hover:bg-pink-600 hover:text-white' : 'opacity-30 cursor-not-allowed'}`}
+                               disabled={!newsDetailed.portugal.acores}
+                             >
+                               <Ship className="w-3 h-3 text-cyan-400" /> Açores
+                             </button>
+
+                             <button 
+                               onClick={() => { setActiveCountry('Madeira'); setShowNewOnly(true); setShowNewSubmenu(false); }}
+                               className={`w-full text-left px-3 py-2 text-[8px] rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2 ${newsDetailed.portugal.madeira ? 'text-slate-200 hover:bg-pink-600 hover:text-white' : 'opacity-30 cursor-not-allowed'}`}
+                               disabled={!newsDetailed.portugal.madeira}
+                             >
+                               <MapPin className="w-3 h-3 text-emerald-400" /> Madeira
+                             </button>
+
+                             <button 
+                               onClick={() => { setActiveCountry('Portugal'); setActiveCategory('lotaria'); setShowNewOnly(true); setShowNewSubmenu(false); }}
+                               className={`w-full text-left px-3 py-2 text-[8px] rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2 ${newsDetailed.portugal.lotarias ? 'text-slate-200 hover:bg-pink-600 hover:text-white' : 'opacity-30 cursor-not-allowed'}`}
+                               disabled={!newsDetailed.portugal.lotarias}
+                             >
+                               <Star className="w-3 h-3 text-amber-500" /> Lotarias
+                             </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
