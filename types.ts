@@ -114,14 +114,15 @@ export interface SiteMetadata {
   founderBio?: string;
   founderQuote?: string;
   milestones?: Milestone[];
-  visitorCount?: number; // Contador total de acessos
-  visitorLog?: VisitorEntry[]; // Registo de quem entrou
+  visitorCount?: number; 
+  visitorLog?: VisitorEntry[]; 
 }
 
 export interface VisitorEntry {
   name: string;
   timestamp: number;
   isAdmin: boolean;
+  location?: string;
 }
 
 export interface Milestone {

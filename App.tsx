@@ -22,7 +22,6 @@ import { ScratchcardData, CategoryItem, SiteMetadata, Continent, VisitorEntry } 
 import { translations, Language } from './translations';
 import { DivineSignal, Signal } from './components/DivineSignal';
 
-// Canal de comunicação mágica da Chloe entre janelas
 const chloeChannel = new BroadcastChannel('chloe_archive_sync');
 
 const App: React.FC = () => {
@@ -54,7 +53,6 @@ const App: React.FC = () => {
 
   const t = translations[language] || translations['pt'];
 
-  // Escuta atualizações de outras janelas
   useEffect(() => {
     chloeChannel.onmessage = (event) => {
       if (event.data.type === 'SYNC_METADATA') {
@@ -64,7 +62,6 @@ const App: React.FC = () => {
     return () => chloeChannel.close;
   }, []);
 
-  // Inicialização e Contador de Visitas
   useEffect(() => {
     const init = async () => {
       try {
@@ -78,7 +75,6 @@ const App: React.FC = () => {
         setImages(allImages || []);
         setCategories(allCats || []);
         
-        // Atualizar Contador de Visitas
         const updatedMeta = {
            ...meta,
            visitorCount: (meta.visitorCount || 0) + 1,
@@ -86,7 +82,6 @@ const App: React.FC = () => {
         setSiteMetadata(updatedMeta);
         await storageService.saveSiteMetadata(updatedMeta);
         
-        // Avisar outras abas do novo acesso
         chloeChannel.postMessage({ type: 'SYNC_METADATA', payload: updatedMeta });
 
         if (currentUser) {
@@ -106,10 +101,23 @@ const App: React.FC = () => {
     const meta = currentMeta || siteMetadata;
     if (!meta) return;
 
+    let location = 'Local Desconhecido';
+    try {
+      // Pequena consulta para localização aproximada
+      const response = await fetch('https://ipapi.co/json/');
+      const data = await response.json();
+      if (data.city && data.country_name) {
+        location = `${data.city}, ${data.country_name}`;
+      }
+    } catch (e) {
+      console.log("Localização indisponível hihi!");
+    }
+
     const newEntry: VisitorEntry = {
       name,
       isAdmin: isAdm,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      location
     };
 
     const log = meta.visitorLog || [];
@@ -119,7 +127,6 @@ const App: React.FC = () => {
     setSiteMetadata(updatedMeta);
     await storageService.saveSiteMetadata(updatedMeta);
     
-    // Sincronizar login entre abas
     chloeChannel.postMessage({ type: 'SYNC_METADATA', payload: updatedMeta });
   };
 
