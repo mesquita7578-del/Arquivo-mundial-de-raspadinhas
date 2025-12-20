@@ -19,12 +19,10 @@ import { translations, Language } from './translations';
 import { DivineSignal, Signal } from './components/DivineSignal';
 
 const App: React.FC = () => {
-  // Estados de Dados
   const [images, setImages] = useState<ScratchcardData[]>([]);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [siteMetadata, setSiteMetadata] = useState<SiteMetadata | null>(null);
   
-  // Estados de Navegação e Filtros
   const [currentPage, setCurrentPage] = useState<'home' | 'stats' | 'map' | 'about' | 'new-arrivals'>('home');
   const [language, setLanguage] = useState<Language>('pt');
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,11 +33,9 @@ const App: React.FC = () => {
   const [showWinnersOnly, setShowWinnersOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Sugestões de país
   const [showCountrySuggestions, setShowCountrySuggestions] = useState(false);
   const countryInputRef = useRef<HTMLDivElement>(null);
 
-  // Modais
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
@@ -47,7 +43,6 @@ const App: React.FC = () => {
   const [showWebsites, setShowWebsites] = useState(false);
   const [showRadio, setShowRadio] = useState(false);
   
-  // Admin e Sinais
   const [isAdmin, setIsAdmin] = useState(localStorage.getItem('archive_admin') === 'true');
   const [currentUser, setCurrentUser] = useState<string | null>(localStorage.getItem('archive_user'));
   const [signals, setSignals] = useState<Signal[]>([]);
@@ -86,19 +81,6 @@ const App: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const uniqueCountries = useMemo(() => {
-    const countries = images.map(img => img.country).filter(Boolean);
-    return Array.from(new Set(countries)).sort();
-  }, [images]);
-
-  const countrySuggestions = useMemo(() => {
-    if (!activeCountry.trim()) return [];
-    return uniqueCountries.filter(c => 
-      c.toLowerCase().includes(activeCountry.toLowerCase()) && 
-      c.toLowerCase() !== activeCountry.toLowerCase()
-    ).slice(0, 5);
-  }, [activeCountry, uniqueCountries]);
-
   const addSignal = (message: string, type: Signal['type'] = 'info') => {
     const id = Math.random().toString(36).substr(2, 9);
     setSignals(prev => [...prev, { id, message, type }]);
@@ -127,7 +109,7 @@ const App: React.FC = () => {
       const matchesRarity = !showRaritiesOnly || img.isRarity;
       const matchesWinners = !showWinnersOnly || img.isWinner;
       
-      const isRecent = (Date.now() - (img.createdAt || 0)) < 43200000; // 12h
+      const isRecent = (Date.now() - (img.createdAt || 0)) < 43200000;
       const matchesPage = currentPage === 'new-arrivals' ? isRecent : true;
       
       return matchesSearch && matchesContinent && matchesCountry && matchesCategory && matchesRarity && matchesWinners && matchesPage;
@@ -181,22 +163,14 @@ const App: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#020617] text-slate-100 gap-6">
-        <div className="relative">
-          <Loader2 className="w-16 h-16 animate-spin text-brand-500" />
-          <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-brand-400 animate-pulse" />
-        </div>
-        <div className="text-center space-y-2">
-          <p className="font-black uppercase tracking-[0.3em] text-xs text-brand-400 animate-pulse">
-            Chloe está a carregar o seu mundo azul... hihi!
-          </p>
-          <p className="text-[10px] text-slate-600 uppercase font-bold tracking-widest">Aguarde um momento</p>
-        </div>
+        <Loader2 className="w-16 h-16 animate-spin text-brand-500" />
+        <p className="font-black uppercase tracking-[0.3em] text-xs text-brand-400 animate-pulse">Chloe está a carregar... hihi!</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#020617] text-slate-100">
+    <div className="min-h-screen flex flex-col bg-[#020617] text-slate-100 pt-24 md:pt-28">
       <Header 
         isAdmin={isAdmin}
         currentUser={currentUser}
@@ -226,105 +200,47 @@ const App: React.FC = () => {
         }, {} as any)}
       />
 
-      {/* Barra de Navegação Consolidada: Categorias + Status + Pesquisa + País */}
       {(currentPage === 'home' || currentPage === 'new-arrivals') && (
-        <div className="bg-[#0a0f1e]/90 border-b border-slate-800 backdrop-blur-md sticky top-[70px] md:top-[80px] z-[100] px-4 md:px-8 py-2">
-          <div className="max-w-[1800px] mx-auto flex flex-col xl:flex-row items-center justify-between gap-4">
+        <div className="bg-[#020617]/40 backdrop-blur-xl sticky top-[80px] z-[90] px-4 md:px-8 py-3 border-b border-white/5 shadow-2xl">
+          <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             
-            {/* Bloco Unificado: Categorias, Status, Pesquisa e País Alinhados */}
-            <div className="flex flex-wrap items-center gap-3 w-full xl:flex-1 overflow-x-auto scrollbar-hide">
-               <div className="flex items-center gap-1">
-                  {[
-                    { id: 'all', label: 'Tudo', icon: LayoutGrid },
-                    { id: 'raspadinha', label: 'Raspadinhas', icon: Ticket },
-                    { id: 'lotaria', label: 'Lotarias', icon: Star },
-                    { id: 'boletim', label: 'Boletins', icon: Layers },
-                    { id: 'objeto', label: 'Objetos', icon: Box },
-                  ].map(cat => (
-                    <button
-                      key={cat.id}
-                      onClick={() => setActiveCategory(cat.id)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border neon-shimmer ${activeCategory === cat.id ? 'bg-gradient-to-r from-brand-600 via-brand-400 to-brand-600 animate-shimmer border-brand-300 text-white shadow-[0_0_20px_rgba(59,130,246,0.6)]' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700'}`}
-                    >
-                      <cat.icon className="w-3.5 h-3.5" /> {cat.label}
-                    </button>
-                  ))}
-               </div>
-
-               <div className="h-6 w-px bg-slate-800 mx-1 hidden sm:block"></div>
-
-               {/* Raridades e Premiadas (Com Neon Cintilante Temático) */}
-               <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setShowRaritiesOnly(!showRaritiesOnly)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border neon-shimmer ${showRaritiesOnly ? 'bg-gradient-to-r from-amber-600 via-amber-400 to-amber-600 animate-shimmer border-amber-300 text-white shadow-[0_0_20px_rgba(245,158,11,0.6)]' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-amber-500'}`}
-                  >
-                    <Sparkles className={`w-3.5 h-3.5 ${showRaritiesOnly ? 'text-white' : 'text-amber-500'}`} /> {showRaritiesOnly ? 'Só Raridades' : 'Raridades'}
-                  </button>
-
-                  <button
-                    onClick={() => setShowWinnersOnly(!showWinnersOnly)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border neon-shimmer ${showWinnersOnly ? 'bg-gradient-to-r from-emerald-600 via-emerald-400 to-emerald-600 animate-shimmer border-emerald-300 text-white shadow-[0_0_20px_rgba(16,185,129,0.6)]' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-emerald-500'}`}
-                  >
-                    <Trophy className={`w-3.5 h-3.5 ${showWinnersOnly ? 'text-white' : 'text-emerald-500'}`} /> {showWinnersOnly ? 'Só Premiadas' : 'Premiadas'}
-                  </button>
-               </div>
-
-               <div className="h-6 w-px bg-slate-800 mx-1 hidden sm:block"></div>
-
-               {/* Pesquisa e Filtro de País (Bordas Neon) */}
-               <div className="flex items-center gap-2 flex-1 min-w-[300px]">
-                  <div className="relative flex-1 group">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
-                    <input 
-                      type="text" 
-                      placeholder="Pesquisar..." 
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-[10px] focus:border-brand-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.3)] outline-none transition-all shadow-inner font-bold text-white uppercase tracking-wider"
-                    />
-                  </div>
-
-                  <div className="relative flex-1 group" ref={countryInputRef}>
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-brand-500" />
-                    <input 
-                      type="text" 
-                      placeholder="Filtrar País..." 
-                      value={activeCountry}
-                      onChange={(e) => { setActiveCountry(e.target.value); setShowCountrySuggestions(true); }}
-                      onFocus={() => setShowCountrySuggestions(true)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-8 py-1.5 text-[10px] focus:border-brand-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.3)] outline-none transition-all shadow-inner font-bold text-white uppercase tracking-wider"
-                    />
-                    {activeCountry && (
-                      <button onClick={() => setActiveCountry('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white">
-                        <X className="w-2.5 h-2.5" />
-                      </button>
-                    )}
-                    {showCountrySuggestions && countrySuggestions.length > 0 && (
-                      <div className="absolute top-full right-0 w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-[120] overflow-hidden animate-fade-in">
-                        {countrySuggestions.map(country => (
-                          <button
-                            key={country}
-                            onClick={() => { setActiveCountry(country); setShowCountrySuggestions(false); }}
-                            className="w-full text-left px-3 py-2 text-[9px] font-black text-slate-400 hover:bg-brand-500 hover:text-white transition-all border-b border-slate-800 last:border-0 uppercase"
-                          >
-                            {country}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-               </div>
+            {/* Filtros de Categoria */}
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-1 md:pb-0">
+               {[
+                 { id: 'all', label: 'Tudo', icon: LayoutGrid },
+                 { id: 'raspadinha', label: 'Raspadinhas', icon: Ticket },
+                 { id: 'lotaria', label: 'Lotarias', icon: Star },
+               ].map(cat => (
+                 <button
+                   key={cat.id}
+                   onClick={() => setActiveCategory(cat.id)}
+                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/30' : 'bg-slate-900/50 border border-slate-800 text-slate-500 hover:text-slate-300'}`}
+                 >
+                   <cat.icon className="w-3.5 h-3.5" /> {cat.label}
+                 </button>
+               ))}
             </div>
 
-            {/* Direita: Ação Admin */}
-            <div className="flex items-center shrink-0">
+            {/* Pesquisa Centralizada e Compacta */}
+            <div className="relative w-full max-w-sm group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="Pesquisar exemplar..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-full pl-12 pr-4 py-2.5 text-xs focus:border-brand-500 outline-none transition-all uppercase tracking-wider text-white shadow-inner"
+              />
+            </div>
+
+            {/* Botão de Ação */}
+            <div className="shrink-0">
                {isAdmin && (
                   <button 
                     onClick={() => setShowUpload(true)} 
-                    className="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(59,130,246,0.4)] active:scale-95 whitespace-nowrap border border-brand-400/50"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg hover:scale-105 active:scale-95 shadow-emerald-900/20 border border-emerald-400/20"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Arquivar
+                    <Plus className="w-4 h-4" /> Arquivar Item
                   </button>
                )}
             </div>
@@ -332,35 +248,9 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <main className="flex-1 flex flex-col min-h-0 pb-16 md:pb-12">
+      <main className="flex-1 flex flex-col min-h-0 pb-20">
         {(currentPage === 'home' || currentPage === 'new-arrivals') && (
-          <div className="p-4 md:p-8 space-y-6 animate-fade-in">
-            {/* Status dos Filtros */}
-            {(activeCountry || activeCategory !== 'all' || showRaritiesOnly || showWinnersOnly || searchTerm) && (
-              <div className="flex items-center justify-between bg-slate-900/30 border border-slate-800/50 p-3 rounded-2xl">
-                 <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest mr-2">Filtros ativos:</span>
-                    {searchTerm && <span className="bg-slate-800 text-white px-2 py-0.5 rounded text-[8px] font-black uppercase border border-slate-700">{searchTerm}</span>}
-                    {activeCountry && <span className="bg-slate-800 text-white px-2 py-0.5 rounded text-[8px] font-black uppercase border border-slate-700">{activeCountry}</span>}
-                    {activeCategory !== 'all' && <span className="bg-slate-800 text-white px-2 py-0.5 rounded text-[8px] font-black uppercase border border-slate-700">{activeCategory}</span>}
-                    {showRaritiesOnly && <span className="bg-amber-900/30 text-amber-400 px-2 py-0.5 rounded text-[8px] font-black uppercase border border-amber-800/50">Só Raridades</span>}
-                    {showWinnersOnly && <span className="bg-emerald-900/30 text-emerald-400 px-2 py-0.5 rounded text-[8px] font-black uppercase border border-emerald-800/50">Só Premiadas</span>}
-                 </div>
-                 <button 
-                    onClick={() => {
-                      setActiveCountry('');
-                      setActiveCategory('all');
-                      setShowRaritiesOnly(false);
-                      setShowWinnersOnly(false);
-                      setSearchTerm('');
-                    }} 
-                    className="text-brand-500 hover:text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-lg transition-all"
-                  >
-                    Limpar Tudo
-                  </button>
-              </div>
-            )}
-
+          <div className="p-4 md:p-8 animate-fade-in">
             <ImageGrid 
               images={filteredImages}
               onImageClick={setSelectedImage}
@@ -438,7 +328,6 @@ const App: React.FC = () => {
         onWebsitesClick={() => setShowWebsites(true)}
       />
 
-      {/* Modais */}
       {showUpload && (
         <UploadModal 
           onClose={() => setShowUpload(false)}
