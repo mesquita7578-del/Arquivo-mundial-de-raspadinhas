@@ -53,8 +53,9 @@ export const OFFICIAL_LOTTERIES: (Partial<WebsiteLink> & { continent: string })[
   { name: "Ontario Lottery and Gaming (OLG)", url: "https://www.olg.ca", country: "Canadá", category: "Official Operator", continent: "América" },
   { name: "Loto-Québec", url: "https://lotoquebec.com", country: "Canadá", category: "Official Operator", continent: "América" },
   { name: "Western Canada Lottery (WCLC)", url: "https://www.wclc.com", country: "Canadá", category: "Official Operator", continent: "América" },
-  { name: "Tatts (Tattersall’s)", url: "https://www.thelott.com", country: "Austrália", category: "Official Operator", continent: "Oceania" },
-  { name: "NSW Lotteries", url: "https://www.thelott.com", country: "Austrália", category: "Official Operator", continent: "Oceania" },
-  { name: "Golden Casket", url: "https://www.thelott.com", country: "Austrália", category: "Official Operator", continent: "Oceania" },
-  { name: "SA Lotteries", url: "https://www.thelott.com", country: "Austrália", category: "Official Operator", continent: "Oceania" }
+  { name: "Tatts (Tattersall’s Sweeps)", url: "https://www.thelott.com", country: "Austrália", category: "Official Operator", continent: "Oceania" },
+  { name: "Tatts NT Lotteries", url: "https://www.thelott.com", country: "Austrália", category: "Official Operator", continent: "Oceania" },
+  { name: "NSW Lotteries (New South Wales)", url: "https://www.thelott.com", country: "Austrália", category: "Official Operator", continent: "Oceania" },
+  { name: "Golden Casket Lottery Corp", url: "https://www.thelott.com", country: "Austrália", category: "Official Operator", continent: "Oceania" },
+  { name: "SA Lotteries (Tatts SA)", url: "https://www.thelott.com", country: "Austrália", category: "Official Operator", continent: "Oceania" }
 ];
