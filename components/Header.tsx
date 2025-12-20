@@ -78,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   const continents: Continent[] = ['Europa', 'América', 'Ásia', 'África', 'Oceania'];
 
-  const hasSpecialSubs = (country: string) => ['Portugal', 'Espanha', 'Alemanha'].includes(country);
+  const hasSpecialSubs = (country: string) => ['Portugal', 'Espanha', 'Alemanha', 'Canadá'].includes(country);
 
   return (
     <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[110] w-[95%] max-w-6xl pointer-events-none">
@@ -89,7 +89,7 @@ export const Header: React.FC<HeaderProps> = ({
             <Ticket className="w-3.5 h-3.5 text-white" />
           </div>
           <div className="flex flex-col">
-            <h1 className="hidden md:block text-[9px] font-black text-white uppercase italic tracking-tighter leading-none">
+            <h1 className="hidden md:block text-[9px] font-black text-white uppercase italic tracking-tighter leading-none animate-bounce-in">
               {t.title}
             </h1>
             <span className="hidden md:block text-[5px] text-brand-400 font-black uppercase tracking-[0.2em] leading-none mt-0.5">Jorge Mesquita</span>
@@ -192,6 +192,26 @@ export const Header: React.FC<HeaderProps> = ({
                             </button>
                           </>
                         )}
+
+                        {activeCountrySub === 'Canadá' && (
+                          <>
+                            <button onClick={() => { onCountrySelect?.('América', 'Canadá', 'atlantic'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <Landmark className="w-2.5 h-2.5 text-blue-400" /> Atlantic Lottery
+                            </button>
+                            <button onClick={() => { onCountrySelect?.('América', 'Canadá', 'bc'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <Landmark className="w-2.5 h-2.5 text-emerald-400" /> BC Lottery
+                            </button>
+                            <button onClick={() => { onCountrySelect?.('América', 'Canadá', 'ontario'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <Landmark className="w-2.5 h-2.5 text-red-500" /> Ontario (OLG)
+                            </button>
+                            <button onClick={() => { onCountrySelect?.('América', 'Canadá', 'quebec'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <Landmark className="w-2.5 h-2.5 text-blue-300" /> Loto-Québec
+                            </button>
+                            <button onClick={() => { onCountrySelect?.('América', 'Canadá', 'western'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <Landmark className="w-2.5 h-2.5 text-yellow-500" /> Western Canada
+                            </button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -218,7 +238,7 @@ export const Header: React.FC<HeaderProps> = ({
              </button>
            )}
 
-           <button onClick={onHistoryClick} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/5 transition-all" title={t.history}>
+           <button onHistoryClick={onHistoryClick} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/5 transition-all" title={t.history}>
              <BookOpen className="w-3.5 h-3.5" />
            </button>
 

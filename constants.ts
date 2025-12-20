@@ -50,5 +50,10 @@ export const OFFICIAL_LOTTERIES: (Partial<WebsiteLink> & { continent: string })[
   { name: "Lottomatica", url: "https://www.lottomatica.it", country: "Itália", category: "Official Operator", continent: "Europa" },
   { name: "ONCE", url: "https://www.juegosonce.es", country: "Espanha", category: "Official Operator", continent: "Europa" },
   { name: "Catalogue des Tickets (França)", url: "http://tickets.chez.com/", country: "França", category: "Catálogo Técnico / Referência", continent: "Europa" },
-  { name: "Française des Jeux (FDJ)", url: "https://www.fdj.fr", country: "França", category: "Official Operator", continent: "Europa" }
+  { name: "Française des Jeux (FDJ)", url: "https://www.fdj.fr", country: "França", category: "Official Operator", continent: "Europa" },
+  { name: "Atlantic Lottery Corporation", url: "https://www.alc.ca", country: "Canadá", category: "Official Operator", continent: "América" },
+  { name: "BC Lottery (BCLC)", url: "https://www.bclc.com", country: "Canadá", category: "Official Operator", continent: "América" },
+  { name: "Ontario Lottery and Gaming (OLG)", url: "https://www.olg.ca", country: "Canadá", category: "Official Operator", continent: "América" },
+  { name: "Loto-Québec", url: "https://lotoquebec.com", country: "Canadá", category: "Official Operator", continent: "América" },
+  { name: "Western Canada Lottery (WCLC)", url: "https://www.wclc.com", country: "Canadá", category: "Official Operator", continent: "América" }
 ];

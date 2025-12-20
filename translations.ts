@@ -4,7 +4,7 @@ export type Language = 'pt' | 'it';
 export const translations = {
   pt: {
     header: {
-      title: "Arquivo Mundial",
+      title: "Arquivo Mundial de Raspadinhas",
       subtitle: "Raspadinhas & Lotarias",
       history: "Biblioteca", 
       search: "Buscar...",
@@ -148,7 +148,7 @@ export const translations = {
       linesYellow: "Amarelas",
       linesNone: "Nenhuma",
       cancel: "Cancelar",
-      backBtn: "Voltar",
+      backBtn: "Indietro",
       analyze: "Pedir à Chloe",
       analyzing: "A Chloe está a ler...",
       save: "Salva",
@@ -162,7 +162,7 @@ export const translations = {
     viewer: {
       front: "FRENTE",
       back: "VERSO",
-      cancel: "Cancelar",
+      cancel: "Annulla",
       save: "Salva",
       share: "Partilhar",
       copied: "Copiado!",
@@ -224,7 +224,7 @@ export const translations = {
   },
   it: {
     header: {
-      title: "Archivio Mondiale",
+      title: "Archivio Mondiale di Gratta e Vinci",
       subtitle: "Gratta e Vinci & Lotterie",
       history: "Biblioteca", 
       search: "Cerca...",
@@ -272,7 +272,7 @@ export const translations = {
       addDocSuccess: "Documento aggiunto con successo!",
       deleteDocConfirm: "Sei sicuro di voler eliminare questo documento?",
       documentsTitle: "Documenti Disponibili",
-      noDocs: "Nessun documento registrato.",
+      noDocs: "Nessun documento registrado.",
       viewPdf: "Visualizza PDF",
       articlesTitle: "Articoli e Storia",
       close: "Chiudi Biblioteca",
