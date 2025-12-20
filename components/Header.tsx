@@ -4,7 +4,7 @@ import {
   Ticket, Lock, LogOut, BookOpen, Home, 
   BarChart2, ChevronDown, Globe, User, 
   Info, Database, ClipboardList, ChevronRight, Map as MapIcon, Radio, Menu, X as CloseIcon,
-  Download, Upload, MapPin, Star, Landmark, Ship
+  Download, Upload, MapPin, Star, Landmark, Ship, Flag, Crown
 } from 'lucide-react';
 import { Language } from '../translations';
 import { Continent } from '../types';
@@ -27,7 +27,7 @@ interface HeaderProps {
   t: any;
   onInstall?: () => void;
   countriesByContinent?: Record<string, string[]>;
-  onCountrySelect?: (continent: Continent, country: string, island?: string) => void;
+  onCountrySelect?: (continent: Continent, country: string, subRegion?: string) => void;
   recentCount?: number;
   collectionCount?: number;
 }
@@ -78,6 +78,8 @@ export const Header: React.FC<HeaderProps> = ({
 
   const continents: Continent[] = ['Europa', 'América', 'Ásia', 'África', 'Oceania'];
 
+  const hasSpecialSubs = (country: string) => ['Portugal', 'Espanha', 'Alemanha'].includes(country);
+
   return (
     <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[110] w-[95%] max-w-6xl pointer-events-none">
       <div className="bg-slate-900/90 backdrop-blur-3xl border border-white/10 rounded-full h-11 md:h-12 shadow-[0_15px_40px_rgba(0,0,0,0.6)] flex items-center justify-between px-4 md:px-6 pointer-events-auto transition-all">
@@ -107,6 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
               {showExplore && (
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 flex z-[120] animate-bounce-in">
                   <div className="flex gap-1.5">
+                    {/* Menu 1: Continentes */}
                     <div className="w-40 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-1 backdrop-blur-2xl h-fit">
                        {continents.map(cont => (
                          <button 
@@ -121,49 +124,74 @@ export const Header: React.FC<HeaderProps> = ({
                        ))}
                     </div>
 
+                    {/* Menu 2: Países */}
                     {activeSubMenu && countriesByContinent[activeSubMenu] && (
                       <div className="w-48 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-1 backdrop-blur-2xl max-h-[300px] overflow-y-auto custom-scrollbar animate-fade-in flex flex-col">
                         {countriesByContinent[activeSubMenu].sort().map(country => (
-                          <div key={country} className="relative">
-                            <button 
-                              onMouseEnter={() => setActiveCountrySub(country)}
-                              onClick={() => {
-                                if (country !== 'Portugal') {
-                                  onCountrySelect?.(activeSubMenu, country);
-                                  setShowExplore(false);
-                                  onNavigate('home');
-                                }
-                              }}
-                              className={`w-full text-left px-3 py-1.5 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center justify-between group ${activeCountrySub === country ? 'bg-brand-600 text-white' : ''}`}
-                            >
-                              <span className="flex items-center gap-2"><MapPin className="w-2 h-2" /> {country}</span>
-                              {country === 'Portugal' && <ChevronRight className="w-2 h-2" />}
-                            </button>
-                          </div>
+                          <button 
+                            key={country}
+                            onMouseEnter={() => setActiveCountrySub(country)}
+                            onClick={() => {
+                              if (!hasSpecialSubs(country)) {
+                                onCountrySelect?.(activeSubMenu, country);
+                                setShowExplore(false);
+                                onNavigate('home');
+                              }
+                            }}
+                            className={`w-full text-left px-3 py-1.5 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center justify-between group ${activeCountrySub === country ? 'bg-brand-600 text-white' : ''}`}
+                          >
+                            <span className="flex items-center gap-2"><MapPin className="w-2 h-2" /> {country}</span>
+                            {hasSpecialSubs(country) && <ChevronRight className="w-2 h-2" />}
+                          </button>
                         ))}
                       </div>
                     )}
 
-                    {activeCountrySub === 'Portugal' && activeSubMenu === 'Europa' && (
-                      <div className="w-48 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-1 backdrop-blur-2xl animate-fade-in h-fit flex flex-col">
-                        <button 
-                           onClick={() => { onCountrySelect?.('Europa', 'Portugal', 'continente'); setShowExplore(false); onNavigate('home'); }}
-                           className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2"
-                        >
-                           <Landmark className="w-2.5 h-2.5 text-blue-400" /> SCML (Continente)
-                        </button>
-                        <button 
-                           onClick={() => { onCountrySelect?.('Europa', 'Portugal', 'açores'); setShowExplore(false); onNavigate('home'); }}
-                           className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2"
-                        >
-                           <Ship className="w-2.5 h-2.5 text-cyan-400" /> Açores
-                        </button>
-                        <button 
-                           onClick={() => { onCountrySelect?.('Europa', 'Portugal', 'madeira'); setShowExplore(false); onNavigate('home'); }}
-                           className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2"
-                        >
-                           <MapPin className="w-2.5 h-2.5 text-emerald-400" /> Madeira
-                        </button>
+                    {/* Menu 3: Sub-regiões Técnicas */}
+                    {activeCountrySub && hasSpecialSubs(activeCountrySub) && (
+                      <div className="w-52 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-1 backdrop-blur-2xl animate-fade-in h-fit flex flex-col">
+                        <div className="px-3 py-2 border-b border-white/5 mb-1">
+                           <span className="text-[6px] font-black text-slate-500 uppercase tracking-widest">Divisões de {activeCountrySub}</span>
+                        </div>
+
+                        {activeCountrySub === 'Portugal' && (
+                          <>
+                            <button onClick={() => { onCountrySelect?.('Europa', 'Portugal', 'continente'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <Landmark className="w-2.5 h-2.5 text-blue-400" /> SCML (Continente)
+                            </button>
+                            <button onClick={() => { onCountrySelect?.('Europa', 'Portugal', 'açores'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <Ship className="w-2.5 h-2.5 text-cyan-400" /> Açores
+                            </button>
+                            <button onClick={() => { onCountrySelect?.('Europa', 'Portugal', 'madeira'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <MapPin className="w-2.5 h-2.5 text-emerald-400" /> Madeira
+                            </button>
+                          </>
+                        )}
+
+                        {activeCountrySub === 'Espanha' && (
+                          <>
+                            <button onClick={() => { onCountrySelect?.('Europa', 'Espanha', 'nacional'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <Landmark className="w-2.5 h-2.5 text-red-500" /> SELAE (Nacional)
+                            </button>
+                            <button onClick={() => { onCountrySelect?.('Europa', 'Espanha', 'once'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <Crown className="w-2.5 h-2.5 text-emerald-500" /> ONCE
+                            </button>
+                            <button onClick={() => { onCountrySelect?.('Europa', 'Espanha', 'catalunha'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <Flag className="w-2.5 h-2.5 text-yellow-500" /> Catalunha
+                            </button>
+                          </>
+                        )}
+
+                        {activeCountrySub === 'Alemanha' && (
+                          <>
+                            <button onClick={() => { onCountrySelect?.('Europa', 'Alemanha', 'lotto'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <Star className="w-2.5 h-2.5 text-blue-500" /> Lotto (Nacional)
+                            </button>
+                            <button onClick={() => { onCountrySelect?.('Europa', 'Alemanha', 'baviera'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <MapPin className="w-2.5 h-2.5 text-blue-300" /> Baviera
+                            </button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>

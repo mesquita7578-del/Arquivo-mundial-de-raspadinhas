@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, Plus, Loader2, Sparkles, Zap, LayoutGrid, Trophy, Star, 
   Ticket, Layers, Box, MapPin, X, Diamond, Crown, CheckCircle2, Users, Clock, ChevronDown, ChevronRight,
-  Ship, Landmark
+  Ship, Landmark, Flag
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { ImageGrid } from './components/ImageGrid';
@@ -35,7 +35,7 @@ const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeContinent, setActiveContinent] = useState<Continent | 'Mundo'>('Mundo');
   const [activeCountry, setActiveCountry] = useState<string>(''); 
-  const [activeIsland, setActiveIsland] = useState<string>(''); // Novo: Diferenciar Continente/Ilha
+  const [activeSubRegion, setActiveSubRegion] = useState<string>(''); // Generalizado para ilhas/autoridades
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [showRaritiesOnly, setShowRaritiesOnly] = useState(false);
   const [showWinnersOnly, setShowWinnersOnly] = useState(false);
@@ -167,26 +167,33 @@ const App: React.FC = () => {
       const gName = (img.gameName || "").toLowerCase();
       const gCountry = (img.country || "").toLowerCase();
       const gIsland = (img.island || "").toLowerCase();
+      const gRegion = (img.region || "").toLowerCase();
+      const gSub = (img.subRegion || "").toLowerCase();
       const gNum = (img.gameNumber || "").toLowerCase();
       const s = searchTerm.toLowerCase();
       
       const isRecent = (Date.now() - (img.createdAt || 0)) < 86400000;
       
-      const matchesSearch = gName.includes(s) || gCountry.includes(s) || gIsland.includes(s) || gNum.includes(s);
+      const matchesSearch = gName.includes(s) || gCountry.includes(s) || gIsland.includes(s) || gNum.includes(s) || gRegion.includes(s);
       const matchesContinent = activeContinent === 'Mundo' || img.continent === activeContinent;
       
-      // Lógica Refinada de País/Ilha/SCML
+      // Lógica de Localização Universal e Profissional
       let matchesLocation = true;
       if (activeCountry) {
-        if (activeCountry.toLowerCase() === 'portugal' && activeIsland === 'continente') {
-          // Apenas SCML: País Portugal e SEM ilha
-          matchesLocation = gCountry === 'portugal' && !img.island;
-        } else if (activeCountry.toLowerCase() === 'açores' || activeIsland === 'açores') {
-          matchesLocation = gIsland === 'açores';
-        } else if (activeCountry.toLowerCase() === 'madeira' || activeIsland === 'madeira') {
-          matchesLocation = gIsland === 'madeira';
+        const countryMatch = gCountry === activeCountry.toLowerCase();
+        
+        if (activeSubRegion) {
+          const sub = activeSubRegion.toLowerCase();
+          // Se for "continente" em Portugal, garantimos que não tem ilha
+          if (activeCountry.toLowerCase() === 'portugal' && sub === 'continente') {
+            matchesLocation = countryMatch && !img.island;
+          } 
+          // Caso contrário, verificamos se o campo subRegion, island ou region bate
+          else {
+            matchesLocation = countryMatch && (gSub === sub || gIsland === sub || gRegion === sub || (img.operator && img.operator.toLowerCase().includes(sub)));
+          }
         } else {
-          matchesLocation = gCountry === activeCountry.toLowerCase() || gIsland === activeCountry.toLowerCase();
+          matchesLocation = countryMatch;
         }
       }
 
@@ -199,27 +206,29 @@ const App: React.FC = () => {
       
       return matchesSearch && matchesContinent && matchesLocation && matchesCategory && matchesRarity && matchesWinners && matchesNew;
     });
-  }, [images, searchTerm, activeContinent, activeCountry, activeIsland, activeCategory, showRaritiesOnly, showWinnersOnly, showNewOnly, currentPage, currentUser]);
+  }, [images, searchTerm, activeContinent, activeCountry, activeSubRegion, activeCategory, showRaritiesOnly, showWinnersOnly, showNewOnly, currentPage, currentUser]);
 
   const newsDetailed = useMemo(() => {
     const threshold = Date.now() - 86400000;
     const newItems = images.filter(img => (img.createdAt || 0) > threshold);
     
     const countrySet = new Set<string>();
-    const portugalSubNews = {
-      scml: newItems.some(i => i.country === 'Portugal' && !i.island && i.category === 'raspadinha'),
-      acores: newItems.some(i => i.island === 'Açores'),
-      madeira: newItems.some(i => i.island === 'Madeira'),
-      lotarias: newItems.some(i => i.country === 'Portugal' && i.category === 'lotaria')
-    };
-
-    newItems.forEach(img => {
-      countrySet.add(img.country);
-    });
+    newItems.forEach(img => countrySet.add(img.country));
 
     return {
       countries: Array.from(countrySet).sort(),
-      portugal: portugalSubNews
+      // Mapeamento dinâmico de novidades por país
+      getNewsFor: (country: string) => {
+        const countryNews = newItems.filter(i => i.country === country);
+        return {
+          total: countryNews.length,
+          subs: countryNews.reduce((acc, curr) => {
+            const label = curr.island || curr.subRegion || curr.region || 'Geral';
+            acc[label] = (acc[label] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>)
+        };
+      }
     };
   }, [images]);
 
@@ -292,10 +301,10 @@ const App: React.FC = () => {
         t={t.header}
         recentCount={images.filter(img => (Date.now() - (img.createdAt || 0)) < 43200000).length}
         collectionCount={collectionCount}
-        onCountrySelect={(cont, loc, island) => {
+        onCountrySelect={(cont, loc, sub) => {
           setActiveContinent(cont);
           setActiveCountry(loc);
-          setActiveIsland(island || '');
+          setActiveSubRegion(sub || '');
           setCurrentPage('home');
           setShowNewOnly(false);
         }}
@@ -313,13 +322,13 @@ const App: React.FC = () => {
             <div className="flex flex-wrap items-center justify-center gap-1 md:gap-1.5">
                <div className="flex items-center gap-1 border-r border-white/10 pr-1 mr-0.5">
                  <button 
-                   onClick={() => { setShowRaritiesOnly(!showRaritiesOnly); setActiveCategory('all'); setActiveCountry(''); setActiveIsland(''); }} 
+                   onClick={() => { setShowRaritiesOnly(!showRaritiesOnly); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); }} 
                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-amber-400'}`}
                  >
                    <Diamond className="w-3 h-3" /> Raridades
                  </button>
                  <button 
-                   onClick={() => { setShowWinnersOnly(!showWinnersOnly); setActiveCategory('all'); setActiveCountry(''); setActiveIsland(''); }} 
+                   onClick={() => { setShowWinnersOnly(!showWinnersOnly); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); }} 
                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-emerald-400'}`}
                  >
                    <Trophy className="w-3 h-3" /> Premiadas
@@ -336,7 +345,7 @@ const App: React.FC = () => {
                   ].map(cat => (
                     <button 
                       key={cat.id} 
-                      onClick={() => { setActiveCategory(cat.id); setShowRaritiesOnly(false); setShowWinnersOnly(false); setShowNewOnly(false); setActiveCountry(''); setActiveIsland(''); }} 
+                      onClick={() => { setActiveCategory(cat.id); setShowRaritiesOnly(false); setShowWinnersOnly(false); setShowNewOnly(false); setActiveCountry(''); setActiveSubRegion(''); }} 
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white border border-brand-400/30' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-brand-400'}`}
                     >
                       <cat.icon className="w-3 h-3" /> {cat.label}
@@ -345,7 +354,7 @@ const App: React.FC = () => {
                   
                   <div className="relative" ref={newSubmenuRef}>
                     <button 
-                      onClick={() => { setShowNewOnly(!showNewOnly); setShowRaritiesOnly(false); setShowWinnersOnly(false); setActiveCategory('all'); setActiveCountry(''); setActiveIsland(''); }} 
+                      onClick={() => { setShowNewOnly(!showNewOnly); setShowRaritiesOnly(false); setShowWinnersOnly(false); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); }} 
                       onMouseEnter={() => setShowNewSubmenu(true)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ml-0.5 ${showNewOnly || showNewSubmenu ? 'bg-pink-600 text-white shadow-[0_0_15px_rgba(219,39,119,0.5)] border border-pink-400/30' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-pink-400'}`}
                     >
@@ -365,7 +374,7 @@ const App: React.FC = () => {
                                onMouseEnter={() => setActiveNewCountrySub(country)}
                                onClick={() => {
                                  setActiveCountry(country);
-                                 setActiveIsland('');
+                                 setActiveSubRegion('');
                                  setShowNewOnly(true);
                                  setShowNewSubmenu(false);
                                  setCurrentPage('home');
@@ -378,43 +387,50 @@ const App: React.FC = () => {
                            ))}
                         </div>
 
-                        {activeNewCountrySub === 'Portugal' && (
+                        {activeNewCountrySub && (
                           <div className="w-48 ml-1 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-1.5 backdrop-blur-3xl animate-fade-in h-fit">
                              <div className="text-[7px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 py-1.5 border-b border-white/5 mb-1 flex items-center gap-2">
-                               <MapPin className="w-2.5 h-2.5 text-blue-500" /> Filtrar Portugal
+                               <MapPin className="w-2.5 h-2.5 text-blue-500" /> Filtrar {activeNewCountrySub}
                              </div>
                              
-                             <button 
-                               onClick={() => { setActiveCountry('Portugal'); setActiveIsland('continente'); setActiveCategory('raspadinha'); setShowNewOnly(true); setShowNewSubmenu(false); }}
-                               className={`w-full text-left px-3 py-2 text-[8px] rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2 ${newsDetailed.portugal.scml ? 'text-slate-200 hover:bg-pink-600 hover:text-white' : 'opacity-30 cursor-not-allowed'}`}
-                               disabled={!newsDetailed.portugal.scml}
-                             >
-                               <Landmark className="w-3 h-3 text-blue-400" /> SCML (Continente)
-                             </button>
+                             {activeNewCountrySub === 'Portugal' && (
+                               <>
+                                 <button onClick={() => { setActiveCountry('Portugal'); setActiveSubRegion('continente'); setShowNewOnly(true); setShowNewSubmenu(false); }} className="w-full text-left px-3 py-2 text-[8px] text-slate-400 hover:bg-pink-600 hover:text-white rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                                    <Landmark className="w-3 h-3 text-blue-400" /> SCML (Continente)
+                                 </button>
+                                 <button onClick={() => { setActiveCountry('Portugal'); setActiveSubRegion('açores'); setShowNewOnly(true); setShowNewSubmenu(false); }} className="w-full text-left px-3 py-2 text-[8px] text-slate-400 hover:bg-pink-600 hover:text-white rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                                    <Ship className="w-3 h-3 text-cyan-400" /> Açores
+                                 </button>
+                                 <button onClick={() => { setActiveCountry('Portugal'); setActiveSubRegion('madeira'); setShowNewOnly(true); setShowNewSubmenu(false); }} className="w-full text-left px-3 py-2 text-[8px] text-slate-400 hover:bg-pink-600 hover:text-white rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                                    <MapPin className="w-3 h-3 text-emerald-400" /> Madeira
+                                 </button>
+                               </>
+                             )}
 
-                             <button 
-                               onClick={() => { setActiveCountry('Portugal'); setActiveIsland('açores'); setShowNewOnly(true); setShowNewSubmenu(false); }}
-                               className={`w-full text-left px-3 py-2 text-[8px] rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2 ${newsDetailed.portugal.acores ? 'text-slate-200 hover:bg-pink-600 hover:text-white' : 'opacity-30 cursor-not-allowed'}`}
-                               disabled={!newsDetailed.portugal.acores}
-                             >
-                               <Ship className="w-3 h-3 text-cyan-400" /> Açores
-                             </button>
+                             {activeNewCountrySub === 'Espanha' && (
+                               <>
+                                 <button onClick={() => { setActiveCountry('Espanha'); setActiveSubRegion('nacional'); setShowNewOnly(true); setShowNewSubmenu(false); }} className="w-full text-left px-3 py-2 text-[8px] text-slate-400 hover:bg-pink-600 hover:text-white rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                                    <Landmark className="w-3 h-3 text-red-500" /> SELAE (Nacional)
+                                 </button>
+                                 <button onClick={() => { setActiveCountry('Espanha'); setActiveSubRegion('once'); setShowNewOnly(true); setShowNewSubmenu(false); }} className="w-full text-left px-3 py-2 text-[8px] text-slate-400 hover:bg-pink-600 hover:text-white rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                                    <Crown className="w-3 h-3 text-emerald-500" /> ONCE
+                                 </button>
+                                 <button onClick={() => { setActiveCountry('Espanha'); setActiveSubRegion('catalunha'); setShowNewOnly(true); setShowNewSubmenu(false); }} className="w-full text-left px-3 py-2 text-[8px] text-slate-400 hover:bg-pink-600 hover:text-white rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                                    <Flag className="w-3 h-3 text-yellow-500" /> Catalunha
+                                 </button>
+                               </>
+                             )}
 
-                             <button 
-                               onClick={() => { setActiveCountry('Portugal'); setActiveIsland('madeira'); setShowNewOnly(true); setShowNewSubmenu(false); }}
-                               className={`w-full text-left px-3 py-2 text-[8px] rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2 ${newsDetailed.portugal.madeira ? 'text-slate-200 hover:bg-pink-600 hover:text-white' : 'opacity-30 cursor-not-allowed'}`}
-                               disabled={!newsDetailed.portugal.madeira}
-                             >
-                               <MapPin className="w-3 h-3 text-emerald-400" /> Madeira
-                             </button>
-
-                             <button 
-                               onClick={() => { setActiveCountry('Portugal'); setActiveIsland(''); setActiveCategory('lotaria'); setShowNewOnly(true); setShowNewSubmenu(false); }}
-                               className={`w-full text-left px-3 py-2 text-[8px] rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2 ${newsDetailed.portugal.lotarias ? 'text-slate-200 hover:bg-pink-600 hover:text-white' : 'opacity-30 cursor-not-allowed'}`}
-                               disabled={!newsDetailed.portugal.lotarias}
-                             >
-                               <Star className="w-3 h-3 text-amber-500" /> Lotarias
-                             </button>
+                             {activeNewCountrySub === 'Alemanha' && (
+                               <>
+                                 <button onClick={() => { setActiveCountry('Alemanha'); setActiveSubRegion('lotto'); setShowNewOnly(true); setShowNewSubmenu(false); }} className="w-full text-left px-3 py-2 text-[8px] text-slate-400 hover:bg-pink-600 hover:text-white rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                                    <Star className="w-3 h-3 text-blue-500" /> Lotto (Geral)
+                                 </button>
+                                 <button onClick={() => { setActiveCountry('Alemanha'); setActiveSubRegion('baviera'); setShowNewOnly(true); setShowNewSubmenu(false); }} className="w-full text-left px-3 py-2 text-[8px] text-slate-400 hover:bg-pink-600 hover:text-white rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                                    <MapPin className="w-3 h-3 text-blue-300" /> Baviera
+                                 </button>
+                               </>
+                             )}
                           </div>
                         )}
                       </div>
@@ -469,7 +485,7 @@ const App: React.FC = () => {
 
         {currentPage === 'map' && (
            <div className="p-10 h-full min-h-[600px]">
-             <WorldMap images={images} activeContinent={activeContinent} onCountrySelect={(country) => { setActiveCountry(country); setActiveIsland(''); setCurrentPage('home'); }} t={t.grid} />
+             <WorldMap images={images} activeContinent={activeContinent} onCountrySelect={(country) => { setActiveCountry(country); setActiveSubRegion(''); setCurrentPage('home'); }} t={t.grid} />
            </div>
         )}
 

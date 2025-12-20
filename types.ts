@@ -58,6 +58,7 @@ export interface ScratchcardData {
   isSeries?: boolean;
   seriesDetails?: string;
   setCount?: string; 
+  subRegion?: string; // Novo: Para "ONCE", "Cantão", "SCML Continente", etc.
 }
 
 export interface AnalysisResult {
@@ -71,6 +72,7 @@ export interface AnalysisResult {
   state: string;
   country: string;
   island?: string;
+  subRegion?: string;
   continent: Continent;
   operator: string;
   printer: string;
