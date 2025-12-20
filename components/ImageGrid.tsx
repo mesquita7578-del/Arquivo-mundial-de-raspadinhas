@@ -61,7 +61,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
     currentPage * ITEMS_PER_PAGE
   );
 
-  const isRecent = (createdAt: number) => (Date.now() - createdAt) < 172800000; // 48 horas
+  const isRecent = (createdAt: number) => (Date.now() - createdAt) < 43200000; // 12 horas
 
   if (images.length === 0) {
     return (
@@ -106,8 +106,8 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
               
               <div className="absolute top-0.5 right-0.5 flex flex-col gap-0.5 items-end z-10">
                 {isRecent(item.createdAt) && (
-                   <div className="flex items-center gap-0.5 bg-brand-500 text-white px-1 py-0.5 rounded-[2px] text-[5px] font-black animate-pulse shadow-lg shadow-brand-900/50">
-                     <Zap className="w-1.5 h-1.5 fill-white" />
+                   <div className="flex items-center gap-0.5 bg-blue-500/30 backdrop-blur-md text-red-500 px-1 py-0.5 rounded-[2px] text-[6px] font-black animate-pulse shadow-lg border border-blue-400/20">
+                     <Zap className="w-1.5 h-1.5 fill-red-500" />
                      NOVO
                    </div>
                 )}

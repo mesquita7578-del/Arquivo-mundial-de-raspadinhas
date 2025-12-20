@@ -127,7 +127,7 @@ const App: React.FC = () => {
       const matchesRarity = !showRaritiesOnly || img.isRarity;
       const matchesWinners = !showWinnersOnly || img.isWinner;
       
-      const isRecent = (Date.now() - (img.createdAt || 0)) < 172800000; // 48h
+      const isRecent = (Date.now() - (img.createdAt || 0)) < 43200000; // 12h
       const matchesPage = currentPage === 'new-arrivals' ? isRecent : true;
       
       return matchesSearch && matchesContinent && matchesCountry && matchesCategory && matchesRarity && matchesWinners && matchesPage;
@@ -213,7 +213,7 @@ const App: React.FC = () => {
         onExportTXT={handleExportTXT}
         onExportCSV={() => {}}
         t={t.header}
-        recentCount={images.filter(img => (Date.now() - (img.createdAt || 0)) < 172800000).length}
+        recentCount={images.filter(img => (Date.now() - (img.createdAt || 0)) < 43200000).length}
         onCountrySelect={(cont, country) => {
           setActiveContinent(cont);
           setActiveCountry(country);
@@ -231,8 +231,8 @@ const App: React.FC = () => {
         <div className="bg-[#0a0f1e]/90 border-b border-slate-800 backdrop-blur-md sticky top-[70px] md:top-[80px] z-[100] px-4 md:px-8 py-2">
           <div className="max-w-[1800px] mx-auto flex flex-col xl:flex-row items-center justify-between gap-4">
             
-            {/* Bloco Unificado: Categorias e Status Alinhados */}
-            <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto overflow-x-auto scrollbar-hide">
+            {/* Bloco Unificado: Categorias, Status, Pesquisa e País Alinhados */}
+            <div className="flex flex-wrap items-center gap-3 w-full xl:flex-1 overflow-x-auto scrollbar-hide">
                <div className="flex items-center gap-1">
                   {[
                     { id: 'all', label: 'Tudo', icon: LayoutGrid },
@@ -253,7 +253,7 @@ const App: React.FC = () => {
 
                <div className="h-6 w-px bg-slate-800 mx-1 hidden sm:block"></div>
 
-               {/* Raridades e Premiadas movidas para o final das categorias */}
+               {/* Raridades e Premiadas */}
                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => setShowRaritiesOnly(!showRaritiesOnly)}
@@ -269,57 +269,62 @@ const App: React.FC = () => {
                     <Trophy className={`w-3.5 h-3.5 ${showWinnersOnly ? 'text-white' : 'text-emerald-500'}`} /> {showWinnersOnly ? 'Só Premiadas' : 'Premiadas'}
                   </button>
                </div>
+
+               <div className="h-6 w-px bg-slate-800 mx-1 hidden sm:block"></div>
+
+               {/* Pesquisa e Filtro de País (Agora ao lado de Premiadas) */}
+               <div className="flex items-center gap-2 flex-1 min-w-[300px]">
+                  <div className="relative flex-1 group">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
+                    <input 
+                      type="text" 
+                      placeholder="Pesquisar..." 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-[10px] focus:border-brand-500 outline-none transition-all shadow-inner font-bold text-white uppercase tracking-wider"
+                    />
+                  </div>
+
+                  <div className="relative flex-1 group" ref={countryInputRef}>
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-brand-500" />
+                    <input 
+                      type="text" 
+                      placeholder="Filtrar País..." 
+                      value={activeCountry}
+                      onChange={(e) => { setActiveCountry(e.target.value); setShowCountrySuggestions(true); }}
+                      onFocus={() => setShowCountrySuggestions(true)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-8 py-1.5 text-[10px] focus:border-brand-500 outline-none transition-all shadow-inner font-bold text-white uppercase tracking-wider"
+                    />
+                    {activeCountry && (
+                      <button onClick={() => setActiveCountry('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white">
+                        <X className="w-2.5 h-2.5" />
+                      </button>
+                    )}
+                    {showCountrySuggestions && countrySuggestions.length > 0 && (
+                      <div className="absolute top-full right-0 w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-[120] overflow-hidden animate-fade-in">
+                        {countrySuggestions.map(country => (
+                          <button
+                            key={country}
+                            onClick={() => { setActiveCountry(country); setShowCountrySuggestions(false); }}
+                            className="w-full text-left px-3 py-2 text-[9px] font-black text-slate-400 hover:bg-brand-500 hover:text-white transition-all border-b border-slate-800 last:border-0 uppercase"
+                          >
+                            {country}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+               </div>
             </div>
 
-            {/* Direita: Pesquisa e Filtro de País (Compactos) */}
-            <div className="flex flex-col sm:flex-row items-center gap-2 w-full xl:w-auto">
-               <div className="relative w-full sm:w-48 group">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
-                  <input 
-                    type="text" 
-                    placeholder="Pesquisar..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-[10px] focus:border-brand-500 outline-none transition-all shadow-inner font-bold text-white uppercase tracking-wider"
-                  />
-               </div>
-
-               <div className="relative w-full sm:w-44 group" ref={countryInputRef}>
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-brand-500" />
-                  <input 
-                    type="text" 
-                    placeholder="Filtrar País..." 
-                    value={activeCountry}
-                    onChange={(e) => { setActiveCountry(e.target.value); setShowCountrySuggestions(true); }}
-                    onFocus={() => setShowCountrySuggestions(true)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-8 py-1.5 text-[10px] focus:border-brand-500 outline-none transition-all shadow-inner font-bold text-white uppercase tracking-wider"
-                  />
-                  {activeCountry && (
-                    <button onClick={() => setActiveCountry('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white">
-                      <X className="w-2.5 h-2.5" />
-                    </button>
-                  )}
-                  {showCountrySuggestions && countrySuggestions.length > 0 && (
-                    <div className="absolute top-full right-0 w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-[120] overflow-hidden animate-fade-in">
-                      {countrySuggestions.map(country => (
-                        <button
-                          key={country}
-                          onClick={() => { setActiveCountry(country); setShowCountrySuggestions(false); }}
-                          className="w-full text-left px-3 py-2 text-[9px] font-black text-slate-400 hover:bg-brand-500 hover:text-white transition-all border-b border-slate-800 last:border-0 uppercase"
-                        >
-                          {country}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-               </div>
-
+            {/* Direita: Ação Admin */}
+            <div className="flex items-center shrink-0">
                {isAdmin && (
                   <button 
                     onClick={() => setShowUpload(true)} 
-                    className="bg-brand-600 hover:bg-brand-500 text-white px-4 py-1.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg active:scale-95 whitespace-nowrap"
+                    className="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg active:scale-95 whitespace-nowrap"
                   >
-                    <Plus className="w-3 h-3" /> Arquivar
+                    <Plus className="w-3.5 h-3.5" /> Arquivar
                   </button>
                )}
             </div>
