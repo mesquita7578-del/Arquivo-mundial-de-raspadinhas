@@ -58,7 +58,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
     currentPage * ITEMS_PER_PAGE
   );
 
-  const isRecent = (createdAt: number) => (Date.now() - createdAt) < 43200000; // 12 horas
+  const isRecent = (createdAt: number) => (Date.now() - createdAt) < 86400000; // 24 horas para novidades
 
   if (images.length === 0) {
     return (

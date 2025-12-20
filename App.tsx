@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, Plus, Loader2, Sparkles, Zap, LayoutGrid, Trophy, Star, 
-  Ticket, Layers, Box, MapPin, X, Diamond, Crown, CheckCircle2, Users, Clock
+  Ticket, Layers, Box, MapPin, X, Diamond, Crown, CheckCircle2, Users, Clock, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { ImageGrid } from './components/ImageGrid';
@@ -38,6 +38,7 @@ const App: React.FC = () => {
   const [showRaritiesOnly, setShowRaritiesOnly] = useState(false);
   const [showWinnersOnly, setShowWinnersOnly] = useState(false);
   const [showNewOnly, setShowNewOnly] = useState(false);
+  const [showNewSubmenu, setShowNewSubmenu] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
@@ -52,7 +53,19 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<string | null>(localStorage.getItem('archive_user'));
   const [signals, setSignals] = useState<Signal[]>([]);
 
+  const newSubmenuRef = useRef<HTMLDivElement>(null);
+
   const t = translations[language] || translations['pt'];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (newSubmenuRef.current && !newSubmenuRef.current.contains(event.target as Node)) {
+        setShowNewSubmenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     chloeChannel.onmessage = (event) => {
@@ -153,7 +166,7 @@ const App: React.FC = () => {
       const gNum = (img.gameNumber || "").toLowerCase();
       const s = searchTerm.toLowerCase();
       
-      const isRecent = (Date.now() - (img.createdAt || 0)) < 43200000;
+      const isRecent = (Date.now() - (img.createdAt || 0)) < 86400000; // 24 horas para ser "Novo"
       
       const matchesSearch = gName.includes(s) || gCountry.includes(s) || gIsland.includes(s) || gNum.includes(s);
       const matchesContinent = activeContinent === 'Mundo' || img.continent === activeContinent;
@@ -168,6 +181,18 @@ const App: React.FC = () => {
       return matchesSearch && matchesContinent && matchesCountry && matchesCategory && matchesRarity && matchesWinners && matchesNew;
     });
   }, [images, searchTerm, activeContinent, activeCountry, activeCategory, showRaritiesOnly, showWinnersOnly, showNewOnly, currentPage, currentUser]);
+
+  // Lógica para descobrir quais países têm novidades (últimas 24h)
+  const countriesWithNewEntries = useMemo(() => {
+    const threshold = Date.now() - 86400000;
+    const newItems = images.filter(img => (img.createdAt || 0) > threshold);
+    const countrySet = new Set<string>();
+    newItems.forEach(img => {
+      countrySet.add(img.country);
+      if (img.island) countrySet.add(img.island);
+    });
+    return Array.from(countrySet).sort();
+  }, [images]);
 
   const collectionCount = useMemo(() => {
     if (!currentUser) return 0;
@@ -217,6 +242,15 @@ const App: React.FC = () => {
     URL.revokeObjectURL(url);
     addSignal("Checklist gerada com sucesso! hihi!", "success");
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#020617] text-slate-100 gap-6">
+        <Loader2 className="w-16 h-16 animate-spin text-brand-500" />
+        <p className="font-black uppercase tracking-[0.3em] text-xs text-brand-400 animate-pulse">Chloe está a carregar... hihi!</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#020617] text-slate-100 pt-24 md:pt-28">
@@ -289,13 +323,42 @@ const App: React.FC = () => {
                     </button>
                   ))}
                   
-                  {/* Botão de Novas Entradas (Rosa Chloe) ao lado dos Objetos */}
-                  <button 
-                    onClick={() => setShowNewOnly(!showNewOnly)} 
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ml-0.5 ${showNewOnly ? 'bg-pink-600 text-white shadow-[0_0_15px_rgba(219,39,119,0.5)] border border-pink-400/30' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-pink-400'}`}
-                  >
-                    <Clock className="w-3 h-3" /> Novas Entradas
-                  </button>
+                  {/* Botão de Novas Entradas (Rosa Chloe) com Submenu Automático */}
+                  <div className="relative" ref={newSubmenuRef}>
+                    <button 
+                      onClick={() => setShowNewOnly(!showNewOnly)} 
+                      onMouseEnter={() => setShowNewSubmenu(true)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ml-0.5 ${showNewOnly || showNewSubmenu ? 'bg-pink-600 text-white shadow-[0_0_15px_rgba(219,39,119,0.5)] border border-pink-400/30' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-pink-400'}`}
+                    >
+                      <Clock className="w-3 h-3" /> Novas Entradas
+                      {countriesWithNewEntries.length > 0 && <ChevronDown className={`w-2.5 h-2.5 transition-transform ${showNewSubmenu ? 'rotate-180' : ''}`} />}
+                    </button>
+
+                    {showNewSubmenu && countriesWithNewEntries.length > 0 && (
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-44 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-1.5 z-[100] animate-bounce-in backdrop-blur-3xl">
+                         <div className="text-[7px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 py-1.5 border-b border-white/5 mb-1 flex items-center gap-2">
+                           <Sparkles className="w-2.5 h-2.5 text-pink-500" /> Novidades por País
+                         </div>
+                         <div className="max-h-[250px] overflow-y-auto custom-scrollbar">
+                           {countriesWithNewEntries.map(country => (
+                             <button
+                               key={country}
+                               onClick={() => {
+                                 setActiveCountry(country);
+                                 setShowNewOnly(true);
+                                 setShowNewSubmenu(false);
+                                 setCurrentPage('home');
+                               }}
+                               className="w-full text-left px-3 py-1.5 text-[8px] text-slate-400 hover:text-white hover:bg-pink-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center justify-between group"
+                             >
+                               {country}
+                               <ChevronRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                             </button>
+                           ))}
+                         </div>
+                      </div>
+                    )}
+                  </div>
                </div>
             </div>
 
