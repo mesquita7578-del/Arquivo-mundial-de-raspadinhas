@@ -29,7 +29,7 @@ export interface ScratchcardData {
   customId: string;
   frontUrl: string;
   backUrl?: string;
-  gallery?: string[]; // Novo campo para múltiplas imagens da série
+  gallery?: string[]; 
   gameName: string;
   gameNumber: string;
   releaseDate: string;
@@ -57,7 +57,7 @@ export interface ScratchcardData {
   seriesGroupId?: string;
   isSeries?: boolean;
   seriesDetails?: string;
-  setCount?: string; // Novo campo para quantidade manual de itens no SET
+  setCount?: string; 
 }
 
 export interface AnalysisResult {
@@ -114,6 +114,14 @@ export interface SiteMetadata {
   founderBio?: string;
   founderQuote?: string;
   milestones?: Milestone[];
+  visitorCount?: number; // Contador total de acessos
+  visitorLog?: VisitorEntry[]; // Registo de quem entrou
+}
+
+export interface VisitorEntry {
+  name: string;
+  timestamp: number;
+  isAdmin: boolean;
 }
 
 export interface Milestone {

@@ -1,21 +1,23 @@
 
 import React from 'react';
-import { Heart, RefreshCw, User, ShieldCheck, Smartphone, Download, Radio } from 'lucide-react';
+import { Heart, RefreshCw, User, ShieldCheck, Smartphone, Download, Radio, Users } from 'lucide-react';
 import { ChloeClock } from './ChloeClock';
 
 interface FooterProps {
   onNavigate: (page: any) => void;
   onWebsitesClick: () => void;
   onRadioClick: () => void;
+  visitorCount?: number;
+  onVisitorsClick: () => void;
   onInstall?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onRadioClick, onInstall }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onRadioClick, visitorCount = 0, onVisitorsClick, onInstall }) => {
   return (
     <footer className="fixed bottom-0 left-0 w-full bg-[#020617]/90 border-t border-slate-900 px-6 py-1.5 z-[100] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] backdrop-blur-md">
       <div className="max-w-[1800px] mx-auto flex items-center justify-between gap-4">
         
-        {/* Lado Esquerdo: Jorge & Info (Compacto) */}
+        {/* Lado Esquerdo: Jorge & Info */}
         <div className="flex items-center gap-2 group cursor-default shrink-0">
           <div className="p-1 bg-slate-900 border border-brand-600/30 rounded-lg text-brand-500 group-hover:bg-brand-600 group-hover:text-white transition-all">
              <User className="w-2.5 h-2.5" />
@@ -26,12 +28,23 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onR
           </div>
         </div>
 
-        {/* Centro: Relógio da Chloe (Mais Pequeno) */}
-        <div className="flex-1 flex justify-center scale-75 sm:scale-90 origin-center">
+        {/* Centro: Relógio da Chloe e Contador de Visitas */}
+        <div className="flex-1 flex items-center justify-center gap-4 scale-75 sm:scale-90 origin-center">
            <ChloeClock />
+           
+           <button 
+             onClick={onVisitorsClick}
+             className="flex items-center bg-slate-900/40 border border-white/5 px-4 py-2 rounded-full group hover:border-cyan-500/30 transition-all backdrop-blur-sm"
+           >
+              <Users className="w-3 h-3 text-cyan-500 mr-2 group-hover:animate-bounce" />
+              <div className="flex flex-col items-start">
+                 <span className="text-[6px] font-black text-slate-600 uppercase tracking-widest leading-none">Acessos</span>
+                 <span className="text-[10px] font-black text-white font-mono leading-tight">{visitorCount}</span>
+              </div>
+           </button>
         </div>
 
-        {/* Lado Direito: Fabio & Ações (Compacto) */}
+        {/* Lado Direito: Fabio & Ações */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="hidden md:flex items-center gap-3 border-r border-slate-800 pr-3">
             <button 

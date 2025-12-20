@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, Plus, Loader2, Sparkles, Zap, LayoutGrid, Trophy, Star, 
-  Ticket, Layers, Box, MapPin, X, Diamond, Crown, CheckCircle2 
+  Ticket, Layers, Box, MapPin, X, Diamond, Crown, CheckCircle2, Users 
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { ImageGrid } from './components/ImageGrid';
@@ -15,9 +15,10 @@ import { HistoryModal } from './components/HistoryModal';
 import { WebsitesModal } from './components/WebsitesModal';
 import { RadioModal } from './components/RadioModal';
 import { AboutPage } from './components/AboutPage';
+import { VisitorsModal } from './components/VisitorsModal';
 import { Footer } from './components/Footer';
 import { storageService } from './services/storage';
-import { ScratchcardData, CategoryItem, SiteMetadata, Continent } from './types';
+import { ScratchcardData, CategoryItem, SiteMetadata, Continent, VisitorEntry } from './types';
 import { translations, Language } from './translations';
 import { DivineSignal, Signal } from './components/DivineSignal';
 
@@ -30,21 +31,19 @@ const App: React.FC = () => {
   const [language, setLanguage] = useState<Language>('pt');
   const [searchTerm, setSearchTerm] = useState('');
   const [activeContinent, setActiveContinent] = useState<Continent | 'Mundo'>('Mundo');
-  const [activeCountry, setActiveCountry] = useState<string>(''); // Atuará como Localização (País ou Ilha)
+  const [activeCountry, setActiveCountry] = useState<string>(''); 
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [showRaritiesOnly, setShowRaritiesOnly] = useState(false);
   const [showWinnersOnly, setShowWinnersOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
-  const [showCountrySuggestions, setShowCountrySuggestions] = useState(false);
-  const countryInputRef = useRef<HTMLDivElement>(null);
-
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showWebsites, setShowWebsites] = useState(false);
   const [showRadio, setShowRadio] = useState(false);
+  const [showVisitors, setShowVisitors] = useState(false);
   
   const [isAdmin, setIsAdmin] = useState(localStorage.getItem('archive_admin') === 'true');
   const [currentUser, setCurrentUser] = useState<string | null>(localStorage.getItem('archive_user'));
@@ -52,6 +51,7 @@ const App: React.FC = () => {
 
   const t = translations[language] || translations['pt'];
 
+  // Inicialização e Contador de Visitas
   useEffect(() => {
     const init = async () => {
       try {
@@ -64,7 +64,20 @@ const App: React.FC = () => {
         
         setImages(allImages || []);
         setCategories(allCats || []);
-        setSiteMetadata(meta || null);
+        
+        // Atualizar Contador de Visitas
+        const updatedMeta = {
+           ...meta,
+           visitorCount: (meta.visitorCount || 0) + 1,
+        };
+        setSiteMetadata(updatedMeta);
+        await storageService.saveSiteMetadata(updatedMeta);
+
+        // Se já houver um utilizador logado, registar a presença
+        if (currentUser) {
+           recordVisitor(currentUser, isAdmin, updatedMeta);
+        }
+
       } catch (err) {
         console.error("Erro no carregamento do Arquivo:", err);
       } finally {
@@ -74,15 +87,24 @@ const App: React.FC = () => {
     init();
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (countryInputRef.current && !countryInputRef.current.contains(event.target as Node)) {
-        setShowCountrySuggestions(false);
-      }
+  const recordVisitor = async (name: string, isAdm: boolean, currentMeta?: SiteMetadata) => {
+    const meta = currentMeta || siteMetadata;
+    if (!meta) return;
+
+    const newEntry: VisitorEntry = {
+      name,
+      isAdmin: isAdm,
+      timestamp: Date.now()
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+
+    const log = meta.visitorLog || [];
+    // Manter apenas os últimos 50 registos para não pesar o DB local
+    const updatedLog = [newEntry, ...log].slice(0, 50);
+    
+    const updatedMeta = { ...meta, visitorLog: updatedLog };
+    setSiteMetadata(updatedMeta);
+    await storageService.saveSiteMetadata(updatedMeta);
+  };
 
   const addSignal = (message: string, type: Signal['type'] = 'info') => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -109,25 +131,14 @@ const App: React.FC = () => {
       
       const matchesSearch = gName.includes(s) || gCountry.includes(s) || gIsland.includes(s) || gNum.includes(s);
       const matchesContinent = activeContinent === 'Mundo' || img.continent === activeContinent;
-      
-      // Lógica de localização: pode coincidir com o país OU com a ilha
-      const matchesCountry = !activeCountry || 
-                             img.country.toLowerCase() === activeCountry.toLowerCase() || 
-                             (img.island && img.island.toLowerCase() === activeCountry.toLowerCase());
-      
+      const matchesCountry = !activeCountry || img.country.toLowerCase() === activeCountry.toLowerCase() || (img.island && img.island.toLowerCase() === activeCountry.toLowerCase());
       const matchesCategory = activeCategory === 'all' || img.category === activeCategory;
       const matchesRarity = !showRaritiesOnly || img.isRarity;
       const matchesWinners = !showWinnersOnly || img.isWinner;
       
       const isRecent = (Date.now() - (img.createdAt || 0)) < 43200000;
-      
-      if (currentPage === 'new-arrivals') {
-        if (!isRecent) return false;
-      }
-      
-      if (currentPage === 'collection') {
-        if (!currentUser || !img.owners?.includes(currentUser)) return false;
-      }
+      if (currentPage === 'new-arrivals') if (!isRecent) return false;
+      if (currentPage === 'collection') if (!currentUser || !img.owners?.includes(currentUser)) return false;
       
       return matchesSearch && matchesContinent && matchesCountry && matchesCategory && matchesRarity && matchesWinners;
     });
@@ -213,10 +224,9 @@ const App: React.FC = () => {
         collectionCount={collectionCount}
         onCountrySelect={(cont, loc) => {
           setActiveContinent(cont);
-          setActiveCountry(loc); // loc pode ser País ou Ilha
+          setActiveCountry(loc); 
           setCurrentPage('home');
         }}
-        // Aqui agrupamos Países E Ilhas como localizações selecionáveis individuais
         countriesByContinent={images.reduce((acc, img) => {
           if (!acc[img.continent]) acc[img.continent] = [];
           if (!acc[img.continent].includes(img.country)) acc[img.continent].push(img.country);
@@ -228,25 +238,12 @@ const App: React.FC = () => {
       {(currentPage === 'home' || currentPage === 'new-arrivals' || currentPage === 'collection') && (
         <div className="bg-[#020617]/70 backdrop-blur-3xl sticky top-[95px] z-[90] px-6 md:px-10 py-5 border-b border-white/10 shadow-2xl">
           <div className="max-w-[1800px] mx-auto flex flex-col gap-6">
-            
             <div className="flex flex-wrap items-center justify-center lg:justify-between gap-4">
-              
               <div className="flex flex-wrap items-center gap-2">
                  <div className="flex items-center gap-2 mr-2 border-r border-white/10 pr-4">
-                   <button 
-                     onClick={() => setShowRaritiesOnly(!showRaritiesOnly)}
-                     className={`flex items-center gap-2 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950 shadow-lg' : 'bg-slate-900/50 border border-slate-800 text-slate-500 hover:text-slate-300'}`}
-                   >
-                     <Diamond className="w-4 h-4" /> Raridades
-                   </button>
-                   <button 
-                     onClick={() => setShowWinnersOnly(!showWinnersOnly)}
-                     className={`flex items-center gap-2 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white shadow-lg' : 'bg-slate-900/50 border border-slate-800 text-slate-500 hover:text-slate-300'}`}
-                   >
-                     <Trophy className="w-4 h-4" /> Premiadas
-                   </button>
+                   <button onClick={() => setShowRaritiesOnly(!showRaritiesOnly)} className={`flex items-center gap-2 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950 shadow-lg' : 'bg-slate-900/50 border border-slate-800 text-slate-500 hover:text-slate-300'}`}><Diamond className="w-4 h-4" /> Raridades</button>
+                   <button onClick={() => setShowWinnersOnly(!showWinnersOnly)} className={`flex items-center gap-2 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white shadow-lg' : 'bg-slate-900/50 border border-slate-800 text-slate-500 hover:text-slate-300'}`}><Trophy className="w-4 h-4" /> Premiadas</button>
                  </div>
-
                  <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
                     {[
                       { id: 'all', label: 'Tudo', icon: LayoutGrid },
@@ -255,36 +252,17 @@ const App: React.FC = () => {
                       { id: 'boletim', label: 'Boletins', icon: Layers },
                       { id: 'objeto', label: 'Objetos', icon: Box },
                     ].map(cat => (
-                      <button
-                        key={cat.id}
-                        onClick={() => setActiveCategory(cat.id)}
-                        className={`flex items-center gap-3 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/40 border border-brand-400/30' : 'bg-slate-900/50 border border-slate-800 text-slate-500 hover:text-slate-300'}`}
-                      >
-                        <cat.icon className="w-4 h-4" /> {cat.label}
-                      </button>
+                      <button key={cat.id} onClick={() => setActiveCategory(cat.id)} className={`flex items-center gap-3 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/40 border border-brand-400/30' : 'bg-slate-900/50 border border-slate-800 text-slate-500 hover:text-slate-300'}`}><cat.icon className="w-4 h-4" /> {cat.label}</button>
                     ))}
                  </div>
               </div>
-
               <div className="flex items-center gap-4 w-full lg:w-auto">
                 <div className="relative w-full lg:w-72 group">
                   <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
-                  <input 
-                    type="text" 
-                    placeholder="Pesquisar..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-full pl-12 pr-6 py-3 text-xs focus:border-brand-500 outline-none transition-all uppercase tracking-wider text-white shadow-inner"
-                  />
+                  <input type="text" placeholder="Pesquisar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-full pl-12 pr-6 py-3 text-xs focus:border-brand-500 outline-none transition-all uppercase tracking-wider text-white shadow-inner"/>
                 </div>
-
                 {isAdmin && (
-                  <button 
-                    onClick={() => setShowUpload(true)} 
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 shadow-xl hover:scale-105 active:scale-95 border border-emerald-400/20 whitespace-nowrap"
-                  >
-                    <Plus className="w-5 h-5" /> Arquivar Item
-                  </button>
+                  <button onClick={() => setShowUpload(true)} className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 shadow-xl hover:scale-105 active:scale-95 border border-emerald-400/20 whitespace-nowrap"><Plus className="w-5 h-5" /> Arquivar Item</button>
                 )}
               </div>
             </div>
@@ -302,39 +280,17 @@ const App: React.FC = () => {
                 <p className="text-[9px] uppercase tracking-widest mt-2 text-slate-700">{t.grid.emptyCollectionDesc}</p>
               </div>
             )}
-            <ImageGrid 
-              images={filteredImages}
-              onImageClick={setSelectedImage}
-              isAdmin={isAdmin}
-              currentUser={currentUser}
-              t={t.grid}
-            />
+            <ImageGrid images={filteredImages} onImageClick={setSelectedImage} isAdmin={isAdmin} currentUser={currentUser} t={t.grid}/>
           </div>
         )}
 
         {currentPage === 'stats' && (
            <StatsSection 
-             stats={images.reduce((acc, img) => {
-               if (img.continent) acc[img.continent] = (acc[img.continent] || 0) + 1;
-               return acc;
-             }, {} as any)}
-             categoryStats={{ 
-               scratch: images.filter(i => i.category === 'raspadinha').length,
-               lottery: images.filter(i => i.category === 'lotaria').length
-             }}
-             countryStats={images.reduce((acc, img) => {
-               if (img.country) acc[img.country] = (acc[img.country] || 0) + 1;
-               return acc;
-             }, {} as any)}
-             stateStats={images.reduce((acc, img) => {
-               if (img.state) acc[img.state] = (acc[img.state] || 0) + 1;
-               return acc;
-             }, {} as any)}
-             collectorStats={images.reduce((acc, img) => {
-               const c = img.collector || 'Geral';
-               acc[c] = (acc[c] || 0) + 1;
-               return acc;
-             }, {} as any)}
+             stats={images.reduce((acc, img) => { if (img.continent) acc[img.continent] = (acc[img.continent] || 0) + 1; return acc; }, {} as any)}
+             categoryStats={{ scratch: images.filter(i => i.category === 'raspadinha').length, lottery: images.filter(i => i.category === 'lotaria').length }}
+             countryStats={images.reduce((acc, img) => { if (img.country) acc[img.country] = (acc[img.country] || 0) + 1; return acc; }, {} as any)}
+             stateStats={images.reduce((acc, img) => { if (img.state) acc[img.state] = (acc[img.state] || 0) + 1; return acc; }, {} as any)}
+             collectorStats={images.reduce((acc, img) => { const c = img.collector || 'Geral'; acc[c] = (acc[c] || 0) + 1; return acc; }, {} as any)}
              totalRecords={images.length}
              t={t.stats}
              currentUser={currentUser}
@@ -343,26 +299,13 @@ const App: React.FC = () => {
 
         {currentPage === 'map' && (
            <div className="p-10 h-full min-h-[600px]">
-             <WorldMap 
-               images={images}
-               activeContinent={activeContinent}
-               onCountrySelect={(country) => {
-                 setActiveCountry(country);
-                 setCurrentPage('home');
-               }}
-               t={t.grid}
-             />
+             <WorldMap images={images} activeContinent={activeContinent} onCountrySelect={(country) => { setActiveCountry(country); setCurrentPage('home'); }} t={t.grid} />
            </div>
         )}
 
         {currentPage === 'about' && (
           <AboutPage 
-            t={t.about} 
-            isAdmin={isAdmin}
-            founderPhoto={siteMetadata?.founderPhotoUrl}
-            founderBio={siteMetadata?.founderBio}
-            founderQuote={siteMetadata?.founderQuote}
-            milestones={siteMetadata?.milestones}
+            t={t.about} isAdmin={isAdmin} founderPhoto={siteMetadata?.founderPhotoUrl} founderBio={siteMetadata?.founderBio} founderQuote={siteMetadata?.founderQuote} milestones={siteMetadata?.milestones}
             onUpdateFounderPhoto={(url) => setSiteMetadata(prev => prev ? {...prev, founderPhotoUrl: url} : {id: 'site_settings', founderPhotoUrl: url})}
             onUpdateMetadata={(data) => {
                const updated = {...siteMetadata, ...data} as SiteMetadata;
@@ -378,6 +321,8 @@ const App: React.FC = () => {
         onNavigate={setCurrentPage}
         onWebsitesClick={() => setShowWebsites(true)}
         onRadioClick={() => setShowRadio(true)}
+        visitorCount={siteMetadata?.visitorCount}
+        onVisitorsClick={() => setShowVisitors(true)}
       />
 
       {showUpload && (
@@ -387,36 +332,16 @@ const App: React.FC = () => {
             setImages([data, ...images]);
             addSignal(`${data.gameName} arquivado! hihi!`, 'success');
           }}
-          existingImages={images}
-          initialFile={null}
-          currentUser={currentUser}
-          t={t.upload}
-          categories={categories}
+          existingImages={images} initialFile={null} currentUser={currentUser} t={t.upload} categories={categories}
         />
       )}
 
       {selectedImage && (
         <ImageViewer 
-          image={selectedImage}
-          onClose={() => setSelectedImage(null)}
-          onUpdate={async (data) => {
-            await storageService.save(data);
-            setImages(images.map(img => img.id === data.id ? data : img));
-            setSelectedImage(data);
-            addSignal("Registo atualizado! hihi!", "info");
-          }}
-          onDelete={async (id) => {
-            await storageService.delete(id);
-            setImages(images.filter(img => img.id !== id));
-            setSelectedImage(null);
-            addSignal("Item removido.", "warning");
-          }}
-          isAdmin={isAdmin}
-          currentUser={currentUser}
-          contextImages={images}
-          onImageSelect={setSelectedImage}
-          t={t.viewer}
-          categories={categories}
+          image={selectedImage} onClose={() => setSelectedImage(null)}
+          onUpdate={async (data) => { await storageService.save(data); setImages(images.map(img => img.id === data.id ? data : img)); setSelectedImage(data); addSignal("Registo atualizado! hihi!", "info"); }}
+          onDelete={async (id) => { await storageService.delete(id); setImages(images.filter(img => img.id !== id)); setSelectedImage(null); addSignal("Item removido.", "warning"); }}
+          isAdmin={isAdmin} currentUser={currentUser} contextImages={images} onImageSelect={setSelectedImage} t={t.viewer} categories={categories}
         />
       )}
 
@@ -429,12 +354,14 @@ const App: React.FC = () => {
               setCurrentUser(u);
               localStorage.setItem('archive_user', u);
               localStorage.setItem('archive_admin', 'true');
+              recordVisitor(u, true);
               addSignal(`Bem-vindo, Comandante ${u}! hihi!`, 'divine');
               return true;
             } else if (type === 'visitor') {
               setCurrentUser(u);
               localStorage.setItem('archive_user', u);
               localStorage.setItem('archive_admin', 'false');
+              recordVisitor(u, false);
               addSignal(`Olá, ${u}! Bom ver-te aqui! hihi!`, 'success');
               return true;
             }
@@ -447,6 +374,7 @@ const App: React.FC = () => {
       {showHistory && <HistoryModal onClose={() => setShowHistory(false)} isAdmin={isAdmin} t={{...t.header, ...t.history}} />}
       {showWebsites && <WebsitesModal onClose={() => setShowWebsites(false)} isAdmin={isAdmin} t={t.header} />}
       {showRadio && <RadioModal onClose={() => setShowRadio(false)} />}
+      {showVisitors && <VisitorsModal onClose={() => setShowVisitors(false)} visitors={siteMetadata?.visitorLog || []} totalCount={siteMetadata?.visitorCount || 0} />}
 
       <DivineSignal signals={signals} onRemove={(id) => setSignals(s => s.filter(sig => sig.id !== id))} />
     </div>
