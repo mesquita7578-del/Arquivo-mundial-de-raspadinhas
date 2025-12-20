@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Plus, Loader2, Sparkles, Zap } from 'lucide-center'; // Nota: Corrigindo possível erro de import se houvesse, mas mantendo lucide-react
+import { Search, Plus, Loader2, Sparkles, Zap } from 'lucide-react';
 import { Header } from './components/Header';
 import { ImageGrid } from './components/ImageGrid';
 import { ImageViewer } from './components/ImageViewer';

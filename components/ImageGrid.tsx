@@ -1,7 +1,7 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
-  Filter, Zap, Trophy, CheckCircle2, Image as ImageIcon, ChevronLeft, ChevronRight, MapPin, RefreshCcw
+  Filter, Zap, Trophy, CheckCircle2, Image as ImageIcon, ChevronLeft, ChevronRight, MapPin, RefreshCcw, Search, X
 } from 'lucide-react';
 import { ScratchcardData } from '../types';
 
@@ -13,7 +13,7 @@ interface ImageGridProps {
   t: any;
 }
 
-const ITEMS_PER_PAGE = 100;
+const ITEMS_PER_PAGE = 20;
 
 const StateBadge = ({ state }: { state: string }) => {
   const colors: Record<string, string> = {
@@ -42,23 +42,65 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   t 
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [countryFilter, setCountryFilter] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionRef = useRef<HTMLDivElement>(null);
   
-  const sortedImages = useMemo(() => {
-    return [...images].sort((a, b) => {
+  // Extrair países únicos para sugestões
+  const uniqueCountries = useMemo(() => {
+    const countries = images.map(img => img.country).filter(Boolean);
+    return Array.from(new Set(countries)).sort();
+  }, [images]);
+
+  // Filtrar sugestões com base no input
+  const suggestions = useMemo(() => {
+    if (!countryFilter.trim()) return [];
+    return uniqueCountries.filter(c => 
+      c.toLowerCase().includes(countryFilter.toLowerCase()) && 
+      c.toLowerCase() !== countryFilter.toLowerCase()
+    ).slice(0, 5);
+  }, [countryFilter, uniqueCountries]);
+
+  // Fechar sugestões ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (suggestionRef.current && !suggestionRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const sortedAndFilteredImages = useMemo(() => {
+    let result = [...images];
+    
+    // Filtro por país local
+    if (countryFilter.trim()) {
+      result = result.filter(img => 
+        img.country.toLowerCase().includes(countryFilter.toLowerCase())
+      );
+    }
+
+    return result.sort((a, b) => {
       const numA = a.gameNumber || "";
       const numB = b.gameNumber || "";
       return numA.localeCompare(numB, undefined, { numeric: true, sensitivity: 'base' });
     });
-  }, [images]);
+  }, [images, countryFilter]);
 
-  const totalPages = Math.ceil(sortedImages.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(sortedAndFilteredImages.length / ITEMS_PER_PAGE);
 
   const displayedImages = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return sortedImages.slice(start, start + ITEMS_PER_PAGE);
-  }, [sortedImages, currentPage]);
+    return sortedAndFilteredImages.slice(start, start + ITEMS_PER_PAGE);
+  }, [sortedAndFilteredImages, currentPage]);
 
-  // Alerta NOVO limitado a 24 horas
+  // Resetar página quando o filtro muda
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [countryFilter]);
+
   const isRecent = (createdAt: number) => {
     const twentyFourHoursInMs = 24 * 60 * 60 * 1000;
     return (Date.now() - createdAt) < twentyFourHoursInMs;
@@ -74,7 +116,57 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   }
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-6">
+      {/* Country Search Bar Interno */}
+      <div className="flex flex-col sm:flex-row items-center gap-4 bg-slate-900/40 p-4 rounded-2xl border border-slate-800/50 backdrop-blur-sm">
+        <div className="relative flex-1 w-full" ref={suggestionRef}>
+          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-500" />
+          <input 
+            type="text" 
+            placeholder="Filtrar por país específico..." 
+            value={countryFilter}
+            onChange={(e) => {
+              setCountryFilter(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-10 py-3 text-xs font-bold text-white focus:border-brand-500 outline-none transition-all shadow-inner uppercase tracking-widest"
+          />
+          {countryFilter && (
+            <button 
+              onClick={() => setCountryFilter('')}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Sugestões de Países */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute top-full left-0 w-full mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-[60] overflow-hidden animate-fade-in neon-border-blue">
+              {suggestions.map(country => (
+                <button
+                  key={country}
+                  onClick={() => {
+                    setCountryFilter(country);
+                    setShowSuggestions(false);
+                  }}
+                  className="w-full text-left px-4 py-3 text-[10px] font-black text-slate-400 hover:bg-brand-500 hover:text-white transition-all border-b border-slate-800 last:border-0 uppercase tracking-widest flex items-center gap-2"
+                >
+                  <MapPin className="w-3 h-3 opacity-50" />
+                  {country}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center gap-2 px-4 py-2 bg-slate-950 rounded-xl border border-slate-800 shrink-0">
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Resultados:</span>
+          <span className="text-xs font-black text-brand-400">{sortedAndFilteredImages.length}</span>
+        </div>
+      </div>
+
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-2 md:gap-3">
         {displayedImages.map((item) => {
           const itemIsRecent = isRecent(item.createdAt);
@@ -100,82 +192,4 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 />
                 
                 {/* Imagem do Verso no Hover */}
-                {item.backUrl && (
-                  <img 
-                    src={item.backUrl} 
-                    alt={`${item.gameName} Verso`}
-                    className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-105 group-hover:scale-100 z-10"
-                  />
-                )}
-
-                <div className="absolute top-1 left-1 flex flex-col gap-0.5 z-20">
-                   <div className="bg-black/60 backdrop-blur-md text-white text-[7px] font-black px-1.5 py-0.5 rounded-sm border border-white/5 uppercase tracking-tighter leading-none shadow-xl">
-                      {item.customId}
-                   </div>
-                </div>
-
-                 <div className="absolute top-1 right-1 flex flex-col gap-1 items-end z-20">
-                    {item.backUrl && (
-                      <div className="bg-slate-900/60 backdrop-blur-sm text-slate-400 p-1 rounded-sm border border-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
-                         <RefreshCcw className="w-2.5 h-2.5" />
-                      </div>
-                    )}
-                    {itemIsRecent && (
-                       <div className="bg-brand-500 backdrop-blur-md text-white px-2.5 py-1 rounded-sm shadow-[0_0_20px_rgba(0,168,255,0.8)] -rotate-6 border border-brand-400 flex items-center gap-1 animate-pulse-slow" title="Adicionado nas últimas 24h!">
-                          <Zap className="w-3 h-3 fill-white" />
-                          <span className="text-[8px] font-black uppercase tracking-widest">NOVO</span>
-                       </div>
-                    )}
-                    {currentUser && item.owners?.includes(currentUser) && (
-                       <div className="bg-brand-500/80 backdrop-blur-sm text-white p-1 rounded-full shadow-lg border border-brand-400/50">
-                          <CheckCircle2 className="w-2.5 h-2.5" />
-                       </div>
-                    )}
-                    {item.isWinner && <div className="bg-green-600/80 backdrop-blur-sm text-white p-1 rounded-full shadow-lg border border-green-400/50"><Trophy className="w-2.5 h-2.5" /></div>}
-                 </div>
-                 
-                 <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black to-transparent pointer-events-none opacity-60"></div>
-              </div>
-
-              <div className="p-1.5 bg-slate-950 flex flex-col flex-1 border-t border-slate-900/50">
-                <div className="flex justify-between items-start mb-1 gap-1">
-                  <h3 className="font-black text-slate-400 text-[9px] leading-tight truncate flex-1 uppercase tracking-tighter group-hover:text-brand-500 transition-colors" title={item.gameName}>{item.gameName}</h3>
-                </div>
-                <div className="mt-auto flex items-center justify-between">
-                  <div className="flex items-center gap-0.5 text-[7px] text-slate-600 font-black uppercase tracking-widest">
-                    <MapPin className="w-2 h-2" /> <span className="truncate max-w-[50px]">{item.country}</span>
-                  </div>
-                  <StateBadge state={item.state} />
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-6 py-12">
-          <button 
-            onClick={() => {setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo(0,0);}} 
-            disabled={currentPage === 1} 
-            className="group flex items-center gap-2 px-6 py-2.5 bg-slate-900/40 backdrop-blur-xl text-slate-400 border border-slate-800/50 rounded-full disabled:opacity-10 hover:bg-brand-500/20 hover:text-brand-500 hover:border-brand-500/30 transition-all text-[10px] font-black uppercase tracking-widest shadow-2xl"
-          >
-             <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> {t.prev}
-          </button>
-          
-          <div className="px-4 py-1.5 bg-slate-950/80 rounded-full border border-slate-800/50 shadow-inner">
-             <span className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em]">PAG <span className="text-slate-300">{currentPage}</span> / {totalPages}</span>
-          </div>
-
-          <button 
-            onClick={() => {setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo(0,0);}} 
-            disabled={currentPage === totalPages} 
-            className="group flex items-center gap-2 px-6 py-2.5 bg-slate-900/40 backdrop-blur-xl text-slate-400 border border-slate-800/50 rounded-full disabled:opacity-10 hover:bg-brand-500/20 hover:text-brand-500 hover:border-brand-500/30 transition-all text-[10px] font-black uppercase tracking-widest shadow-2xl"
-          >
-             {t.next} <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
+                {item.
