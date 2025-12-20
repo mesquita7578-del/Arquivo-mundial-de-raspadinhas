@@ -35,7 +35,7 @@ const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeContinent, setActiveContinent] = useState<Continent | 'Mundo'>('Mundo');
   const [activeCountry, setActiveCountry] = useState<string>(''); 
-  const [activeSubRegion, setActiveSubRegion] = useState<string>(''); // Generalizado para ilhas/autoridades
+  const [activeSubRegion, setActiveSubRegion] = useState<string>(''); 
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [showRaritiesOnly, setShowRaritiesOnly] = useState(false);
   const [showWinnersOnly, setShowWinnersOnly] = useState(false);
@@ -177,18 +177,15 @@ const App: React.FC = () => {
       const matchesSearch = gName.includes(s) || gCountry.includes(s) || gIsland.includes(s) || gNum.includes(s) || gRegion.includes(s);
       const matchesContinent = activeContinent === 'Mundo' || img.continent === activeContinent;
       
-      // Lógica de Localização Universal e Profissional
       let matchesLocation = true;
       if (activeCountry) {
         const countryMatch = gCountry === activeCountry.toLowerCase();
         
         if (activeSubRegion) {
           const sub = activeSubRegion.toLowerCase();
-          // Se for "continente" em Portugal, garantimos que não tem ilha
           if (activeCountry.toLowerCase() === 'portugal' && sub === 'continente') {
             matchesLocation = countryMatch && !img.island;
           } 
-          // Caso contrário, verificamos se o campo subRegion, island ou region bate
           else {
             matchesLocation = countryMatch && (gSub === sub || gIsland === sub || gRegion === sub || (img.operator && img.operator.toLowerCase().includes(sub)));
           }
@@ -217,7 +214,6 @@ const App: React.FC = () => {
 
     return {
       countries: Array.from(countrySet).sort(),
-      // Mapeamento dinâmico de novidades por país
       getNewsFor: (country: string) => {
         const countryNews = newItems.filter(i => i.country === country);
         return {
@@ -472,6 +468,7 @@ const App: React.FC = () => {
 
         {currentPage === 'stats' && (
            <StatsSection 
+             images={images}
              stats={images.reduce((acc, img) => { if (img.continent) acc[img.continent] = (acc[img.continent] || 0) + 1; return acc; }, {} as any)}
              categoryStats={{ scratch: images.filter(i => i.category === 'raspadinha').length, lottery: images.filter(i => i.category === 'lotaria').length }}
              countryStats={images.reduce((acc, img) => { if (img.country) acc[img.country] = (acc[img.country] || 0) + 1; return acc; }, {} as any)}

@@ -1,15 +1,16 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Continent } from '../types';
+import { Continent, ScratchcardData } from '../types';
 import { 
   BarChart3, Database, Map, PieChart, Users, Award, Ticket, 
   Coins, Crown, Star, Sparkles, Flag, Globe, Mail, 
   ShieldCheck, LayoutGrid, CheckCircle2, RotateCcw, 
-  User, Zap, TrendingUp, MessageCircle, Loader2
+  User, Zap, TrendingUp, MessageCircle, Loader2, Banknote
 } from 'lucide-react';
 import { getChloeInsight } from '../services/geminiService';
 
 interface StatsSectionProps {
+  images: ScratchcardData[];
   stats: Record<string, number>;
   categoryStats: { scratch: number; lottery: number };
   countryStats: Record<string, number>;
@@ -20,7 +21,7 @@ interface StatsSectionProps {
   currentUser?: string | null;
 }
 
-export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats, countryStats, stateStats, collectorStats, totalRecords, t, currentUser }) => {
+export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categoryStats, countryStats, stateStats, collectorStats, totalRecords, t, currentUser }) => {
   const [animate, setAnimate] = useState(false);
   const [chloeMessage, setChloeMessage] = useState<string | null>(null);
   const [isAskingChloe, setIsAskingChloe] = useState(false);
@@ -35,13 +36,18 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
     return vals.length > 0 ? Math.max(...vals) : 1;
   }, [stats]);
 
-  const { scratchPct, lotteryPct } = useMemo(() => {
-    const total = totalRecords || 1;
-    return {
-      scratchPct: (categoryStats.scratch / total) * 100,
-      lotteryPct: (categoryStats.lottery / total) * 100
-    };
-  }, [categoryStats, totalRecords]);
+  // Novo cálculo: Valor total investido em MINT
+  const totalMintInvestment = useMemo(() => {
+    return images.reduce((acc, img) => {
+      if (img.state === 'MINT' && img.price) {
+        // Limpar a string do preço (remover €, $, espaços) e converter para número
+        const cleanPrice = img.price.replace(/[^\d,.]/g, '').replace(',', '.');
+        const val = parseFloat(cleanPrice);
+        return isNaN(val) ? acc : acc + val;
+      }
+      return acc;
+    }, 0);
+  }, [images]);
 
   const handleAskChloe = async () => {
     setIsAskingChloe(true);
@@ -70,7 +76,6 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
     const countSC = Number(stateStats['SC']) || 0;
     const countCS = Number(stateStats['CS']) || 0;
     
-    // Lista de todos os estados que contam como Amostra/Specimen técnica
     const sampleKeys = ['AMOSTRA', 'VOID', 'SAMPLE', 'MUESTRA', 'CAMPIONE', '样本', 'MUSTER', 'PRØVE'];
     const countSamples = sampleKeys.reduce((acc, key) => acc + (Number(stateStats[key]) || 0), 0);
     
@@ -127,16 +132,17 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
         )}
 
         {/* Info Cards Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
            {[
              { label: t.totalRecords, val: totalRecords, icon: Database, color: 'text-brand-500' },
              { label: 'Nações', val: Object.keys(countryStats).length, icon: Globe, color: 'text-cyan-500' },
              { label: 'Raspadinhas', val: categoryStats.scratch, icon: Coins, color: 'text-amber-500' },
+             { label: 'Valor MINT', val: `${totalMintInvestment.toFixed(2)}€`, icon: Banknote, color: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/5' },
              { label: 'Lotarias', val: categoryStats.lottery, icon: Ticket, color: 'text-white' }
            ].map((card, i) => (
-             <div key={i} className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+             <div key={i} className={`bg-slate-900 border ${card.color.includes('border') ? card.color : 'border-slate-800'} p-4 rounded-xl flex flex-col justify-between`}>
                 <div className="flex justify-between items-center mb-1">
-                   <card.icon className={`w-4 h-4 ${card.color}`} />
+                   <card.icon className={`w-4 h-4 ${card.color.split(' ')[0]}`} />
                    <span className="text-[14px] font-black text-white font-mono">{card.val}</span>
                 </div>
                 <p className="text-[7px] text-slate-500 font-black uppercase tracking-widest">{card.label}</p>
