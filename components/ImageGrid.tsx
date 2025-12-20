@@ -1,7 +1,8 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
-  Filter, Zap, Trophy, CheckCircle2, Image as ImageIcon, ChevronLeft, ChevronRight, MapPin, RefreshCcw, Search, X
+  Filter, Zap, Trophy, CheckCircle2, Image as ImageIcon, 
+  ChevronLeft, ChevronRight, MapPin, RefreshCcw, Search, X 
 } from 'lucide-react';
 import { ScratchcardData } from '../types';
 
@@ -29,12 +30,6 @@ const StateBadge = ({ state }: { state: string }) => {
   );
 };
 
-const SafeImage = ({ src, alt, className }: { src: string, alt: string, className?: string }) => {
-    const [error, setError] = useState(false);
-    if (error || !src) return <div className={`flex items-center justify-center bg-slate-900 ${className}`}><ImageIcon className="w-5 h-5 text-slate-800" /></div>;
-    return <img src={src} alt={alt} className={className} onError={() => setError(true)} loading="lazy" />;
-};
-
 export const ImageGrid: React.FC<ImageGridProps> = ({ 
   images, 
   onImageClick, 
@@ -45,14 +40,14 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   const [countryFilter, setCountryFilter] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestionRef = useRef<HTMLDivElement>(null);
-  
-  // Extrair países únicos para sugestões
+
+  // Países únicos para o filtro
   const uniqueCountries = useMemo(() => {
     const countries = images.map(img => img.country).filter(Boolean);
     return Array.from(new Set(countries)).sort();
   }, [images]);
 
-  // Filtrar sugestões com base no input
+  // Sugestões dinâmicas
   const suggestions = useMemo(() => {
     if (!countryFilter.trim()) return [];
     return uniqueCountries.filter(c => 
@@ -74,14 +69,11 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 
   const sortedAndFilteredImages = useMemo(() => {
     let result = [...images];
-    
-    // Filtro por país local
     if (countryFilter.trim()) {
       result = result.filter(img => 
         img.country.toLowerCase().includes(countryFilter.toLowerCase())
       );
     }
-
     return result.sort((a, b) => {
       const numA = a.gameNumber || "";
       const numB = b.gameNumber || "";
@@ -90,71 +82,53 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   }, [images, countryFilter]);
 
   const totalPages = Math.ceil(sortedAndFilteredImages.length / ITEMS_PER_PAGE);
+  const displayedImages = sortedAndFilteredImages.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE, 
+    currentPage * ITEMS_PER_PAGE
+  );
 
-  const displayedImages = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return sortedAndFilteredImages.slice(start, start + ITEMS_PER_PAGE);
-  }, [sortedAndFilteredImages, currentPage]);
+  useEffect(() => { setCurrentPage(1); }, [countryFilter]);
 
-  // Resetar página quando o filtro muda
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [countryFilter]);
-
-  const isRecent = (createdAt: number) => {
-    const twentyFourHoursInMs = 24 * 60 * 60 * 1000;
-    return (Date.now() - createdAt) < twentyFourHoursInMs;
-  };
+  const isRecent = (createdAt: number) => (Date.now() - createdAt) < 86400000;
 
   if (images.length === 0) {
-     return (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-600 border border-dashed border-slate-800 rounded-2xl bg-slate-900/10">
-           <Filter className="w-12 h-12 mb-4 opacity-10" />
-           <p className="font-black uppercase tracking-[0.2em] text-[10px]">Silêncio no Arquivo Mundial.</p>
-        </div>
-     );
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-slate-600 border border-dashed border-slate-800 rounded-2xl bg-slate-900/10">
+        <Filter className="w-12 h-12 mb-4 opacity-10" />
+        <p className="font-black uppercase tracking-[0.2em] text-[10px]">Silêncio no Arquivo Mundial.</p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      {/* Country Search Bar Interno */}
+      {/* Barra de Filtro de País */}
       <div className="flex flex-col sm:flex-row items-center gap-4 bg-slate-900/40 p-4 rounded-2xl border border-slate-800/50 backdrop-blur-sm">
         <div className="relative flex-1 w-full" ref={suggestionRef}>
           <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-500" />
           <input 
             type="text" 
-            placeholder="Filtrar por país específico..." 
+            placeholder="Filtrar por país..." 
             value={countryFilter}
-            onChange={(e) => {
-              setCountryFilter(e.target.value);
-              setShowSuggestions(true);
-            }}
+            onChange={(e) => { setCountryFilter(e.target.value); setShowSuggestions(true); }}
             onFocus={() => setShowSuggestions(true)}
             className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-10 py-3 text-xs font-bold text-white focus:border-brand-500 outline-none transition-all shadow-inner uppercase tracking-widest"
           />
           {countryFilter && (
-            <button 
-              onClick={() => setCountryFilter('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white transition-colors"
-            >
+            <button onClick={() => setCountryFilter('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white">
               <X className="w-4 h-4" />
             </button>
           )}
 
-          {/* Sugestões de Países */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 w-full mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-[60] overflow-hidden animate-fade-in neon-border-blue">
+            <div className="absolute top-full left-0 w-full mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-[60] overflow-hidden">
               {suggestions.map(country => (
                 <button
                   key={country}
-                  onClick={() => {
-                    setCountryFilter(country);
-                    setShowSuggestions(false);
-                  }}
-                  className="w-full text-left px-4 py-3 text-[10px] font-black text-slate-400 hover:bg-brand-500 hover:text-white transition-all border-b border-slate-800 last:border-0 uppercase tracking-widest flex items-center gap-2"
+                  onClick={() => { setCountryFilter(country); setShowSuggestions(false); }}
+                  className="w-full text-left px-4 py-3 text-[10px] font-black text-slate-400 hover:bg-brand-500 hover:text-white transition-all border-b border-slate-800 last:border-0 uppercase flex items-center gap-2"
                 >
-                  <MapPin className="w-3 h-3 opacity-50" />
-                  {country}
+                  <MapPin className="w-3 h-3 opacity-50" /> {country}
                 </button>
               ))}
             </div>
@@ -162,34 +136,85 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
         </div>
         
         <div className="flex items-center gap-2 px-4 py-2 bg-slate-950 rounded-xl border border-slate-800 shrink-0">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Resultados:</span>
+          <span className="text-[10px] font-black text-slate-500 uppercase">Total:</span>
           <span className="text-xs font-black text-brand-400">{sortedAndFilteredImages.length}</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-2 md:gap-3">
-        {displayedImages.map((item) => {
-          const itemIsRecent = isRecent(item.createdAt);
-          
-          return (
-            <div
-              key={item.id}
-              className="group bg-slate-950 border border-slate-900 hover:border-brand-500/50 transition-all duration-300 cursor-pointer flex flex-col rounded-sm overflow-hidden shadow-2xl hover:shadow-brand-500/10 active:scale-95"
-              onClick={() => onImageClick(item)}
-            >
-              <div className="px-1.5 py-1 bg-black border-b border-slate-900 flex justify-between items-center text-[6px] font-black text-slate-600 uppercase tracking-widest">
-                 <div className="flex items-center gap-0.5">
-                    <span className="text-brand-600">REF</span> {item.gameNumber}
-                 </div>
-                 <span className="group-hover:text-slate-400 transition-colors">{item.releaseDate?.split('-')[0]}</span>
-              </div>
+      {/* Grelha de Imagens */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+        {displayedImages.map((item) => (
+          <div
+            key={item.id}
+            className="group bg-slate-950 border border-slate-900 hover:border-brand-500/50 transition-all cursor-pointer flex flex-col rounded-md overflow-hidden shadow-xl active:scale-95"
+            onClick={() => onImageClick(item)}
+          >
+            <div className="px-2 py-1 bg-black border-b border-slate-900 flex justify-between items-center text-[7px] font-black text-slate-600 uppercase tracking-widest">
+               <span>REF {item.gameNumber}</span>
+               <span>{item.country}</span>
+            </div>
 
-              <div className="relative aspect-[3/4] bg-black flex items-center justify-center overflow-hidden">
-                <SafeImage 
-                  src={item.frontUrl} 
-                  alt={item.gameName} 
-                  className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${item.backUrl ? 'group-hover:opacity-0' : 'opacity-80 group-hover:opacity-100'}`} 
+            <div className="relative aspect-[3/4] bg-black overflow-hidden">
+              <img 
+                src={item.frontUrl} 
+                alt={item.gameName} 
+                className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${item.backUrl ? 'group-hover:opacity-0' : ''}`} 
+              />
+              {item.backUrl && (
+                <img 
+                  src={item.backUrl} 
+                  className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity" 
+                  alt="Verso"
                 />
-                
-                {/* Imagem do Verso no Hover */}
-                {item.
+              )}
+              
+              <div className="absolute top-1 right-1 flex flex-col gap-1 items-end">
+                {isRecent(item.createdAt) && (
+                   <div className="bg-brand-500 text-white px-2 py-0.5 rounded-sm text-[8px] font-black animate-pulse">NOVO</div>
+                )}
+                {item.isWinner && <div className="bg-green-600 p-1 rounded-full"><Trophy className="w-2.5 h-2.5 text-white" /></div>}
+              </div>
+            </div>
+
+            <div className="p-2 bg-slate-950 flex flex-col flex-1 border-t border-slate-900/50">
+              <h3 className="font-black text-slate-400 text-[9px] leading-tight truncate uppercase group-hover:text-brand-500 transition-colors">
+                {item.gameName}
+              </h3>
+              <div className="mt-auto pt-2 flex items-center justify-between">
+                <span className="text-[7px] text-slate-600 font-black uppercase tracking-widest">{item.customId}</span>
+                <StateBadge state={item.state} />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Paginação */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 py-8">
+          <button 
+            onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo(0,0); }} 
+            disabled={currentPage === 1} 
+            className="p-2 bg-slate-900 text-slate-400 rounded-full border border-slate-800 disabled:opacity-10 hover:bg-brand-500 hover:text-white transition-all"
+          >
+             <ChevronLeft className="w-5 h-5" />
+          </button>
+          
+          <div className="px-4 py-1.5 bg-slate-950 rounded-full border border-slate-800">
+             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+               Página <span className="text-slate-300">{currentPage}</span> de {totalPages}
+             </span>
+          </div>
+
+          <button 
+            onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo(0,0); }} 
+            disabled={currentPage === totalPages} 
+            className="p-2 bg-slate-900 text-slate-400 rounded-full border border-slate-800 disabled:opacity-10 hover:bg-brand-500 hover:text-white transition-all"
+          >
+             <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
