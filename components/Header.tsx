@@ -78,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   const continents: Continent[] = ['Europa', 'América', 'Ásia', 'África', 'Oceania'];
 
-  const hasSpecialSubs = (country: string) => ['Portugal', 'Espanha', 'Alemanha', 'Canadá'].includes(country);
+  const hasSpecialSubs = (country: string) => ['Portugal', 'Espanha', 'Alemanha', 'Canadá', 'Austrália'].includes(country);
 
   return (
     <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[110] w-[95%] max-w-6xl pointer-events-none">
@@ -212,6 +212,26 @@ export const Header: React.FC<HeaderProps> = ({
                             </button>
                           </>
                         )}
+
+                        {activeCountrySub === 'Austrália' && (
+                          <>
+                            <button onClick={() => { onCountrySelect?.('Oceania', 'Austrália', 'tatts'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <Landmark className="w-2.5 h-2.5 text-blue-500" /> Tatts (Victoria)
+                            </button>
+                            <button onClick={() => { onCountrySelect?.('Oceania', 'Austrália', 'tattsnt'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <Landmark className="w-2.5 h-2.5 text-orange-500" /> Tatts NT
+                            </button>
+                            <button onClick={() => { onCountrySelect?.('Oceania', 'Austrália', 'nsw'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <Landmark className="w-2.5 h-2.5 text-cyan-400" /> NSW Lotteries
+                            </button>
+                            <button onClick={() => { onCountrySelect?.('Oceania', 'Austrália', 'golden'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <Landmark className="w-2.5 h-2.5 text-yellow-500" /> Golden Casket
+                            </button>
+                            <button onClick={() => { onCountrySelect?.('Oceania', 'Austrália', 'sa'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
+                               <Landmark className="w-2.5 h-2.5 text-red-500" /> SA Lotteries
+                            </button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -238,7 +258,7 @@ export const Header: React.FC<HeaderProps> = ({
              </button>
            )}
 
-           <button onHistoryClick={onHistoryClick} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/5 transition-all" title={t.history}>
+           <button onClick={onHistoryClick} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/5 transition-all" title={t.history}>
              <BookOpen className="w-3.5 h-3.5" />
            </button>
 
