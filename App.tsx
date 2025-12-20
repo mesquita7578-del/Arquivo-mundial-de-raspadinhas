@@ -197,26 +197,27 @@ const App: React.FC = () => {
         {(currentPage === 'home' || currentPage === 'new-arrivals') && (
           <div className="p-4 md:p-8 space-y-8 animate-fade-in">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="relative w-full max-w-xl group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
+              {/* Pesquisa mais pequena (max-w-sm) */}
+              <div className="relative w-full max-w-sm group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
                 <input 
                   type="text" 
-                  placeholder="Pesquisar por nome, nº ou país..." 
+                  placeholder="Pesquisar..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-12 pr-4 py-4 text-sm focus:border-brand-500 outline-none transition-all shadow-inner"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-12 pr-4 py-3 text-xs focus:border-brand-500 outline-none transition-all shadow-inner font-bold"
                 />
               </div>
               <div className="flex gap-2">
                 {activeCountry && (
-                  <button onClick={() => setActiveCountry('')} className="bg-slate-800 text-slate-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase border border-slate-700 hover:text-white">
+                  <button onClick={() => setActiveCountry('')} className="bg-slate-800 text-slate-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase border border-slate-700 hover:text-white transition-all">
                     País: {activeCountry} (Limpar)
                   </button>
                 )}
                 {isAdmin && (
                   <button 
                     onClick={() => setShowUpload(true)} 
-                    className="bg-brand-500 hover:bg-brand-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 shadow-xl shadow-brand-500/20"
+                    className="bg-brand-500 hover:bg-brand-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 shadow-xl shadow-brand-500/20 active:scale-95"
                   >
                     <Plus className="w-4 h-4" /> Arquivar Item
                   </button>

@@ -58,8 +58,8 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 
   // Fechar sugestões ao clicar fora
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (suggestionRef.current && !suggestionRef.current.contains(e.target as Node)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionRef.current && !suggestionRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
       }
     };
@@ -69,15 +69,29 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 
   const sortedAndFilteredImages = useMemo(() => {
     let result = [...images];
+    
+    // Aplicar filtro de país se houver
     if (countryFilter.trim()) {
       result = result.filter(img => 
         img.country.toLowerCase().includes(countryFilter.toLowerCase())
       );
     }
+
+    // Ordenação Crescente pelo gameNumber (Natural Sort)
     return result.sort((a, b) => {
-      const numA = a.gameNumber || "";
-      const numB = b.gameNumber || "";
-      return numA.localeCompare(numB, undefined, { numeric: true, sensitivity: 'base' });
+      const numA = a.gameNumber?.trim() || "";
+      const numB = b.gameNumber?.trim() || "";
+      
+      // Se um deles não tem número, vai para o fim
+      if (numA === "" && numB === "") return 0;
+      if (numA === "") return 1;
+      if (numB === "") return -1;
+      
+      // Ordenação numérica consciente (ex: "2" vem antes de "10")
+      return numA.localeCompare(numB, undefined, { 
+        numeric: true, 
+        sensitivity: 'base' 
+      });
     });
   }, [images, countryFilter]);
 
@@ -87,7 +101,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
     currentPage * ITEMS_PER_PAGE
   );
 
-  useEffect(() => { setCurrentPage(1); }, [countryFilter]);
+  useEffect(() => { setCurrentPage(1); }, [countryFilter, images]);
 
   const isRecent = (createdAt: number) => (Date.now() - createdAt) < 86400000;
 

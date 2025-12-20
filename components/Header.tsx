@@ -4,7 +4,7 @@ import {
   Ticket, Lock, LogOut, BookOpen, Home, 
   BarChart2, ChevronDown, Globe, User, Smartphone, 
   Info, Database, FileJson, FileSpreadsheet, ClipboardList, UploadCloud, ChevronRight, MapPin, Map as MapIcon, Zap, Radio, Menu, X as CloseIcon,
-  Download, Upload
+  Download, Upload, Globe2
 } from 'lucide-react';
 import { Language } from '../translations';
 import { Continent } from '../types';
@@ -73,6 +73,8 @@ export const Header: React.FC<HeaderProps> = ({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const continents: Continent[] = ['Europa', 'América', 'Ásia', 'África', 'Oceania'];
+
   return (
     <header className="flex items-center justify-between px-4 lg:px-8 py-2 bg-[#020617] border-b border-slate-900 sticky top-0 z-[110] shadow-2xl h-[70px] md:h-[80px]">
       
@@ -104,21 +106,58 @@ export const Header: React.FC<HeaderProps> = ({
          </button>
 
          <div className="relative" ref={exploreRef}>
-            <button onClick={() => setShowExplore(!showExplore)} className={`px-3 py-2 rounded-full text-[11px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${showExplore ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+            <button onClick={() => setShowExplore(!showExplore)} className={`px-3 py-2 rounded-full text-[11px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${showExplore ? 'bg-slate-800 text-white shadow-lg shadow-brand-900/10' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
               <Globe className="w-4 h-4" /> {t.explore} <ChevronDown className={`w-3 h-3 transition-transform ${showExplore ? 'rotate-180' : ''}`} />
             </button>
+            
             {showExplore && (
-              <div className="absolute top-full left-0 mt-2 w-64 bg-[#0a0f1e] border border-slate-800 rounded-xl shadow-2xl p-2 z-[120] animate-fade-in">
-                 {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => {
-                   const countries = countriesByContinent[cont] || [];
-                   return (
-                     <div key={cont} className="relative" onMouseEnter={() => setActiveSubMenu(cont)}>
-                       <button onClick={() => { onNavigate('home'); onCountrySelect?.(cont as Continent, ''); setShowExplore(false); }} className={`w-full text-left px-3 py-2.5 text-[10px] rounded-lg transition-all flex items-center justify-between font-black uppercase tracking-widest ${activeSubMenu === cont ? 'bg-brand-500 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>
-                         {cont} {countries.length > 0 && <ChevronRight className="w-3.5 h-3.5 opacity-50" />}
-                       </button>
-                     </div>
-                   );
-                 })}
+              <div className="absolute top-full left-0 mt-3 flex z-[120] animate-fade-in">
+                {/* Menu de Continentes */}
+                <div className="w-56 bg-[#0a0f1e] border border-slate-800 rounded-2xl shadow-2xl p-2 backdrop-blur-xl">
+                   {continents.map(cont => {
+                     const countries = countriesByContinent[cont] || [];
+                     return (
+                       <div key={cont} className="relative" onMouseEnter={() => setActiveSubMenu(cont)}>
+                         <button 
+                           onClick={() => { 
+                             onNavigate('home'); 
+                             onCountrySelect?.(cont, ''); 
+                             setShowExplore(false); 
+                           }} 
+                           className={`w-full text-left px-4 py-3 text-[10px] rounded-xl transition-all flex items-center justify-between font-black uppercase tracking-widest ${activeSubMenu === cont ? 'bg-brand-500 text-white' : 'text-slate-400 hover:bg-slate-800/50'}`}
+                         >
+                           <span className="flex items-center gap-2">
+                             <MapIcon className="w-3.5 h-3.5" /> {cont}
+                           </span>
+                           {countries.length > 0 && <ChevronRight className="w-3.5 h-3.5 opacity-50" />}
+                         </button>
+                       </div>
+                     );
+                   })}
+                </div>
+
+                {/* Submenu de Países Lateral */}
+                {activeSubMenu && countriesByContinent[activeSubMenu]?.length > 0 && (
+                   <div className="ml-2 w-64 bg-[#0a0f1e] border border-slate-800 rounded-2xl shadow-2xl p-2 backdrop-blur-xl animate-fade-in max-h-[400px] overflow-y-auto custom-scrollbar">
+                      <div className="px-3 py-2 border-b border-slate-800 mb-2">
+                         <span className="text-[9px] font-black text-brand-400 uppercase tracking-widest">Países do Arquivo</span>
+                      </div>
+                      {countriesByContinent[activeSubMenu].sort().map(country => (
+                        <button 
+                          key={country}
+                          onClick={() => {
+                             onNavigate('home');
+                             onCountrySelect?.(activeSubMenu as Continent, country);
+                             setShowExplore(false);
+                          }}
+                          className="w-full text-left px-3 py-2.5 text-[10px] text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition-all font-black uppercase tracking-widest flex items-center gap-2 group"
+                        >
+                          <div className="w-1.5 h-1.5 rounded-full bg-slate-700 group-hover:bg-brand-500 transition-colors"></div>
+                          {country}
+                        </button>
+                      ))}
+                   </div>
+                )}
               </div>
             )}
          </div>
@@ -146,7 +185,7 @@ export const Header: React.FC<HeaderProps> = ({
               <Database className="w-4 h-4" /> JSON <ChevronDown className={`w-3 h-3 transition-transform ${showTools ? 'rotate-180' : ''}`} />
             </button>
             {showTools && (
-              <div className="absolute top-full right-0 mt-2 w-56 bg-[#0a0f1e] border border-slate-800 rounded-xl shadow-2xl p-2 z-[120] animate-fade-in">
+              <div className="absolute top-full right-0 mt-2 w-56 bg-[#0a0f1e] border border-slate-800 rounded-xl shadow-2xl p-2 z-[120] animate-fade-in backdrop-blur-xl">
                  <button onClick={onExport} className="w-full text-left px-3 py-2.5 text-[10px] text-slate-300 hover:bg-slate-800 rounded-lg font-black uppercase tracking-widest flex items-center gap-3 transition-all">
                     <Download className="w-4 h-4 text-brand-500" /> Exportar Backup (JSON)
                  </button>
