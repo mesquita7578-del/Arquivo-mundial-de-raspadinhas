@@ -76,38 +76,38 @@ export const Header: React.FC<HeaderProps> = ({
   const continents: Continent[] = ['Europa', 'América', 'Ásia', 'África', 'Oceania'];
 
   return (
-    <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[110] w-[95%] max-w-7xl pointer-events-none">
-      <div className="bg-slate-900/90 backdrop-blur-2xl border border-white/10 rounded-full h-14 md:h-16 shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex items-center justify-between px-4 md:px-8 pointer-events-auto">
+    <header className="fixed top-6 left-1/2 -translate-x-1/2 z-[110] w-[95%] max-w-7xl pointer-events-none">
+      <div className="bg-slate-900/95 backdrop-blur-3xl border border-white/20 rounded-full h-16 md:h-20 shadow-[0_25px_60px_rgba(0,0,0,0.8)] flex items-center justify-between px-6 md:px-10 pointer-events-auto transition-all">
         
         {/* Logo Minimalista */}
-        <div className="flex items-center gap-3 cursor-pointer group shrink-0" onClick={() => onNavigate('home')}>
-          <div className="bg-brand-600 p-1.5 rounded-lg shadow-lg group-hover:scale-110 transition-transform">
-            <Ticket className="w-5 h-5 text-white" />
+        <div className="flex items-center gap-4 cursor-pointer group shrink-0" onClick={() => onNavigate('home')}>
+          <div className="bg-brand-600 p-2 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
+            <Ticket className="w-6 h-6 text-white" />
           </div>
           <div className="flex flex-col">
-            <h1 className="hidden md:block text-base font-black text-white uppercase italic tracking-tighter leading-none">
+            <h1 className="hidden md:block text-lg font-black text-white uppercase italic tracking-tighter leading-none">
               {t.title}
             </h1>
-            <span className="hidden md:block text-[7px] text-slate-500 font-black uppercase tracking-widest">Vovô Jorge 🐉</span>
+            <span className="hidden md:block text-[8px] text-brand-400 font-black uppercase tracking-[0.2em] mt-1">Vovô Jorge 🐉</span>
           </div>
         </div>
 
         {/* Navegação Central Compacta */}
-        <nav className="flex items-center gap-0.5 md:gap-1">
-           <button onClick={() => onNavigate('home')} className={`p-2.5 rounded-full transition-all ${currentPage === 'home' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}`} title={t.home}>
-             <Home className="w-4 h-4 md:w-5 md:h-5" />
+        <nav className="flex items-center gap-1 md:gap-2">
+           <button onClick={() => onNavigate('home')} className={`p-3 rounded-full transition-all ${currentPage === 'home' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/10'}`} title={t.home}>
+             <Home className="w-5 h-5 md:w-6 md:h-6" />
            </button>
 
            <div className="relative" ref={exploreRef}>
-              <button onClick={() => setShowExplore(!showExplore)} className={`p-2.5 rounded-full transition-all flex items-center gap-1 ${showExplore ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`} title={t.explore}>
-                <Globe className="w-4 h-4 md:w-5 md:h-5" />
+              <button onClick={() => setShowExplore(!showExplore)} className={`p-3 rounded-full transition-all flex items-center gap-1 ${showExplore ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10'}`} title={t.explore}>
+                <Globe className="w-5 h-5 md:w-6 md:h-6" />
               </button>
               
               {showExplore && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 flex z-[120] animate-bounce-in">
-                  <div className="w-48 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-1.5 backdrop-blur-xl">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-6 flex z-[120] animate-bounce-in">
+                  <div className="w-56 bg-slate-900 border border-white/20 rounded-2xl shadow-2xl p-2 backdrop-blur-2xl">
                      {continents.map(cont => (
-                       <button key={cont} onMouseEnter={() => setActiveSubMenu(cont)} onClick={() => { onNavigate('home'); onCountrySelect?.(cont, ''); setShowExplore(false); }} className={`w-full text-left px-4 py-2 text-[10px] rounded-lg transition-all flex items-center justify-between font-black uppercase tracking-widest ${activeSubMenu === cont ? 'bg-brand-600 text-white' : 'text-slate-400 hover:bg-white/5'}`}>
+                       <button key={cont} onMouseEnter={() => setActiveSubMenu(cont)} onClick={() => { onNavigate('home'); onCountrySelect?.(cont, ''); setShowExplore(false); }} className={`w-full text-left px-5 py-3 text-[11px] rounded-xl transition-all flex items-center justify-between font-black uppercase tracking-widest ${activeSubMenu === cont ? 'bg-brand-600 text-white' : 'text-slate-400 hover:bg-white/5'}`}>
                          {cont}
                        </button>
                      ))}
@@ -116,29 +116,29 @@ export const Header: React.FC<HeaderProps> = ({
               )}
            </div>
 
-           <button onClick={() => onNavigate('map')} className={`p-2.5 rounded-full transition-all ${currentPage === 'map' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}`} title="Mapa">
-             <MapIcon className="w-4 h-4 md:w-5 md:h-5" />
+           <button onClick={() => onNavigate('map')} className={`p-3 rounded-full transition-all ${currentPage === 'map' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/10'}`} title="Mapa">
+             <MapIcon className="w-5 h-5 md:w-6 md:h-6" />
            </button>
 
-           <button onClick={() => onNavigate('stats')} className={`p-2.5 rounded-full transition-all ${currentPage === 'stats' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}`} title={t.stats}>
-             <BarChart2 className="w-4 h-4 md:w-5 md:h-5" />
+           <button onClick={() => onNavigate('stats')} className={`p-3 rounded-full transition-all ${currentPage === 'stats' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/10'}`} title={t.stats}>
+             <BarChart2 className="w-5 h-5 md:w-6 md:h-6" />
            </button>
 
-           <button onClick={onHistoryClick} className="p-2.5 rounded-full text-slate-400 hover:text-white hover:bg-white/5 transition-all" title={t.history}>
-             <BookOpen className="w-4 h-4 md:w-5 md:h-5" />
+           <button onClick={onHistoryClick} className="p-3 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-all" title={t.history}>
+             <BookOpen className="w-5 h-5 md:w-6 md:h-6" />
            </button>
 
            <div className="relative" ref={toolsRef}>
-              <button onClick={() => setShowTools(!showTools)} className={`p-2.5 rounded-full transition-all ${showTools ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`} title="Ferramentas">
-                <Database className="w-4 h-4 md:w-5 md:h-5" />
+              <button onClick={() => setShowTools(!showTools)} className={`p-3 rounded-full transition-all ${showTools ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10'}`} title="Ferramentas">
+                <Database className="w-5 h-5 md:w-6 md:h-6" />
               </button>
               {showTools && (
-                <div className="absolute top-full right-0 mt-4 w-56 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-2 z-[120]">
-                   <button onClick={onExport} className="w-full text-left px-4 py-2.5 text-[9px] text-slate-400 hover:bg-brand-600 hover:text-white rounded-lg font-black uppercase tracking-widest flex items-center gap-3">
-                      <Download className="w-4 h-4" /> Exportar Backup
+                <div className="absolute top-full right-0 mt-6 w-64 bg-slate-900 border border-white/20 rounded-2xl shadow-2xl p-3 z-[120]">
+                   <button onClick={onExport} className="w-full text-left px-5 py-3 text-[10px] text-slate-400 hover:bg-brand-600 hover:text-white rounded-xl font-black uppercase tracking-widest flex items-center gap-4">
+                      <Download className="w-5 h-5" /> Exportar Backup
                    </button>
-                   <button onClick={handleImportClick} className="w-full text-left px-4 py-2.5 text-[9px] text-slate-400 hover:bg-brand-600 hover:text-white rounded-lg font-black uppercase tracking-widest flex items-center gap-3">
-                      <Upload className="w-4 h-4" /> Importar Backup
+                   <button onClick={handleImportClick} className="w-full text-left px-5 py-3 text-[10px] text-slate-400 hover:bg-brand-600 hover:text-white rounded-xl font-black uppercase tracking-widest flex items-center gap-4">
+                      <Upload className="w-5 h-5" /> Importar Backup
                    </button>
                    <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileChange} />
                 </div>
@@ -147,22 +147,22 @@ export const Header: React.FC<HeaderProps> = ({
         </nav>
 
         {/* Lado Direito: Login & Idioma */}
-        <div className="flex items-center gap-2 md:gap-4">
-          <div className="hidden sm:flex bg-white/5 rounded-full p-0.5 border border-white/5">
-            <button onClick={() => setLanguage('pt')} className={`px-2.5 py-1 rounded-full text-[8px] font-black ${language === 'pt' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-500'}`}>PT</button>
-            <button onClick={() => setLanguage('it')} className={`px-2.5 py-1 rounded-full text-[8px] font-black ${language === 'it' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-500'}`}>IT</button>
+        <div className="flex items-center gap-3 md:gap-5">
+          <div className="hidden sm:flex bg-white/5 rounded-full p-1 border border-white/10">
+            <button onClick={() => setLanguage('pt')} className={`px-4 py-1.5 rounded-full text-[10px] font-black transition-all ${language === 'pt' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}>PT</button>
+            <button onClick={() => setLanguage('it')} className={`px-4 py-1.5 rounded-full text-[10px] font-black transition-all ${language === 'it' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}>IT</button>
           </div>
 
           {currentUser ? (
-            <button onClick={onLogout} className="flex items-center gap-2 p-1 bg-slate-800 hover:bg-red-600/20 text-white border border-white/5 rounded-full transition-all group" title="Sair">
-               <div className="w-7 h-7 rounded-full bg-brand-600 flex items-center justify-center text-[10px] font-black shadow-inner">
+            <button onClick={onLogout} className="flex items-center gap-3 p-1.5 bg-slate-800 hover:bg-red-600/20 text-white border border-white/10 rounded-full transition-all group" title="Sair">
+               <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-brand-600 flex items-center justify-center text-[11px] font-black shadow-inner">
                  {currentUser[0].toUpperCase()}
                </div>
-               <LogOut className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 group-hover:text-red-400 mr-2" />
+               <LogOut className="w-5 h-5 opacity-40 group-hover:opacity-100 group-hover:text-red-400 mr-2" />
             </button>
           ) : (
-            <button onClick={onAdminToggle} className="flex items-center gap-2 px-4 py-2 bg-white text-slate-950 hover:bg-brand-500 hover:text-white rounded-full transition-all text-[9px] font-black uppercase tracking-widest shadow-xl">
-              <Lock className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Entrar</span>
+            <button onClick={onAdminToggle} className="flex items-center gap-3 px-6 py-3 bg-amber-500 text-slate-950 hover:bg-white hover:text-brand-600 rounded-full transition-all text-[11px] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(245,158,11,0.4)] active:scale-95">
+              <Lock className="w-5 h-5" /> <span className="hidden sm:inline">Entrar</span>
             </button>
           )}
         </div>
