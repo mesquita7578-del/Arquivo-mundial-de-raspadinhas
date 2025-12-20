@@ -13,7 +13,7 @@ interface ImageGridProps {
   t: any;
 }
 
-const ITEMS_PER_PAGE = 50; // Aumentado para condizer com a grelha de 10 colunas
+const ITEMS_PER_PAGE = 50; 
 
 const StateBadge = ({ state }: { state: string }) => {
   const colors: Record<string, string> = {
@@ -36,18 +36,15 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Ordenação Crescente pelo gameNumber (Natural Sort)
   const sortedImages = useMemo(() => {
     return [...images].sort((a, b) => {
       const numA = a.gameNumber?.trim() || "";
       const numB = b.gameNumber?.trim() || "";
       
-      // Se um deles não tem número, vai para o fim
       if (numA === "" && numB === "") return 0;
       if (numA === "") return 1;
       if (numB === "") return -1;
       
-      // Ordenação numérica consciente (ex: "2" vem antes de "10")
       return numA.localeCompare(numB, undefined, { 
         numeric: true, 
         sensitivity: 'base' 
@@ -75,7 +72,6 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Grelha de Imagens: 10 colunas em XL */}
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
         {displayedImages.map((item) => (
           <div
@@ -106,8 +102,8 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
               
               <div className="absolute top-0.5 right-0.5 flex flex-col gap-0.5 items-end z-10">
                 {isRecent(item.createdAt) && (
-                   <div className="flex items-center gap-0.5 bg-blue-500/30 backdrop-blur-md text-red-500 px-1 py-0.5 rounded-[2px] text-[6px] font-black animate-pulse shadow-lg border border-blue-400/20">
-                     <Zap className="w-1.5 h-1.5 fill-red-500" />
+                   <div className="flex items-center gap-0.5 bg-pink-600/30 backdrop-blur-md text-pink-400 px-1 py-0.5 rounded-[2px] text-[6px] font-black animate-pulse shadow-lg border border-pink-500/20">
+                     <Zap className="w-1.5 h-1.5 fill-pink-500" />
                      NOVO
                    </div>
                 )}
@@ -132,7 +128,6 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
         ))}
       </div>
 
-      {/* Paginação Compacta */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-4 py-4 mb-8">
           <button 

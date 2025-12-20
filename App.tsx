@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, Plus, Loader2, Sparkles, Zap, LayoutGrid, Trophy, Star, 
-  Ticket, Layers, Box, MapPin, X, Diamond, Crown, CheckCircle2, Users 
+  Ticket, Layers, Box, MapPin, X, Diamond, Crown, CheckCircle2, Users, Clock
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { ImageGrid } from './components/ImageGrid';
@@ -37,6 +37,7 @@ const App: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [showRaritiesOnly, setShowRaritiesOnly] = useState(false);
   const [showWinnersOnly, setShowWinnersOnly] = useState(false);
+  const [showNewOnly, setShowNewOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
@@ -103,7 +104,6 @@ const App: React.FC = () => {
 
     let location = 'Local Desconhecido';
     try {
-      // Pequena consulta para localização aproximada
       const response = await fetch('https://ipapi.co/json/');
       const data = await response.json();
       if (data.city && data.country_name) {
@@ -153,20 +153,21 @@ const App: React.FC = () => {
       const gNum = (img.gameNumber || "").toLowerCase();
       const s = searchTerm.toLowerCase();
       
+      const isRecent = (Date.now() - (img.createdAt || 0)) < 43200000;
+      
       const matchesSearch = gName.includes(s) || gCountry.includes(s) || gIsland.includes(s) || gNum.includes(s);
       const matchesContinent = activeContinent === 'Mundo' || img.continent === activeContinent;
       const matchesCountry = !activeCountry || img.country.toLowerCase() === activeCountry.toLowerCase() || (img.island && img.island.toLowerCase() === activeCountry.toLowerCase());
       const matchesCategory = activeCategory === 'all' || img.category === activeCategory;
       const matchesRarity = !showRaritiesOnly || img.isRarity;
       const matchesWinners = !showWinnersOnly || img.isWinner;
+      const matchesNew = !showNewOnly || isRecent;
       
-      const isRecent = (Date.now() - (img.createdAt || 0)) < 43200000;
-      if (currentPage === 'new-arrivals') if (!isRecent) return false;
       if (currentPage === 'collection') if (!currentUser || !img.owners?.includes(currentUser)) return false;
       
-      return matchesSearch && matchesContinent && matchesCountry && matchesCategory && matchesRarity && matchesWinners;
+      return matchesSearch && matchesContinent && matchesCountry && matchesCategory && matchesRarity && matchesWinners && matchesNew;
     });
-  }, [images, searchTerm, activeContinent, activeCountry, activeCategory, showRaritiesOnly, showWinnersOnly, currentPage, currentUser]);
+  }, [images, searchTerm, activeContinent, activeCountry, activeCategory, showRaritiesOnly, showWinnersOnly, showNewOnly, currentPage, currentUser]);
 
   const collectionCount = useMemo(() => {
     if (!currentUser) return 0;
@@ -227,7 +228,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#020617] text-slate-100 pt-28 md:pt-32">
+    <div className="min-h-screen flex flex-col bg-[#020617] text-slate-100 pt-24 md:pt-28">
       <Header 
         isAdmin={isAdmin}
         currentUser={currentUser}
@@ -259,44 +260,80 @@ const App: React.FC = () => {
         }, {} as any)}
       />
 
-      {(currentPage === 'home' || currentPage === 'new-arrivals' || currentPage === 'collection') && (
-        <div className="bg-[#020617]/70 backdrop-blur-3xl sticky top-[95px] z-[90] px-6 md:px-10 py-5 border-b border-white/10 shadow-2xl">
-          <div className="max-w-[1800px] mx-auto flex flex-col gap-6">
-            <div className="flex flex-wrap items-center justify-center lg:justify-between gap-4">
-              <div className="flex flex-wrap items-center gap-2">
-                 <div className="flex items-center gap-2 mr-2 border-r border-white/10 pr-4">
-                   <button onClick={() => setShowRaritiesOnly(!showRaritiesOnly)} className={`flex items-center gap-2 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950 shadow-lg' : 'bg-slate-900/50 border border-slate-800 text-slate-500 hover:text-slate-300'}`}><Diamond className="w-4 h-4" /> Raridades</button>
-                   <button onClick={() => setShowWinnersOnly(!showWinnersOnly)} className={`flex items-center gap-2 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white shadow-lg' : 'bg-slate-900/50 border border-slate-800 text-slate-500 hover:text-slate-300'}`}><Trophy className="w-4 h-4" /> Premiadas</button>
-                 </div>
-                 <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
-                    {[
-                      { id: 'all', label: 'Tudo', icon: LayoutGrid },
-                      { id: 'raspadinha', label: 'Raspadinhas', icon: Ticket },
-                      { id: 'lotaria', label: 'Lotarias', icon: Star },
-                      { id: 'boletim', label: 'Boletins', icon: Layers },
-                      { id: 'objeto', label: 'Objetos', icon: Box },
-                    ].map(cat => (
-                      <button key={cat.id} onClick={() => setActiveCategory(cat.id)} className={`flex items-center gap-3 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/40 border border-brand-400/30' : 'bg-slate-900/50 border border-slate-800 text-slate-500 hover:text-slate-300'}`}><cat.icon className="w-4 h-4" /> {cat.label}</button>
-                    ))}
-                 </div>
+      {(currentPage === 'home' || currentPage === 'collection') && (
+        <div className="bg-[#020617]/40 backdrop-blur-3xl sticky top-[80px] z-[90] px-6 md:px-10 py-2 border-b border-white/5 shadow-xl transition-all">
+          <div className="max-w-[1800px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-3">
+            
+            {/* Filtros "Dóceis" e Compactos */}
+            <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
+               <div className="flex items-center gap-1.5 border-r border-white/10 pr-2">
+                 <button 
+                   onClick={() => setShowNewOnly(!showNewOnly)} 
+                   className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showNewOnly ? 'bg-pink-600 text-white shadow-[0_0_15px_rgba(219,39,119,0.5)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-pink-400'}`}
+                 >
+                   <Clock className="w-3 h-3" /> Novidades
+                 </button>
+                 <button 
+                   onClick={() => setShowRaritiesOnly(!showRaritiesOnly)} 
+                   className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-amber-400'}`}
+                 >
+                   <Diamond className="w-3 h-3" /> Raridades
+                 </button>
+                 <button 
+                   onClick={() => setShowWinnersOnly(!showWinnersOnly)} 
+                   className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-emerald-400'}`}
+                 >
+                   <Trophy className="w-3 h-3" /> Premiadas
+                 </button>
+               </div>
+
+               <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+                  {[
+                    { id: 'all', label: 'Tudo', icon: LayoutGrid },
+                    { id: 'raspadinha', label: 'Raspadinhas', icon: Ticket },
+                    { id: 'lotaria', label: 'Lotarias', icon: Star },
+                    { id: 'boletim', label: 'Boletins', icon: Layers },
+                    { id: 'objeto', label: 'Objetos', icon: Box },
+                  ].map(cat => (
+                    <button 
+                      key={cat.id} 
+                      onClick={() => setActiveCategory(cat.id)} 
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white shadow-lg border border-brand-400/30' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-brand-400'}`}
+                    >
+                      <cat.icon className="w-3 h-3" /> {cat.label}
+                    </button>
+                  ))}
+               </div>
+            </div>
+
+            {/* Pesquisa e Ação Compacta */}
+            <div className="flex items-center gap-3 w-full lg:w-auto">
+              <div className="relative flex-1 lg:w-56 group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
+                <input 
+                  type="text" 
+                  placeholder="Pesquisar..." 
+                  value={searchTerm} 
+                  onChange={(e) => setSearchTerm(e.target.value)} 
+                  className="w-full bg-slate-950/50 border border-white/5 rounded-full pl-9 pr-4 py-2 text-[10px] focus:border-brand-500/50 outline-none transition-all uppercase tracking-wider text-white shadow-inner"
+                />
               </div>
-              <div className="flex items-center gap-4 w-full lg:w-auto">
-                <div className="relative w-full lg:w-72 group">
-                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
-                  <input type="text" placeholder="Pesquisar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-full pl-12 pr-6 py-3 text-xs focus:border-brand-500 outline-none transition-all uppercase tracking-wider text-white shadow-inner"/>
-                </div>
-                {isAdmin && (
-                  <button onClick={() => setShowUpload(true)} className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 shadow-xl hover:scale-105 active:scale-95 border border-emerald-400/20 whitespace-nowrap"><Plus className="w-5 h-5" /> Arquivar Item</button>
-                )}
-              </div>
+              {isAdmin && (
+                <button 
+                  onClick={() => setShowUpload(true)} 
+                  className="bg-emerald-600/90 hover:bg-emerald-500 text-white px-5 py-2 rounded-full font-black text-[8px] uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg active:scale-95 border border-emerald-400/20 whitespace-nowrap"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Arquivar Item
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
 
       <main className="flex-1 flex flex-col min-h-0 pb-20">
-        {(currentPage === 'home' || currentPage === 'new-arrivals' || currentPage === 'collection') && (
-          <div className="p-4 md:p-10 animate-fade-in">
+        {(currentPage === 'home' || currentPage === 'collection') && (
+          <div className="p-4 md:p-8 animate-fade-in">
             {currentPage === 'collection' && filteredImages.length === 0 && (
               <div className="flex flex-col items-center justify-center py-20 text-slate-600 border border-dashed border-slate-800 rounded-2xl bg-slate-900/10 mb-10">
                 <Star className="w-12 h-12 mb-4 opacity-10" />
