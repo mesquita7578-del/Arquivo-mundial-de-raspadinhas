@@ -13,7 +13,7 @@ interface ImageGridProps {
   t: any;
 }
 
-const ITEMS_PER_PAGE = 20;
+const ITEMS_PER_PAGE = 50; // Aumentado para condizer com a grelha de 10 colunas
 
 const StateBadge = ({ state }: { state: string }) => {
   const colors: Record<string, string> = {
@@ -23,7 +23,7 @@ const StateBadge = ({ state }: { state: string }) => {
     'VOID': 'bg-red-500/10 text-red-400 border-red-500/30',
   };
   return (
-    <span className={`px-1 py-0.5 rounded text-[7px] font-black uppercase border backdrop-blur-sm ${colors[state] || 'bg-slate-700/50 text-slate-300 border-slate-600/50'}`}>
+    <span className={`px-1 py-0.5 rounded text-[5px] font-black uppercase border backdrop-blur-sm ${colors[state] || 'bg-slate-700/50 text-slate-300 border-slate-600/50'}`}>
       {state}
     </span>
   );
@@ -75,17 +75,17 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Grelha de Imagens */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+      {/* Grelha de Imagens: 10 colunas em XL */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
         {displayedImages.map((item) => (
           <div
             key={item.id}
             className="group bg-slate-950 border border-slate-900 hover:border-brand-500/50 transition-all cursor-pointer flex flex-col rounded-md overflow-hidden shadow-xl active:scale-95"
             onClick={() => onImageClick(item)}
           >
-            <div className="px-2 py-1 bg-black border-b border-slate-900 flex justify-between items-center text-[7px] font-black text-slate-600 uppercase tracking-widest">
-               <span>REF {item.gameNumber}</span>
-               <span className="truncate max-w-[60px]">{item.country}</span>
+            <div className="px-1 py-0.5 bg-black border-b border-slate-900 flex justify-between items-center text-[5px] font-black text-slate-600 uppercase tracking-widest">
+               <span className="truncate max-w-[30px]">#{item.gameNumber}</span>
+               <span className="truncate max-w-[40px]">{item.country}</span>
             </div>
 
             <div className="relative aspect-[3/4] bg-black overflow-hidden">
@@ -104,20 +104,20 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 />
               )}
               
-              <div className="absolute top-1 right-1 flex flex-col gap-1 items-end">
+              <div className="absolute top-0.5 right-0.5 flex flex-col gap-0.5 items-end">
                 {isRecent(item.createdAt) && (
-                   <div className="bg-brand-500 text-white px-2 py-0.5 rounded-sm text-[8px] font-black animate-pulse">NOVO</div>
+                   <div className="bg-brand-500 text-white px-1 py-0.5 rounded-[2px] text-[5px] font-black animate-pulse">NOVO</div>
                 )}
-                {item.isWinner && <div className="bg-green-600 p-1 rounded-full"><Trophy className="w-2.5 h-2.5 text-white" /></div>}
+                {item.isWinner && <div className="bg-green-600 p-0.5 rounded-full"><Trophy className="w-1.5 h-1.5 text-white" /></div>}
               </div>
             </div>
 
-            <div className="p-2 bg-slate-950 flex flex-col flex-1 border-t border-slate-900/50">
-              <h3 className="font-black text-slate-400 text-[9px] leading-tight truncate uppercase group-hover:text-brand-500 transition-colors">
+            <div className="p-1 bg-slate-950 flex flex-col flex-1 border-t border-slate-900/50">
+              <h3 className="font-black text-slate-500 text-[7px] leading-tight truncate uppercase group-hover:text-brand-500 transition-colors">
                 {item.gameName}
               </h3>
-              <div className="mt-auto pt-2 flex items-center justify-between">
-                <span className="text-[7px] text-slate-600 font-black uppercase tracking-widest">{item.customId}</span>
+              <div className="mt-0.5 flex items-center justify-between">
+                <span className="text-[4px] text-slate-700 font-black uppercase tracking-widest">{item.customId.split('-')[1]}</span>
                 <StateBadge state={item.state} />
               </div>
             </div>
@@ -125,29 +125,29 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
         ))}
       </div>
 
-      {/* Paginação */}
+      {/* Paginação Compacta */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-4 py-8">
+        <div className="flex items-center justify-center gap-4 py-4 mb-8">
           <button 
             onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo(0,0); }} 
             disabled={currentPage === 1} 
-            className="p-2 bg-slate-900 text-slate-400 rounded-full border border-slate-800 disabled:opacity-10 hover:bg-brand-500 hover:text-white transition-all"
+            className="p-1.5 bg-slate-900 text-slate-400 rounded-full border border-slate-800 disabled:opacity-10 hover:bg-brand-500 hover:text-white transition-all"
           >
-             <ChevronLeft className="w-5 h-5" />
+             <ChevronLeft className="w-4 h-4" />
           </button>
           
-          <div className="px-4 py-1.5 bg-slate-950 rounded-full border border-slate-800">
-             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-               Página <span className="text-slate-300">{currentPage}</span> de {totalPages}
+          <div className="px-4 py-1 bg-slate-950 rounded-full border border-slate-800">
+             <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+               {currentPage} / {totalPages}
              </span>
           </div>
 
           <button 
             onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo(0,0); }} 
             disabled={currentPage === totalPages} 
-            className="p-2 bg-slate-900 text-slate-400 rounded-full border border-slate-800 disabled:opacity-10 hover:bg-brand-500 hover:text-white transition-all"
+            className="p-1.5 bg-slate-900 text-slate-400 rounded-full border border-slate-800 disabled:opacity-10 hover:bg-brand-500 hover:text-white transition-all"
           >
-             <ChevronRight className="w-5 h-5" />
+             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       )}
