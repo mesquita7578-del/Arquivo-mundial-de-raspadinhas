@@ -22,6 +22,9 @@ import { ScratchcardData, CategoryItem, SiteMetadata, Continent, VisitorEntry } 
 import { translations, Language } from './translations';
 import { DivineSignal, Signal } from './components/DivineSignal';
 
+// Canal de comunicação mágica da Chloe entre janelas
+const chloeChannel = new BroadcastChannel('chloe_archive_sync');
+
 const App: React.FC = () => {
   const [images, setImages] = useState<ScratchcardData[]>([]);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
@@ -51,6 +54,16 @@ const App: React.FC = () => {
 
   const t = translations[language] || translations['pt'];
 
+  // Escuta atualizações de outras janelas
+  useEffect(() => {
+    chloeChannel.onmessage = (event) => {
+      if (event.data.type === 'SYNC_METADATA') {
+        setSiteMetadata(event.data.payload);
+      }
+    };
+    return () => chloeChannel.close;
+  }, []);
+
   // Inicialização e Contador de Visitas
   useEffect(() => {
     const init = async () => {
@@ -72,8 +85,10 @@ const App: React.FC = () => {
         };
         setSiteMetadata(updatedMeta);
         await storageService.saveSiteMetadata(updatedMeta);
+        
+        // Avisar outras abas do novo acesso
+        chloeChannel.postMessage({ type: 'SYNC_METADATA', payload: updatedMeta });
 
-        // Se já houver um utilizador logado, registar a presença
         if (currentUser) {
            recordVisitor(currentUser, isAdmin, updatedMeta);
         }
@@ -98,12 +113,14 @@ const App: React.FC = () => {
     };
 
     const log = meta.visitorLog || [];
-    // Manter apenas os últimos 50 registos para não pesar o DB local
     const updatedLog = [newEntry, ...log].slice(0, 50);
     
     const updatedMeta = { ...meta, visitorLog: updatedLog };
     setSiteMetadata(updatedMeta);
     await storageService.saveSiteMetadata(updatedMeta);
+    
+    // Sincronizar login entre abas
+    chloeChannel.postMessage({ type: 'SYNC_METADATA', payload: updatedMeta });
   };
 
   const addSignal = (message: string, type: Signal['type'] = 'info') => {

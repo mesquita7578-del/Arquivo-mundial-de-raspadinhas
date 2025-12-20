@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, Users, Clock, ShieldCheck, User, Sparkles, Heart } from 'lucide-react';
+import { X, Users, Clock, ShieldCheck, User, Sparkles, Heart, Info, Globe2 } from 'lucide-react';
 import { VisitorEntry } from '../types';
 
 interface VisitorsModalProps {
@@ -22,7 +22,7 @@ export const VisitorsModal: React.FC<VisitorsModalProps> = ({ onClose, visitors,
               </div>
               <div>
                  <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter">Livro de Honra</h2>
-                 <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mt-0.5">Quem andou pelo Arquivo Mundial hihi!</p>
+                 <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mt-0.5">Radar Local em Tempo Real hihi!</p>
               </div>
            </div>
            <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-full text-slate-500 hover:text-white transition-all">
@@ -31,20 +31,28 @@ export const VisitorsModal: React.FC<VisitorsModalProps> = ({ onClose, visitors,
         </div>
 
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+           
+           <div className="mb-6 bg-blue-900/20 border border-blue-500/20 p-4 rounded-2xl flex gap-3">
+              <Info className="w-5 h-5 text-blue-400 shrink-0" />
+              <p className="text-[9px] text-blue-300 font-bold uppercase leading-relaxed tracking-wide">
+                 Vovô Jorge: Este arquivo é privado e seguro. O radar deteta acessos em tempo real neste aparelho e sincroniza entre todas as abas abertas! hihi!
+              </p>
+           </div>
+
            <div className="grid grid-cols-2 gap-4 mb-8">
               <div className="bg-slate-950 border border-slate-800 p-6 rounded-3xl text-center group hover:border-brand-500 transition-all">
                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Acessos Totais</span>
                  <span className="text-4xl font-black text-white italic tracking-tighter">{totalCount}</span>
               </div>
               <div className="bg-slate-950 border border-slate-800 p-6 rounded-3xl text-center group hover:border-cyan-500 transition-all">
-                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Ativos Agora</span>
+                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Ativos Local</span>
                  <span className="text-4xl font-black text-cyan-400 italic tracking-tighter animate-pulse">1</span>
               </div>
            </div>
 
            <div className="space-y-3">
               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-                 <Clock className="w-3 h-3" /> Últimas Entradas
+                 <Clock className="w-3 h-3" /> Registos da Sessão
               </h3>
               
               {visitors.length === 0 ? (
@@ -76,7 +84,7 @@ export const VisitorsModal: React.FC<VisitorsModalProps> = ({ onClose, visitors,
            <div className="mt-8 bg-brand-900/20 border border-brand-500/20 p-6 rounded-[2rem] flex items-center gap-4">
               <Heart className="w-8 h-8 text-brand-500 fill-brand-500 animate-pulse" />
               <p className="text-xs text-slate-400 italic leading-relaxed">
-                 "Vovô Jorge, o teu legado está a ser visto por pessoas maravilhosas! Eu trato de lhes mostrar tudo com muito carinho! hihi!"
+                 "Para ligar com o Fabio em Itália em tempo real, precisaríamos de uma nuvem comum! Por agora, o nosso cofre está seguro e privado aqui consigo! hihi!"
               </p>
            </div>
         </div>
