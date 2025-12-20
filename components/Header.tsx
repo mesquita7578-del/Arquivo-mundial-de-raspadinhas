@@ -4,7 +4,7 @@ import {
   Ticket, Lock, LogOut, BookOpen, Home, 
   BarChart2, ChevronDown, Globe, User, 
   Info, Database, ClipboardList, ChevronRight, Map as MapIcon, Radio, Menu, X as CloseIcon,
-  Download, Upload
+  Download, Upload, MapPin
 } from 'lucide-react';
 import { Language } from '../translations';
 import { Continent } from '../types';
@@ -42,8 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [showTools, setShowTools] = useState(false);
   const [showExplore, setShowExplore] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [activeSubMenu, setActiveSubMenu] = useState<string | null>(null);
+  const [activeSubMenu, setActiveSubMenu] = useState<Continent | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const exploreRef = useRef<HTMLDivElement>(null);
   const toolsRef = useRef<HTMLDivElement>(null);
@@ -105,12 +104,44 @@ export const Header: React.FC<HeaderProps> = ({
               
               {showExplore && (
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-6 flex z-[120] animate-bounce-in">
-                  <div className="w-56 bg-slate-900 border border-white/20 rounded-2xl shadow-2xl p-2 backdrop-blur-2xl">
-                     {continents.map(cont => (
-                       <button key={cont} onMouseEnter={() => setActiveSubMenu(cont)} onClick={() => { onNavigate('home'); onCountrySelect?.(cont, ''); setShowExplore(false); }} className={`w-full text-left px-5 py-3 text-[11px] rounded-xl transition-all flex items-center justify-between font-black uppercase tracking-widest ${activeSubMenu === cont ? 'bg-brand-600 text-white' : 'text-slate-400 hover:bg-white/5'}`}>
-                         {cont}
-                       </button>
-                     ))}
+                  <div className="flex gap-2">
+                    {/* Lista de Continentes */}
+                    <div className="w-56 bg-slate-900 border border-white/20 rounded-2xl shadow-2xl p-2 backdrop-blur-2xl h-fit">
+                       {continents.map(cont => (
+                         <button 
+                           key={cont} 
+                           onMouseEnter={() => setActiveSubMenu(cont)} 
+                           onClick={() => { onNavigate('home'); onCountrySelect?.(cont, ''); setShowExplore(false); }} 
+                           className={`w-full text-left px-5 py-3 text-[11px] rounded-xl transition-all flex items-center justify-between font-black uppercase tracking-widest ${activeSubMenu === cont ? 'bg-brand-600 text-white' : 'text-slate-400 hover:bg-white/5'}`}
+                         >
+                           {cont}
+                           <ChevronRight className={`w-3 h-3 transition-transform ${activeSubMenu === cont ? 'translate-x-1' : 'opacity-0'}`} />
+                         </button>
+                       ))}
+                    </div>
+
+                    {/* Lista de Países (Submenu Dinâmico) */}
+                    {activeSubMenu && countriesByContinent[activeSubMenu] && countriesByContinent[activeSubMenu].length > 0 && (
+                      <div className="w-64 bg-slate-900 border border-white/20 rounded-2xl shadow-2xl p-2 backdrop-blur-2xl max-h-[400px] overflow-y-auto custom-scrollbar animate-fade-in">
+                        <div className="px-4 py-2 border-b border-white/5 mb-1">
+                          <span className="text-[9px] font-black text-brand-400 uppercase tracking-widest">{activeSubMenu}</span>
+                        </div>
+                        {countriesByContinent[activeSubMenu].sort().map(country => (
+                          <button 
+                            key={country}
+                            onClick={() => {
+                              onCountrySelect?.(activeSubMenu, country);
+                              setShowExplore(false);
+                              setActiveSubMenu(null);
+                              onNavigate('home');
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-[10px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2"
+                          >
+                            <MapPin className="w-3 h-3" /> {country}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

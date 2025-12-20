@@ -205,65 +205,70 @@ const App: React.FC = () => {
 
       {(currentPage === 'home' || currentPage === 'new-arrivals') && (
         <div className="bg-[#020617]/70 backdrop-blur-3xl sticky top-[95px] z-[90] px-6 md:px-10 py-5 border-b border-white/10 shadow-2xl">
-          <div className="max-w-[1800px] mx-auto flex flex-col gap-5">
+          <div className="max-w-[1800px] mx-auto flex flex-col gap-6">
             
-            {/* Linha 1: Filtros de Categoria e Especiais */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
-                 {[
-                   { id: 'all', label: 'Tudo', icon: LayoutGrid },
-                   { id: 'raspadinha', label: 'Raspadinhas', icon: Ticket },
-                   { id: 'lotaria', label: 'Lotarias', icon: Star },
-                   { id: 'boletim', label: 'Boletins', icon: Layers },
-                   { id: 'objeto', label: 'Objetos', icon: Box },
-                 ].map(cat => (
-                   <button
-                     key={cat.id}
-                     onClick={() => setActiveCategory(cat.id)}
-                     className={`flex items-center gap-3 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/40 border border-brand-400/30' : 'bg-slate-900/50 border border-slate-800 text-slate-500 hover:text-slate-300'}`}
+            {/* LINHA ÚNICA DE FILTROS: "Tudo seguido e alinhado" */}
+            <div className="flex flex-wrap items-center justify-center lg:justify-between gap-4">
+              
+              <div className="flex flex-wrap items-center gap-2">
+                 {/* FILTROS ESPECIAIS PRIMEIRO */}
+                 <div className="flex items-center gap-2 mr-2 border-r border-white/10 pr-4">
+                   <button 
+                     onClick={() => setShowRaritiesOnly(!showRaritiesOnly)}
+                     className={`flex items-center gap-2 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950 shadow-lg' : 'bg-slate-900/50 border border-slate-800 text-slate-500 hover:text-slate-300'}`}
                    >
-                     <cat.icon className="w-4 h-4" /> {cat.label}
+                     <Diamond className="w-4 h-4" /> Raridades
                    </button>
-                 ))}
+                   <button 
+                     onClick={() => setShowWinnersOnly(!showWinnersOnly)}
+                     className={`flex items-center gap-2 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white shadow-lg' : 'bg-slate-900/50 border border-slate-800 text-slate-500 hover:text-slate-300'}`}
+                   >
+                     <Trophy className="w-4 h-4" /> Premiadas
+                   </button>
+                 </div>
+
+                 {/* CATEGORIAS LOGO A SEGUIR */}
+                 <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
+                    {[
+                      { id: 'all', label: 'Tudo', icon: LayoutGrid },
+                      { id: 'raspadinha', label: 'Raspadinhas', icon: Ticket },
+                      { id: 'lotaria', label: 'Lotarias', icon: Star },
+                      { id: 'boletim', label: 'Boletins', icon: Layers },
+                      { id: 'objeto', label: 'Objetos', icon: Box },
+                    ].map(cat => (
+                      <button
+                        key={cat.id}
+                        onClick={() => setActiveCategory(cat.id)}
+                        className={`flex items-center gap-3 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/40 border border-brand-400/30' : 'bg-slate-900/50 border border-slate-800 text-slate-500 hover:text-slate-300'}`}
+                      >
+                        <cat.icon className="w-4 h-4" /> {cat.label}
+                      </button>
+                    ))}
+                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                 <button 
-                   onClick={() => setShowRaritiesOnly(!showRaritiesOnly)}
-                   className={`flex items-center gap-3 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950 shadow-lg' : 'bg-slate-900/50 border border-slate-800 text-slate-500'}`}
-                 >
-                   <Diamond className="w-4 h-4" /> {t.header.rarities}
-                 </button>
-                 <button 
-                   onClick={() => setShowWinnersOnly(!showWinnersOnly)}
-                   className={`flex items-center gap-3 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white shadow-lg' : 'bg-slate-900/50 border border-slate-800 text-slate-500'}`}
-                 >
-                   <Trophy className="w-4 h-4" /> {t.header.winners}
-                 </button>
-              </div>
-            </div>
+              {/* PESQUISA E AÇÃO */}
+              <div className="flex items-center gap-4 w-full lg:w-auto">
+                <div className="relative w-full lg:w-72 group">
+                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
+                  <input 
+                    type="text" 
+                    placeholder="Pesquisar..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-full pl-12 pr-6 py-3 text-xs focus:border-brand-500 outline-none transition-all uppercase tracking-wider text-white shadow-inner"
+                  />
+                </div>
 
-            {/* Linha 2: Pesquisa e Ação */}
-            <div className="flex items-center justify-between gap-6">
-              <div className="relative w-full max-w-sm group">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
-                <input 
-                  type="text" 
-                  placeholder="Pesquisar exemplar..." 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-full pl-12 pr-6 py-3.5 text-xs focus:border-brand-500 outline-none transition-all uppercase tracking-wider text-white shadow-inner"
-                />
+                {isAdmin && (
+                  <button 
+                    onClick={() => setShowUpload(true)} 
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 shadow-xl hover:scale-105 active:scale-95 border border-emerald-400/20 whitespace-nowrap"
+                  >
+                    <Plus className="w-5 h-5" /> Arquivar Item
+                  </button>
+                )}
               </div>
-
-              {isAdmin && (
-                <button 
-                  onClick={() => setShowUpload(true)} 
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 shadow-xl hover:scale-105 active:scale-95 border border-emerald-400/20"
-                >
-                  <Plus className="w-5 h-5" /> Arquivar Item
-                </button>
-              )}
             </div>
           </div>
         </div>
