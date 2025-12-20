@@ -218,15 +218,6 @@ const App: React.FC = () => {
     addSignal("Checklist gerada com sucesso! hihi!", "success");
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#020617] text-slate-100 gap-6">
-        <Loader2 className="w-16 h-16 animate-spin text-brand-500" />
-        <p className="font-black uppercase tracking-[0.3em] text-xs text-brand-400 animate-pulse">Chloe está a carregar... hihi!</p>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-[#020617] text-slate-100 pt-24 md:pt-28">
       <Header 
@@ -261,33 +252,27 @@ const App: React.FC = () => {
       />
 
       {(currentPage === 'home' || currentPage === 'collection') && (
-        <div className="bg-[#020617]/40 backdrop-blur-3xl sticky top-[68px] md:top-[76px] z-[90] px-4 md:px-10 py-1.5 border-b border-white/5 shadow-xl transition-all">
-          <div className="max-w-[1800px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-2 md:gap-4">
+        <div className="bg-[#020617]/40 backdrop-blur-3xl sticky top-[68px] md:top-[74px] z-[90] px-4 md:px-10 py-1 border-b border-white/5 shadow-xl transition-all">
+          <div className="max-w-[1800px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-1 md:gap-3">
             
-            {/* Filtros Compactos e Dóceis */}
+            {/* Filtros "Dóceis" e Compactos */}
             <div className="flex flex-wrap items-center justify-center gap-1 md:gap-1.5">
-               <div className="flex items-center gap-1 border-r border-white/10 pr-1.5 mr-0.5">
-                 <button 
-                   onClick={() => setShowNewOnly(!showNewOnly)} 
-                   className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showNewOnly ? 'bg-pink-600 text-white shadow-[0_0_15px_rgba(219,39,119,0.5)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-pink-400'}`}
-                 >
-                   <Clock className="w-3 h-3" /> Novidades
-                 </button>
+               <div className="flex items-center gap-1 border-r border-white/10 pr-1 mr-0.5">
                  <button 
                    onClick={() => setShowRaritiesOnly(!showRaritiesOnly)} 
-                   className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-amber-400'}`}
+                   className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-amber-400'}`}
                  >
                    <Diamond className="w-3 h-3" /> Raridades
                  </button>
                  <button 
                    onClick={() => setShowWinnersOnly(!showWinnersOnly)} 
-                   className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-emerald-400'}`}
+                   className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-emerald-400'}`}
                  >
                    <Trophy className="w-3 h-3" /> Premiadas
                  </button>
                </div>
 
-               <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide py-1">
+               <div className="flex items-center gap-1 py-1">
                   {[
                     { id: 'all', label: 'Tudo', icon: LayoutGrid },
                     { id: 'raspadinha', label: 'Raspadinhas', icon: Ticket },
@@ -303,25 +288,33 @@ const App: React.FC = () => {
                       <cat.icon className="w-3 h-3" /> {cat.label}
                     </button>
                   ))}
+                  
+                  {/* Botão de Novas Entradas (Rosa Chloe) ao lado dos Objetos */}
+                  <button 
+                    onClick={() => setShowNewOnly(!showNewOnly)} 
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ml-0.5 ${showNewOnly ? 'bg-pink-600 text-white shadow-[0_0_15px_rgba(219,39,119,0.5)] border border-pink-400/30' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-pink-400'}`}
+                  >
+                    <Clock className="w-3 h-3" /> Novas Entradas
+                  </button>
                </div>
             </div>
 
             {/* Pesquisa e Ação */}
             <div className="flex items-center gap-2 w-full lg:w-auto">
-              <div className="relative flex-1 lg:w-52 group">
+              <div className="relative flex-1 lg:w-48 group">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
                 <input 
                   type="text" 
                   placeholder="Pesquisar..." 
                   value={searchTerm} 
                   onChange={(e) => setSearchTerm(e.target.value)} 
-                  className="w-full bg-slate-950/50 border border-white/5 rounded-full pl-8 pr-4 py-1.5 text-[9px] focus:border-brand-500/50 outline-none transition-all uppercase tracking-wider text-white shadow-inner"
+                  className="w-full bg-slate-950/50 border border-white/5 rounded-full pl-8 pr-4 py-1 text-[9px] focus:border-brand-500/50 outline-none transition-all uppercase tracking-wider text-white shadow-inner"
                 />
               </div>
               {isAdmin && (
                 <button 
                   onClick={() => setShowUpload(true)} 
-                  className="bg-emerald-600/90 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-full font-black text-[8px] uppercase tracking-widest transition-all flex items-center gap-1.5 shadow-lg active:scale-95 border border-emerald-400/20 whitespace-nowrap"
+                  className="bg-emerald-600/90 hover:bg-emerald-500 text-white px-3.5 py-1 rounded-full font-black text-[8px] uppercase tracking-widest transition-all flex items-center gap-1.5 shadow-lg active:scale-95 border border-emerald-400/20 whitespace-nowrap"
                 >
                   <Plus className="w-3 h-3" /> Novo Item
                 </button>
