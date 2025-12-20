@@ -244,7 +244,7 @@ const App: React.FC = () => {
                     <button
                       key={cat.id}
                       onClick={() => setActiveCategory(cat.id)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${activeCategory === cat.id ? 'bg-brand-500 border-brand-400 text-white shadow-lg shadow-brand-900/20' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border neon-shimmer ${activeCategory === cat.id ? 'bg-gradient-to-r from-brand-600 via-brand-400 to-brand-600 animate-shimmer border-brand-300 text-white shadow-[0_0_20px_rgba(59,130,246,0.6)]' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700'}`}
                     >
                       <cat.icon className="w-3.5 h-3.5" /> {cat.label}
                     </button>
@@ -253,18 +253,18 @@ const App: React.FC = () => {
 
                <div className="h-6 w-px bg-slate-800 mx-1 hidden sm:block"></div>
 
-               {/* Raridades e Premiadas */}
+               {/* Raridades e Premiadas (Com Neon Cintilante Temático) */}
                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => setShowRaritiesOnly(!showRaritiesOnly)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${showRaritiesOnly ? 'bg-amber-500 border-amber-400 text-white shadow-lg shadow-amber-900/20' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-amber-500'}`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border neon-shimmer ${showRaritiesOnly ? 'bg-gradient-to-r from-amber-600 via-amber-400 to-amber-600 animate-shimmer border-amber-300 text-white shadow-[0_0_20px_rgba(245,158,11,0.6)]' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-amber-500'}`}
                   >
                     <Sparkles className={`w-3.5 h-3.5 ${showRaritiesOnly ? 'text-white' : 'text-amber-500'}`} /> {showRaritiesOnly ? 'Só Raridades' : 'Raridades'}
                   </button>
 
                   <button
                     onClick={() => setShowWinnersOnly(!showWinnersOnly)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${showWinnersOnly ? 'bg-emerald-500 border-emerald-400 text-white shadow-lg shadow-emerald-900/20' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-emerald-500'}`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border neon-shimmer ${showWinnersOnly ? 'bg-gradient-to-r from-emerald-600 via-emerald-400 to-emerald-600 animate-shimmer border-emerald-300 text-white shadow-[0_0_20px_rgba(16,185,129,0.6)]' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-emerald-500'}`}
                   >
                     <Trophy className={`w-3.5 h-3.5 ${showWinnersOnly ? 'text-white' : 'text-emerald-500'}`} /> {showWinnersOnly ? 'Só Premiadas' : 'Premiadas'}
                   </button>
@@ -272,7 +272,7 @@ const App: React.FC = () => {
 
                <div className="h-6 w-px bg-slate-800 mx-1 hidden sm:block"></div>
 
-               {/* Pesquisa e Filtro de País (Agora ao lado de Premiadas) */}
+               {/* Pesquisa e Filtro de País (Bordas Neon) */}
                <div className="flex items-center gap-2 flex-1 min-w-[300px]">
                   <div className="relative flex-1 group">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
@@ -281,7 +281,7 @@ const App: React.FC = () => {
                       placeholder="Pesquisar..." 
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-[10px] focus:border-brand-500 outline-none transition-all shadow-inner font-bold text-white uppercase tracking-wider"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-[10px] focus:border-brand-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.3)] outline-none transition-all shadow-inner font-bold text-white uppercase tracking-wider"
                     />
                   </div>
 
@@ -293,7 +293,7 @@ const App: React.FC = () => {
                       value={activeCountry}
                       onChange={(e) => { setActiveCountry(e.target.value); setShowCountrySuggestions(true); }}
                       onFocus={() => setShowCountrySuggestions(true)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-8 py-1.5 text-[10px] focus:border-brand-500 outline-none transition-all shadow-inner font-bold text-white uppercase tracking-wider"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-8 py-1.5 text-[10px] focus:border-brand-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.3)] outline-none transition-all shadow-inner font-bold text-white uppercase tracking-wider"
                     />
                     {activeCountry && (
                       <button onClick={() => setActiveCountry('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white">
@@ -322,7 +322,7 @@ const App: React.FC = () => {
                {isAdmin && (
                   <button 
                     onClick={() => setShowUpload(true)} 
-                    className="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg active:scale-95 whitespace-nowrap"
+                    className="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(59,130,246,0.4)] active:scale-95 whitespace-nowrap border border-brand-400/50"
                   >
                     <Plus className="w-3.5 h-3.5" /> Arquivar
                   </button>
