@@ -4,7 +4,7 @@ import {
   Ticket, Lock, LogOut, BookOpen, Home, 
   BarChart2, ChevronDown, Globe, User, 
   Info, Database, ClipboardList, ChevronRight, Map as MapIcon, Radio, Menu, X as CloseIcon,
-  Download, Upload, MapPin, Star
+  Download, Upload, MapPin, Star, Landmark, Ship
 } from 'lucide-react';
 import { Language } from '../translations';
 import { Continent } from '../types';
@@ -27,7 +27,7 @@ interface HeaderProps {
   t: any;
   onInstall?: () => void;
   countriesByContinent?: Record<string, string[]>;
-  onCountrySelect?: (continent: Continent, country: string) => void;
+  onCountrySelect?: (continent: Continent, country: string, island?: string) => void;
   recentCount?: number;
   collectionCount?: number;
 }
@@ -45,6 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [showTools, setShowTools] = useState(false);
   const [showExplore, setShowExplore] = useState(false);
   const [activeSubMenu, setActiveSubMenu] = useState<Continent | null>(null);
+  const [activeCountrySub, setActiveCountrySub] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const exploreRef = useRef<HTMLDivElement>(null);
   const toolsRef = useRef<HTMLDivElement>(null);
@@ -54,6 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
       if (exploreRef.current && !exploreRef.current.contains(event.target as Node)) {
         setShowExplore(false);
         setActiveSubMenu(null);
+        setActiveCountrySub(null);
       }
       if (toolsRef.current && !toolsRef.current.contains(event.target as Node)) {
         setShowTools(false);
@@ -80,7 +82,6 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[110] w-[95%] max-w-6xl pointer-events-none">
       <div className="bg-slate-900/90 backdrop-blur-3xl border border-white/10 rounded-full h-11 md:h-12 shadow-[0_15px_40px_rgba(0,0,0,0.6)] flex items-center justify-between px-4 md:px-6 pointer-events-auto transition-all">
         
-        {/* Logo Minimalista Extremamente Compacto */}
         <div className="flex items-center gap-2 cursor-pointer group shrink-0" onClick={() => onNavigate('home')}>
           <div className="bg-brand-600 p-1 rounded-lg shadow-lg group-hover:scale-105 transition-transform">
             <Ticket className="w-3.5 h-3.5 text-white" />
@@ -93,7 +94,6 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Navegação Central Dócil */}
         <nav className="flex items-center gap-0.5 md:gap-1">
            <button onClick={() => onNavigate('home')} className={`p-1.5 rounded-lg transition-all ${currentPage === 'home' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} title={t.home}>
              <Home className="w-3.5 h-3.5" />
@@ -111,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
                        {continents.map(cont => (
                          <button 
                            key={cont} 
-                           onMouseEnter={() => setActiveSubMenu(cont)} 
+                           onMouseEnter={() => { setActiveSubMenu(cont); setActiveCountrySub(null); }} 
                            onClick={() => { onNavigate('home'); onCountrySelect?.(cont, ''); setShowExplore(false); }} 
                            className={`w-full text-left px-3 py-1.5 text-[8px] rounded-lg transition-all flex items-center justify-between font-black uppercase tracking-widest ${activeSubMenu === cont ? 'bg-brand-600 text-white' : 'text-slate-400 hover:bg-white/5'}`}
                          >
@@ -122,21 +122,48 @@ export const Header: React.FC<HeaderProps> = ({
                     </div>
 
                     {activeSubMenu && countriesByContinent[activeSubMenu] && (
-                      <div className="w-48 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-1 backdrop-blur-2xl max-h-[300px] overflow-y-auto custom-scrollbar animate-fade-in">
+                      <div className="w-48 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-1 backdrop-blur-2xl max-h-[300px] overflow-y-auto custom-scrollbar animate-fade-in flex flex-col">
                         {countriesByContinent[activeSubMenu].sort().map(country => (
-                          <button 
-                            key={country}
-                            onClick={() => {
-                              onCountrySelect?.(activeSubMenu, country);
-                              setShowExplore(false);
-                              setActiveSubMenu(null);
-                              onNavigate('home');
-                            }}
-                            className="w-full text-left px-3 py-1.5 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2"
-                          >
-                            <MapPin className="w-2 h-2" /> {country}
-                          </button>
+                          <div key={country} className="relative">
+                            <button 
+                              onMouseEnter={() => setActiveCountrySub(country)}
+                              onClick={() => {
+                                if (country !== 'Portugal') {
+                                  onCountrySelect?.(activeSubMenu, country);
+                                  setShowExplore(false);
+                                  onNavigate('home');
+                                }
+                              }}
+                              className={`w-full text-left px-3 py-1.5 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center justify-between group ${activeCountrySub === country ? 'bg-brand-600 text-white' : ''}`}
+                            >
+                              <span className="flex items-center gap-2"><MapPin className="w-2 h-2" /> {country}</span>
+                              {country === 'Portugal' && <ChevronRight className="w-2 h-2" />}
+                            </button>
+                          </div>
                         ))}
+                      </div>
+                    )}
+
+                    {activeCountrySub === 'Portugal' && activeSubMenu === 'Europa' && (
+                      <div className="w-48 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-1 backdrop-blur-2xl animate-fade-in h-fit flex flex-col">
+                        <button 
+                           onClick={() => { onCountrySelect?.('Europa', 'Portugal', 'continente'); setShowExplore(false); onNavigate('home'); }}
+                           className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2"
+                        >
+                           <Landmark className="w-2.5 h-2.5 text-blue-400" /> SCML (Continente)
+                        </button>
+                        <button 
+                           onClick={() => { onCountrySelect?.('Europa', 'Portugal', 'açores'); setShowExplore(false); onNavigate('home'); }}
+                           className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2"
+                        >
+                           <Ship className="w-2.5 h-2.5 text-cyan-400" /> Açores
+                        </button>
+                        <button 
+                           onClick={() => { onCountrySelect?.('Europa', 'Portugal', 'madeira'); setShowExplore(false); onNavigate('home'); }}
+                           className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2"
+                        >
+                           <MapPin className="w-2.5 h-2.5 text-emerald-400" /> Madeira
+                        </button>
                       </div>
                     )}
                   </div>
@@ -185,7 +212,6 @@ export const Header: React.FC<HeaderProps> = ({
            </div>
         </nav>
 
-        {/* Lado Direito: Login & Idioma */}
         <div className="flex items-center gap-1.5 md:gap-3">
           <div className="hidden sm:flex bg-white/5 rounded-lg p-0.5 border border-white/5">
             <button onClick={() => setLanguage('pt')} className={`px-2 py-0.5 rounded text-[7px] font-black transition-all ${language === 'pt' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}>PT</button>

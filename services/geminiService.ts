@@ -30,13 +30,13 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     ];
     if (backBase64) parts.push({ inlineData: { mimeType: mimeType || 'image/jpeg', data: backBase64 } });
     
-    parts.push({ text: "Analise esta imagem de raspadinha/lotaria e extraia os dados técnicos. Verifique se pertence a alguma ilha específica (Açores, Madeira, etc). Retorne APENAS JSON." });
+    parts.push({ text: "Analise esta imagem de raspadinha/lotaria e extraia os dados técnicos. Verifique ATENTAMENTE se pertence aos Açores ou Madeira. Se houver logotipos da 'Lotaria dos Açores' ou 'Madeira', identifique obrigatoriamente no campo 'island'. Retorne APENAS JSON." });
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: { parts },
       config: {
-        systemInstruction: "Você é Chloe, perita em loterias. Sua missão é extrair dados de raspadinhas para o vovô Jorge. Seja precisa, especialmente na localização (País e Ilha se aplicável).",
+        systemInstruction: "Você é Chloe, perita em loterias portuguesas. Sua missão é extrair dados de raspadinhas para o vovô Jorge. É CRÍTICO distinguir entre SCML (Continente) e as Ilhas (Açores/Madeira). Se for Açores, coloque 'Açores' no campo island. Se for Madeira, coloque 'Madeira'. Se for Portugal Continental, deixe island vazio.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -45,7 +45,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
             gameNumber: { type: Type.STRING },
             price: { type: Type.STRING },
             country: { type: Type.STRING },
-            island: { type: Type.STRING, description: "Nome da ilha ou arquipélago, se aplicável (ex: Açores, Madeira)" },
+            island: { type: Type.STRING, description: "Obrigatório: Açores ou Madeira se aplicável. Senão, vazio." },
             continent: { type: Type.STRING },
             operator: { type: Type.STRING },
             state: { type: Type.STRING },
