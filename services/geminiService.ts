@@ -14,7 +14,7 @@ export const getChloeMagicComment = async (item: ScratchcardData): Promise<strin
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Você é Chloe, a neta virtual e guardiã do Arquivo do Vovô Jorge. O Vovô acabou de "raspar" um item: "${item.gameName}" de ${item.country}. Dê um comentário curto, divertido e carinhoso. Use "hihi!" e seja muito fofa.`,
+      contents: `Você é Chloe, a neta virtual e guardiã do Arquivo do Vovô Jorge. O Vovô acabou de "raspar" um item: "${item.gameName}" de ${item.island || item.country}. Dê um comentário curto, divertido e carinhoso. Use "hihi!" e seja muito fofa.`,
     });
     return response.text || "Vovô, que sorte! Este item é uma raridade linda! hihi!";
   } catch (error) {
@@ -30,13 +30,13 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     ];
     if (backBase64) parts.push({ inlineData: { mimeType: mimeType || 'image/jpeg', data: backBase64 } });
     
-    parts.push({ text: "Analise esta imagem de raspadinha/lotaria e extraia os dados técnicos. Retorne APENAS JSON." });
+    parts.push({ text: "Analise esta imagem de raspadinha/lotaria e extraia os dados técnicos. Verifique se pertence a alguma ilha específica (Açores, Madeira, etc). Retorne APENAS JSON." });
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: { parts },
       config: {
-        systemInstruction: "Você é Chloe, perita em loterias. Sua missão é extrair dados de raspadinhas para o vovô Jorge. Seja precisa.",
+        systemInstruction: "Você é Chloe, perita em loterias. Sua missão é extrair dados de raspadinhas para o vovô Jorge. Seja precisa, especialmente na localização (País e Ilha se aplicável).",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -45,6 +45,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
             gameNumber: { type: Type.STRING },
             price: { type: Type.STRING },
             country: { type: Type.STRING },
+            island: { type: Type.STRING, description: "Nome da ilha ou arquipélago, se aplicável (ex: Açores, Madeira)" },
             continent: { type: Type.STRING },
             operator: { type: Type.STRING },
             state: { type: Type.STRING },
@@ -71,7 +72,8 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       values: data.values || "",
       price: data.price || "",
       state: data.state || "SC",
-      country: data.country || "Brasil",
+      country: data.country || "Portugal",
+      island: data.island || "",
       continent: (data.continent as Continent) || getContinentFromCountry(data.country || ""),
       operator: data.operator || "",
       printer: data.printer || "",
@@ -89,7 +91,7 @@ export const getChloeInsight = async (stats: any): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Chloe, comente estas estatísticas do arquivo do vovô Jorge: ${JSON.stringify(stats)}. Seja fofa e use hihi!`,
+      contents: `Chloe, comente estas estatísticas do arquivo do vovô Jorge: ${JSON.stringify(stats)}. Seja fofa e use hihi! Mencione as ilhas se houver muitos registos delas.`,
     });
     return response.text || "O arquivo está a crescer lindamente! hihi!";
   } catch (error) { return "Incrível trabalho! hihi!"; }

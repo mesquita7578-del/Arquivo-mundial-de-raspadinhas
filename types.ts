@@ -39,6 +39,7 @@ export interface ScratchcardData {
   state: ScratchcardState;
   country: string;
   region?: string;
+  island?: string; // Novo campo para separação individual
   continent: Continent;
   category: string;
   operator?: string;
@@ -67,6 +68,7 @@ export interface AnalysisResult {
   price: string;
   state: string;
   country: string;
+  island?: string;
   continent: Continent;
   operator: string;
   printer: string;

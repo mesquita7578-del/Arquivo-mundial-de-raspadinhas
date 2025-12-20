@@ -7,7 +7,7 @@ import {
   Ruler, Printer, Banknote, ScanLine,
   LayoutGrid, Eye, User,
   RefreshCw, Layers as LayersIcon, ChevronLeft, ChevronRight,
-  Maximize2, Activity
+  Maximize2, Activity, Ship
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent, LineType, CategoryItem } from '../types';
 
@@ -113,7 +113,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md" onClick={onClose}>
       
-      {/* Navegação Lateral */}
       {hasPrev && (
         <button onClick={(e) => { e.stopPropagation(); handlePrev(); }} className="absolute left-8 z-[10001] p-4 bg-slate-900/50 hover:bg-brand-600 text-white rounded-full border border-white/10 transition-all active:scale-95">
           <ChevronLeft className="w-8 h-8" />
@@ -127,7 +126,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
 
       <div className="w-full h-full md:h-[90vh] md:max-w-6xl flex flex-col md:flex-row bg-[#020617] md:rounded-3xl overflow-hidden border border-white/5 shadow-2xl relative" onClick={e => e.stopPropagation()}>
          
-         {/* Lado Esquerdo: Imagem Central */}
          <div className="flex-1 bg-black/40 relative flex flex-col min-h-0 border-r border-white/5">
             <button className="absolute top-4 right-4 text-white/50 hover:text-white z-50 p-2" onClick={onClose}><X className="w-6 h-6"/></button>
             
@@ -158,7 +156,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
             </div>
          </div>
 
-         {/* Lado Direito: Informação */}
          <div className="w-full md:w-[400px] bg-slate-900/30 flex flex-col h-full overflow-hidden shrink-0">
               <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/50">
                  {isAdmin && (
@@ -177,13 +174,15 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                        <div className="space-y-4 animate-fade-in">
                           <input type="text" value={formData.gameName} onChange={e => handleChange('gameName', e.target.value)} className="w-full bg-slate-950 text-white text-sm font-black rounded-xl p-3 border border-white/10" placeholder="Nome" />
                           <input type="text" value={formData.gameNumber} onChange={e => handleChange('gameNumber', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-3 border border-white/10 rounded-xl" placeholder="Nº Jogo" />
+                          <input type="text" value={formData.island} onChange={e => handleChange('island', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-3 border border-brand-500/30 rounded-xl" placeholder="Ilha (Açores, Madeira...)" />
                           <input type="text" value={formData.operator} onChange={e => handleChange('operator', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-3 border border-white/10 rounded-xl" placeholder="Emissor" />
                        </div>
                     ) : (
                        <div className="border-b border-white/5 pb-6">
                           <h2 className="text-3xl font-black text-white uppercase italic leading-none">{formData.gameName}</h2>
-                          <div className="flex items-center gap-2 mt-4">
+                          <div className="flex flex-wrap items-center gap-2 mt-4">
                             <span className="text-brand-500 text-[9px] font-black uppercase tracking-widest bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">{formData.category}</span>
+                            {formData.island && <span className="text-cyan-400 text-[9px] font-black uppercase tracking-widest bg-cyan-500/10 px-2 py-1 rounded border border-cyan-500/20">{formData.island}</span>}
                             <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{formData.operator}</span>
                           </div>
                        </div>
@@ -193,10 +192,11 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                  {!isEditing && (
                     <div className="grid grid-cols-2 gap-3 animate-fade-in">
                        <DataTag icon={Hash} label="Nº Jogo" value={formData.gameNumber} colorClass="text-brand-500" />
+                       <DataTag icon={Flag} label="País" value={formData.country} colorClass="text-red-500" />
+                       {formData.island && <DataTag icon={MapPin} label="Ilha" value={formData.island} colorClass="text-cyan-500" />}
                        <DataTag icon={Fingerprint} label="ID Único" value={formData.customId} colorClass="text-slate-500" />
                        <DataTag icon={Ruler} label="Formato" value={formData.size} colorClass="text-cyan-500" />
                        <DataTag icon={Clock} label="Ano" value={formData.releaseDate} colorClass="text-orange-500" />
-                       <DataTag icon={Flag} label="País" value={formData.country} colorClass="text-red-500" />
                        <DataTag icon={Activity} label="Estado" value={formData.state} colorClass="text-brand-400" />
                     </div>
                  )}

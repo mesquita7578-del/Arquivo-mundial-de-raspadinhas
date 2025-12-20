@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   X, Upload, Sparkles, Check, Loader2, ArrowLeft, 
-  Image as ImageIcon, ScanLine, Star, Hash, Globe, 
+  ImageIcon, ScanLine, Star, Hash, Globe, 
   Printer, Ruler, Banknote, Clock, Info, MapPin, 
-  Building2, Layers, User, Palette, Activity, Percent, Calendar, AlertCircle
+  Building2, Layers, User, Palette, Activity, Percent, Calendar, AlertCircle, Ship
 } from 'lucide-react';
 import { ScratchcardData, Category, ScratchcardState, LineType, CategoryItem } from '../types';
 import { analyzeImage } from '../services/geminiService';
@@ -61,6 +62,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     state: 'SC',
     continent: 'Europa',
     country: 'Portugal',
+    island: '',
     operator: '',
     lines: 'none',
     gameNumber: '',
@@ -84,6 +86,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       gameNames: unique(existingImages.map(img => img.gameName)),
       countries: unique(existingImages.map(img => img.country)),
       regions: unique(existingImages.map(img => img.region)),
+      islands: unique(existingImages.map(img => img.island)),
       operators: unique(existingImages.map(img => img.operator)),
       printers: unique(existingImages.map(img => img.printer)),
       collectors: unique(existingImages.map(img => img.collector)),
@@ -119,7 +122,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       const backBase64 = backPreview ? backPreview.split(',')[1] : null;
       const result = await analyzeImage(frontBase64, backBase64, frontFile.type);
       
-      // Fix: Cast result.state to ScratchcardState and result.lines to LineType to match ScratchcardData type
       setFormData(prev => ({
         ...prev,
         ...result,
@@ -143,7 +145,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     setIsSaving(true);
     const timestamp = Date.now();
     
-    // Gerar ID personalizado
     const countryCode = (formData.country || 'PT').substring(0, 2).toUpperCase();
     const generatedId = `${countryCode}-${Math.floor(10000 + Math.random() * 89999)}`;
 
@@ -162,6 +163,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       state: (formData.state as ScratchcardState) || 'SC',
       country: formData.country || '',
       region: formData.region || '',
+      island: formData.island || '',
       continent: (formData.continent as any) || 'Europa',
       category: formData.category || 'raspadinha',
       operator: formData.operator || '',
@@ -342,10 +344,14 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                       <h3 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] flex items-center gap-2">
                         <MapPin className="w-3 h-3" /> Origem Geográfica
                       </h3>
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-2 gap-4">
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">País:</span>
                            <input list="countries" type="text" value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500" />
+                        </label>
+                        <label>
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Ilha / Arquipélago:</span>
+                           <input list="islands" type="text" value={formData.island} onChange={e => setFormData({...formData, island: e.target.value})} className="w-full bg-slate-950 border border-brand-500/50 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500" placeholder="Ex: Açores, Madeira..." />
                         </label>
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Região / Cantão:</span>
@@ -387,6 +393,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
        <datalist id="game-names">{suggestions.gameNames.map(val => <option key={val} value={val} />)}</datalist>
        <datalist id="collectors">{suggestions.collectors.map(val => <option key={val} value={val} />)}</datalist>
        <datalist id="countries">{suggestions.countries.map(val => <option key={val} value={val} />)}</datalist>
+       <datalist id="islands">{suggestions.islands.map(val => <option key={val} value={val} />)}</datalist>
        <datalist id="regions">{suggestions.regions.map(val => <option key={val} value={val} />)}</datalist>
        <datalist id="operators">{suggestions.operators.map(val => <option key={val} value={val} />)}</datalist>
        <datalist id="printers">{suggestions.printers.map(val => <option key={val} value={val} />)}</datalist>

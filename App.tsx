@@ -30,7 +30,7 @@ const App: React.FC = () => {
   const [language, setLanguage] = useState<Language>('pt');
   const [searchTerm, setSearchTerm] = useState('');
   const [activeContinent, setActiveContinent] = useState<Continent | 'Mundo'>('Mundo');
-  const [activeCountry, setActiveCountry] = useState<string>('');
+  const [activeCountry, setActiveCountry] = useState<string>(''); // Atuará como Localização (País ou Ilha)
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [showRaritiesOnly, setShowRaritiesOnly] = useState(false);
   const [showWinnersOnly, setShowWinnersOnly] = useState(false);
@@ -102,12 +102,18 @@ const App: React.FC = () => {
     return images.filter(img => {
       const gName = (img.gameName || "").toLowerCase();
       const gCountry = (img.country || "").toLowerCase();
+      const gIsland = (img.island || "").toLowerCase();
       const gNum = (img.gameNumber || "").toLowerCase();
       const s = searchTerm.toLowerCase();
       
-      const matchesSearch = gName.includes(s) || gCountry.includes(s) || gNum.includes(s);
+      const matchesSearch = gName.includes(s) || gCountry.includes(s) || gIsland.includes(s) || gNum.includes(s);
       const matchesContinent = activeContinent === 'Mundo' || img.continent === activeContinent;
-      const matchesCountry = !activeCountry || img.country.toLowerCase().includes(activeCountry.toLowerCase());
+      
+      // Lógica de localização: pode coincidir com o país OU com a ilha
+      const matchesCountry = !activeCountry || 
+                             img.country.toLowerCase() === activeCountry.toLowerCase() || 
+                             (img.island && img.island.toLowerCase() === activeCountry.toLowerCase());
+      
       const matchesCategory = activeCategory === 'all' || img.category === activeCategory;
       const matchesRarity = !showRaritiesOnly || img.isRarity;
       const matchesWinners = !showWinnersOnly || img.isWinner;
@@ -152,7 +158,7 @@ const App: React.FC = () => {
   };
 
   const handleExportTXT = () => {
-    const content = images.map(img => `${img.gameNumber} - ${img.gameName} (${img.country})`).join('\n');
+    const content = images.map(img => `${img.gameNumber} - ${img.gameName} (${img.island || img.country})`).join('\n');
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -191,14 +197,16 @@ const App: React.FC = () => {
         onExportCSV={() => {}}
         t={t.header}
         recentCount={images.filter(img => (Date.now() - (img.createdAt || 0)) < 43200000).length}
-        onCountrySelect={(cont, country) => {
+        onCountrySelect={(cont, loc) => {
           setActiveContinent(cont);
-          setActiveCountry(country);
+          setActiveCountry(loc); // loc pode ser País ou Ilha
           setCurrentPage('home');
         }}
+        // Aqui agrupamos Países E Ilhas como localizações selecionáveis individuais
         countriesByContinent={images.reduce((acc, img) => {
           if (!acc[img.continent]) acc[img.continent] = [];
           if (!acc[img.continent].includes(img.country)) acc[img.continent].push(img.country);
+          if (img.island && !acc[img.continent].includes(img.island)) acc[img.continent].push(img.island);
           return acc;
         }, {} as any)}
       />
@@ -207,11 +215,9 @@ const App: React.FC = () => {
         <div className="bg-[#020617]/70 backdrop-blur-3xl sticky top-[95px] z-[90] px-6 md:px-10 py-5 border-b border-white/10 shadow-2xl">
           <div className="max-w-[1800px] mx-auto flex flex-col gap-6">
             
-            {/* LINHA ÚNICA DE FILTROS: "Tudo seguido e alinhado" */}
             <div className="flex flex-wrap items-center justify-center lg:justify-between gap-4">
               
               <div className="flex flex-wrap items-center gap-2">
-                 {/* FILTROS ESPECIAIS PRIMEIRO */}
                  <div className="flex items-center gap-2 mr-2 border-r border-white/10 pr-4">
                    <button 
                      onClick={() => setShowRaritiesOnly(!showRaritiesOnly)}
@@ -227,7 +233,6 @@ const App: React.FC = () => {
                    </button>
                  </div>
 
-                 {/* CATEGORIAS LOGO A SEGUIR */}
                  <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
                     {[
                       { id: 'all', label: 'Tudo', icon: LayoutGrid },
@@ -247,7 +252,6 @@ const App: React.FC = () => {
                  </div>
               </div>
 
-              {/* PESQUISA E AÇÃO */}
               <div className="flex items-center gap-4 w-full lg:w-auto">
                 <div className="relative w-full lg:w-72 group">
                   <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
