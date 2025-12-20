@@ -58,7 +58,8 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
     currentPage * ITEMS_PER_PAGE
   );
 
-  const isRecent = (createdAt: number) => (Date.now() - createdAt) < 86400000; // 24 horas para novidades
+  // Alterado para 12 horas (43200000ms) como o vovô pediu!
+  const isRecent = (createdAt: number) => (Date.now() - createdAt) < 43200000;
 
   if (images.length === 0) {
     return (
@@ -100,15 +101,20 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 />
               )}
               
-              <div className="absolute top-0.5 right-0.5 flex flex-col gap-0.5 items-end z-10">
+              <div className="absolute top-0 right-0 flex flex-col gap-0.5 items-end z-20">
                 {isRecent(item.createdAt) && (
-                   <div className="flex items-center gap-0.5 bg-pink-600/30 backdrop-blur-md text-pink-400 px-1 py-0.5 rounded-[2px] text-[6px] font-black animate-pulse shadow-lg border border-pink-500/20">
-                     <Zap className="w-1.5 h-1.5 fill-pink-500" />
+                   <div className="flex items-center gap-1 bg-pink-600 text-white px-2 py-1 rounded-bl-lg text-[8px] font-black animate-pulse shadow-[0_0_15px_rgba(219,39,119,0.6)] border-l border-b border-pink-400/50">
+                     <Zap className="w-2 h-2 fill-white" />
                      NOVO
                    </div>
                 )}
-                {item.isWinner && (
-                  <div className="bg-green-600 p-0.5 rounded-full shadow-md">
+                {item.isWinner && !isRecent(item.createdAt) && (
+                  <div className="bg-green-600 p-0.5 rounded-full shadow-md mr-1 mt-1">
+                    <Trophy className="w-1.5 h-1.5 text-white" />
+                  </div>
+                )}
+                {item.isWinner && isRecent(item.createdAt) && (
+                  <div className="bg-green-600 p-0.5 rounded-full shadow-md mr-1 mt-0.5">
                     <Trophy className="w-1.5 h-1.5 text-white" />
                   </div>
                 )}
