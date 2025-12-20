@@ -7,7 +7,7 @@ import {
   Ruler, Printer, Banknote, ScanLine,
   LayoutGrid, Eye, User,
   RefreshCw, Layers as LayersIcon, ChevronLeft, ChevronRight,
-  Maximize2, Activity, Ship, Palette, Calendar, Percent, Check, Star, ImagePlus
+  Maximize2, Activity, Ship, Palette, Calendar, Percent, Check, Star, ImagePlus, LayoutList
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent, LineType, CategoryItem } from '../types';
 
@@ -68,6 +68,13 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
     if (image.gallery) gal.push(...image.gallery);
     return gal;
   }, [image]);
+
+  // Cálculo de quantos itens a série tem (ignorando o verso e respeitando o campo manual)
+  const setDisplayCount = useMemo(() => {
+    if (formData.setCount) return formData.setCount;
+    const galleryItems = image.gallery ? image.gallery.length : 0;
+    return galleryItems > 0 ? (galleryItems + 1).toString() : null;
+  }, [formData.setCount, image.gallery]);
 
   const isSaved = useMemo(() => {
     if (!currentUser) return false;
@@ -239,11 +246,14 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                           <div className="space-y-3">
                              <input type="text" value={formData.operator} onChange={e => handleChange('operator', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-3 border border-white/10 rounded-xl outline-none" placeholder="Operador (ex: SCML)" />
                              <div className="grid grid-cols-2 gap-3">
+                                <input type="text" value={formData.setCount} onChange={e => handleChange('setCount', e.target.value)} className="w-full bg-slate-950 border border-brand-500 text-white text-xs p-3 rounded-xl outline-none" placeholder="SET / Série (Qtd)" />
                                 <input type="text" value={formData.size} onChange={e => handleChange('size', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-3 border border-white/10 rounded-xl outline-none" placeholder="Dimensões" />
-                                <input type="text" value={formData.emission} onChange={e => handleChange('emission', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-3 border border-white/10 rounded-xl outline-none" placeholder="Tiragem" />
                              </div>
                              <div className="grid grid-cols-2 gap-3">
+                                <input type="text" value={formData.emission} onChange={e => handleChange('emission', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-3 border border-white/10 rounded-xl outline-none" placeholder="Tiragem" />
                                 <input type="text" value={formData.printer} onChange={e => handleChange('printer', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-3 border border-white/10 rounded-xl outline-none" placeholder="Gráfica" />
+                             </div>
+                             <div className="grid grid-cols-2 gap-3">
                                 <input type="text" value={formData.winProbability} onChange={e => handleChange('winProbability', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-3 border border-white/10 rounded-xl outline-none" placeholder="Probabilidade" />
                              </div>
                           </div>
@@ -313,10 +323,10 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                               </div>
                             )}
                             <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{formData.operator}</span>
-                            {localGallery.length > 2 && (
+                            {setDisplayCount && (
                                <div className="flex items-center gap-1.5 bg-brand-600/10 text-brand-400 px-2 py-1 rounded border border-brand-500/30">
-                                  <LayersIcon className="w-3 h-3" />
-                                  <span className="text-[9px] font-black uppercase tracking-widest">Série ({localGallery.length - 1} Itens)</span>
+                                  <LayoutList className="w-3 h-3" />
+                                  <span className="text-[9px] font-black uppercase tracking-widest">SET DE {setDisplayCount}</span>
                                </div>
                             )}
                           </div>

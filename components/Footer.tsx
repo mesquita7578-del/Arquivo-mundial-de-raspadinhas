@@ -1,15 +1,16 @@
 
 import React from 'react';
-import { Heart, RefreshCw, User, ShieldCheck, Smartphone, Download } from 'lucide-react';
+import { Heart, RefreshCw, User, ShieldCheck, Smartphone, Download, Radio } from 'lucide-react';
 import { ChloeClock } from './ChloeClock';
 
 interface FooterProps {
   onNavigate: (page: any) => void;
   onWebsitesClick: () => void;
+  onRadioClick: () => void;
   onInstall?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onInstall }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onRadioClick, onInstall }) => {
   return (
     <footer className="fixed bottom-0 left-0 w-full bg-[#020617]/90 border-t border-slate-900 px-6 py-1.5 z-[100] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] backdrop-blur-md">
       <div className="max-w-[1800px] mx-auto flex items-center justify-between gap-4">
@@ -33,6 +34,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onI
         {/* Lado Direito: Fabio & Ações (Compacto) */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="hidden md:flex items-center gap-3 border-r border-slate-800 pr-3">
+            <button 
+              onClick={onRadioClick}
+              className="flex items-center gap-1.5 text-[7px] font-black text-brand-400 hover:text-white uppercase tracking-[0.1em] transition-colors"
+            >
+              <Radio className="w-2 h-2" /> Rádios & TV
+            </button>
             <button 
               onClick={onWebsitesClick}
               className="text-[7px] font-black text-slate-500 hover:text-brand-400 uppercase tracking-[0.1em] transition-colors"

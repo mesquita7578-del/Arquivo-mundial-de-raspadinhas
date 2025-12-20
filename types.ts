@@ -57,6 +57,7 @@ export interface ScratchcardData {
   seriesGroupId?: string;
   isSeries?: boolean;
   seriesDetails?: string;
+  setCount?: string; // Novo campo para quantidade manual de itens no SET
 }
 
 export interface AnalysisResult {

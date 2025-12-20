@@ -4,7 +4,7 @@ import {
   X, Upload, Sparkles, Check, Loader2, ArrowLeft, 
   ImageIcon, ScanLine, Star, Hash, Globe, 
   Printer, Ruler, Banknote, Clock, Info, MapPin, 
-  Building2, Layers, User, Palette, Activity, Percent, Calendar, AlertCircle, Ship, ImagePlus, Trash2
+  Building2, Layers, User, Palette, Activity, Percent, Calendar, AlertCircle, Ship, ImagePlus, Trash2, LayoutList
 } from 'lucide-react';
 import { ScratchcardData, Category, ScratchcardState, LineType, CategoryItem } from '../types';
 import { analyzeImage } from '../services/geminiService';
@@ -75,7 +75,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     closeDate: '',
     emission: '',
     winProbability: '',
-    values: ''
+    values: '',
+    setCount: ''
   });
 
   const frontInputRef = useRef<HTMLInputElement>(null);
@@ -100,7 +101,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     if (initialFile) handleFrontSelect(initialFile);
   }, [initialFile]);
 
-  // Fix: Explicitly casting file to Blob to resolve "Argument of type 'unknown' is not assignable to parameter of type 'Blob'"
   const handleFrontSelect = (file: File) => {
     setFrontFile(file);
     const reader = new FileReader();
@@ -109,7 +109,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     setAnalysisError(null);
   };
 
-  // Fix: Explicitly casting file to Blob to resolve "Argument of type 'unknown' is not assignable to parameter of type 'Blob'"
   const handleBackSelect = (file: File) => {
     setBackFile(file);
     const reader = new FileReader();
@@ -117,7 +116,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     reader.readAsDataURL(file as Blob);
   };
 
-  // Fix: Explicitly typing as File[] and casting each file to Blob during iteration to resolve TS inference issues
   const handleGallerySelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []) as File[];
     files.forEach((file: File) => {
@@ -195,7 +193,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       collector: formData.collector || currentUser || 'Jorge Mesquita',
       aiGenerated: formData.aiGenerated || false,
       createdAt: timestamp,
-      owners: currentUser ? [currentUser] : []
+      owners: currentUser ? [currentUser] : [],
+      setCount: formData.setCount
     };
 
     try {
@@ -236,7 +235,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    onClick={() => galleryInputRef.current?.click()}
                    className="flex items-center gap-1.5 px-3 py-1 bg-brand-600/20 text-brand-400 rounded-full text-[8px] font-black uppercase tracking-widest hover:bg-brand-600 hover:text-white transition-all"
                  >
-                   <ImagePlus className="w-3 h-3" /> Adicionar Mais
+                   <ImagePlus className="w-3 h-3" /> Adicionar Frentes
                  </button>
                  <input type="file" ref={galleryInputRef} className="hidden" accept="image/*" multiple onChange={handleGallerySelect} />
               </div>
@@ -249,7 +248,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                  ))}
                  {galleryPreviews.length === 0 && (
                     <div className="w-full py-4 border border-dashed border-slate-800 rounded-xl flex items-center justify-center">
-                       <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest italic">Nenhuma imagem extra adicionada</span>
+                       <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest italic">Nenhuma frente extra adicionada</span>
                     </div>
                  )}
               </div>
@@ -331,6 +330,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                         <label className="block col-span-2">
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Operador dos Jogo:</span>
                            <input list="operators" type="text" value={formData.operator} onChange={e => setFormData({...formData, operator: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" placeholder="Ex: SCML, ONCE, Sisal..." />
+                        </label>
+                        <label className="block">
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">SET / Série (Qtd):</span>
+                           <input type="text" value={formData.setCount} onChange={e => setFormData({...formData, setCount: e.target.value})} className="w-full bg-slate-950 border border-brand-500 text-white rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-500/50" placeholder="Ex: 4" />
                         </label>
                         <label className="block">
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">dimensões:</span>

@@ -377,6 +377,7 @@ const App: React.FC = () => {
       <Footer 
         onNavigate={setCurrentPage}
         onWebsitesClick={() => setShowWebsites(true)}
+        onRadioClick={() => setShowRadio(true)}
       />
 
       {showUpload && (
