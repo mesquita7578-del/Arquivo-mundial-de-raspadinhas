@@ -26,7 +26,7 @@ const App: React.FC = () => {
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [siteMetadata, setSiteMetadata] = useState<SiteMetadata | null>(null);
   
-  const [currentPage, setCurrentPage] = useState<'home' | 'stats' | 'map' | 'about' | 'new-arrivals'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'stats' | 'map' | 'about' | 'new-arrivals' | 'collection'>('home');
   const [language, setLanguage] = useState<Language>('pt');
   const [searchTerm, setSearchTerm] = useState('');
   const [activeContinent, setActiveContinent] = useState<Continent | 'Mundo'>('Mundo');
@@ -95,6 +95,7 @@ const App: React.FC = () => {
     localStorage.removeItem('archive_user');
     localStorage.removeItem('archive_admin');
     addSignal("Até à próxima, vovô! hihi!");
+    if (currentPage === 'collection') setCurrentPage('home');
   };
 
   const filteredImages = useMemo(() => {
@@ -119,11 +120,23 @@ const App: React.FC = () => {
       const matchesWinners = !showWinnersOnly || img.isWinner;
       
       const isRecent = (Date.now() - (img.createdAt || 0)) < 43200000;
-      const matchesPage = currentPage === 'new-arrivals' ? isRecent : true;
       
-      return matchesSearch && matchesContinent && matchesCountry && matchesCategory && matchesRarity && matchesWinners && matchesPage;
+      if (currentPage === 'new-arrivals') {
+        if (!isRecent) return false;
+      }
+      
+      if (currentPage === 'collection') {
+        if (!currentUser || !img.owners?.includes(currentUser)) return false;
+      }
+      
+      return matchesSearch && matchesContinent && matchesCountry && matchesCategory && matchesRarity && matchesWinners;
     });
-  }, [images, searchTerm, activeContinent, activeCountry, activeCategory, showRaritiesOnly, showWinnersOnly, currentPage]);
+  }, [images, searchTerm, activeContinent, activeCountry, activeCategory, showRaritiesOnly, showWinnersOnly, currentPage, currentUser]);
+
+  const collectionCount = useMemo(() => {
+    if (!currentUser) return 0;
+    return images.filter(img => img.owners?.includes(currentUser)).length;
+  }, [images, currentUser]);
 
   const handleExport = async () => {
     try {
@@ -197,6 +210,7 @@ const App: React.FC = () => {
         onExportCSV={() => {}}
         t={t.header}
         recentCount={images.filter(img => (Date.now() - (img.createdAt || 0)) < 43200000).length}
+        collectionCount={collectionCount}
         onCountrySelect={(cont, loc) => {
           setActiveContinent(cont);
           setActiveCountry(loc); // loc pode ser País ou Ilha
@@ -211,7 +225,7 @@ const App: React.FC = () => {
         }, {} as any)}
       />
 
-      {(currentPage === 'home' || currentPage === 'new-arrivals') && (
+      {(currentPage === 'home' || currentPage === 'new-arrivals' || currentPage === 'collection') && (
         <div className="bg-[#020617]/70 backdrop-blur-3xl sticky top-[95px] z-[90] px-6 md:px-10 py-5 border-b border-white/10 shadow-2xl">
           <div className="max-w-[1800px] mx-auto flex flex-col gap-6">
             
@@ -279,8 +293,15 @@ const App: React.FC = () => {
       )}
 
       <main className="flex-1 flex flex-col min-h-0 pb-20">
-        {(currentPage === 'home' || currentPage === 'new-arrivals') && (
+        {(currentPage === 'home' || currentPage === 'new-arrivals' || currentPage === 'collection') && (
           <div className="p-4 md:p-10 animate-fade-in">
+            {currentPage === 'collection' && filteredImages.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20 text-slate-600 border border-dashed border-slate-800 rounded-2xl bg-slate-900/10 mb-10">
+                <Star className="w-12 h-12 mb-4 opacity-10" />
+                <p className="font-black uppercase tracking-[0.2em] text-[10px]">{t.grid.emptyCollection}</p>
+                <p className="text-[9px] uppercase tracking-widest mt-2 text-slate-700">{t.grid.emptyCollectionDesc}</p>
+              </div>
+            )}
             <ImageGrid 
               images={filteredImages}
               onImageClick={setSelectedImage}

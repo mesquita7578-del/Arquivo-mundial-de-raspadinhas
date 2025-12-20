@@ -7,7 +7,7 @@ import {
   Ruler, Printer, Banknote, ScanLine,
   LayoutGrid, Eye, User,
   RefreshCw, Layers as LayersIcon, ChevronLeft, ChevronRight,
-  Maximize2, Activity, Ship, Palette, Calendar, Percent, Check
+  Maximize2, Activity, Ship, Palette, Calendar, Percent, Check, Star
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent, LineType, CategoryItem } from '../types';
 
@@ -61,6 +61,11 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   const hasNext = currentIndex < contextImages.length - 1;
   const hasPrev = currentIndex > 0;
 
+  const isSaved = useMemo(() => {
+    if (!currentUser) return false;
+    return formData.owners?.includes(currentUser);
+  }, [formData.owners, currentUser]);
+
   const handleNext = () => { if (hasNext) onImageSelect(contextImages[currentIndex + 1]); };
   const handlePrev = () => { if (hasPrev) onImageSelect(contextImages[currentIndex - 1]); };
 
@@ -90,6 +95,20 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
 
   const handleSave = () => { onUpdate(formData); setIsEditing(false); };
   const handleDelete = () => { if (confirm(t.deleteConfirm)) onDelete(image.id); };
+
+  const handleToggleSave = () => {
+    if (!currentUser) return;
+    const currentOwners = formData.owners || [];
+    let newOwners;
+    if (currentOwners.includes(currentUser)) {
+      newOwners = currentOwners.filter(o => o !== currentUser);
+    } else {
+      newOwners = [...currentOwners, currentUser];
+    }
+    const updatedData = { ...formData, owners: newOwners };
+    setFormData(updatedData);
+    onUpdate(updatedData);
+  };
   
   const DataTag = ({ icon: Icon, label, value, colorClass = "text-slate-400" }: any) => (
     <div className="flex items-center gap-3 bg-slate-900 border border-slate-800 p-3 rounded-xl transition-all">
@@ -163,11 +182,23 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
 
          <div className="w-full md:w-[500px] bg-slate-900/30 flex flex-col h-full overflow-hidden shrink-0">
               <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/50">
-                 {isAdmin && (
-                    <button onClick={isEditing ? handleSave : () => setIsEditing(true)} className={`flex items-center gap-2 px-6 py-2 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all ${isEditing ? 'bg-emerald-600 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-white/5 text-brand-400 hover:bg-white/10 border border-white/10'}`}>
-                       {isEditing ? <Save className="w-4 h-4"/> : <Edit2 className="w-4 h-4"/>} {isEditing ? 'Gravar Alterações' : 'Editar Ficha'}
-                    </button>
-                 )}
+                 <div className="flex items-center gap-2">
+                   {isAdmin && (
+                      <button onClick={isEditing ? handleSave : () => setIsEditing(true)} className={`flex items-center gap-2 px-6 py-2 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all ${isEditing ? 'bg-emerald-600 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-white/5 text-brand-400 hover:bg-white/10 border border-white/10'}`}>
+                         {isEditing ? <Save className="w-4 h-4"/> : <Edit2 className="w-4 h-4"/>} {isEditing ? 'Gravar Alterações' : 'Editar Ficha'}
+                      </button>
+                   )}
+                   {currentUser && !isEditing && (
+                     <button 
+                       onClick={handleToggleSave}
+                       className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all border ${isSaved ? 'bg-brand-600 text-white border-brand-400/50' : 'bg-white/5 text-slate-400 border-white/10 hover:bg-white/10'}`}
+                       title={isSaved ? "Remover da Coleção" : "Adicionar à Coleção"}
+                     >
+                       <Star className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
+                       {isSaved ? "Marcado" : "Marcar"}
+                     </button>
+                   )}
+                 </div>
                  {!isEditing && isAdmin && (
                     <button onClick={handleDelete} className="p-2 text-slate-500 hover:text-red-500 transition-colors"><Trash2 className="w-6 h-6"/></button>
                  )}

@@ -4,7 +4,7 @@ import {
   Ticket, Lock, LogOut, BookOpen, Home, 
   BarChart2, ChevronDown, Globe, User, 
   Info, Database, ClipboardList, ChevronRight, Map as MapIcon, Radio, Menu, X as CloseIcon,
-  Download, Upload, MapPin
+  Download, Upload, MapPin, Star
 } from 'lucide-react';
 import { Language } from '../translations';
 import { Continent } from '../types';
@@ -29,6 +29,7 @@ interface HeaderProps {
   countriesByContinent?: Record<string, string[]>;
   onCountrySelect?: (continent: Continent, country: string) => void;
   recentCount?: number;
+  collectionCount?: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
@@ -38,7 +39,8 @@ export const Header: React.FC<HeaderProps> = ({
   currentPage, onNavigate, t,
   countriesByContinent = {},
   onCountrySelect,
-  recentCount = 0
+  recentCount = 0,
+  collectionCount = 0
 }) => {
   const [showTools, setShowTools] = useState(false);
   const [showExplore, setShowExplore] = useState(false);
@@ -154,6 +156,17 @@ export const Header: React.FC<HeaderProps> = ({
            <button onClick={() => onNavigate('stats')} className={`p-3 rounded-full transition-all ${currentPage === 'stats' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/10'}`} title={t.stats}>
              <BarChart2 className="w-5 h-5 md:w-6 md:h-6" />
            </button>
+
+           {currentUser && (
+             <button onClick={() => onNavigate('collection')} className={`p-3 rounded-full transition-all flex items-center gap-1 relative ${currentPage === 'collection' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/10'}`} title={t.myCollection}>
+               <Star className={`w-5 h-5 md:w-6 md:h-6 ${currentPage === 'collection' ? 'fill-current' : ''}`} />
+               {collectionCount > 0 && (
+                 <span className="absolute top-1 right-1 bg-brand-500 text-white text-[8px] font-black w-4 h-4 flex items-center justify-center rounded-full border border-slate-900">
+                   {collectionCount}
+                 </span>
+               )}
+             </button>
+           )}
 
            <button onClick={onHistoryClick} className="p-3 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-all" title={t.history}>
              <BookOpen className="w-5 h-5 md:w-6 md:h-6" />
