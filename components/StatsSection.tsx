@@ -64,26 +64,26 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
   ];
 
   const stateDonutData = useMemo(() => {
-    const vals = Object.values(stateStats) as number[];
-    const total = vals.reduce((a: number, b: number) => a + b, 0) || 1;
+    const total = totalRecords || 1;
     
     const countMint = Number(stateStats['MINT']) || 0;
     const countSC = Number(stateStats['SC']) || 0;
     const countCS = Number(stateStats['CS']) || 0;
     
+    // Lista de todos os estados que contam como Amostra/Specimen técnica
+    const sampleKeys = ['AMOSTRA', 'VOID', 'SAMPLE', 'MUESTRA', 'CAMPIONE', '样本', 'MUSTER', 'PRØVE'];
+    const countSamples = sampleKeys.reduce((acc, key) => acc + (Number(stateStats[key]) || 0), 0);
+    
     const pMint = (countMint / total) * 100;
     const pSC = (countSC / total) * 100;
     const pCS = (countCS / total) * 100;
-    const pAmostra = 100 - (pMint + pSC + pCS);
+    const pSamples = (countSamples / total) * 100;
 
     return {
-      pMint, pSC, pCS, pAmostra,
-      stop1: pMint,
-      stop2: pMint + pSC,
-      stop3: pMint + pSC + pCS,
+      pMint, pSC, pCS, pSamples,
       total
     };
-  }, [stateStats]);
+  }, [stateStats, totalRecords]);
 
   const isChloe = currentUser?.toUpperCase() === 'CHLOE';
 
@@ -91,7 +91,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
     <div className="w-full bg-[#020617] py-4 pb-20 animate-fade-in relative">
       <div className="max-w-6xl mx-auto px-4 relative z-10">
         
-        {/* Welcome Card - Very Compact */}
+        {/* Welcome Card */}
         <div className="mb-6 bg-slate-900/40 border border-brand-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl backdrop-blur-sm">
            <div className={`w-12 h-12 rounded-xl flex items-center justify-center border bg-brand-500/10 border-brand-500 shadow-lg shrink-0`}>
               {isChloe ? <Sparkles className="w-6 h-6 text-white" /> : <User className="w-6 h-6 text-white" />}
@@ -114,7 +114,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
            </button>
         </div>
 
-        {/* Insight - Compact */}
+        {/* Insight */}
         {chloeMessage && (
           <div className="mb-6 bg-brand-600/10 border border-brand-500/30 rounded-2xl p-4 animate-bounce-in">
              <div className="flex items-start gap-3">
@@ -126,7 +126,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
           </div>
         )}
 
-        {/* Info Cards Row - Compact */}
+        {/* Info Cards Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
            {[
              { label: t.totalRecords, val: totalRecords, icon: Database, color: 'text-brand-500' },
@@ -144,7 +144,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
            ))}
         </div>
 
-        {/* Main Charts - Resized Height */}
+        {/* Main Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-4 min-h-[220px] flex flex-col">
             <h3 className="text-[8px] font-black text-slate-500 mb-6 uppercase tracking-widest flex items-center gap-2">
@@ -175,21 +175,30 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, categoryStats
                 </div>
                 <div className="flex-1 pl-4 space-y-1">
                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-1">Estados Físicos</span>
-                   {['MINT', 'SC', 'CS'].map((s, idx) => (
-                     <div key={s} className="flex justify-between items-center text-[8px] font-black uppercase">
-                        <span className="text-slate-400">{s}</span>
-                        <span className="text-brand-500">
-                          {idx === 0 ? Math.round(stateDonutData.pMint) : idx === 1 ? Math.round(stateDonutData.pSC) : Math.round(stateDonutData.pCS)}%
-                        </span>
-                     </div>
-                   ))}
+                   <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-[8px] font-black uppercase">
+                         <span className="text-slate-400">MINT</span>
+                         <span className="text-brand-500">{Math.round(stateDonutData.pMint)}%</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[8px] font-black uppercase">
+                         <span className="text-slate-400">SC</span>
+                         <span className="text-brand-500">{Math.round(stateDonutData.pSC)}%</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[8px] font-black uppercase">
+                         <span className="text-slate-400">CS</span>
+                         <span className="text-brand-500">{Math.round(stateDonutData.pCS)}%</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[8px] font-black uppercase p-1 bg-purple-500/10 rounded border border-purple-500/20">
+                         <span className="text-purple-400">Amostras</span>
+                         <span className="text-purple-400">{Math.round(stateDonutData.pSamples)}%</span>
+                      </div>
+                   </div>
                 </div>
              </div>
 
              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
                 <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-3">Ranking Nações</span>
                 <div className="space-y-2">
-                   {/* Explicitly cast Object.entries to resolve 'unknown' type inference on sorting operands */}
                    {(Object.entries(countryStats) as [string, number][]).sort((a,b) => b[1] - a[1]).slice(0, 3).map(([c, v], idx) => (
                       <div key={c} className="flex items-center justify-between group">
                          <span className="text-[9px] font-black text-slate-300 uppercase truncate max-w-[80px]">{idx+1}. {c}</span>
