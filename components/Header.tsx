@@ -3,7 +3,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import { 
   Ticket, Lock, LogOut, BookOpen, Home, 
   BarChart2, ChevronDown, Globe, User, Smartphone, 
-  Info, Database, FileJson, FileSpreadsheet, ClipboardList, UploadCloud, ChevronRight, MapPin, Map as MapIcon, Zap, Radio, Menu, X as CloseIcon
+  Info, Database, FileJson, FileSpreadsheet, ClipboardList, UploadCloud, ChevronRight, MapPin, Map as MapIcon, Zap, Radio, Menu, X as CloseIcon,
+  Download, Upload
 } from 'lucide-react';
 import { Language } from '../translations';
 import { Continent } from '../types';
@@ -45,12 +46,16 @@ export const Header: React.FC<HeaderProps> = ({
   const [activeSubMenu, setActiveSubMenu] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const exploreRef = useRef<HTMLDivElement>(null);
+  const toolsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (exploreRef.current && !exploreRef.current.contains(event.target as Node)) {
         setShowExplore(false);
         setActiveSubMenu(null);
+      }
+      if (toolsRef.current && !toolsRef.current.contains(event.target as Node)) {
+        setShowTools(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -89,7 +94,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Desktop Navigation - Aparece a partir de MD agora (768px) */}
+      {/* Desktop Navigation */}
       <nav className="hidden md:flex items-center gap-1">
          <button 
            onClick={() => onNavigate('home')}
@@ -126,9 +131,36 @@ export const Header: React.FC<HeaderProps> = ({
            <BarChart2 className="w-4 h-4" /> {t.stats}
          </button>
 
+         {/* Botão Sobre */}
+         <button onClick={() => onNavigate('about')} className={`px-3 py-2 rounded-full text-[11px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${currentPage === 'about' ? 'bg-brand-500 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+           <Info className="w-4 h-4" /> Sobre
+         </button>
+
          <button onClick={onRadioClick} className="px-3 py-2 rounded-full text-[11px] font-black uppercase tracking-widest flex items-center gap-2 transition-all text-slate-400 hover:text-white hover:bg-slate-800">
            <Radio className="w-4 h-4 text-brand-500" /> Rádios
          </button>
+
+         {/* Menu JSON/Backup */}
+         <div className="relative" ref={toolsRef}>
+            <button onClick={() => setShowTools(!showTools)} className={`px-3 py-2 rounded-full text-[11px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${showTools ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <Database className="w-4 h-4" /> JSON <ChevronDown className={`w-3 h-3 transition-transform ${showTools ? 'rotate-180' : ''}`} />
+            </button>
+            {showTools && (
+              <div className="absolute top-full right-0 mt-2 w-56 bg-[#0a0f1e] border border-slate-800 rounded-xl shadow-2xl p-2 z-[120] animate-fade-in">
+                 <button onClick={onExport} className="w-full text-left px-3 py-2.5 text-[10px] text-slate-300 hover:bg-slate-800 rounded-lg font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                    <Download className="w-4 h-4 text-brand-500" /> Exportar Backup (JSON)
+                 </button>
+                 <button onClick={handleImportClick} className="w-full text-left px-3 py-2.5 text-[10px] text-slate-300 hover:bg-slate-800 rounded-lg font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                    <Upload className="w-4 h-4 text-emerald-500" /> Importar Backup (JSON)
+                 </button>
+                 <div className="h-px bg-slate-800 my-1 mx-2"></div>
+                 <button onClick={onExportTXT} className="w-full text-left px-3 py-2.5 text-[10px] text-slate-300 hover:bg-slate-800 rounded-lg font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                    <ClipboardList className="w-4 h-4 text-orange-500" /> Minha Checklist (TXT)
+                 </button>
+                 <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileChange} />
+              </div>
+            )}
+         </div>
       </nav>
 
       {/* Right Actions */}
@@ -166,8 +198,11 @@ export const Header: React.FC<HeaderProps> = ({
           <button onClick={() => { onNavigate('home'); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><Home className="w-5 h-5 text-brand-500" /> {t.home}</button>
           <button onClick={() => { onNavigate('map'); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><MapIcon className="w-5 h-5 text-brand-500" /> Mapa Mundial</button>
           <button onClick={() => { onNavigate('stats'); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><BarChart2 className="w-5 h-5 text-brand-500" /> Estatísticas</button>
+          <button onClick={() => { onNavigate('about'); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><Info className="w-5 h-5 text-brand-500" /> Sobre o Legado</button>
           <button onClick={() => { onRadioClick(); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><Radio className="w-5 h-5 text-brand-500" /> Rádios PT</button>
           <button onClick={() => { onHistoryClick(); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><BookOpen className="w-5 h-5 text-brand-500" /> Biblioteca</button>
+          <div className="h-px bg-slate-800 my-2"></div>
+          <button onClick={() => { onExport(); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><Database className="w-5 h-5 text-brand-500" /> Exportar Backup</button>
         </div>
       )}
     </header>

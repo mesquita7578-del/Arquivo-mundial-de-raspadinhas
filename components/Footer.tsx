@@ -13,12 +13,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onI
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-[#020617] border-t border-slate-900 px-6 py-4 sticky bottom-0 z-[100] w-full shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-brand-500/30 to-transparent"></div>
-      
-      <div className="max-w-[1800px] mx-auto flex flex-col gap-4">
+    <footer className="bg-[#020617] border-t border-slate-900 px-6 py-10 w-full shadow-[0_-10px_30px_rgba(0,0,0,0.5)] mt-auto">
+      <div className="max-w-[1800px] mx-auto flex flex-col gap-6">
         
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           
           <div className="flex items-center gap-3 order-2 md:order-1 flex-1 justify-end group cursor-default">
             <div className="flex flex-col items-end">
@@ -45,7 +43,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onI
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between pt-3 border-t border-white/5 gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-between pt-6 border-t border-white/5 gap-4">
           <div className="flex items-center gap-4">
             <span className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em]">
               © {currentYear} ARQUIVO MUNDIAL • PORTO É NAÇÃO 🐉
@@ -56,6 +54,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onI
                 className="text-[9px] font-black text-slate-500 hover:text-brand-400 uppercase tracking-[0.1em] transition-colors"
               >
                 Diretório
+              </button>
+              <button 
+                onClick={() => onNavigate('about')}
+                className="text-[9px] font-black text-slate-500 hover:text-brand-400 uppercase tracking-[0.1em] transition-colors"
+              >
+                Sobre o Projeto
               </button>
             </div>
           </div>
@@ -72,7 +76,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onI
               onClick={() => window.location.reload()}
             >
                <RefreshCw className="w-3 h-3" />
-               <span className="text-[8px] font-black uppercase">F5</span>
+               <span className="text-[8px] font-black uppercase">Recarregar</span>
             </button>
           </div>
         </div>

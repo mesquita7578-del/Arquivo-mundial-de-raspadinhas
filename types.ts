@@ -55,6 +55,7 @@ export interface ScratchcardData {
   isWinner?: boolean;
   seriesGroupId?: string;
   isSeries?: boolean;
+  seriesDetails?: string;
 }
 
 export interface AnalysisResult {

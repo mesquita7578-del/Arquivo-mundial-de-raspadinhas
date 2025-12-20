@@ -6,7 +6,7 @@ import {
   Building2, Globe, Fingerprint,
   Sparkles, Columns, Ruler, Printer, Banknote, ScanLine,
   Layers, LayoutGrid, Eye, Calendar, ChevronDown, User,
-  Tag, ShieldCheck, Palette, Activity, Percent, Plus, RefreshCw
+  Tag, ShieldCheck, Palette, Activity, Percent, Plus, RefreshCw, Layers as LayersIcon
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent, LineType, CategoryItem } from '../types';
 
@@ -249,6 +249,36 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                             </label>
                           </div>
 
+                          {/* Seção Série no modo Edição */}
+                          <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 space-y-4">
+                            <label className="flex items-center gap-3 cursor-pointer group">
+                               <div className="relative">
+                                  <input 
+                                    type="checkbox" 
+                                    checked={formData.isSeries} 
+                                    onChange={e => handleChange('isSeries', e.target.checked)} 
+                                    className="sr-only" 
+                                  />
+                                  <div className={`w-10 h-5 bg-slate-800 rounded-full transition-colors ${formData.isSeries ? 'bg-brand-600' : ''}`}></div>
+                                  <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${formData.isSeries ? 'translate-x-5' : ''}`}></div>
+                               </div>
+                               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white transition-colors">É Série (SET)?</span>
+                            </label>
+
+                            {formData.isSeries && (
+                              <div className="animate-fade-in space-y-2">
+                                <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Detalhes da Série:</span>
+                                <input 
+                                  type="text" 
+                                  value={formData.seriesDetails || ''} 
+                                  onChange={e => handleChange('seriesDetails', e.target.value)} 
+                                  placeholder="Nºs (ex: 1-5)" 
+                                  className="w-full bg-slate-950 text-white text-xs p-3 border border-slate-800 rounded-xl outline-none focus:border-brand-500 shadow-inner" 
+                                />
+                              </div>
+                            )}
+                          </div>
+
                           <div className="grid grid-cols-2 gap-4">
                             <label className="col-span-2">
                                <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Operador dos Jogo:</span>
@@ -348,6 +378,11 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                        <DataTag icon={Printer} label="Impresso por" value={formData.printer} colorClass="text-slate-400" />
                        <DataTag icon={ScanLine} label="Cores das linhas" value={formData.lines} colorClass="text-emerald-500" />
                        <DataTag icon={Activity} label="Estado Exemplar" value={formData.state} colorClass="text-brand-400" />
+                       {formData.isSeries && (
+                         <div className="col-span-2">
+                           <DataTag icon={LayersIcon} label="Coleção / Detalhes Série" value={formData.seriesDetails || 'Sim (SET)'} colorClass="text-brand-500" />
+                         </div>
+                       )}
                     </div>
                  )}
 

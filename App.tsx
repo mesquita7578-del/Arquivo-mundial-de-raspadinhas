@@ -11,6 +11,7 @@ import { WorldMap } from './components/WorldMap';
 import { HistoryModal } from './components/HistoryModal';
 import { WebsitesModal } from './components/WebsitesModal';
 import { RadioModal } from './components/RadioModal';
+import { AboutPage } from './components/AboutPage';
 import { Footer } from './components/Footer';
 import { storageService } from './services/storage';
 import { ScratchcardData, CategoryItem, SiteMetadata, Continent } from './types';
@@ -62,7 +63,6 @@ const App: React.FC = () => {
       } catch (err) {
         console.error("Erro no carregamento do Arquivo:", err);
       } finally {
-        // Pequeno atraso para garantir que a UI não pisque
         setTimeout(() => setIsLoading(false), 800);
       }
     };
@@ -133,6 +133,18 @@ const App: React.FC = () => {
     reader.readAsText(file);
   };
 
+  const handleExportTXT = () => {
+    const content = images.map(img => `${img.gameNumber} - ${img.gameName} (${img.country})`).join('\n');
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `checklist-arquivo-${new Date().toISOString().split('T')[0]}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    addSignal("Checklist gerada com sucesso! hihi!", "success");
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#020617] text-slate-100 gap-6">
@@ -165,6 +177,8 @@ const App: React.FC = () => {
         onRadioClick={() => setShowRadio(true)}
         onExport={handleExport}
         onImport={handleImport}
+        onExportTXT={handleExportTXT}
+        onExportCSV={() => {}}
         t={t.header}
         recentCount={images.filter(img => (Date.now() - (img.createdAt || 0)) < 86400000).length}
         onCountrySelect={(cont, country) => {
@@ -172,8 +186,11 @@ const App: React.FC = () => {
           setActiveCountry(country);
           setCurrentPage('home');
         }}
-        onExportCSV={() => {}}
-        onExportTXT={() => {}}
+        countriesByContinent={images.reduce((acc, img) => {
+          if (!acc[img.continent]) acc[img.continent] = [];
+          if (!acc[img.continent].includes(img.country)) acc[img.continent].push(img.country);
+          return acc;
+        }, {} as any)}
       />
 
       <main className="flex-1 flex flex-col min-h-0">
@@ -258,6 +275,24 @@ const App: React.FC = () => {
                t={t.grid}
              />
            </div>
+        )}
+
+        {currentPage === 'about' && (
+          <AboutPage 
+            t={t.about} 
+            isAdmin={isAdmin}
+            founderPhoto={siteMetadata?.founderPhotoUrl}
+            founderBio={siteMetadata?.founderBio}
+            founderQuote={siteMetadata?.founderQuote}
+            milestones={siteMetadata?.milestones}
+            onUpdateFounderPhoto={(url) => setSiteMetadata(prev => prev ? {...prev, founderPhotoUrl: url} : {id: 'site_settings', founderPhotoUrl: url})}
+            onUpdateMetadata={(data) => {
+               const updated = {...siteMetadata, ...data} as SiteMetadata;
+               setSiteMetadata(updated);
+               storageService.saveSiteMetadata(updated);
+               addSignal("Memórias atualizadas! hihi!", "success");
+            }}
+          />
         )}
       </main>
 
