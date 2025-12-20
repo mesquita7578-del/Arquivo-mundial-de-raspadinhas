@@ -5,7 +5,7 @@ import {
   BarChart3, Database, Map, PieChart, Users, Award, Ticket, 
   Coins, Crown, Star, Sparkles, Flag, Globe, Mail, 
   ShieldCheck, LayoutGrid, CheckCircle2, RotateCcw, 
-  User, Zap, TrendingUp, MessageCircle, Loader2, Banknote, AlertTriangle
+  User, Zap, TrendingUp, MessageCircle, Loader2, Banknote
 } from 'lucide-react';
 import { getChloeInsight } from '../services/geminiService';
 
@@ -36,36 +36,13 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categ
     return vals.length > 0 ? Math.max(...vals) : 1;
   }, [stats]);
 
-  // Cálculos Financeiros Separados
-  const financialSummary = useMemo(() => {
-    let mintCount = 0;
-    let mintTotal = 0;
-    let grandTotal = 0;
-    let suspectItems: string[] = [];
-
-    images.forEach(img => {
-      if (img.price) {
-        const cleanPrice = img.price.replace(/[^\d,.]/g, '').replace(',', '.');
-        const val = parseFloat(cleanPrice);
-        
-        if (!isNaN(val)) {
-          grandTotal += val;
-          
-          // APENAS MINT (Garantir comparação sem erro de maiúsculas)
-          if (img.state?.toUpperCase() === 'MINT') {
-            mintCount++;
-            mintTotal += val;
-            
-            // Detetar valores suspeitos (ex: um preço de 5000€ numa raspadinha é provável que seja o Nº do Jogo)
-            if (val > 250) {
-              suspectItems.push(img.gameName);
-            }
-          }
-        }
-      }
-    });
+  // Contador de itens por estado (sem valores monetários)
+  const itemCounts = useMemo(() => {
+    const mintCount = images.filter(img => img.state?.toUpperCase() === 'MINT').length;
+    const scratchCount = images.filter(img => img.category === 'raspadinha').length;
+    const lotteryCount = images.filter(img => img.category === 'lotaria').length;
     
-    return { mintTotal, mintCount, grandTotal, suspectItems };
+    return { mintCount, scratchCount, lotteryCount };
   }, [images]);
 
   const handleAskChloe = async () => {
@@ -92,7 +69,6 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categ
     const total = totalRecords || 1;
     const countMint = Number(stateStats['MINT']) || 0;
     const countSC = Number(stateStats['SC']) || 0;
-    const countCS = Number(stateStats['CS']) || 0;
     
     const sampleKeys = ['AMOSTRA', 'VOID', 'SAMPLE', 'MUESTRA', 'CAMPIONE', '样本', 'MUSTER', 'PRØVE'];
     const countSamples = sampleKeys.reduce((acc, key) => acc + (Number(stateStats[key]) || 0), 0);
@@ -100,7 +76,6 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categ
     return {
       pMint: (countMint / total) * 100,
       pSC: (countSC / total) * 100,
-      pCS: (countCS / total) * 100,
       pSamples: (countSamples / total) * 100,
       total
     };
@@ -135,31 +110,42 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categ
            </button>
         </div>
 
-        {/* Info Cards Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+        {/* Insight */}
+        {chloeMessage && (
+          <div className="mb-6 bg-brand-600/10 border border-brand-500/30 rounded-2xl p-4 animate-bounce-in">
+             <div className="flex items-start gap-3">
+                <Sparkles className="w-4 h-4 text-brand-400 shrink-0" />
+                <p className="text-sm text-slate-100 font-bold italic leading-tight tracking-tight uppercase">
+                   "{chloeMessage}"
+                </p>
+             </div>
+          </div>
+        )}
+
+        {/* Info Cards Row - APENAS QUANTIDADES */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
            {[
              { label: t.totalRecords, val: totalRecords, icon: Database, color: 'text-brand-500' },
-             { label: 'Nações', val: Object.keys(countryStats).length, icon: Globe, color: 'text-cyan-500' },
+             { label: 'Países Catalogados', val: Object.keys(countryStats).length, icon: Globe, color: 'text-cyan-500' },
              { 
-                label: 'Cofre MINT', 
-                val: `${financialSummary.mintTotal.toFixed(2)}€`, 
+                label: 'Itens MINT (Novos)', 
+                val: itemCounts.mintCount, 
                 icon: Crown, 
                 color: 'text-amber-400 border-amber-500/30 bg-amber-500/5',
-                sub: `${financialSummary.mintCount} itens novos`
+                sub: 'Exemplares Impecáveis'
              },
              { 
-                label: 'Investimento Total', 
-                val: `${financialSummary.grandTotal.toFixed(2)}€`, 
-                icon: Banknote, 
-                color: 'text-slate-400 border-slate-700/50 bg-slate-800/20',
-                sub: `Todos os estados`
-             },
-             { label: 'Lotarias', val: categoryStats.lottery, icon: Ticket, color: 'text-white' }
+                label: 'Total Lotarias', 
+                val: itemCounts.lotteryCount, 
+                icon: Ticket, 
+                color: 'text-white border-slate-700/50 bg-slate-800/20',
+                sub: 'Documentos e Bilhetes'
+             }
            ].map((card, i) => (
              <div key={i} className={`bg-slate-900 border ${card.color.includes('border') ? card.color : 'border-slate-800'} p-4 rounded-xl flex flex-col justify-between`}>
                 <div className="flex justify-between items-center mb-1">
                    <card.icon className={`w-4 h-4 ${card.color.split(' ')[0]}`} />
-                   <span className="text-[13px] font-black text-white font-mono">{card.val}</span>
+                   <span className="text-[18px] font-black text-white font-mono tracking-tighter">{card.val}</span>
                 </div>
                 <div className="mt-1">
                    <p className="text-[7px] text-slate-500 font-black uppercase tracking-widest">{card.label}</p>
@@ -168,20 +154,6 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categ
              </div>
            ))}
         </div>
-
-        {/* ALERTA DE VALORES SUSPEITOS */}
-        {financialSummary.suspectItems.length > 0 && (
-           <div className="mb-6 bg-red-950/20 border border-red-500/30 p-4 rounded-2xl flex items-start gap-4 animate-pulse">
-              <AlertTriangle className="w-6 h-6 text-red-500 shrink-0" />
-              <div>
-                 <h4 className="text-[10px] font-black text-red-400 uppercase tracking-widest">Aviso da Chloe: Valores Suspeitos! hihi!</h4>
-                 <p className="text-[9px] text-slate-400 mt-1 font-bold">
-                    Vovô, encontrei preços muito altos em alguns itens MINT (ex: {financialSummary.suspectItems.slice(0, 2).join(', ')}). 
-                    Confirme se não guardou o "Nº do Jogo" no campo do "Preço" por engano! hihi!
-                 </p>
-              </div>
-           </div>
-        )}
 
         {/* Main Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
