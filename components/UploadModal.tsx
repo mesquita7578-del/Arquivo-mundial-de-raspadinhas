@@ -4,7 +4,7 @@ import {
   X, Upload, Sparkles, Check, Loader2, ArrowLeft, 
   ImageIcon, ScanLine, Star, Hash, Globe, 
   Printer, Ruler, Banknote, Clock, Info, MapPin, 
-  Building2, Layers, User, Palette, Activity, Percent, Calendar, AlertCircle, Ship
+  Building2, Layers, User, Palette, Activity, Percent, Calendar, AlertCircle, Ship, ImagePlus, Trash2
 } from 'lucide-react';
 import { ScratchcardData, Category, ScratchcardState, LineType, CategoryItem } from '../types';
 import { analyzeImage } from '../services/geminiService';
@@ -53,6 +53,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
   const [backFile, setBackFile] = useState<File | null>(null);
   const [frontPreview, setFrontPreview] = useState<string | null>(null);
   const [backPreview, setBackPreview] = useState<string | null>(null);
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
@@ -79,6 +80,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
   const frontInputRef = useRef<HTMLInputElement>(null);
   const backInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const suggestions = useMemo(() => {
     const unique = (arr: any[]) => Array.from(new Set(arr.filter(Boolean)));
@@ -98,19 +100,37 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     if (initialFile) handleFrontSelect(initialFile);
   }, [initialFile]);
 
+  // Fix: Explicitly casting file to Blob to resolve "Argument of type 'unknown' is not assignable to parameter of type 'Blob'"
   const handleFrontSelect = (file: File) => {
     setFrontFile(file);
     const reader = new FileReader();
     reader.onload = (e) => setFrontPreview(e.target?.result as string);
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(file as Blob);
     setAnalysisError(null);
   };
 
+  // Fix: Explicitly casting file to Blob to resolve "Argument of type 'unknown' is not assignable to parameter of type 'Blob'"
   const handleBackSelect = (file: File) => {
     setBackFile(file);
     const reader = new FileReader();
     reader.onload = (e) => setBackPreview(e.target?.result as string);
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(file as Blob);
+  };
+
+  // Fix: Explicitly typing as File[] and casting each file to Blob during iteration to resolve TS inference issues
+  const handleGallerySelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []) as File[];
+    files.forEach((file: File) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setGalleryPreviews(prev => [...prev, event.target?.result as string]);
+      };
+      reader.readAsDataURL(file as Blob);
+    });
+  };
+
+  const removeGalleryImage = (index: number) => {
+    setGalleryPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const processImage = async () => {
@@ -153,6 +173,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       customId: formData.customId || generatedId,
       frontUrl: frontPreview || '',
       backUrl: backPreview || undefined,
+      gallery: galleryPreviews.length > 0 ? galleryPreviews : undefined,
       gameName: formData.gameName || '',
       gameNumber: formData.gameNumber || '',
       releaseDate: formData.releaseDate || '',
@@ -190,11 +211,11 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     return (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
         <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-8 shadow-2xl relative">
-           <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-white"><X className="w-6 h-6"/></button>
+           <button className="absolute top-6 right-6 text-slate-500 hover:text-white" onClick={onClose}><X className="w-6 h-6"/></button>
            <h2 className="text-2xl font-black text-white mb-8 italic uppercase tracking-tighter flex items-center gap-3">
              <Upload className="w-6 h-6 text-brand-500"/> Novo Registo
            </h2>
-           <div className="grid grid-cols-2 gap-4 mb-8">
+           <div className="grid grid-cols-2 gap-4 mb-4">
               <div onClick={() => frontInputRef.current?.click()} className="aspect-square border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-brand-500 transition-all relative overflow-hidden bg-slate-950">
                 {frontPreview ? <img src={frontPreview} className="absolute inset-0 w-full h-full object-contain" /> : <><ImageIcon className="w-8 h-8 text-slate-700 mb-2"/><span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Frente</span></>}
                 <input type="file" ref={frontInputRef} className="hidden" accept="image/*" onChange={e => e.target.files?.[0] && handleFrontSelect(e.target.files[0])} />
@@ -204,11 +225,40 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                 <input type="file" ref={backInputRef} className="hidden" accept="image/*" onChange={e => e.target.files?.[0] && handleBackSelect(e.target.files[0])} />
               </div>
            </div>
+
+           {/* Seção de Galeria para Séries */}
+           <div className="mb-8">
+              <div className="flex items-center justify-between mb-3">
+                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                    <Layers className="w-3 h-3" /> Galeria da Série / Conjunto
+                 </span>
+                 <button 
+                   onClick={() => galleryInputRef.current?.click()}
+                   className="flex items-center gap-1.5 px-3 py-1 bg-brand-600/20 text-brand-400 rounded-full text-[8px] font-black uppercase tracking-widest hover:bg-brand-600 hover:text-white transition-all"
+                 >
+                   <ImagePlus className="w-3 h-3" /> Adicionar Mais
+                 </button>
+                 <input type="file" ref={galleryInputRef} className="hidden" accept="image/*" multiple onChange={handleGallerySelect} />
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                 {galleryPreviews.map((prev, i) => (
+                    <div key={i} className="relative w-16 h-16 shrink-0 rounded-lg border border-slate-800 overflow-hidden bg-slate-950 group">
+                       <img src={prev} className="w-full h-full object-cover" />
+                       <button onClick={() => removeGalleryImage(i)} className="absolute top-0.5 right-0.5 bg-red-600 text-white p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-2 h-2"/></button>
+                    </div>
+                 ))}
+                 {galleryPreviews.length === 0 && (
+                    <div className="w-full py-4 border border-dashed border-slate-800 rounded-xl flex items-center justify-center">
+                       <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest italic">Nenhuma imagem extra adicionada</span>
+                    </div>
+                 )}
+              </div>
+           </div>
+
            <button onClick={processImage} disabled={!frontFile || isAnalyzing} className="w-full bg-brand-600 hover:bg-brand-500 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl disabled:opacity-50 neon-glow-blue">
              {isAnalyzing ? <Loader2 className="animate-spin w-5 h-5"/> : <Sparkles className="w-5 h-5"/>}
              {isAnalyzing ? "CHLOE A ANALISAR..." : "CHLOE: PREENCHER AUTOMATICAMENTE"}
            </button>
-           {!frontFile && <p className="text-center text-[9px] text-slate-600 font-black uppercase tracking-widest mt-4 animate-pulse">Selecione pelo menos a frente para a Chloe ler! hihi!</p>}
         </div>
       </div>
     );
@@ -239,9 +289,14 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                       <div className="bg-slate-950 rounded-2xl p-2 border border-slate-800 shadow-2xl">
                          <img src={frontPreview || ''} className="w-full rounded-xl object-contain max-h-[400px]" />
                       </div>
-                      {backPreview && (
-                         <div className="bg-slate-950 rounded-2xl p-2 border border-slate-800 shadow-2xl">
-                            <img src={backPreview} className="w-full rounded-xl object-contain max-h-[300px]" />
+                      
+                      {/* Galeria de Thumbnails no Editor */}
+                      {(backPreview || galleryPreviews.length > 0) && (
+                         <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800 flex flex-wrap gap-2">
+                            {backPreview && <div className="w-20 h-20 rounded-lg border border-brand-500/30 overflow-hidden"><img src={backPreview} className="w-full h-full object-cover" /></div>}
+                            {galleryPreviews.map((g, i) => (
+                               <div key={i} className="w-20 h-20 rounded-lg border border-slate-700 overflow-hidden opacity-70"><img src={g} className="w-full h-full object-cover" /></div>
+                            ))}
                          </div>
                       )}
                    </div>

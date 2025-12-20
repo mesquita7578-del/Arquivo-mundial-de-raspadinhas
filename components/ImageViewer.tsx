@@ -7,7 +7,7 @@ import {
   Ruler, Printer, Banknote, ScanLine,
   LayoutGrid, Eye, User,
   RefreshCw, Layers as LayersIcon, ChevronLeft, ChevronRight,
-  Maximize2, Activity, Ship, Palette, Calendar, Percent, Check, Star
+  Maximize2, Activity, Ship, Palette, Calendar, Percent, Check, Star, ImagePlus
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent, LineType, CategoryItem } from '../types';
 
@@ -55,36 +55,50 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<ScratchcardData>(image);
   const [activeImage, setActiveImage] = useState<string>(image.frontUrl);
-  const [activeLabel, setActiveLabel] = useState<'front' | 'back'>('front');
+  const [activeIndex, setActiveIndex] = useState(0);
   
-  const currentIndex = useMemo(() => contextImages.findIndex(img => img.id === image.id), [image, contextImages]);
-  const hasNext = currentIndex < contextImages.length - 1;
-  const hasPrev = currentIndex > 0;
+  const currentIndexInContext = useMemo(() => contextImages.findIndex(img => img.id === image.id), [image, contextImages]);
+  const hasNextRecord = currentIndexInContext < contextImages.length - 1;
+  const hasPrevRecord = currentIndexInContext > 0;
+
+  // Montar a galeria local deste registro
+  const localGallery = useMemo(() => {
+    const gal = [image.frontUrl];
+    if (image.backUrl) gal.push(image.backUrl);
+    if (image.gallery) gal.push(...image.gallery);
+    return gal;
+  }, [image]);
 
   const isSaved = useMemo(() => {
     if (!currentUser) return false;
     return formData.owners?.includes(currentUser);
   }, [formData.owners, currentUser]);
 
-  const handleNext = () => { if (hasNext) onImageSelect(contextImages[currentIndex + 1]); };
-  const handlePrev = () => { if (hasPrev) onImageSelect(contextImages[currentIndex - 1]); };
+  const handleNextRecord = () => { if (hasNextRecord) onImageSelect(contextImages[currentIndexInContext + 1]); };
+  const handlePrevRecord = () => { if (hasPrevRecord) onImageSelect(contextImages[currentIndexInContext - 1]); };
+
+  const handleNextImage = () => { setActiveIndex(prev => (prev + 1) % localGallery.length); };
+  const handlePrevImage = () => { setActiveIndex(prev => (prev - 1 + localGallery.length) % localGallery.length); };
+
+  useEffect(() => {
+    setActiveImage(localGallery[activeIndex]);
+  }, [activeIndex, localGallery]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isEditing) return;
-      if (e.key === 'ArrowRight') handleNext();
-      if (e.key === 'ArrowLeft') handlePrev();
+      if (e.key === 'ArrowRight') handleNextRecord();
+      if (e.key === 'ArrowLeft') handlePrevRecord();
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, isEditing]);
+  }, [currentIndexInContext, isEditing]);
 
   useEffect(() => {
     if (image) {
       setFormData(image);
-      setActiveImage(image.frontUrl);
-      setActiveLabel('front');
+      setActiveIndex(0);
       setIsEditing(false);
     }
   }, [image]);
@@ -123,27 +137,19 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   );
 
   const toggleImage = () => {
-    if (formData.backUrl) {
-       if (activeLabel === 'front') {
-          setActiveImage(formData.backUrl);
-          setActiveLabel('back');
-       } else {
-          setActiveImage(formData.frontUrl);
-          setActiveLabel('front');
-       }
-    }
+    setActiveIndex(prev => (prev + 1) % localGallery.length);
   };
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md" onClick={onClose}>
       
-      {hasPrev && (
-        <button onClick={(e) => { e.stopPropagation(); handlePrev(); }} className="absolute left-8 z-[10001] p-4 bg-slate-900/50 hover:bg-brand-600 text-white rounded-full border border-white/10 transition-all active:scale-95">
+      {hasPrevRecord && (
+        <button onClick={(e) => { e.stopPropagation(); handlePrevRecord(); }} className="absolute left-8 z-[10001] p-4 bg-slate-900/50 hover:bg-brand-600 text-white rounded-full border border-white/10 transition-all active:scale-95">
           <ChevronLeft className="w-8 h-8" />
         </button>
       )}
-      {hasNext && (
-        <button onClick={(e) => { e.stopPropagation(); handleNext(); }} className="absolute right-8 z-[10001] p-4 bg-slate-900/50 hover:bg-brand-600 text-white rounded-full border border-white/10 transition-all active:scale-95">
+      {hasNextRecord && (
+        <button onClick={(e) => { e.stopPropagation(); handleNextRecord(); }} className="absolute right-8 z-[10001] p-4 bg-slate-900/50 hover:bg-brand-600 text-white rounded-full border border-white/10 transition-all active:scale-95">
           <ChevronRight className="w-8 h-8" />
         </button>
       )}
@@ -157,26 +163,29 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                <div className="relative max-w-full max-h-full flex items-center justify-center">
                   <img 
                     src={activeImage} 
-                    className="max-w-full max-h-[75vh] object-contain shadow-2xl rounded-lg" 
+                    className="max-w-full max-h-[75vh] object-contain shadow-2xl rounded-lg animate-fade-in" 
                     alt={formData.gameName} 
+                    key={activeImage}
                   />
-                  {formData.backUrl && (
-                     <button onClick={toggleImage} className="absolute bottom-4 right-4 bg-brand-600 text-white p-3 rounded-full shadow-xl hover:scale-110 transition-transform">
+                  {localGallery.length > 1 && (
+                     <button onClick={toggleImage} className="absolute bottom-4 right-4 bg-brand-600 text-white p-4 rounded-full shadow-[0_0_20px_rgba(37,99,235,0.5)] hover:scale-110 transition-transform flex items-center gap-2">
                         <RefreshCw className="w-5 h-5" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{activeIndex + 1}/{localGallery.length}</span>
                      </button>
                   )}
                </div>
             </div>
 
-            <div className="h-24 bg-slate-900/50 border-t border-white/5 p-4 flex items-center gap-4 justify-center shrink-0">
-               <button onClick={() => { setActiveImage(formData.frontUrl); setActiveLabel('front'); }} className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${activeLabel === 'front' ? 'border-brand-500 scale-105' : 'border-slate-800 opacity-40 hover:opacity-100'}`}>
-                  <img src={formData.frontUrl} className="w-full h-full object-cover" />
-               </button>
-               {formData.backUrl && (
-                  <button onClick={() => { setActiveImage(formData.backUrl!); setActiveLabel('back'); }} className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${activeLabel === 'back' ? 'border-brand-500 scale-105' : 'border-slate-800 opacity-40 hover:opacity-100'}`}>
-                    <img src={formData.backUrl} className="w-full h-full object-cover" />
+            <div className="h-24 bg-slate-900/50 border-t border-white/5 p-4 flex items-center gap-3 justify-center shrink-0 overflow-x-auto scrollbar-hide">
+               {localGallery.map((url, i) => (
+                  <button 
+                    key={i} 
+                    onClick={() => setActiveIndex(i)} 
+                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${activeIndex === i ? 'border-brand-500 scale-110 shadow-lg' : 'border-slate-800 opacity-40 hover:opacity-100'}`}
+                  >
+                    <img src={url} className="w-full h-full object-cover" />
                   </button>
-               )}
+               ))}
             </div>
          </div>
 
@@ -304,6 +313,12 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                               </div>
                             )}
                             <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{formData.operator}</span>
+                            {localGallery.length > 2 && (
+                               <div className="flex items-center gap-1.5 bg-brand-600/10 text-brand-400 px-2 py-1 rounded border border-brand-500/30">
+                                  <LayersIcon className="w-3 h-3" />
+                                  <span className="text-[9px] font-black uppercase tracking-widest">Série ({localGallery.length - 1} Itens)</span>
+                               </div>
+                            )}
                           </div>
                        </div>
 

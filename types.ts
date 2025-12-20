@@ -29,6 +29,7 @@ export interface ScratchcardData {
   customId: string;
   frontUrl: string;
   backUrl?: string;
+  gallery?: string[]; // Novo campo para múltiplas imagens da série
   gameName: string;
   gameNumber: string;
   releaseDate: string;
@@ -39,7 +40,7 @@ export interface ScratchcardData {
   state: ScratchcardState;
   country: string;
   region?: string;
-  island?: string; // Novo campo para separação individual
+  island?: string; 
   continent: Continent;
   category: string;
   operator?: string;
