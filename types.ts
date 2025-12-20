@@ -16,8 +16,6 @@ export interface Album {
   createdAt: number;
 }
 
-// Missing types for the Scratchcard Archive functionality
-
 export type Continent = 'Europa' | 'América' | 'Ásia' | 'África' | 'Oceania' | 'Mundo';
 
 export type ScratchcardState = 'MINT' | 'SC' | 'CS' | 'AMOSTRA' | 'VOID' | 'SAMPLE' | 'MUESTRA' | 'CAMPIONE' | '样本' | 'MUSTER' | 'PRØVE';
@@ -53,6 +51,7 @@ export interface ScratchcardData {
   createdAt: number;
   owners?: string[];
   isWinner?: boolean;
+  isRarity?: boolean;
   seriesGroupId?: string;
   isSeries?: boolean;
   seriesDetails?: string;

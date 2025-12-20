@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Plus, Loader2, Sparkles, Zap } from 'lucide-react';
+import { Search, Plus, Loader2, Sparkles, Zap, LayoutGrid, Trophy, Star, Ticket, Layers, Box } from 'lucide-react';
 import { Header } from './components/Header';
 import { ImageGrid } from './components/ImageGrid';
 import { ImageViewer } from './components/ImageViewer';
@@ -24,12 +24,15 @@ const App: React.FC = () => {
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [siteMetadata, setSiteMetadata] = useState<SiteMetadata | null>(null);
   
-  // Estados de Navegação
+  // Estados de Navegação e Filtros
   const [currentPage, setCurrentPage] = useState<'home' | 'stats' | 'map' | 'about' | 'new-arrivals'>('home');
   const [language, setLanguage] = useState<Language>('pt');
   const [searchTerm, setSearchTerm] = useState('');
   const [activeContinent, setActiveContinent] = useState<Continent | 'Mundo'>('Mundo');
   const [activeCountry, setActiveCountry] = useState<string>('');
+  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [showRaritiesOnly, setShowRaritiesOnly] = useState(false);
+  const [showWinnersOnly, setShowWinnersOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
   // Modais
@@ -93,13 +96,16 @@ const App: React.FC = () => {
       const matchesSearch = gName.includes(s) || gCountry.includes(s) || gNum.includes(s);
       const matchesContinent = activeContinent === 'Mundo' || img.continent === activeContinent;
       const matchesCountry = !activeCountry || img.country === activeCountry;
+      const matchesCategory = activeCategory === 'all' || img.category === activeCategory;
+      const matchesRarity = !showRaritiesOnly || img.isRarity;
+      const matchesWinners = !showWinnersOnly || img.isWinner;
       
       const isRecent = (Date.now() - (img.createdAt || 0)) < 86400000;
       const matchesPage = currentPage === 'new-arrivals' ? isRecent : true;
       
-      return matchesSearch && matchesContinent && matchesCountry && matchesPage;
+      return matchesSearch && matchesContinent && matchesCountry && matchesCategory && matchesRarity && matchesWinners && matchesPage;
     });
-  }, [images, searchTerm, activeContinent, activeCountry, currentPage]);
+  }, [images, searchTerm, activeContinent, activeCountry, activeCategory, showRaritiesOnly, showWinnersOnly, currentPage]);
 
   const handleExport = async () => {
     try {
@@ -193,6 +199,50 @@ const App: React.FC = () => {
         }, {} as any)}
       />
 
+      {/* Segunda Barra de Navegação (Filtros de Categorias e Status) */}
+      {(currentPage === 'home' || currentPage === 'new-arrivals') && (
+        <div className="bg-[#0a0f1e]/80 border-b border-slate-800 backdrop-blur-md sticky top-[70px] md:top-[80px] z-[100] px-4 md:px-8 py-3">
+          <div className="max-w-[1800px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            
+            {/* Filtros de Categoria */}
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide pb-2 sm:pb-0 w-full sm:w-auto">
+               {[
+                 { id: 'all', label: 'Tudo', icon: LayoutGrid },
+                 { id: 'raspadinha', label: 'Raspadinhas', icon: Ticket },
+                 { id: 'lotaria', label: 'Lotarias', icon: Star },
+                 { id: 'boletim', label: 'Boletins', icon: Layers },
+                 { id: 'objeto', label: 'Objetos', icon: Box },
+               ].map(cat => (
+                 <button
+                   key={cat.id}
+                   onClick={() => setActiveCategory(cat.id)}
+                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${activeCategory === cat.id ? 'bg-brand-500 border-brand-400 text-white shadow-lg shadow-brand-900/20' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700'}`}
+                 >
+                   <cat.icon className="w-3.5 h-3.5" /> {cat.label}
+                 </button>
+               ))}
+            </div>
+
+            {/* Filtros Especiais (Raridades e Premiadas) */}
+            <div className="flex items-center gap-3 shrink-0">
+               <button
+                 onClick={() => setShowRaritiesOnly(!showRaritiesOnly)}
+                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${showRaritiesOnly ? 'bg-amber-500 border-amber-400 text-white shadow-lg shadow-amber-900/20' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-amber-500'}`}
+               >
+                 <Sparkles className={`w-3.5 h-3.5 ${showRaritiesOnly ? 'text-white' : 'text-amber-500'}`} /> Raridades
+               </button>
+
+               <button
+                 onClick={() => setShowWinnersOnly(!showWinnersOnly)}
+                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${showWinnersOnly ? 'bg-emerald-500 border-emerald-400 text-white shadow-lg shadow-emerald-900/20' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-emerald-500'}`}
+               >
+                 <Trophy className={`w-3.5 h-3.5 ${showWinnersOnly ? 'text-white' : 'text-emerald-500'}`} /> Premiadas
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="flex-1 flex flex-col min-h-0">
         {(currentPage === 'home' || currentPage === 'new-arrivals') && (
           <div className="p-4 md:p-8 space-y-8 animate-fade-in">
@@ -209,9 +259,17 @@ const App: React.FC = () => {
                 />
               </div>
               <div className="flex gap-2">
-                {activeCountry && (
-                  <button onClick={() => setActiveCountry('')} className="bg-slate-800 text-slate-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase border border-slate-700 hover:text-white transition-all">
-                    País: {activeCountry} (Limpar)
+                {(activeCountry || activeCategory !== 'all' || showRaritiesOnly || showWinnersOnly) && (
+                  <button 
+                    onClick={() => {
+                      setActiveCountry('');
+                      setActiveCategory('all');
+                      setShowRaritiesOnly(false);
+                      setShowWinnersOnly(false);
+                    }} 
+                    className="bg-slate-800 text-slate-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase border border-slate-700 hover:text-white transition-all flex items-center gap-2"
+                  >
+                    Limpar Filtros
                   </button>
                 )}
                 {isAdmin && (
