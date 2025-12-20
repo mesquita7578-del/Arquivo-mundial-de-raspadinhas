@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   X, Edit2, Trash2, Save, 
@@ -7,7 +6,8 @@ import {
   Ruler, Printer, Banknote, ScanLine,
   LayoutGrid, Eye, User,
   RefreshCw, Layers as LayersIcon, ChevronLeft, ChevronRight,
-  Maximize2, Activity, Ship, Palette, Calendar, Percent, Check, Star, ImagePlus, LayoutList
+  Maximize2, Activity, Ship, Palette, Calendar, Percent, Check, Star, ImagePlus, LayoutList,
+  Columns2, Grid3X3
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent, LineType, CategoryItem } from '../types';
 
@@ -53,6 +53,7 @@ const STATE_OPTIONS: { id: ScratchcardState; label: string }[] = [
 
 export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpdate, onDelete, isAdmin, currentUser, contextImages, onImageSelect, t, categories }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [showSeriesComparison, setShowSeriesComparison] = useState(false);
   const [formData, setFormData] = useState<ScratchcardData>(image);
   const [activeImage, setActiveImage] = useState<string>(image.frontUrl);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -60,6 +61,12 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   const currentIndexInContext = useMemo(() => contextImages.findIndex(img => img.id === image.id), [image, contextImages]);
   const hasNextRecord = currentIndexInContext < contextImages.length - 1;
   const hasPrevRecord = currentIndexInContext > 0;
+
+  // Encontrar itens da mesma série
+  const seriesItems = useMemo(() => {
+    if (!image.isSeries || !image.seriesGroupId) return [];
+    return contextImages.filter(img => img.seriesGroupId === image.seriesGroupId);
+  }, [image, contextImages]);
 
   // Montar a galeria local deste registro
   const localGallery = useMemo(() => {
@@ -69,7 +76,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
     return gal;
   }, [image]);
 
-  // Cálculo de quantos itens a série tem (ignorando o verso e respeitando o campo manual)
+  // Cálculo de quantos itens a série tem
   const setDisplayCount = useMemo(() => {
     if (formData.setCount) return formData.setCount;
     const galleryItems = image.gallery ? image.gallery.length : 0;
@@ -83,9 +90,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
 
   const handleNextRecord = () => { if (hasNextRecord) onImageSelect(contextImages[currentIndexInContext + 1]); };
   const handlePrevRecord = () => { if (hasPrevRecord) onImageSelect(contextImages[currentIndexInContext - 1]); };
-
-  const handleNextImage = () => { setActiveIndex(prev => (prev + 1) % localGallery.length); };
-  const handlePrevImage = () => { setActiveIndex(prev => (prev - 1 + localGallery.length) % localGallery.length); };
 
   useEffect(() => {
     setActiveImage(localGallery[activeIndex]);
@@ -107,6 +111,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
       setFormData(image);
       setActiveIndex(0);
       setIsEditing(false);
+      // Mantemos o modo série se o novo item também for da mesma série
     }
   }, [image]);
 
@@ -150,53 +155,101 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md" onClick={onClose}>
       
-      {hasPrevRecord && (
-        <button onClick={(e) => { e.stopPropagation(); handlePrevRecord(); }} className="absolute left-8 z-[10001] p-4 bg-slate-900/50 hover:bg-brand-600 text-white rounded-full border border-white/10 transition-all active:scale-95">
+      {!showSeriesComparison && hasPrevRecord && (
+        <button onClick={(e) => { e.stopPropagation(); handlePrevRecord(); }} className="absolute left-8 z-[10001] p-4 bg-slate-900/50 hover:bg-brand-600 text-white rounded-full border border-white/10 transition-all active:scale-95 hidden md:block">
           <ChevronLeft className="w-8 h-8" />
         </button>
       )}
-      {hasNextRecord && (
-        <button onClick={(e) => { e.stopPropagation(); handleNextRecord(); }} className="absolute right-8 z-[10001] p-4 bg-slate-900/50 hover:bg-brand-600 text-white rounded-full border border-white/10 transition-all active:scale-95">
+      {!showSeriesComparison && hasNextRecord && (
+        <button onClick={(e) => { e.stopPropagation(); handleNextRecord(); }} className="absolute right-8 z-[10001] p-4 bg-slate-900/50 hover:bg-brand-600 text-white rounded-full border border-white/10 transition-all active:scale-95 hidden md:block">
           <ChevronRight className="w-8 h-8" />
         </button>
       )}
 
-      <div className="w-full h-full md:h-[95vh] md:max-w-7xl flex flex-col md:flex-row bg-[#020617] md:rounded-3xl overflow-hidden border border-white/5 shadow-2xl relative" onClick={e => e.stopPropagation()}>
+      <div className={`w-full h-full md:h-[95vh] ${showSeriesComparison ? 'md:max-w-[95vw]' : 'md:max-w-7xl'} flex flex-col md:flex-row bg-[#020617] md:rounded-3xl overflow-hidden border border-white/5 shadow-2xl relative transition-all duration-500`} onClick={e => e.stopPropagation()}>
          
+         {/* LADO ESQUERDO: VISUALIZADOR DE IMAGEM OU COMPARAÇÃO DE SÉRIE */}
          <div className="flex-1 bg-black/40 relative flex flex-col min-h-0 border-r border-white/5">
             <button className="absolute top-4 right-4 text-white/50 hover:text-white z-50 p-2" onClick={onClose}><X className="w-6 h-6"/></button>
             
-            <div className="flex-1 relative flex items-center justify-center p-6 md:p-10 overflow-hidden">
-               <div className="relative max-w-full max-h-full flex items-center justify-center">
-                  <img 
-                    src={activeImage} 
-                    className="max-w-full max-h-[75vh] object-contain shadow-2xl rounded-lg animate-fade-in" 
-                    alt={formData.gameName} 
-                    key={activeImage}
-                  />
-                  {localGallery.length > 1 && (
-                     <button onClick={toggleImage} className="absolute bottom-4 right-4 bg-brand-600 text-white p-4 rounded-full shadow-[0_0_20px_rgba(37,99,235,0.5)] hover:scale-110 transition-transform flex items-center gap-2">
-                        <RefreshCw className="w-5 h-5" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">{activeIndex + 1}/{localGallery.length}</span>
+            {showSeriesComparison ? (
+               <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar animate-fade-in">
+                  <div className="flex items-center justify-between mb-8">
+                     <div className="flex items-center gap-4">
+                        <div className="p-3 bg-brand-600 rounded-2xl shadow-lg">
+                           <Grid3X3 className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                           <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">Comparação de Série</h3>
+                           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{seriesItems.length} Itens Encontrados no Grupo</p>
+                        </div>
+                     </div>
+                     <button 
+                        onClick={() => setShowSeriesComparison(false)}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-white transition-all"
+                     >
+                        <Columns2 className="w-4 h-4" /> Voltar ao Individual
                      </button>
-                  )}
-               </div>
-            </div>
+                  </div>
 
-            <div className="h-24 bg-slate-900/50 border-t border-white/5 p-4 flex items-center gap-3 justify-center shrink-0 overflow-x-auto scrollbar-hide">
-               {localGallery.map((url, i) => (
-                  <button 
-                    key={i} 
-                    onClick={() => setActiveIndex(i)} 
-                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${activeIndex === i ? 'border-brand-500 scale-110 shadow-lg' : 'border-slate-800 opacity-40 hover:opacity-100'}`}
-                  >
-                    <img src={url} className="w-full h-full object-cover" />
-                  </button>
-               ))}
-            </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                     {seriesItems.map((sItem) => (
+                        <div 
+                           key={sItem.id} 
+                           onClick={() => onImageSelect(sItem)}
+                           className={`group relative aspect-[3/4] bg-slate-900 rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${sItem.id === image.id ? 'border-brand-500 shadow-[0_0_30px_rgba(37,99,235,0.3)]' : 'border-white/5 hover:border-white/20'}`}
+                        >
+                           <img src={sItem.frontUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={sItem.gameName} />
+                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
+                           <div className="absolute bottom-3 left-3 right-3">
+                              <span className="text-[10px] font-black text-brand-400 block mb-0.5">#{sItem.gameNumber}</span>
+                              <span className="text-[9px] font-black text-white uppercase tracking-tighter truncate block">{sItem.gameName}</span>
+                           </div>
+                           {sItem.id === image.id && (
+                              <div className="absolute top-3 right-3 bg-brand-500 text-white p-1 rounded-full animate-pulse">
+                                 <Check className="w-3 h-3" />
+                              </div>
+                           )}
+                        </div>
+                     ))}
+                  </div>
+               </div>
+            ) : (
+               <div className="flex-1 relative flex items-center justify-center p-6 md:p-10 overflow-hidden">
+                  <div className="relative max-w-full max-h-full flex items-center justify-center">
+                     <img 
+                       src={activeImage} 
+                       className="max-w-full max-h-[75vh] object-contain shadow-2xl rounded-lg animate-fade-in" 
+                       alt={formData.gameName} 
+                       key={activeImage}
+                     />
+                     {localGallery.length > 1 && (
+                        <button onClick={toggleImage} className="absolute bottom-4 right-4 bg-brand-600 text-white p-4 rounded-full shadow-[0_0_20px_rgba(37,99,235,0.5)] hover:scale-110 transition-transform flex items-center gap-2">
+                           <RefreshCw className="w-5 h-5" />
+                           <span className="text-[10px] font-black uppercase tracking-widest">{activeIndex + 1}/{localGallery.length}</span>
+                        </button>
+                     )}
+                  </div>
+               </div>
+            )}
+
+            {!showSeriesComparison && (
+               <div className="h-24 bg-slate-900/50 border-t border-white/5 p-4 flex items-center gap-3 justify-center shrink-0 overflow-x-auto scrollbar-hide">
+                  {localGallery.map((url, i) => (
+                     <button 
+                       key={i} 
+                       onClick={() => setActiveIndex(i)} 
+                       className={`w-16 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${activeIndex === i ? 'border-brand-500 scale-110 shadow-lg' : 'border-slate-800 opacity-40 hover:opacity-100'}`}
+                     >
+                       <img src={url} className="w-full h-full object-cover" />
+                     </button>
+                  ))}
+               </div>
+            )}
          </div>
 
-         <div className="w-full md:w-[500px] bg-slate-900/30 flex flex-col h-full overflow-hidden shrink-0">
+         {/* LADO DIREITO: FICHA TÉCNICA */}
+         <div className={`w-full md:w-[500px] bg-slate-900/30 flex flex-col h-full overflow-hidden shrink-0 ${showSeriesComparison ? 'md:border-l md:border-white/5' : ''}`}>
               <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/50">
                  <div className="flex items-center gap-2">
                    {isAdmin && (
@@ -235,6 +288,15 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                                 <input type="text" value={formData.gameNumber} onChange={e => handleChange('gameNumber', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-3 border border-white/10 rounded-xl outline-none focus:border-brand-500" placeholder="Nº Jogo" />
                                 <input type="text" value={formData.customId} onChange={e => handleChange('customId', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-3 border border-white/10 rounded-xl outline-none focus:border-brand-500" placeholder="ID Personalizado" />
                              </div>
+                             <div className="flex items-center gap-3 p-3 bg-slate-950 border border-brand-500/30 rounded-xl">
+                                <label className="flex items-center gap-2 cursor-pointer flex-1">
+                                   <input type="checkbox" checked={formData.isSeries} onChange={e => handleChange('isSeries', e.target.checked)} className="w-4 h-4 rounded bg-slate-800 border-slate-700" />
+                                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Faz parte de uma série?</span>
+                                </label>
+                             </div>
+                             {formData.isSeries && (
+                                <input type="text" value={formData.seriesGroupId} onChange={e => handleChange('seriesGroupId', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-brand-500/50 rounded-xl outline-none uppercase font-black" placeholder="ID DO GRUPO (IGUAL PARA TODOS OS ITENS DA SÉRIE)" />
+                             )}
                           </div>
                        </section>
 
@@ -323,10 +385,24 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                               </div>
                             )}
                             <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{formData.operator}</span>
+                            
+                            {/* BOTÃO DE SÉRIE PANORÂMICO */}
+                            {image.isSeries && (
+                               <button 
+                                 onClick={() => setShowSeriesComparison(!showSeriesComparison)}
+                                 className={`flex items-center gap-1.5 px-3 py-1 rounded border transition-all ${showSeriesComparison ? 'bg-brand-600 text-white border-brand-400' : 'bg-brand-600/10 text-brand-400 border-brand-500/30 hover:bg-brand-600/20'}`}
+                               >
+                                  <Grid3X3 className="w-3 h-3" />
+                                  <span className="text-[9px] font-black uppercase tracking-widest">
+                                     {showSeriesComparison ? 'FECHAR COMPARAÇÃO' : 'COMPARAR SÉRIE'}
+                                  </span>
+                               </button>
+                            )}
+                            
                             {setDisplayCount && (
-                               <div className="flex items-center gap-1.5 bg-brand-600/10 text-brand-400 px-2 py-1 rounded border border-brand-500/30">
+                               <div className="flex items-center gap-1.5 bg-slate-800 text-slate-400 px-2 py-1 rounded border border-white/5">
                                   <LayoutList className="w-3 h-3" />
-                                  <span className="text-[9px] font-black uppercase tracking-widest">SET DE {setDisplayCount}</span>
+                                  <span className="text-[9px] font-black uppercase tracking-widest">CONJUNTO DE {setDisplayCount}</span>
                                </div>
                             )}
                           </div>
