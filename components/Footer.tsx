@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Heart, RefreshCw, User, ShieldCheck, Smartphone, Download, Radio, Users } from 'lucide-react';
+import { Heart, RefreshCw, User, ShieldCheck, Smartphone, Download, Radio, Users, Smartphone as MobileIcon } from 'lucide-react';
 import { ChloeClock } from './ChloeClock';
 
 interface FooterProps {
@@ -46,12 +46,23 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onR
 
         {/* Lado Direito: Fabio & Ações */}
         <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:flex items-center gap-3 border-r border-slate-800 pr-3">
+          <div className="hidden md:flex items-center gap-4 border-r border-slate-800 pr-3">
+            {/* Botão Descarregar App - Vermelho Neon */}
+            <button 
+              onClick={() => {
+                if (onInstall) onInstall();
+                else alert("Vovô, para instalar no telemóvel, clique nos 'três pontinhos' do seu navegador e escolha 'Instalar App' ou 'Adicionar ao Ecrã Principal'! hihi!");
+              }}
+              className="flex items-center gap-1.5 text-[7px] font-black text-red-500 hover:text-red-400 uppercase tracking-[0.15em] transition-all drop-shadow-[0_0_8px_rgba(239,68,68,0.6)] hover:drop-shadow-[0_0_12px_rgba(239,68,68,0.9)] animate-pulse"
+            >
+              <MobileIcon className="w-2.5 h-2.5" /> Descarregar App
+            </button>
+
             <button 
               onClick={onRadioClick}
               className="flex items-center gap-1.5 text-[7px] font-black text-brand-400 hover:text-white uppercase tracking-[0.1em] transition-colors"
             >
-              <Radio className="w-2 h-2" /> Rádios & TV
+              <Radio className="w-2.5 h-2.5" /> Rádios & TV
             </button>
             <button 
               onClick={onWebsitesClick}
