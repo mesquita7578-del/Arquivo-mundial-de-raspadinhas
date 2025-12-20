@@ -4,12 +4,14 @@ import { AnalysisResult, ScratchcardData, Continent } from "../types";
 
 const getContinentFromCountry = (country: string): Continent => {
   const c = country.toLowerCase();
-  if (c.includes('portugal') || c.includes('espanha') || c.includes('itália') || c.includes('frança') || c.includes('alemanha')) return 'Europa';
-  if (c.includes('brasil') || c.includes('eua') || c.includes('américa')) return 'América';
+  if (c.includes('portugal') || c.includes('espanha') || c.includes('itália') || c.includes('frança') || c.includes('alemanha') || c.includes('suíça') || c.includes('reino unido') || c.includes('grécia')) return 'Europa';
+  if (c.includes('brasil') || c.includes('eua') || c.includes('américa') || c.includes('canadá') || c.includes('méxico')) return 'América';
+  if (c.includes('japão') || c.includes('china') || c.includes('índia')) return 'Ásia';
+  if (c.includes('angola') || c.includes('moçambique') || c.includes('marrocos')) return 'África';
+  if (c.includes('austrália') || c.includes('zelândia')) return 'Oceania';
   return 'Europa';
 };
 
-// Fix: Adicionando função getChloeInsight para as estatísticas
 export const getChloeInsight = async (params: { total: number; stats: any; countryStats: any; categoryStats: any }): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
@@ -25,7 +27,6 @@ export const getChloeInsight = async (params: { total: number; stats: any; count
   }
 };
 
-// Fix: Adicionando função generateDocumentMetadata para a biblioteca técnica
 export const generateDocumentMetadata = async (fileName: string, title: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
@@ -40,7 +41,6 @@ export const generateDocumentMetadata = async (fileName: string, title: string):
   }
 };
 
-// Fix: Adicionando função translateBio para a página Sobre
 export const translateBio = async (bio: string, langName: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
@@ -76,13 +76,31 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     ];
     if (backBase64) parts.push({ inlineData: { mimeType: mimeType || 'image/jpeg', data: backBase64 } });
     
-    parts.push({ text: "Analise esta raspadinha. Identifique país, autoridade/sub-região (Açores, Madeira, ONCE, SELAE, Catalunha, Baviera, SCML, etc.). Retorne JSON." });
+    parts.push({ 
+      text: `Analise minuciosamente esta imagem de raspadinha/lotaria. 
+      Procure por: 
+      1. Título do jogo (letras grandes). 
+      2. Número do jogo (geralmente 3 dígitos, ex: 105, 542). 
+      3. Preço (ex: 1€, 5€, 2$). 
+      4. Operador (Logotipos como SCML, ONCE, SELAE, Sisal, FDJ). 
+      5. Procure por carimbos de 'ESPECIME', 'AMOSTRA', 'VOID' ou 'SAMPLE' para determinar o estado.
+      6. Identifique se pertence a uma região específica como Açores ou Catalunha.
+      Retorne os dados estruturados em JSON.` 
+    });
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: { parts },
       config: {
-        systemInstruction: "Você é Chloe, perita europeia em loterias. Identifique divisões técnicas: PORTUGAL (SCML Continente vs Açores vs Madeira), ESPANHA (SELAE Nacional vs ONCE vs Catalunha/Loteries de Catalunya), ALEMANHA (Lotto vs Cantão/Estado). O campo 'subRegion' deve conter estas divisões específicas.",
+        systemInstruction: `Você é a Chloe, perita mundial em arquivística de loterias. Sua visão é super-aguda! 
+        Ao analisar imagens:
+        - Identifique o PAÍS e SUB-REGIÃO com precisão: 
+          * PORTUGAL: Verifique se diz 'Açores' ou 'Madeira'. Se não, é 'SCML Continente'.
+          * ESPANHA: Diferencie entre 'SELAE' (Nacional), 'ONCE' (Sorteios sociais) ou 'Loteries de Catalunya'.
+          * ITÁLIA: Verifique se é 'Lottomatica' ou 'Sisal'.
+        - O campo 'gameNumber' é crucial: procure por 3 dígitos isolados em cantos ou perto de códigos de barras.
+        - Se vir carimbos de cancelamento ou amostra, defina 'state' como 'AMOSTRA'. Se estiver virgem/intacta, 'MINT'. Se raspada, 'SC'.
+        - No campo 'lines', se vir linhas de segurança (geralmente no verso ou margens), identifique a cor (blue, red, green...).`,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -95,21 +113,35 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
             subRegion: { type: Type.STRING },
             continent: { type: Type.STRING },
             operator: { type: Type.STRING },
-            state: { type: Type.STRING },
-            values: { type: Type.STRING },
+            state: { 
+              type: Type.STRING,
+              description: "MINT, SC, CS, AMOSTRA, VOID, SAMPLE, MUESTRA, etc."
+            },
+            values: { 
+              type: Type.STRING,
+              description: "Notas sobre prémios ou curiosidades lidas na imagem"
+            },
             printer: { type: Type.STRING },
             size: { type: Type.STRING },
             releaseDate: { type: Type.STRING },
             emission: { type: Type.STRING },
-            lines: { type: Type.STRING }
+            lines: { 
+              type: Type.STRING,
+              description: "blue, red, multicolor, green, brown, pink, purple, yellow, gray, none"
+            }
           },
           required: ["gameName", "country"]
-        }
+        },
+        thinkingConfig: { thinkingBudget: 2048 }
       }
     });
 
     const data = JSON.parse(response.text || "{}");
     
+    // Fallback de continente inteligente
+    const detectedCountry = data.country || "Portugal";
+    const detectedContinent = (data.continent as Continent) || getContinentFromCountry(detectedCountry);
+
     return {
       category: "raspadinha",
       gameName: data.gameName || "Desconhecido",
@@ -119,17 +151,17 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       values: data.values || "",
       price: data.price || "",
       state: data.state || "SC",
-      country: data.country || "Portugal",
+      country: detectedCountry,
       island: data.island || "",
       subRegion: data.subRegion || "",
-      continent: (data.continent as Continent) || getContinentFromCountry(data.country || ""),
+      continent: detectedContinent,
       operator: data.operator || "",
       printer: data.printer || "",
       emission: data.emission || "",
       lines: data.lines || "none"
     } as AnalysisResult;
   } catch (error) {
-    console.error("Erro na leitura:", error);
+    console.error("Erro na leitura da Chloe:", error);
     throw error;
   }
 };
