@@ -36,17 +36,24 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categ
     return vals.length > 0 ? Math.max(...vals) : 1;
   }, [stats]);
 
-  // Novo cálculo: Valor total investido em MINT
-  const totalMintInvestment = useMemo(() => {
-    return images.reduce((acc, img) => {
+  // Cálculo Refinado: APENAS itens MINT
+  const mintSummary = useMemo(() => {
+    let count = 0;
+    const totalValue = images.reduce((acc, img) => {
+      // Filtro rigoroso: Tem de ser MINT e ter preço definido
       if (img.state === 'MINT' && img.price) {
-        // Limpar a string do preço (remover €, $, espaços) e converter para número
+        // Limpar a string (remover símbolos de moeda e espaços, converter vírgulas em pontos)
         const cleanPrice = img.price.replace(/[^\d,.]/g, '').replace(',', '.');
         const val = parseFloat(cleanPrice);
-        return isNaN(val) ? acc : acc + val;
+        if (!isNaN(val)) {
+          count++;
+          return acc + val;
+        }
       }
       return acc;
     }, 0);
+    
+    return { value: totalValue, count };
   }, [images]);
 
   const handleAskChloe = async () => {
@@ -137,7 +144,13 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categ
              { label: t.totalRecords, val: totalRecords, icon: Database, color: 'text-brand-500' },
              { label: 'Nações', val: Object.keys(countryStats).length, icon: Globe, color: 'text-cyan-500' },
              { label: 'Raspadinhas', val: categoryStats.scratch, icon: Coins, color: 'text-amber-500' },
-             { label: 'Valor MINT', val: `${totalMintInvestment.toFixed(2)}€`, icon: Banknote, color: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/5' },
+             { 
+                label: 'Tesouro MINT', 
+                val: `${mintSummary.value.toFixed(2)}€`, 
+                icon: Banknote, 
+                color: 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10 shadow-[0_0_15px_rgba(16,185,129,0.1)]',
+                sub: `${mintSummary.count} exemplares MINT`
+             },
              { label: 'Lotarias', val: categoryStats.lottery, icon: Ticket, color: 'text-white' }
            ].map((card, i) => (
              <div key={i} className={`bg-slate-900 border ${card.color.includes('border') ? card.color : 'border-slate-800'} p-4 rounded-xl flex flex-col justify-between`}>
@@ -145,7 +158,10 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categ
                    <card.icon className={`w-4 h-4 ${card.color.split(' ')[0]}`} />
                    <span className="text-[14px] font-black text-white font-mono">{card.val}</span>
                 </div>
-                <p className="text-[7px] text-slate-500 font-black uppercase tracking-widest">{card.label}</p>
+                <div className="mt-1">
+                   <p className="text-[7px] text-slate-500 font-black uppercase tracking-widest">{card.label}</p>
+                   {'sub' in card && <p className="text-[5px] text-emerald-500/70 font-black uppercase tracking-tighter mt-0.5">{card.sub}</p>}
+                </div>
              </div>
            ))}
         </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, Plus, Loader2, Sparkles, Zap, LayoutGrid, Trophy, Star, 
@@ -77,7 +76,10 @@ const App: React.FC = () => {
         setSiteMetadata(event.data.payload);
       }
     };
-    return () => chloeChannel.close;
+    // Corrected the cleanup function to actually call close() instead of returning the function reference.
+    return () => {
+      chloeChannel.close();
+    };
   }, []);
 
   useEffect(() => {
