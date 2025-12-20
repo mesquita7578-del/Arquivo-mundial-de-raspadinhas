@@ -69,59 +69,41 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="flex items-center justify-between px-3 lg:px-8 py-2 bg-[#020617] border-b border-slate-900 sticky top-0 z-[100] shadow-xl h-[65px] md:h-[75px]">
+    <header className="flex items-center justify-between px-4 lg:px-8 py-2 bg-[#020617] border-b border-slate-900 sticky top-0 z-[110] shadow-2xl h-[70px] md:h-[80px]">
       
       {/* Logo Area */}
-      <div className="flex items-center gap-2 md:gap-3 cursor-pointer group shrink-0" onClick={() => onNavigate('home')}>
-        <div className="bg-brand-500 p-1.5 md:p-2 rounded-lg shadow-[0_0_15px_rgba(0,168,255,0.4)] relative border border-white/20 group-hover:scale-105 transition-transform">
-          <Ticket className="w-5 h-5 md:w-6 md:h-6 text-white" />
+      <div className="flex items-center gap-3 cursor-pointer group shrink-0" onClick={() => onNavigate('home')}>
+        <div className="bg-brand-500 p-2 rounded-xl shadow-[0_0_15px_rgba(0,168,255,0.4)] relative border border-white/20 group-hover:scale-105 transition-transform">
+          <Ticket className="w-6 h-6 text-white" />
           {recentCount > 0 && (
-            <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-white rounded-full border-2 border-brand-500 animate-pulse"></div>
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full border-2 border-brand-500 animate-pulse"></div>
           )}
         </div>
         <div className="flex flex-col">
-          <h1 className="text-xs md:text-xl font-black text-white leading-none tracking-tight uppercase italic group-hover:text-brand-500 transition-colors logo-text">
+          <h1 className="text-sm md:text-xl font-black text-white leading-none tracking-tight uppercase italic group-hover:text-brand-500 transition-colors">
             {t.title}
           </h1>
-          <span className="hidden sm:inline text-[8px] md:text-[10px] text-brand-400 font-bold uppercase tracking-[0.1em] mt-1">
+          <span className="hidden sm:inline text-[9px] md:text-[10px] text-brand-400 font-bold uppercase tracking-[0.1em] mt-1">
             {t.subtitle} 🐉
           </span>
         </div>
       </div>
 
-      {/* Desktop Navigation */}
-      <nav className="hidden lg:flex items-center gap-1">
+      {/* Desktop Navigation - Aparece a partir de MD agora (768px) */}
+      <nav className="hidden md:flex items-center gap-1">
          <button 
            onClick={() => onNavigate('home')}
-           className={`px-3 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all relative ${currentPage === 'home' ? 'bg-brand-500 text-white shadow-[0_0_15px_rgba(0,168,255,0.4)]' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+           className={`px-3 py-2 rounded-full text-[11px] font-black uppercase tracking-widest flex items-center gap-2 transition-all relative ${currentPage === 'home' ? 'bg-brand-500 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
          >
-           <Home className="w-3.5 h-3.5" /> {t.home}
+           <Home className="w-4 h-4" /> {t.home}
          </button>
 
-         {/* BOTÃO NOVIDADES NO TOPO */}
-         {recentCount > 0 && (
-           <button 
-             onClick={() => onNavigate('new-arrivals')}
-             className={`px-3 py-2 rounded-full text-xs font-black flex items-center gap-1.5 transition-all animate-neon-fast border ${currentPage === 'new-arrivals' ? 'bg-brand-500 text-white border-brand-400' : 'bg-brand-500/10 text-brand-400 border-brand-500/30'}`}
-           >
-             <Zap className="w-3.5 h-3.5" /> Novidades ({recentCount})
-           </button>
-         )}
-
-         {/* BOTÃO RÁDIOS NO TOPO */}
-         <button 
-           onClick={onRadioClick}
-           className="px-3 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white hover:bg-slate-800"
-         >
-           <Radio className="w-3.5 h-3.5 text-brand-500" /> Rádios
-         </button>
-         
          <div className="relative" ref={exploreRef}>
-            <button onClick={() => setShowExplore(!showExplore)} className={`px-3 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all ${showExplore ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
-              <Globe className="w-3.5 h-3.5" /> {t.explore} <ChevronDown className={`w-3 h-3 transition-transform ${showExplore ? 'rotate-180' : ''}`} />
+            <button onClick={() => setShowExplore(!showExplore)} className={`px-3 py-2 rounded-full text-[11px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${showExplore ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <Globe className="w-4 h-4" /> {t.explore} <ChevronDown className={`w-3 h-3 transition-transform ${showExplore ? 'rotate-180' : ''}`} />
             </button>
             {showExplore && (
-              <div className="absolute top-full left-0 mt-2 w-64 bg-[#0a0f1e] border border-slate-800 rounded-xl shadow-2xl p-2 z-[110] animate-fade-in neon-border-blue">
+              <div className="absolute top-full left-0 mt-2 w-64 bg-[#0a0f1e] border border-slate-800 rounded-xl shadow-2xl p-2 z-[120] animate-fade-in">
                  {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(cont => {
                    const countries = countriesByContinent[cont] || [];
                    return (
@@ -129,15 +111,6 @@ export const Header: React.FC<HeaderProps> = ({
                        <button onClick={() => { onNavigate('home'); onCountrySelect?.(cont as Continent, ''); setShowExplore(false); }} className={`w-full text-left px-3 py-2.5 text-[10px] rounded-lg transition-all flex items-center justify-between font-black uppercase tracking-widest ${activeSubMenu === cont ? 'bg-brand-500 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>
                          {cont} {countries.length > 0 && <ChevronRight className="w-3.5 h-3.5 opacity-50" />}
                        </button>
-                       {countries.length > 0 && activeSubMenu === cont && (
-                          <div className="absolute left-full top-0 ml-2 w-64 bg-[#0a0f1e] border border-slate-800 rounded-xl shadow-2xl p-2 max-h-[70vh] overflow-y-auto neon-border-blue">
-                             {countries.map(c => (
-                                <button key={c} onClick={() => { onCountrySelect?.(cont as Continent, c); setShowExplore(false); }} className="w-full text-left px-4 py-2 text-[10px] font-black text-slate-300 hover:bg-brand-500 hover:text-white rounded-lg transition-all flex items-center gap-2 uppercase">
-                                   <div className="w-1 h-1 rounded-full bg-brand-400"></div> {c}
-                                </button>
-                             ))}
-                          </div>
-                       )}
                      </div>
                    );
                  })}
@@ -145,80 +118,56 @@ export const Header: React.FC<HeaderProps> = ({
             )}
          </div>
 
-         <button onClick={() => onNavigate('map')} className={`px-3 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all ${currentPage === 'map' ? 'bg-brand-500 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
-           <MapIcon className="w-3.5 h-3.5" /> Mapa
+         <button onClick={() => onNavigate('map')} className={`px-3 py-2 rounded-full text-[11px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${currentPage === 'map' ? 'bg-brand-500 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+           <MapIcon className="w-4 h-4" /> Mapa
          </button>
 
-         <button onClick={() => onNavigate('stats')} className={`px-3 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all ${currentPage === 'stats' ? 'bg-brand-500 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
-           <BarChart2 className="w-3.5 h-3.5" /> {t.stats}
+         <button onClick={() => onNavigate('stats')} className={`px-3 py-2 rounded-full text-[11px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${currentPage === 'stats' ? 'bg-brand-500 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+           <BarChart2 className="w-4 h-4" /> {t.stats}
+         </button>
+
+         <button onClick={onRadioClick} className="px-3 py-2 rounded-full text-[11px] font-black uppercase tracking-widest flex items-center gap-2 transition-all text-slate-400 hover:text-white hover:bg-slate-800">
+           <Radio className="w-4 h-4 text-brand-500" /> Rádios
          </button>
       </nav>
 
       {/* Right Actions */}
-      <div className="flex items-center gap-1.5 md:gap-3">
-        <div className="hidden lg:flex bg-slate-800/80 rounded-lg p-1 border border-slate-700">
-          <button onClick={() => setLanguage('pt')} className={`px-2 py-0.5 rounded-md text-[10px] font-black transition-all ${language === 'pt' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-500'}`}>PT</button>
-          <button onClick={() => setLanguage('it')} className={`px-2 py-0.5 rounded-md text-[10px] font-black transition-all ${language === 'it' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-500'}`}>IT</button>
+      <div className="flex items-center gap-2">
+        <div className="hidden sm:flex bg-slate-800/80 rounded-lg p-1 border border-slate-700">
+          <button onClick={() => setLanguage('pt')} className={`px-2 py-1 rounded-md text-[9px] font-black transition-all ${language === 'pt' ? 'bg-brand-500 text-white' : 'text-slate-500'}`}>PT</button>
+          <button onClick={() => setLanguage('it')} className={`px-2 py-1 rounded-md text-[9px] font-black transition-all ${language === 'it' ? 'bg-brand-500 text-white' : 'text-slate-500'}`}>IT</button>
         </div>
 
-        <button onClick={onHistoryClick} className="hidden sm:flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-brand-500/10 text-brand-400 border border-brand-500/30 rounded-md hover:bg-brand-500 hover:text-white transition-all text-[10px] md:text-xs font-bold uppercase tracking-widest shrink-0">
-          <BookOpen className="w-3.5 h-3.5 md:w-4 md:h-4" /> <span className="hidden xl:inline">{t.history}</span>
+        <button onClick={onHistoryClick} className="hidden lg:flex items-center gap-2 px-4 py-2 bg-brand-500/10 text-brand-400 border border-brand-500/30 rounded-xl hover:bg-brand-500 hover:text-white transition-all text-[11px] font-black uppercase tracking-widest">
+          <BookOpen className="w-4 h-4" /> {t.history}
         </button>
 
-        {isAdmin && (
-           <div className="relative">
-              <button onClick={() => setShowTools(!showTools)} className={`p-2 bg-slate-800 hover:bg-brand-500 text-slate-300 hover:text-white rounded-md border border-slate-700 transition-all flex items-center gap-2 ${showTools ? 'ring-2 ring-brand-400' : ''}`}>
-                <Database className="w-3.5 h-3.5 md:w-4 md:h-4" /> <span className="hidden xl:inline text-[10px] font-black uppercase">DNA</span>
-              </button>
-              {showTools && (
-                 <div className="absolute right-0 mt-3 w-64 bg-[#0a0f1e] border border-slate-800 rounded-xl shadow-2xl p-2 animate-fade-in flex flex-col gap-1 z-[70] neon-border-blue">
-                    <button onClick={() => { onExport(); setShowTools(false); }} className="flex items-center gap-3 w-full px-4 py-3 text-[10px] font-bold text-slate-300 hover:bg-brand-500 hover:text-white rounded-lg transition-all"><FileJson className="w-4 h-4" /> {t.exportBackup}</button>
-                    <button onClick={handleImportClick} className="flex items-center gap-3 w-full px-4 py-3 text-[10px] font-bold text-slate-300 hover:bg-brand-500 hover:text-white rounded-lg transition-all"><UploadCloud className="w-4 h-4" /> {t.importBackup}</button>
-                 </div>
-              )}
-           </div>
-        )}
-
-        <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileChange} />
-
         {currentUser ? (
-          <button onClick={onLogout} className="flex items-center gap-1.5 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-md transition-all text-[10px] md:text-xs font-black uppercase tracking-widest shrink-0">
-             <User className="w-3.5 h-3.5 text-brand-400" /> <span className="hidden sm:inline">{currentUser.split(' ')[0]}</span> <LogOut className="w-3 h-3 md:w-3.5 md:h-3.5 ml-0.5 opacity-50" />
+          <button onClick={onLogout} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-xl transition-all text-[11px] font-black uppercase tracking-widest">
+             <User className="w-4 h-4 text-brand-400" /> <span className="hidden sm:inline">{currentUser.split(' ')[0]}</span> <LogOut className="w-3.5 h-3.5 ml-1 opacity-50" />
           </button>
         ) : (
-          <button onClick={onAdminToggle} className="flex items-center gap-1.5 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-slate-800 hover:bg-brand-500 text-white border border-slate-700 rounded-md transition-all text-[10px] md:text-xs font-black uppercase tracking-widest shadow-lg shrink-0">
-            <Lock className="w-3 h-3 md:w-3.5 md:h-3.5" /> <span className="hidden sm:inline">{t.loginBtn}</span>
+          <button onClick={onAdminToggle} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-brand-500 text-white border border-slate-700 rounded-xl transition-all text-[11px] font-black uppercase tracking-widest shadow-lg">
+            <Lock className="w-4 h-4" /> <span className="hidden sm:inline">{t.loginBtn}</span>
           </button>
         )}
 
         <button 
           onClick={() => setShowMobileMenu(!showMobileMenu)} 
-          className="lg:hidden p-2 text-brand-500 hover:text-white transition-colors"
+          className="md:hidden p-2 text-brand-500 hover:text-white transition-colors"
         >
-          {showMobileMenu ? <CloseIcon className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+          {showMobileMenu ? <CloseIcon className="w-8 h-8" /> : <Menu className="w-8 h-8" />}
         </button>
       </div>
 
       {/* Mobile Menu */}
       {showMobileMenu && (
-        <div className="fixed inset-0 top-[65px] md:top-[75px] bg-[#020617]/98 backdrop-blur-2xl z-[99] flex flex-col p-6 gap-3 animate-fade-in lg:hidden overflow-y-auto">
+        <div className="fixed inset-0 top-[70px] bg-[#020617] z-[105] flex flex-col p-6 gap-3 animate-fade-in md:hidden overflow-y-auto">
           <button onClick={() => { onNavigate('home'); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><Home className="w-5 h-5 text-brand-500" /> {t.home}</button>
-          
-          {recentCount > 0 && (
-            <button onClick={() => { onNavigate('new-arrivals'); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-white p-4 bg-brand-500 border border-brand-400 rounded-2xl animate-neon-fast transition-all"><Zap className="w-5 h-5" /> Novidades ({recentCount})</button>
-          )}
-
-          <button onClick={() => { onRadioClick(); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><Radio className="w-5 h-5 text-brand-500" /> Rádios PT</button>
           <button onClick={() => { onNavigate('map'); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><MapIcon className="w-5 h-5 text-brand-500" /> Mapa Mundial</button>
           <button onClick={() => { onNavigate('stats'); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><BarChart2 className="w-5 h-5 text-brand-500" /> Estatísticas</button>
-          <button onClick={() => { onHistoryClick(); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><BookOpen className="w-5 h-5 text-brand-500" /> Biblioteca (PDF)</button>
-          <button onClick={() => { onNavigate('about'); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><Info className="w-5 h-5 text-brand-500" /> Sobre o Arquivo</button>
-          
-          <div className="mt-auto flex justify-between gap-3 p-2">
-            <button onClick={() => { setLanguage('pt'); setShowMobileMenu(false); }} className={`flex-1 py-4 rounded-2xl font-black text-sm uppercase tracking-widest ${language === 'pt' ? 'bg-brand-500 text-white shadow-lg shadow-brand-900/50' : 'bg-slate-800 text-slate-500 border border-slate-700'}`}>Português</button>
-            <button onClick={() => { setLanguage('it'); setShowMobileMenu(false); }} className={`flex-1 py-4 rounded-2xl font-black text-sm uppercase tracking-widest ${language === 'it' ? 'bg-brand-500 text-white shadow-lg shadow-brand-900/50' : 'bg-slate-800 text-slate-500 border border-slate-700'}`}>Italiano</button>
-          </div>
-          <p className="text-center text-[8px] font-black text-slate-700 uppercase tracking-widest mb-4 italic">© Jorge Mesquita & Fabio Pagni</p>
+          <button onClick={() => { onRadioClick(); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><Radio className="w-5 h-5 text-brand-500" /> Rádios PT</button>
+          <button onClick={() => { onHistoryClick(); setShowMobileMenu(false); }} className="flex items-center gap-4 text-sm font-black uppercase tracking-widest text-slate-300 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl active:bg-brand-500 active:text-white transition-all"><BookOpen className="w-5 h-5 text-brand-500" /> Biblioteca</button>
         </div>
       )}
     </header>

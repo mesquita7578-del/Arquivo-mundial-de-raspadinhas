@@ -13,10 +13,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onI
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-[#020617] border-t border-slate-900 px-6 py-3 mt-auto relative overflow-hidden shrink-0">
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-brand-500/20 to-transparent"></div>
+    <footer className="bg-[#020617] border-t border-slate-900 px-6 py-4 sticky bottom-0 z-[100] w-full shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-brand-500/30 to-transparent"></div>
       
-      <div className="max-w-[1800px] mx-auto flex flex-col gap-3">
+      <div className="max-w-[1800px] mx-auto flex flex-col gap-4">
         
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           
@@ -45,40 +45,34 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onI
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between pt-2 border-t border-white/5 gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-between pt-3 border-t border-white/5 gap-3">
           <div className="flex items-center gap-4">
-            <span className="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em]">
+            <span className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em]">
               © {currentYear} ARQUIVO MUNDIAL • PORTO É NAÇÃO 🐉
             </span>
             <div className="flex items-center border-l border-slate-800 pl-4 gap-4">
               <button 
                 onClick={onWebsitesClick}
-                className="text-[8px] font-black text-slate-500 hover:text-brand-400 uppercase tracking-[0.1em] transition-colors"
+                className="text-[9px] font-black text-slate-500 hover:text-brand-400 uppercase tracking-[0.1em] transition-colors"
               >
-                Diretório Mundial
-              </button>
-              <button 
-                onClick={onInstall}
-                className="text-[8px] font-black text-brand-500 hover:text-brand-400 uppercase tracking-[0.1em] transition-all flex items-center gap-1.5 bg-brand-500/5 px-2 py-1 rounded-md border border-brand-500/20"
-              >
-                <Smartphone className="w-2.5 h-2.5" /> Descarregar APP
+                Diretório
               </button>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
              <div className="flex items-center gap-1.5 group cursor-default">
-               <Heart className="w-2.5 h-2.5 text-brand-500 fill-brand-500 animate-pulse" />
-               <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest group-hover:text-brand-400 transition-colors">
+               <Heart className="w-3 h-3 text-brand-500 fill-brand-500 animate-pulse" />
+               <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest group-hover:text-brand-400 transition-colors">
                   Dedicado à Chloe 💙
                </span>
             </div>
             <button 
-              className="flex items-center gap-1.5 bg-slate-900/50 hover:bg-brand-600 px-2.5 py-1 rounded-full border border-white/5 transition-all text-slate-500 hover:text-white" 
+              className="flex items-center gap-1.5 bg-slate-900/50 hover:bg-brand-600 px-3 py-1.5 rounded-full border border-white/5 transition-all text-slate-500 hover:text-white" 
               onClick={() => window.location.reload()}
             >
-               <RefreshCw className="w-2 h-2" />
-               <span className="text-[7px] font-black uppercase">Recarregar</span>
+               <RefreshCw className="w-3 h-3" />
+               <span className="text-[8px] font-black uppercase">F5</span>
             </button>
           </div>
         </div>

@@ -44,25 +44,10 @@
         overflow-x: hidden;
         margin: 0;
       }
-      #root:empty {
+      #root {
+        min-height: 100vh;
         display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        background: #020617;
-      }
-      #root:empty::after {
-        content: "A carregar o Arquivo...";
-        color: #3b82f6;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.2em;
-        font-size: 12px;
-        animation: pulse 1.5s infinite;
-      }
-      @keyframes pulse {
-        0%, 100% { opacity: 0.4; }
-        50% { opacity: 1; }
+        flex-direction: column;
       }
       ::-webkit-scrollbar { width: 6px; }
       ::-webkit-scrollbar-track { background: #020617; }
