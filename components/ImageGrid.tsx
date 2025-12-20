@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { 
-  Filter, Trophy, ChevronLeft, ChevronRight 
+  Filter, Trophy, ChevronLeft, ChevronRight, Zap 
 } from 'lucide-react';
 import { ScratchcardData } from '../types';
 
@@ -61,7 +61,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
     currentPage * ITEMS_PER_PAGE
   );
 
-  const isRecent = (createdAt: number) => (Date.now() - createdAt) < 86400000;
+  const isRecent = (createdAt: number) => (Date.now() - createdAt) < 172800000; // 48 horas
 
   if (images.length === 0) {
     return (
@@ -104,11 +104,18 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 />
               )}
               
-              <div className="absolute top-0.5 right-0.5 flex flex-col gap-0.5 items-end">
+              <div className="absolute top-0.5 right-0.5 flex flex-col gap-0.5 items-end z-10">
                 {isRecent(item.createdAt) && (
-                   <div className="bg-brand-500 text-white px-1 py-0.5 rounded-[2px] text-[5px] font-black animate-pulse">NOVO</div>
+                   <div className="flex items-center gap-0.5 bg-brand-500 text-white px-1 py-0.5 rounded-[2px] text-[5px] font-black animate-pulse shadow-lg shadow-brand-900/50">
+                     <Zap className="w-1.5 h-1.5 fill-white" />
+                     NOVO
+                   </div>
                 )}
-                {item.isWinner && <div className="bg-green-600 p-0.5 rounded-full"><Trophy className="w-1.5 h-1.5 text-white" /></div>}
+                {item.isWinner && (
+                  <div className="bg-green-600 p-0.5 rounded-full shadow-md">
+                    <Trophy className="w-1.5 h-1.5 text-white" />
+                  </div>
+                )}
               </div>
             </div>
 
