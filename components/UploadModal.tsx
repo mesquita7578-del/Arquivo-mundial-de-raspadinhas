@@ -4,7 +4,7 @@ import {
   X, Upload, Sparkles, Check, Loader2, 
   ImagePlus, Wand2, Layers, Tag, MapPin, Palette, Info, 
   Calendar, Building2, Printer, ScanLine, Banknote, Globe2, Clock,
-  Camera
+  Camera, Hash, Ruler, Percent, Factory, BookOpen
 } from 'lucide-react';
 import { ScratchcardData, CategoryItem, Continent, LineType, ScratchcardState } from '../types';
 import { analyzeImage } from '../services/geminiService';
@@ -62,7 +62,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     releaseDate: '',
     closeDate: '',
     operator: '',
+    emission: '',
     printer: '',
+    size: '',
+    winProbability: '',
     lines: 'none',
     isSeries: false,
     seriesGroupId: '',
@@ -118,176 +121,196 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-6 bg-black/95 backdrop-blur-md">
       <div className="bg-[#0f172a] border border-white/10 rounded-[3rem] w-full max-w-7xl h-full md:h-[94vh] shadow-2xl flex flex-col overflow-hidden animate-bounce-in">
         
-        {/* Header Compacto */}
-        <div className="px-8 py-4 border-b border-white/5 flex justify-between items-center bg-slate-900/40">
+        {/* Header Profissional */}
+        <div className="px-8 py-5 border-b border-white/5 flex justify-between items-center bg-slate-900/40">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-brand-600/20 rounded-xl text-brand-400 border border-brand-500/20"><ImagePlus className="w-5 h-5" /></div>
+            <div className="p-2.5 bg-brand-600/20 rounded-xl text-brand-400 border border-brand-500/20"><Camera className="w-5 h-5" /></div>
             <div>
-              <h2 className="text-lg font-black text-white italic uppercase tracking-tighter">Registo Mestre do Arquivo</h2>
-              <p className="text-slate-500 text-[8px] font-black uppercase tracking-widest">Controlo Técnico • Jorge Mesquita 🐉</p>
+              <h2 className="text-xl font-black text-white italic uppercase tracking-tighter">Registo de Arquivo Mestre</h2>
+              <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest">Controlo de Legado • Jorge Mesquita 🐉</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-500 hover:text-white transition-colors bg-slate-800/50 rounded-full"><X className="w-5 h-5" /></button>
+          <button onClick={onClose} className="p-2 text-slate-500 hover:text-white transition-colors bg-slate-800/50 rounded-full"><X className="w-6 h-6" /></button>
         </div>
 
-        {/* Content: Split View */}
+        {/* Content View */}
         <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
           
-          {/* LADO ESQUERDO: Fotos e IA */}
-          <div className="w-full md:w-1/3 bg-slate-950/30 p-6 flex flex-col gap-5 border-r border-white/5 overflow-y-auto">
+          {/* LADO ESQUERDO: Imagens e Análise */}
+          <div className="w-full md:w-1/4 bg-slate-950/30 p-6 flex flex-col gap-6 border-r border-white/5 overflow-y-auto custom-scrollbar">
              <div className="space-y-4">
-                {/* Fixed: Use imported Camera icon */}
-                <h3 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2"><Camera className="w-3 h-3" /> Captura Visual</h3>
-                <div className="grid grid-cols-2 gap-3">
-                   <div onClick={() => frontInputRef.current?.click()} className={`relative aspect-[3/4] rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center gap-2 overflow-hidden ${frontPreview ? 'border-brand-500' : 'border-slate-800 bg-slate-900/30'}`}>
-                     {frontPreview ? <img src={frontPreview} className="w-full h-full object-cover" /> : <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Frente</span>}
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2"><ImagePlus className="w-3.5 h-3.5" /> Média Captura</h3>
+                <div className="grid grid-cols-1 gap-4">
+                   <div onClick={() => frontInputRef.current?.click()} className={`relative aspect-[3/4] rounded-3xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center gap-3 overflow-hidden ${frontPreview ? 'border-brand-500' : 'border-slate-800 bg-slate-900/30'}`}>
+                     {frontPreview ? <img src={frontPreview} className="w-full h-full object-cover" /> : <div className="text-center"><Upload className="w-8 h-8 mx-auto text-slate-700 mb-2"/><span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Frente</span></div>}
                      <input type="file" ref={frontInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0], 'front')} />
                    </div>
-                   <div onClick={() => backInputRef.current?.click()} className={`relative aspect-[3/4] rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center gap-2 overflow-hidden ${backPreview ? 'border-brand-500' : 'border-slate-800 bg-slate-900/30'}`}>
-                     {backPreview ? <img src={backPreview} className="w-full h-full object-cover" /> : <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Verso</span>}
+                   <div onClick={() => backInputRef.current?.click()} className={`relative aspect-[3/4] rounded-3xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center gap-3 overflow-hidden ${backPreview ? 'border-brand-500' : 'border-slate-800 bg-slate-900/30'}`}>
+                     {backPreview ? <img src={backPreview} className="w-full h-full object-cover" /> : <div className="text-center"><Upload className="w-8 h-8 mx-auto text-slate-700 mb-2"/><span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Verso</span></div>}
                      <input type="file" ref={backInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0], 'back')} />
                    </div>
                 </div>
-                <button onClick={startAnalysis} disabled={!frontPreview || isAnalyzing} className={`w-full py-3.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${frontPreview ? 'bg-brand-600 text-white' : 'bg-slate-800 text-slate-600'}`}>
-                  {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />} Analisar com Chloe IA
+                <button onClick={startAnalysis} disabled={!frontPreview || isAnalyzing} className={`w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${frontPreview ? 'bg-brand-600 text-white shadow-lg' : 'bg-slate-800 text-slate-600'}`}>
+                  {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />} {isAnalyzing ? 'A Ler...' : 'Chloe IA: Ler Dados'}
                 </button>
-             </div>
-             
-             <div className="mt-auto p-4 bg-slate-900/50 rounded-2xl border border-white/5">
-                <div className="flex items-center gap-2 mb-2"><Info className="w-3 h-3 text-brand-500" /><span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Guia da Chloe</span></div>
-                <p className="text-[8px] text-slate-400 font-bold uppercase leading-relaxed">Vovô, use a IA para preencher os nomes e números! hihi! 🎀</p>
              </div>
           </div>
 
-          {/* LADO DIREITO: Super Formulário Técnico */}
-          <div className="flex-1 p-8 overflow-y-auto custom-scrollbar bg-slate-900/10">
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* LADO DIREITO: Todos os Comandos Técnicos */}
+          <div className="flex-1 p-8 overflow-y-auto custom-scrollbar bg-slate-900/20">
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 
-                {/* Bloco 1: Identidade do Jogo */}
-                <div className="space-y-4 bg-slate-950/40 p-5 rounded-[2rem] border border-white/5">
-                   <h3 className="text-[9px] font-black text-brand-500 uppercase tracking-[0.3em] flex items-center gap-2"><Tag className="w-3.5 h-3.5" /> Identidade</h3>
-                   <div className="space-y-3">
+                {/* GRUPO A: Dados de Identidade */}
+                <div className="space-y-5 bg-slate-950/40 p-6 rounded-[2.5rem] border border-white/5">
+                   <h3 className="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em] flex items-center gap-2"><Tag className="w-4 h-4" /> Identidade do Jogo</h3>
+                   <div className="space-y-4">
                       <div className="relative">
-                         <input type="text" placeholder="Nome do Jogo" value={formData.gameName} onChange={e => setFormData({...formData, gameName: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-white font-black text-xs outline-none focus:border-brand-500" />
-                         <span className="absolute -top-1.5 left-2 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Nome</span>
+                         <input type="text" placeholder="Ex: Super Pé de Meia" value={formData.gameName} onChange={e => setFormData({...formData, gameName: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-brand-500" />
+                         <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Nome do Jogo</span>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                          <div className="relative">
-                            <input type="text" placeholder="Ex: 502" value={formData.gameNumber} onChange={e => setFormData({...formData, gameNumber: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-white font-black text-xs outline-none focus:border-brand-500" />
-                            <span className="absolute -top-1.5 left-2 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Nº Jogo</span>
+                            <input type="text" placeholder="Ex: 502" value={formData.gameNumber} onChange={e => setFormData({...formData, gameNumber: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-brand-500" />
+                            <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Nº Jogo</span>
                          </div>
                          <div className="relative">
-                            <input type="text" placeholder="Ex: 5€" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-white font-black text-xs outline-none focus:border-brand-500" />
+                            <input type="text" placeholder="Ex: 5€" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-brand-500" />
                             <span className="absolute -top-1.5 left-2 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Preço</span>
                          </div>
                       </div>
+                      <div className="relative">
+                         <input type="text" placeholder="Identificador Interno" value={formData.customId} onChange={e => setFormData({...formData, customId: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-brand-500" />
+                         <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">ID Personalizado</span>
+                      </div>
                    </div>
                 </div>
 
-                {/* Bloco 2: Cronologia e Entidades */}
-                <div className="space-y-4 bg-slate-950/40 p-5 rounded-[2rem] border border-white/5">
-                   <h3 className="text-[9px] font-black text-orange-500 uppercase tracking-[0.3em] flex items-center gap-2"><Calendar className="w-3.5 h-3.5" /> Cronologia</h3>
-                   <div className="space-y-3">
+                {/* GRUPO B: Cronologia e Entidades */}
+                <div className="space-y-5 bg-slate-950/40 p-6 rounded-[2.5rem] border border-white/5">
+                   <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] flex items-center gap-2"><Calendar className="w-4 h-4" /> Ciclo de Vida</h3>
+                   <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-3">
                          <div className="relative">
-                            <input type="date" value={formData.releaseDate} onChange={e => setFormData({...formData, releaseDate: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white font-black text-[10px] outline-none focus:border-orange-500" />
-                            <span className="absolute -top-1.5 left-2 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Lançamento</span>
+                            <input type="date" value={formData.releaseDate} onChange={e => setFormData({...formData, releaseDate: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-[10px] outline-none focus:border-orange-500" />
+                            <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Lançamento</span>
                          </div>
                          <div className="relative">
-                            <input type="date" value={formData.closeDate} onChange={e => setFormData({...formData, closeDate: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white font-black text-[10px] outline-none focus:border-orange-500" />
-                            <span className="absolute -top-1.5 left-2 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Caducidade</span>
+                            <input type="date" value={formData.closeDate} onChange={e => setFormData({...formData, closeDate: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-[10px] outline-none focus:border-orange-500" />
+                            <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Caducidade</span>
                          </div>
                       </div>
                       <div className="relative">
-                         <input type="text" placeholder="Ex: Jogos Santa Casa" value={formData.operator} onChange={e => setFormData({...formData, operator: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-white font-black text-xs outline-none focus:border-brand-500" />
-                         <span className="absolute -top-1.5 left-2 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Operadora</span>
+                         <input type="text" placeholder="Ex: Jogos Santa Casa" value={formData.operator} onChange={e => setFormData({...formData, operator: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-orange-500" />
+                         <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Operadora / Editora</span>
                       </div>
                       <div className="relative">
-                         <input type="text" placeholder="Ex: Scientific Games" value={formData.printer} onChange={e => setFormData({...formData, printer: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-white font-black text-xs outline-none focus:border-brand-500" />
-                         <span className="absolute -top-1.5 left-2 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Gráfica / Emissora</span>
+                         <input type="text" placeholder="Ex: Scientific Games" value={formData.printer} onChange={e => setFormData({...formData, printer: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-orange-500" />
+                         <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Gráfica / Impressora</span>
                       </div>
                    </div>
                 </div>
 
-                {/* Bloco 3: Localização e Estado */}
-                <div className="space-y-4 bg-slate-950/40 p-5 rounded-[2rem] border border-white/5">
-                   <h3 className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.3em] flex items-center gap-2"><Globe2 className="w-3.5 h-3.5" /> Localização</h3>
-                   <div className="space-y-3">
+                {/* GRUPO C: Dados Técnicos Avançados */}
+                <div className="space-y-5 bg-slate-950/40 p-6 rounded-[2.5rem] border border-white/5">
+                   <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] flex items-center gap-2"><BookOpen className="w-4 h-4" /> Ficha Técnica</h3>
+                   <div className="space-y-4">
+                      <div className="relative">
+                         <input type="text" placeholder="Ex: 20.000.000 exemplares" value={formData.emission} onChange={e => setFormData({...formData, emission: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-emerald-500" />
+                         <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Emissão / Tiragem</span>
+                      </div>
                       <div className="grid grid-cols-2 gap-3">
                          <div className="relative">
-                            <input type="text" value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-white font-black text-xs outline-none focus:border-emerald-500" />
-                            <span className="absolute -top-1.5 left-2 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">País</span>
+                            <input type="text" placeholder="Ex: 10x15cm" value={formData.size} onChange={e => setFormData({...formData, size: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-emerald-500" />
+                            <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Medidas</span>
                          </div>
-                         <select value={formData.state} onChange={e => setFormData({...formData, state: e.target.value as ScratchcardState})} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white font-black text-[10px] outline-none">
-                            {STATE_OPTIONS.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
-                         </select>
-                      </div>
-                      <input type="text" placeholder="Região / Ilha / Sub-Região" value={formData.island || formData.region} onChange={e => setFormData({...formData, island: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-white font-black text-xs outline-none focus:border-brand-500" />
-                   </div>
-                </div>
-
-                {/* Bloco 4: Séries e SETs (Ocupa 2 colunas se puder) */}
-                <div className="space-y-4 bg-brand-500/5 p-6 rounded-[2rem] border border-brand-500/20 lg:col-span-2">
-                   <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-[9px] font-black text-brand-400 uppercase tracking-[0.3em] flex items-center gap-2"><Layers className="w-3.5 h-3.5" /> Sistema de Séries / SET</h3>
-                      <label className="relative inline-flex items-center cursor-pointer scale-90">
-                        <input type="checkbox" checked={formData.isSeries} onChange={e => setFormData({...formData, isSeries: e.target.checked})} className="sr-only peer" />
-                        <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
-                      </label>
-                   </div>
-                   {formData.isSeries && (
-                     <div className="flex gap-4 animate-fade-in">
-                        <input type="text" placeholder="Nome do SET / Série Técnica" value={formData.seriesGroupId} onChange={e => setFormData({...formData, seriesGroupId: e.target.value})} className="flex-1 bg-slate-900 border border-brand-500/30 rounded-lg p-2.5 text-white font-black text-xs outline-none focus:border-brand-500" />
-                        <input type="text" placeholder="Nº Itens no SET" value={formData.setCount} onChange={e => setFormData({...formData, setCount: e.target.value})} className="w-24 bg-slate-900 border border-brand-500/30 rounded-lg p-2.5 text-white font-black text-xs outline-none focus:border-brand-500 text-center" />
-                     </div>
-                   )}
-                </div>
-
-                {/* Bloco 5: Linhas de Segurança Visual */}
-                <div className="space-y-4 bg-slate-950/40 p-5 rounded-[2rem] border border-white/5">
-                   <h3 className="text-[9px] font-black text-pink-500 uppercase tracking-[0.3em] flex items-center gap-2"><ScanLine className="w-3.5 h-3.5" /> Linhas de Segurança</h3>
-                   <div className="flex flex-wrap gap-2">
-                      {LINE_COLORS.map(line => (
-                        <button key={line.id} onClick={() => setFormData({...formData, lines: line.id})} className={`w-8 h-8 rounded-full border-2 transition-all ${formData.lines === line.id ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-40 hover:opacity-100'} ${line.color}`} title={line.label} />
-                      ))}
-                   </div>
-                   <p className="text-[7px] font-black text-slate-600 uppercase tracking-widest text-center">Cor selecionada: {formData.lines}</p>
-                </div>
-
-                {/* Bloco 6: Temas e Notas */}
-                <div className="space-y-4 bg-slate-950/40 p-5 rounded-[2rem] border border-white/5 lg:col-span-3">
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <div className="space-y-3">
-                         <h3 className="text-[9px] font-black text-blue-400 uppercase tracking-[0.3em] flex items-center gap-2"><Palette className="w-3.5 h-3.5" /> Tema Curadoria</h3>
-                         <div className="grid grid-cols-4 gap-2">
-                           {THEME_OPTIONS.map(theme => (
-                             <button key={theme.id} onClick={() => setFormData({...formData, theme: theme.id})} className={`p-2 rounded-lg border text-[8px] font-black uppercase flex items-center justify-center gap-2 ${formData.theme === theme.id ? 'bg-blue-600 border-blue-400 text-white' : 'bg-slate-900 border-white/5 text-slate-500 hover:text-white'}`}>
-                               <span>{theme.icon}</span>
-                             </button>
-                           ))}
+                         <div className="relative">
+                            <input type="text" placeholder="Ex: 1 em 3.4" value={formData.winProbability} onChange={e => setFormData({...formData, winProbability: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-emerald-500" />
+                            <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Probabilidade</span>
                          </div>
                       </div>
-                      <div className="space-y-3">
-                         <h3 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2"><Info className="w-3.5 h-3.5" /> Notas Técnicas</h3>
-                         <textarea placeholder="Alguma particularidade no verso ou tiragem especial? hihi!" value={formData.values} onChange={e => setFormData({...formData, values: e.target.value})} className="w-full bg-slate-900 border border-white/5 rounded-xl p-3 text-white text-[10px] h-20 outline-none italic resize-none focus:border-brand-500 transition-all" />
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        <span className="text-[7px] font-black text-slate-600 uppercase tracking-widest w-full">Linhas de Segurança:</span>
+                        {LINE_COLORS.map(line => (
+                          <button key={line.id} onClick={() => setFormData({...formData, lines: line.id})} className={`w-8 h-8 rounded-full border-2 transition-all ${formData.lines === line.id ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-30 hover:opacity-100'} ${line.color}`} title={line.label} />
+                        ))}
                       </div>
                    </div>
+                </div>
+
+                {/* GRUPO D: Geografia e Estado */}
+                <div className="space-y-5 bg-slate-950/40 p-6 rounded-[2.5rem] border border-white/5">
+                   <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] flex items-center gap-2"><Globe2 className="w-4 h-4" /> Geografia</h3>
+                   <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-3">
+                         <div className="relative">
+                            <input type="text" value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-blue-500" />
+                            <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">País</span>
+                         </div>
+                         <div className="relative">
+                            <select value={formData.state} onChange={e => setFormData({...formData, state: e.target.value as ScratchcardState})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-blue-500">
+                               {STATE_OPTIONS.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
+                            </select>
+                            <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Estado Físico</span>
+                         </div>
+                      </div>
+                      <div className="relative">
+                         <input type="text" placeholder="Açores, Madeira, Catalunha..." value={formData.island || formData.region} onChange={e => setFormData({...formData, island: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-blue-500" />
+                         <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Região / Sub-Divisão</span>
+                      </div>
+                   </div>
+                </div>
+
+                {/* GRUPO E: Séries e Curadoria */}
+                <div className="space-y-5 bg-brand-500/5 p-6 rounded-[2.5rem] border border-brand-500/20 lg:col-span-2">
+                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                      <div className="flex-1 space-y-4">
+                         <div className="flex items-center justify-between">
+                            <h3 className="text-[10px] font-black text-brand-400 uppercase tracking-[0.3em] flex items-center gap-2"><Layers className="w-4 h-4" /> Agrupamento de Série / SET</h3>
+                            <label className="relative inline-flex items-center cursor-pointer scale-110">
+                              <input type="checkbox" checked={formData.isSeries} onChange={e => setFormData({...formData, isSeries: e.target.checked})} className="sr-only peer" />
+                              <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
+                            </label>
+                         </div>
+                         {formData.isSeries && (
+                            <div className="flex gap-4 animate-fade-in">
+                               <input type="text" placeholder="Nome do SET (Ex: Coleção Verão)" value={formData.seriesGroupId} onChange={e => setFormData({...formData, seriesGroupId: e.target.value})} className="flex-1 bg-slate-900 border border-brand-500/30 rounded-xl p-3 text-white font-black text-xs outline-none" />
+                               <input type="text" placeholder="Total" value={formData.setCount} onChange={e => setFormData({...formData, setCount: e.target.value})} className="w-20 bg-slate-900 border border-brand-500/30 rounded-xl p-3 text-white font-black text-xs outline-none text-center" />
+                            </div>
+                         )}
+                      </div>
+                      <div className="flex-1 space-y-4">
+                         <h3 className="text-[10px] font-black text-pink-500 uppercase tracking-[0.3em] flex items-center gap-2"><Palette className="w-4 h-4" /> Tema Sugerido</h3>
+                         <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
+                            {THEME_OPTIONS.map(theme => (
+                              <button key={theme.id} onClick={() => setFormData({...formData, theme: theme.id})} className={`p-2 rounded-xl border transition-all ${formData.theme === theme.id ? 'bg-pink-600 border-pink-400 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-white'}`} title={theme.label}>
+                                 <span className="text-lg">{theme.icon}</span>
+                              </button>
+                            ))}
+                         </div>
+                      </div>
+                   </div>
+                </div>
+
+                {/* GRUPO F: Notas e Curiosidades */}
+                <div className="space-y-4 bg-slate-950/40 p-6 rounded-[2.5rem] border border-white/5 lg:col-span-3">
+                   <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2"><Info className="w-4 h-4" /> Notas de Curador</h3>
+                   <textarea placeholder="Vovô, descreva aqui alguma curiosidade, tiragem especial ou defeitos de impressão... hihi!" value={formData.values} onChange={e => setFormData({...formData, values: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-[2rem] p-5 text-white text-xs h-24 outline-none italic resize-none focus:border-brand-500 transition-all" />
                 </div>
 
              </div>
           </div>
         </div>
 
-        {/* Footer Bar */}
-        <div className="px-8 py-5 border-t border-white/5 bg-slate-900/60 flex justify-end gap-3 shrink-0">
-          <button onClick={onClose} className="px-8 py-3 bg-slate-800 text-slate-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:text-white transition-all">Cancelar</button>
+        {/* Footer do Registo */}
+        <div className="px-8 py-6 border-t border-white/5 bg-slate-900/60 flex justify-end gap-4 shrink-0">
+          <button onClick={onClose} className="px-10 py-3 bg-slate-800 text-slate-400 rounded-2xl font-black text-xs uppercase tracking-widest hover:text-white transition-all">Cancelar</button>
           <button 
             onClick={handleSave} 
             disabled={isSaving || !formData.gameName || !frontPreview}
-            className={`px-12 py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl flex items-center gap-3 transition-all active:scale-95 ${formData.gameName && frontPreview ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/20' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}
+            className={`px-16 py-3 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl flex items-center gap-3 transition-all active:scale-95 ${formData.gameName && frontPreview ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/30' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}
           >
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-            Arquivar Item no Legado
+            {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
+            Arquivar no Legado Mundial
           </button>
         </div>
       </div>

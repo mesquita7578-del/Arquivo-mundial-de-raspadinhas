@@ -8,7 +8,7 @@ import {
   LayoutGrid, Eye, User,
   RefreshCw, Layers as LayersIcon, ChevronLeft, ChevronRight,
   Maximize2, Activity, Ship, Palette, Calendar, Percent, Check, Star, ImagePlus, LayoutList,
-  Columns2, Grid3X3, Layout, StickyNote, AlertCircle
+  Columns2, Grid3X3, Layout, StickyNote, AlertCircle, Factory, Tag
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent, LineType, CategoryItem } from '../types';
 
@@ -38,17 +38,6 @@ const THEME_OPTIONS = [
   { id: 'artes', label: 'Artes' },
   { id: 'historia', label: 'História' },
   { id: 'amor', label: 'Amor' },
-];
-
-const GERMAN_REGIONS = [
-  "Baden-Württemberg", "Baviera (Bayern)", "Berlim (Berlin)", "Brandenburg", "Bremen",
-  "Hamburgo (Hamburg)", "Hessen", "Mecklenburg-Vorpommern", "Baixa Saxónia (Niedersachsen)",
-  "Renânia do Norte-Vestfália (NRW)", "Renânia-Palatinado", "Sarre (Saarland)", "Saxónia (Sachsen)",
-  "Saxónia-Anhalt", "Schleswig-Holstein", "Turíngia (Thüringen)", "Região Militar/Especial", "Outros Cantões"
-];
-
-const US_STATES = [
-  "Alabama", "Alaska", "Arizona", "Arkansas", "Califórnia", "Carolina do Norte", "Carolina do Sul", "Colorado", "Connecticut", "Dakota do Norte", "Dakota do Sul", "Delaware", "Distrito de Colúmbia", "Flórida", "Geórgia", "Havai", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New York", "Novo México", "Ohio", "Oklahoma", "Oregon", "Pensilvânia", "Rhode Island", "Tennessee", "Texas", "Utah", "Vermont", "Virgínia", "Virgínia Ocidental", "Washington", "Wisconsin", "Wyoming"
 ];
 
 const LINE_COLORS: { id: LineType; label: string; bg: string }[] = [
@@ -107,12 +96,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
     if (image.gallery) gal.push(...image.gallery);
     return gal;
   }, [image]);
-
-  const setDisplayCount = useMemo(() => {
-    if (formData.setCount) return formData.setCount;
-    const galleryItems = image.gallery ? image.gallery.length : 0;
-    return galleryItems > 0 ? (galleryItems + 1).toString() : null;
-  }, [formData.setCount, image.gallery]);
 
   const isSaved = useMemo(() => {
     if (!currentUser) return false;
@@ -180,13 +163,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
     </div>
   );
 
-  const toggleImage = () => {
-    setActiveIndex(prev => (prev + 1) % localGallery.length);
-  };
-
-  const isGermany = formData.country.toLowerCase() === 'alemanha';
-  const isUSA = formData.country.toLowerCase() === 'eua' || formData.country.toLowerCase() === 'usa' || formData.country.toLowerCase() === 'estados unidos';
-
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-md" onClick={onClose}>
       
@@ -211,80 +187,36 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar animate-fade-in">
                   <div className="flex items-center justify-between mb-8">
                      <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-brand-600 rounded-xl shadow-lg">
-                           <Grid3X3 className="w-5 h-5 text-white" />
-                        </div>
+                        <div className="p-2.5 bg-brand-600 rounded-xl shadow-lg"><Grid3X3 className="w-5 h-5 text-white" /></div>
                         <div>
                            <h3 className="text-xl font-black text-white italic uppercase tracking-tighter">Comparação da Série</h3>
                            <p className="text-slate-500 text-[8px] font-black uppercase tracking-widest">{seriesItems.length} exemplares registados hihi!</p>
                         </div>
                      </div>
-                     <button 
-                        onClick={() => setShowSeriesComparison(false)}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-white transition-all border border-slate-700"
-                     >
-                        <Columns2 className="w-3.5 h-3.5" /> Ficha Individual
-                     </button>
+                     <button onClick={() => setShowSeriesComparison(false)} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-white transition-all border border-slate-700">Ficha Individual</button>
                   </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
                      {seriesItems.map((sItem) => (
-                        <div 
-                           key={sItem.id} 
-                           onClick={() => onImageSelect(sItem)}
-                           className={`group relative aspect-[3/4] bg-slate-900 rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${sItem.id === image.id ? 'border-brand-500 shadow-lg scale-105 z-10' : 'border-white/5 hover:border-white/20'}`}
-                        >
-                           <img src={sItem.frontUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={sItem.gameName} />
-                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
-                           <div className="absolute bottom-2 left-2 right-2">
-                              <span className="text-[8px] font-black text-brand-400 block">#{sItem.gameNumber}</span>
-                              <span className="text-[8px] font-black text-white uppercase tracking-tighter truncate block">{sItem.gameName}</span>
-                           </div>
-                           {sItem.id === image.id && (
-                              <div className="absolute top-2 right-2 bg-brand-500 text-white p-1 rounded-full animate-pulse shadow-lg">
-                                 <Check className="w-2 h-2" />
-                              </div>
-                           )}
+                        <div key={sItem.id} onClick={() => onImageSelect(sItem)} className={`group aspect-[3/4] bg-slate-900 rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${sItem.id === image.id ? 'border-brand-500 shadow-lg scale-105 z-10' : 'border-white/5 hover:border-white/20'}`}>
+                           <img src={sItem.frontUrl} className="w-full h-full object-cover" />
                         </div>
                      ))}
                   </div>
                </div>
             ) : (
-               <div className="flex-1 relative flex items-center justify-center p-6 md:p-10 overflow-hidden">
-                  <div className="relative max-w-full max-h-full flex items-center justify-center">
-                     <img 
-                       src={activeImage} 
-                       className="max-w-full max-h-[70vh] object-contain shadow-2xl rounded-lg animate-fade-in" 
-                       alt={formData.gameName} 
-                       key={activeImage}
-                     />
-                     {localGallery.length > 1 && (
-                        <button onClick={toggleImage} className="absolute bottom-4 right-4 bg-brand-600 text-white p-3 rounded-full shadow-xl hover:scale-110 transition-transform flex items-center gap-2 border border-brand-400">
-                           <RefreshCw className="w-4 h-4" />
-                           <span className="text-[9px] font-black uppercase tracking-widest">{activeIndex + 1}/{localGallery.length}</span>
-                        </button>
-                     )}
-                  </div>
-               </div>
-            )}
-
-            {!showSeriesComparison && (
-               <div className="h-20 bg-slate-900/50 border-t border-white/5 p-3 flex items-center gap-2 justify-center shrink-0 overflow-x-auto scrollbar-hide">
-                  {localGallery.map((url, i) => (
-                     <button 
-                       key={i} 
-                       onClick={() => setActiveIndex(i)} 
-                       className={`w-14 h-14 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${activeIndex === i ? 'border-brand-500 scale-105 shadow-md' : 'border-slate-800 opacity-40 hover:opacity-100'}`}
-                     >
-                       <img src={url} className="w-full h-full object-cover" />
+               <div className="flex-1 relative flex items-center justify-center p-6 md:p-10">
+                  <img src={activeImage} className="max-w-full max-h-[70vh] object-contain shadow-2xl rounded-lg animate-fade-in" key={activeImage}/>
+                  {localGallery.length > 1 && (
+                     <button onClick={() => setActiveIndex((activeIndex + 1) % localGallery.length)} className="absolute bottom-4 right-4 bg-brand-600 text-white p-3 rounded-full shadow-xl hover:scale-110 transition-transform border border-brand-400">
+                        <RefreshCw className="w-4 h-4" />
                      </button>
-                  ))}
+                  )}
                </div>
             )}
          </div>
 
-         {/* Data Side - Mais Estreito e Fino */}
-         <div className={`w-full md:w-[400px] bg-slate-900/30 flex flex-col h-full overflow-hidden shrink-0 ${showSeriesComparison ? 'md:border-l md:border-white/5' : ''}`}>
+         {/* Data Side - Vista Completa de Profissional */}
+         <div className={`w-full md:w-[420px] bg-slate-900/30 flex flex-col h-full overflow-hidden shrink-0`}>
               <div className="p-5 border-b border-white/5 flex justify-between items-center bg-slate-900/50">
                  <div className="flex items-center gap-2">
                    {isAdmin && (
@@ -292,117 +224,61 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                          {isEditing ? <Save className="w-3.5 h-3.5"/> : <Edit2 className="w-3.5 h-3.5"/>} {isEditing ? 'Gravar' : 'Editar'}
                       </button>
                    )}
-                   {currentUser && !isEditing && (
-                     <button 
-                       onClick={handleToggleSave}
-                       className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all border ${isSaved ? 'bg-brand-600 text-white border-brand-400/50 shadow-lg' : 'bg-white/5 text-slate-400 border-white/10 hover:bg-white/10'}`}
-                     >
-                       <Star className={`w-3.5 h-3.5 ${isSaved ? 'fill-current' : ''}`} />
-                       {isSaved ? "Marcado" : "Marcar"}
-                     </button>
-                   )}
                  </div>
-                 {!isEditing && isAdmin && (
-                    <button onClick={handleDelete} className="p-2 text-slate-500 hover:text-red-500 transition-colors"><Trash2 className="w-5 h-5"/></button>
-                 )}
+                 <button onClick={onClose} className="p-2 text-slate-500 hover:text-white"><X className="w-5 h-5"/></button>
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-950/20">
-                 
                  {isEditing ? (
-                    <div className="space-y-6 animate-fade-in pb-6">
+                    <div className="space-y-6 animate-fade-in pb-10">
                        <section className="space-y-4">
-                          <h3 className="text-[9px] font-black text-brand-500 uppercase tracking-[0.3em] flex items-center gap-2">
-                            <User className="w-3 h-3" /> Ficha Técnica
-                          </h3>
-                          <div className="space-y-3">
-                             <input type="text" value={formData.gameName} onChange={e => handleChange('gameName', e.target.value)} className="w-full bg-slate-950 text-white text-xs font-black rounded-xl p-3.5 border border-white/5 focus:border-brand-500 outline-none" placeholder="Nome do Jogo" />
-                             <div className="grid grid-cols-2 gap-3">
-                                <input type="text" value={formData.gameNumber} onChange={e => handleChange('gameNumber', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Nº Jogo" />
-                                <input type="text" value={formData.customId} onChange={e => handleChange('customId', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="ID Personalizado" />
-                             </div>
-                             
-                             <div className="p-3 bg-slate-950 border border-brand-500/20 rounded-xl">
-                                <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-2">Tema Curadoria:</label>
-                                <select 
-                                  value={formData.theme} 
-                                  onChange={e => handleChange('theme', e.target.value)}
-                                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-[10px] text-white outline-none focus:border-brand-500 uppercase font-black"
-                                >
-                                   <option value="">Sem Tema</option>
-                                   {THEME_OPTIONS.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
-                                </select>
-                             </div>
-
-                             <div className="p-3 bg-slate-950 border border-brand-500/20 rounded-xl">
-                                <label className="flex items-center gap-2 cursor-pointer mb-2">
-                                   <input type="checkbox" checked={formData.isSeries} onChange={e => handleChange('isSeries', e.target.checked)} className="w-3.5 h-3.5 rounded bg-slate-800 border-slate-700" />
-                                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Série / SET</span>
-                                </label>
-                                {formData.isSeries && (
-                                   <input type="text" value={formData.seriesGroupId} onChange={e => handleChange('seriesGroupId', e.target.value)} className="w-full bg-slate-900 text-white text-[9px] p-2 border border-brand-500/30 rounded-lg outline-none uppercase font-black" placeholder="NOME DO SET" />
-                                )}
-                             </div>
-                          </div>
-                       </section>
-
-                       <section className="space-y-4">
-                          <h3 className="text-[9px] font-black text-blue-500 uppercase tracking-[0.3em] flex items-center gap-2">
-                            <MapPin className="w-3 h-3" /> Origem
-                          </h3>
+                          {/* Fixed: Tag was not imported from lucide-react */}
+                          <h3 className="text-[9px] font-black text-brand-500 uppercase tracking-[0.3em] flex items-center gap-2"><Tag className="w-3 h-3" /> Identidade Técnica</h3>
+                          <input type="text" value={formData.gameName} onChange={e => handleChange('gameName', e.target.value)} className="w-full bg-slate-950 text-white text-xs font-black rounded-xl p-3 border border-white/5 focus:border-brand-500 outline-none" placeholder="Nome" />
                           <div className="grid grid-cols-2 gap-3">
-                             <input type="text" value={formData.country} onChange={e => handleChange('country', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="País" />
-                             <input type="text" value={formData.island} onChange={e => handleChange('island', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Ilha" />
+                             <input type="text" value={formData.gameNumber} onChange={e => handleChange('gameNumber', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Nº Jogo" />
+                             <input type="text" value={formData.price} onChange={e => handleChange('price', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Preço" />
                           </div>
+                          <div className="grid grid-cols-2 gap-3">
+                             <div className="space-y-1">
+                                <span className="text-[7px] text-slate-500 font-black uppercase ml-2">Lançamento</span>
+                                <input type="date" value={formData.releaseDate} onChange={e => handleChange('releaseDate', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" />
+                             </div>
+                             <div className="space-y-1">
+                                <span className="text-[7px] text-slate-500 font-black uppercase ml-2">Caducidade</span>
+                                <input type="date" value={formData.closeDate} onChange={e => handleChange('closeDate', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" />
+                             </div>
+                          </div>
+                          <input type="text" value={formData.operator} onChange={e => handleChange('operator', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Operadora / Editora" />
+                          <input type="text" value={formData.printer} onChange={e => handleChange('printer', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Gráfica / Impressora" />
                        </section>
                     </div>
                  ) : (
                     <div className="space-y-6">
                        <div className="border-b border-white/5 pb-4">
-                          <h2 className="text-2xl font-black text-white uppercase italic leading-none tracking-tighter">{formData.gameName}</h2>
-                          <div className="flex flex-wrap items-center gap-2 mt-3">
-                            <span className="text-brand-500 text-[8px] font-black uppercase tracking-widest bg-brand-500/10 px-2 py-0.5 rounded border border-brand-500/20">{formData.category}</span>
-                            {formData.theme && (
-                               <div className="flex items-center gap-1.5 bg-pink-500/10 text-pink-400 px-2 py-0.5 rounded border border-pink-500/30">
-                                  <Layout className="w-3 h-3" />
-                                  <span className="text-[8px] font-black uppercase tracking-widest">{formData.theme}</span>
-                               </div>
-                            )}
-                            {formData.isSeries && (
-                               <button 
-                                 onClick={() => setShowSeriesComparison(!showSeriesComparison)}
-                                 className={`flex items-center gap-1.5 px-3 py-1 rounded border transition-all ${showSeriesComparison ? 'bg-brand-600 text-white border-brand-400' : 'bg-brand-600/10 text-brand-400 border-brand-500/20'}`}
-                               >
-                                  <Grid3X3 className="w-3 h-3" />
-                                  <span className="text-[8px] font-black uppercase tracking-widest">Série</span>
-                               </button>
-                            )}
-                          </div>
+                          <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">{formData.gameName}</h2>
+                          <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mt-2">{formData.category} • {formData.operator || 'Operador Desconhecido'}</p>
                        </div>
 
                        <div className="grid grid-cols-2 gap-2 animate-fade-in">
                           <DataTag icon={Hash} label="Nº Jogo" value={formData.gameNumber} colorClass="text-brand-500" />
                           <DataTag icon={Flag} label="País" value={formData.country} colorClass="text-red-500" />
-                          <DataTag icon={Clock} label="Data" value={formData.releaseDate} colorClass="text-orange-500" />
+                          <DataTag icon={Clock} label="Lançamento" value={formData.releaseDate} colorClass="text-orange-500" />
+                          <DataTag icon={Calendar} label="Caducidade" value={formData.closeDate} colorClass="text-amber-500" />
                           <DataTag icon={Activity} label="Estado" value={formData.state} colorClass="text-brand-400" />
                           <DataTag icon={Banknote} label="Preço" value={formData.price} colorClass="text-emerald-500" />
-                          <DataTag icon={Fingerprint} label="ID Único" value={formData.customId} colorClass="text-slate-500" />
+                          <DataTag icon={LayoutList} label="Emissão" value={formData.emission} colorClass="text-indigo-400" />
+                          <DataTag icon={Ruler} label="Medidas" value={formData.size} colorClass="text-blue-400" />
+                          <DataTag icon={Percent} label="Sorte" value={formData.winProbability} colorClass="text-pink-400" />
+                          <DataTag icon={Factory} label="Gráfica" value={formData.printer} colorClass="text-slate-400" />
                        </div>
 
-                       <div className="bg-slate-950 p-5 rounded-2xl border border-white/5 space-y-2">
+                       <div className="bg-slate-950 p-5 rounded-2xl border border-white/5 space-y-4">
                           <div className="flex items-center gap-2 text-slate-500">
                              <Info className="w-3.5 h-3.5" />
-                             <span className="text-[8px] font-black uppercase tracking-widest">Notas do Arquivo</span>
+                             <span className="text-[8px] font-black uppercase tracking-widest">Notas de Arquivo</span>
                           </div>
-                          <p className="text-xs text-slate-400 italic leading-relaxed">{formData.values || 'Nenhuma nota registada hihi!'}</p>
-                          <div className="pt-3 border-t border-white/5 flex items-center justify-between">
-                             <span className="text-[7px] font-black text-slate-600 uppercase tracking-widest">Guardião</span>
-                             <span className="text-[9px] font-black text-brand-400 uppercase">{formData.collector || 'Jorge Mesquita'}</span>
-                          </div>
-                       </div>
-
-                       <div className="text-[7px] text-slate-800 font-black uppercase tracking-[0.4em] text-center pt-4">
-                          Visionary Archive 🐉
+                          <p className="text-xs text-slate-400 italic leading-relaxed">{formData.values || 'Nenhuma nota adicional.'}</p>
                        </div>
                     </div>
                  )}
