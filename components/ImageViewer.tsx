@@ -40,6 +40,17 @@ const THEME_OPTIONS = [
   { id: 'amor', label: 'Amor' },
 ];
 
+const GERMAN_REGIONS = [
+  "Baden-Württemberg", "Baviera (Bayern)", "Berlim (Berlin)", "Brandenburg", "Bremen",
+  "Hamburgo (Hamburg)", "Hessen", "Mecklenburg-Vorpommern", "Baixa Saxónia (Niedersachsen)",
+  "Renânia do Norte-Vestfália (NRW)", "Renânia-Palatinado", "Sarre (Saarland)", "Saxónia (Sachsen)",
+  "Saxónia-Anhalt", "Schleswig-Holstein", "Turíngia (Thüringen)", "Região Militar/Especial", "Outros Cantões"
+];
+
+const US_STATES = [
+  "Alabama", "Alaska", "Arizona", "Arkansas", "Califórnia", "Carolina do Norte", "Carolina do Sul", "Colorado", "Connecticut", "Dakota do Norte", "Dakota do Sul", "Delaware", "Distrito de Colúmbia", "Flórida", "Geórgia", "Havai", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New York", "Novo México", "Ohio", "Oklahoma", "Oregon", "Pensilvânia", "Rhode Island", "Tennessee", "Texas", "Utah", "Vermont", "Virgínia", "Virgínia Ocidental", "Washington", "Wisconsin", "Wyoming"
+];
+
 const LINE_COLORS: { id: LineType; label: string; bg: string }[] = [
   { id: 'blue', label: 'Azul', bg: 'bg-blue-500' },
   { id: 'red', label: 'Vermelho', bg: 'bg-red-500' },
@@ -131,7 +142,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
       setFormData(image);
       setActiveIndex(0);
       setIsEditing(false);
-      // Mantém a comparação aberta se o novo item pertencer à mesma série
       const isSameSeries = seriesItems.some(s => s.id === image.id);
       if (!isSameSeries) setShowSeriesComparison(false);
     }
@@ -173,6 +183,9 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   const toggleImage = () => {
     setActiveIndex(prev => (prev + 1) % localGallery.length);
   };
+
+  const isGermany = formData.country.toLowerCase() === 'alemanha';
+  const isUSA = formData.country.toLowerCase() === 'eua' || formData.country.toLowerCase() === 'usa' || formData.country.toLowerCase() === 'estados unidos';
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md" onClick={onClose}>
@@ -395,7 +408,29 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                           <div className="grid grid-cols-2 gap-3">
                              <input type="text" value={formData.country} onChange={e => handleChange('country', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-3 border border-white/10 rounded-xl outline-none" placeholder="País" />
                              <input type="text" value={formData.island} onChange={e => handleChange('island', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-3 border border-brand-500/50 rounded-xl outline-none focus:border-brand-500" placeholder="Ilha (Açores...)" />
-                             <input type="text" value={formData.region} onChange={e => handleChange('region', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-3 border border-white/10 rounded-xl outline-none" placeholder="Região" />
+                             
+                             {isGermany ? (
+                                <select 
+                                  value={formData.region} 
+                                  onChange={e => handleChange('region', e.target.value)} 
+                                  className="w-full bg-slate-950 text-white text-[10px] font-black uppercase p-3 border border-brand-500/50 rounded-xl outline-none focus:border-brand-500"
+                                >
+                                   <option value="">Selecione o Cantão</option>
+                                   {GERMAN_REGIONS.map(reg => <option key={reg} value={reg}>{reg}</option>)}
+                                </select>
+                             ) : isUSA ? (
+                                <select 
+                                  value={formData.region} 
+                                  onChange={e => handleChange('region', e.target.value)} 
+                                  className="w-full bg-slate-950 text-white text-[10px] font-black uppercase p-3 border border-brand-500/50 rounded-xl outline-none focus:border-brand-500"
+                                >
+                                   <option value="">Selecione o Estado</option>
+                                   {US_STATES.map(st => <option key={st} value={st}>{st}</option>)}
+                                </select>
+                             ) : (
+                                <input type="text" value={formData.region} onChange={e => handleChange('region', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-3 border border-white/10 rounded-xl outline-none" placeholder="Região" />
+                             )}
+
                              <select value={formData.continent} onChange={e => handleChange('continent', e.target.value as any)} className="w-full bg-slate-950 text-white text-[10px] font-black uppercase p-3 border border-white/10 rounded-xl outline-none">
                                 {['Europa', 'América', 'Ásia', 'África', 'Oceania'].map(c => <option key={c} value={c}>{c}</option>)}
                              </select>

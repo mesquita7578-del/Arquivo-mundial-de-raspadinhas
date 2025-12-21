@@ -35,6 +35,10 @@ const THEME_OPTIONS = [
   { id: 'amor', label: 'Amor' },
 ];
 
+const US_STATES = [
+  "Alabama", "Alaska", "Arizona", "Arkansas", "Califórnia", "Carolina do Norte", "Carolina do Sul", "Colorado", "Connecticut", "Dakota do Norte", "Dakota do Sul", "Delaware", "Distrito de Colúmbia", "Flórida", "Geórgia", "Havai", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New York", "Novo México", "Ohio", "Oklahoma", "Oregon", "Pensilvânia", "Rhode Island", "Tennessee", "Texas", "Utah", "Vermont", "Virgínia", "Virgínia Ocidental", "Washington", "Wisconsin", "Wyoming"
+];
+
 const LINE_COLORS: { id: LineType; label: string; bg: string }[] = [
   { id: 'blue', label: 'Azul', bg: 'bg-blue-500' },
   { id: 'red', label: 'Vermelho', bg: 'bg-red-500' },
@@ -222,6 +226,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       setIsSaving(false);
     }
   };
+
+  const isUSA = formData.country?.toLowerCase() === 'eua' || formData.country?.toLowerCase() === 'usa' || formData.country?.toLowerCase() === 'estados unidos';
 
   if (step === 1) {
     return (
@@ -444,8 +450,19 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                            <input list="islands" type="text" value={formData.island} onChange={e => setFormData({...formData, island: e.target.value})} className="w-full bg-slate-950 border border-brand-500/50 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500" placeholder="Ex: Açores, Madeira..." />
                         </label>
                         <label>
-                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Região / Cantão:</span>
-                           <input list="regions" type="text" value={formData.region} onChange={e => setFormData({...formData, region: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500" />
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Região / Estado:</span>
+                           {isUSA ? (
+                             <select 
+                               value={formData.region} 
+                               onChange={e => setFormData({...formData, region: e.target.value})}
+                               className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500"
+                             >
+                                <option value="">Selecione o Estado</option>
+                                {US_STATES.map(st => <option key={st} value={st}>{st}</option>)}
+                             </select>
+                           ) : (
+                             <input list="regions" type="text" value={formData.region} onChange={e => setFormData({...formData, region: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500" />
+                           )}
                         </label>
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Continente:</span>
