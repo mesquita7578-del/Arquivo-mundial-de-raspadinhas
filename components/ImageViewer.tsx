@@ -8,7 +8,8 @@ import {
   LayoutGrid, Eye, User,
   RefreshCw, Layers as LayersIcon, ChevronLeft, ChevronRight,
   Maximize2, Activity, Ship, Palette, Calendar, Percent, Check, Star, ImagePlus, LayoutList,
-  Columns2, Grid3X3, Layout, StickyNote, AlertCircle, Factory, Tag, Trash
+  Columns2, Grid3X3, Layout, StickyNote, AlertCircle, Factory, Tag, Trash,
+  CalendarDays, ShieldCheck, Zap, Layers, Microscope
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent, LineType, CategoryItem } from '../types';
 
@@ -25,21 +26,6 @@ interface ImageViewerProps {
   categories: CategoryItem[];
 }
 
-const THEME_OPTIONS = [
-  { id: 'animais', label: 'Animais' },
-  { id: 'natal', label: 'Natal' },
-  { id: 'filmes', label: 'Filmes' },
-  { id: 'desenhos', label: 'Desenhos Animados' },
-  { id: 'desporto', label: 'Desporto' },
-  { id: 'ouro', label: 'Ouro' },
-  { id: 'espaco', label: 'Espaço' },
-  { id: 'automoveis', label: 'Automóveis' },
-  { id: 'natureza', label: 'Natureza' },
-  { id: 'artes', label: 'Artes' },
-  { id: 'historia', label: 'História' },
-  { id: 'amor', label: 'Amor' },
-];
-
 const LINE_COLORS: { id: LineType; label: string; bg: string }[] = [
   { id: 'blue', label: 'Azul', bg: 'bg-blue-500' },
   { id: 'red', label: 'Vermelho', bg: 'bg-red-500' },
@@ -51,20 +37,6 @@ const LINE_COLORS: { id: LineType; label: string; bg: string }[] = [
   { id: 'yellow', label: 'Amarelo', bg: 'bg-yellow-400' },
   { id: 'gray', label: 'Cinza', bg: 'bg-slate-500' },
   { id: 'none', label: 'Sem', bg: 'bg-slate-800 border-slate-700' }
-];
-
-const STATE_OPTIONS: { id: ScratchcardState; label: string }[] = [
-  { id: 'MINT', label: 'MINT' },
-  { id: 'SC', label: 'SC' },
-  { id: 'CS', label: 'CS' },
-  { id: 'AMOSTRA', label: 'AMOSTRA' },
-  { id: 'VOID', label: 'VOID' },
-  { id: 'SAMPLE', label: 'SAMPLE' },
-  { id: 'MUESTRA', label: 'MUESTRA' },
-  { id: 'CAMPIONE', label: 'CAMPIONE' },
-  { id: '样本', label: '样本' },
-  { id: 'MUSTER', label: 'MUSTER' },
-  { id: 'PRØVE', label: 'PRØVE' }
 ];
 
 export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpdate, onDelete, isAdmin, currentUser, contextImages, onImageSelect, t, categories }) => {
@@ -96,11 +68,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
     if (image.gallery) gal.push(...image.gallery);
     return gal;
   }, [image]);
-
-  const isSaved = useMemo(() => {
-    if (!currentUser) return false;
-    return formData.owners?.includes(currentUser);
-  }, [formData.owners, currentUser]);
 
   const handleNextRecord = () => { if (hasNextRecord) onImageSelect(contextImages[currentIndexInContext + 1]); };
   const handlePrevRecord = () => { if (hasPrevRecord) onImageSelect(contextImages[currentIndexInContext - 1]); };
@@ -153,31 +120,31 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   };
 
   const handleSave = () => { onUpdate(formData); setIsEditing(false); };
-  const handleDelete = () => { if (confirm(t.deleteConfirm)) onDelete(image.id); };
-
-  const handleToggleSave = () => {
-    if (!currentUser) return;
-    const currentOwners = formData.owners || [];
-    let newOwners;
-    if (currentOwners.includes(currentUser)) {
-      newOwners = currentOwners.filter(o => o !== currentUser);
-    } else {
-      newOwners = [...currentOwners, currentUser];
-    }
-    const updatedData = { ...formData, owners: newOwners };
-    setFormData(updatedData);
-    onUpdate(updatedData);
+  const handleDelete = () => { 
+    if (confirm("Vovô Jorge, tem a certeza que quer REMOVER TODO ESTE REGISTO do arquivo para sempre? hihi!")) {
+      onDelete(image.id);
+    } 
   };
-  
-  const DataTag = ({ icon: Icon, label, value, colorClass = "text-slate-400" }: any) => (
-    <div className="flex items-center gap-3 bg-slate-900 border border-slate-800 p-2.5 rounded-xl transition-all">
-      <div className={`p-1.5 rounded-lg bg-slate-800 shrink-0`}>
-        <Icon className={`w-3.5 h-3.5 ${colorClass}`} />
+
+  const DataCard = ({ icon: Icon, label, value, colorClass = "text-slate-400", subValue }: any) => (
+    <div className="group bg-slate-900/40 border border-white/5 hover:border-brand-500/30 p-3 rounded-2xl transition-all duration-300 shadow-sm hover:shadow-brand-900/10">
+      <div className="flex items-start justify-between mb-2">
+        <div className={`p-1.5 rounded-lg bg-slate-950 border border-white/5 group-hover:scale-110 transition-transform`}>
+          <Icon className={`w-3.5 h-3.5 ${colorClass}`} />
+        </div>
+        {subValue && <span className="text-[7px] font-black text-slate-600 uppercase tracking-widest">{subValue}</span>}
       </div>
       <div className="flex flex-col min-w-0">
-        <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">{label}</span>
-        <span className="text-[10px] font-black text-slate-200 truncate">{value || '-'}</span>
+        <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1 group-hover:text-brand-400 transition-colors">{label}</span>
+        <span className="text-[10px] font-black text-slate-100 truncate tracking-tight">{value || '-'}</span>
       </div>
+    </div>
+  );
+
+  const SectionHeader = ({ icon: Icon, title, color = "text-brand-500" }: any) => (
+    <div className="flex items-center gap-2 mb-3 mt-6 first:mt-0">
+      <Icon className={`w-3 h-3 ${color}`} />
+      <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">{title}</span>
     </div>
   );
 
@@ -233,8 +200,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
             )}
          </div>
 
-         {/* Data Side - Vista Completa de Profissional */}
-         <div className={`w-full md:w-[420px] bg-slate-900/30 flex flex-col h-full overflow-hidden shrink-0`}>
+         {/* Data Side */}
+         <div className={`w-full md:w-[450px] bg-slate-900/30 flex flex-col h-full overflow-hidden shrink-0`}>
               <div className="p-5 border-b border-white/5 flex justify-between items-center bg-slate-900/50">
                  <div className="flex items-center gap-2">
                    {isAdmin && (
@@ -242,18 +209,30 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                         <button onClick={isEditing ? handleSave : () => setIsEditing(true)} className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${isEditing ? 'bg-emerald-600 text-white shadow-lg' : 'bg-white/5 text-brand-400 hover:bg-white/10 border border-white/10'}`}>
                            {isEditing ? <Save className="w-3.5 h-3.5"/> : <Edit2 className="w-3.5 h-3.5"/>} {isEditing ? 'Gravar' : 'Editar'}
                         </button>
+                        
+                        {!isEditing && (
+                          <button onClick={handleDelete} className="flex items-center gap-2 px-3 py-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-xl border border-red-500/20 transition-all text-[9px] font-black uppercase tracking-widest" title="REMOVER TODO O REGISTO">
+                             <Trash2 className="w-3.5 h-3.5" /> Eliminar
+                          </button>
+                        )}
+
                         {isEditing && (
                           <button onClick={handleClearData} className="p-2 text-red-500 hover:bg-red-500/10 rounded-xl border border-red-500/20" title="Limpar Campos Técnicos">
-                             <Trash className="w-4 h-4" />
+                             <RefreshCw className="w-4 h-4" />
                           </button>
                         )}
                       </div>
                    )}
                  </div>
+                 {!isEditing && image.isSeries && (
+                   <button onClick={() => setShowSeriesComparison(true)} className="flex items-center gap-2 px-3 py-1.5 bg-brand-600/20 text-brand-400 border border-brand-500/20 rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-brand-600 hover:text-white transition-all">
+                      <Layers className="w-3 h-3" /> Série
+                   </button>
+                 )}
                  <button onClick={onClose} className="p-2 text-slate-500 hover:text-white"><X className="w-5 h-5"/></button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-950/20">
+              <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-950/20">
                  {isEditing ? (
                     <div className="space-y-6 animate-fade-in pb-10">
                        <section className="space-y-4">
@@ -287,31 +266,63 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                        </section>
                     </div>
                  ) : (
-                    <div className="space-y-6">
+                    <div className="space-y-8 pb-10">
                        <div className="border-b border-white/5 pb-4">
-                          <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">{formData.gameName}</h2>
-                          <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mt-2">{formData.category} • {formData.operator || 'Operador Desconhecido'}</p>
-                       </div>
-
-                       <div className="grid grid-cols-2 gap-2 animate-fade-in">
-                          <DataTag icon={Hash} label="Nº Jogo" value={formData.gameNumber} colorClass="text-brand-500" />
-                          <DataTag icon={Flag} label="País" value={formData.country} colorClass="text-red-500" />
-                          <DataTag icon={Clock} label="Lançamento" value={formData.releaseDate} colorClass="text-orange-500" />
-                          <DataTag icon={Calendar} label="Caducidade" value={formData.closeDate} colorClass="text-amber-500" />
-                          <DataTag icon={Activity} label="Estado" value={formData.state} colorClass="text-brand-400" />
-                          <DataTag icon={Banknote} label="Preço" value={formData.price} colorClass="text-emerald-500" />
-                          <DataTag icon={LayoutList} label="Emissão" value={formData.emission} colorClass="text-indigo-400" />
-                          <DataTag icon={Ruler} label="Medidas" value={formData.size} colorClass="text-blue-400" />
-                          <DataTag icon={Percent} label="Sorte" value={formData.winProbability} colorClass="text-pink-400" />
-                          <DataTag icon={Factory} label="Gráfica" value={formData.printer} colorClass="text-slate-400" />
-                       </div>
-
-                       <div className="bg-slate-950 p-5 rounded-2xl border border-white/5 space-y-4">
-                          <div className="flex items-center gap-2 text-slate-500">
-                             <Info className="w-3.5 h-3.5" />
-                             <span className="text-[8px] font-black uppercase tracking-widest">Notas de Arquivo</span>
+                          <div className="flex items-center gap-2 mb-2">
+                             <div className="bg-brand-600 p-1 rounded-md"><Star className="w-3 h-3 text-white fill-current" /></div>
+                             <span className="text-[8px] font-black text-brand-500 uppercase tracking-widest">{formData.category}</span>
                           </div>
-                          <p className="text-xs text-slate-400 italic leading-relaxed">{formData.values || 'Nenhuma nota adicional.'}</p>
+                          <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none">{formData.gameName}</h2>
+                          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2">{formData.operator || 'Operador Desconhecido'}</p>
+                       </div>
+
+                       {/* Grupo: Identidade e Valor */}
+                       <section>
+                          <SectionHeader icon={Fingerprint} title="Identidade do Item" color="text-brand-400" />
+                          <div className="grid grid-cols-2 gap-3">
+                             <DataCard icon={Hash} label="Nº Jogo" value={formData.gameNumber} colorClass="text-brand-500" />
+                             <DataCard icon={Banknote} label="Valor Facial" value={formData.price} colorClass="text-emerald-500" />
+                             <DataCard icon={ShieldCheck} label="Estado Físico" value={formData.state} colorClass="text-amber-500" />
+                             <DataCard icon={Zap} label="Raridade" value={formData.isRarity ? 'PEÇA RARA' : 'COMUM'} colorClass={formData.isRarity ? 'text-rose-500' : 'text-slate-500'} />
+                          </div>
+                       </section>
+
+                       {/* Grupo: Ciclo de Vida */}
+                       <section>
+                          <SectionHeader icon={CalendarDays} title="Cronologia Técnica" color="text-orange-500" />
+                          <div className="grid grid-cols-2 gap-3">
+                             <DataCard icon={Clock} label="Lançamento" value={formData.releaseDate} colorClass="text-orange-400" />
+                             <DataCard icon={Calendar} label="Caducidade" value={formData.closeDate} colorClass="text-red-400" />
+                          </div>
+                       </section>
+
+                       {/* Grupo: Detalhes de Impressão */}
+                       <section>
+                          <SectionHeader icon={Microscope} title="Dados de Produção" color="text-indigo-500" />
+                          <div className="grid grid-cols-2 gap-3">
+                             <DataCard icon={Factory} label="Entidade Gráfica" value={formData.printer} colorClass="text-indigo-400" />
+                             <DataCard icon={Ruler} label="Medidas Reais" value={formData.size} colorClass="text-blue-400" />
+                             <DataCard icon={LayoutList} label="Tiragem Total" value={formData.emission} colorClass="text-purple-400" />
+                             <DataCard icon={Percent} label="Probabilidade" value={formData.winProbability} colorClass="text-pink-400" />
+                          </div>
+                       </section>
+
+                       {/* Grupo: Localização */}
+                       <section>
+                          <SectionHeader icon={Globe} title="Origem Geográfica" color="text-cyan-500" />
+                          <div className="grid grid-cols-2 gap-3">
+                             <DataCard icon={Flag} label="Nação" value={formData.country} colorClass="text-red-500" />
+                             <DataCard icon={MapPin} label="Região / Ilha" value={formData.island || formData.region} colorClass="text-cyan-400" />
+                          </div>
+                       </section>
+
+                       {/* Notas Adicionais */}
+                       <div className="bg-slate-900 border border-brand-500/10 p-5 rounded-3xl space-y-3 shadow-inner">
+                          <div className="flex items-center gap-2 text-slate-500">
+                             <Info className="w-3.5 h-3.5 text-brand-500" />
+                             <span className="text-[8px] font-black uppercase tracking-widest">Observações de Curador</span>
+                          </div>
+                          <p className="text-xs text-slate-300 italic leading-relaxed border-l-2 border-brand-500/30 pl-4">{formData.values || 'Nenhuma nota especial registada para este exemplar.'}</p>
                        </div>
                     </div>
                  )}
