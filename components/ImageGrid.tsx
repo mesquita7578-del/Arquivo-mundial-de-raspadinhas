@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Filter, Trophy, ChevronLeft, ChevronRight, Zap, Layers 
 } from 'lucide-react';
@@ -36,6 +36,12 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Chloe: Sempre que a lista de imagens mudar (filtros/pesquisa), voltamos para a página 1!
+  // Isso resolve o problema de "não atualizar" nos tablets quando mudamos o filtro.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [images.length, images[0]?.id]); 
+
   const sortedImages = useMemo(() => {
     return [...images].sort((a, b) => {
       const numA = a.gameNumber?.trim() || "";
@@ -62,7 +68,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 
   if (images.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-slate-600 border border-dashed border-slate-800 rounded-2xl bg-slate-900/10">
+      <div className="flex flex-col items-center justify-center py-20 text-slate-600 border border-dashed border-slate-800 rounded-2xl bg-slate-900/10 animate-fade-in">
         <Filter className="w-12 h-12 mb-4 opacity-10" />
         <p className="font-black uppercase tracking-[0.2em] text-[10px]">Silêncio no Arquivo Mundial.</p>
         <p className="text-[9px] uppercase tracking-widest mt-2 text-slate-700">Tente ajustar os filtros ou a pesquisa.</p>
@@ -72,11 +78,12 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
+      {/* Grid Otimizada: Adicionamos colunas específicas para tablets (5 e 6 colunas) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-2 md:gap-3 transition-all">
         {displayedImages.map((item) => (
           <div
             key={item.id}
-            className="group bg-slate-950 border border-slate-900 hover:border-brand-500/50 transition-all cursor-pointer flex flex-col rounded-md overflow-hidden shadow-xl active:scale-95"
+            className="group bg-slate-950 border border-slate-900 hover:border-brand-500/50 transition-all cursor-pointer flex flex-col rounded-md overflow-hidden shadow-xl active:scale-95 animate-fade-in"
             onClick={() => onImageClick(item)}
           >
             <div className="px-1 py-0.5 bg-black border-b border-slate-900 flex justify-between items-center text-[5px] font-black text-slate-600 uppercase tracking-widest">
@@ -84,12 +91,15 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                <span className="truncate max-w-[40px]">{item.country}</span>
             </div>
 
-            <div className="relative aspect-[3/4] bg-black overflow-hidden">
+            <div className="relative aspect-[3/4] bg-slate-900 overflow-hidden">
               <img 
                 src={item.frontUrl} 
                 alt={item.gameName} 
                 className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${item.backUrl ? 'group-hover:opacity-0' : ''}`} 
                 loading="lazy"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://placehold.co/400x600/1e293b/475569?text=Sem+Imagem';
+                }}
               />
               {item.backUrl && (
                 <img 
@@ -138,9 +148,9 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-4 py-4 mb-8">
           <button 
-            onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo(0,0); }} 
+            onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
             disabled={currentPage === 1} 
-            className="p-1.5 bg-slate-900 text-slate-400 rounded-full border border-slate-800 disabled:opacity-10 hover:bg-brand-500 hover:text-white transition-all"
+            className="p-1.5 bg-slate-900 text-slate-400 rounded-full border border-slate-800 disabled:opacity-10 hover:bg-brand-500 hover:text-white transition-all active:scale-90"
           >
              <ChevronLeft className="w-4 h-4" />
           </button>
@@ -152,9 +162,9 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
           </div>
 
           <button 
-            onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo(0,0); }} 
+            onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
             disabled={currentPage === totalPages} 
-            className="p-1.5 bg-slate-900 text-slate-400 rounded-full border border-slate-800 disabled:opacity-10 hover:bg-brand-500 hover:text-white transition-all"
+            className="p-1.5 bg-slate-900 text-slate-400 rounded-full border border-slate-800 disabled:opacity-10 hover:bg-brand-500 hover:text-white transition-all active:scale-90"
           >
              <ChevronRight className="w-4 h-4" />
           </button>
