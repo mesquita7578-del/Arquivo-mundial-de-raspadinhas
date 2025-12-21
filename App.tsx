@@ -184,7 +184,7 @@ const App: React.FC = () => {
     });
   }, [images, searchTerm, activeContinent, activeCountry, activeSubRegion, activeCategory, activeTheme, showRaritiesOnly, showWinnersOnly, showSeriesOnly, showNewOnly, currentPage, currentUser]);
 
-  // NOVO: Países que têm novidades registradas
+  // NOVO: Países que têm novidades registradas para a Sub-Barra hihi!
   const recentCountries = useMemo(() => {
     const recent = images.filter(img => (Date.now() - (img.createdAt || 0)) < 43200000);
     return Array.from(new Set(recent.map(img => img.country))).sort();
@@ -355,7 +355,7 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* SUB-BARRA DE PAÍSES PARA NOVIDADES hihi! */}
+            {/* SUB-BARRA DE PAÍSES PARA NOVIDADES RESTAURADA hihi! */}
             {showNewOnly && recentCountries.length > 0 && (
               <div className="flex items-center gap-2 py-1.5 border-t border-white/5 animate-fade-in overflow-x-auto scrollbar-hide">
                  <div className="flex items-center gap-2 px-1 shrink-0">
