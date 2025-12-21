@@ -43,9 +43,9 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onR
               </div>
            </button>
            
-           {/* Chloe: Carimbo de Versão para o Vovô ver no tablet! */}
-           <div className="hidden lg:block px-3 py-1 bg-red-600/10 rounded-lg border border-red-500/20">
-              <span className="text-[7px] font-black text-red-500 uppercase tracking-[0.2em]">v7.0 - A MARETA GIGANTE ATIVA 🔨</span>
+           {/* Chloe: Carimbo de Versão V8.0 */}
+           <div className="hidden lg:block px-3 py-1 bg-blue-600/10 rounded-lg border border-blue-500/20">
+              <span className="text-[7px] font-black text-blue-500 uppercase tracking-[0.2em]">v8.0 - SEM CONFLITOS & BACKUP ATIVO 🔨</span>
            </div>
         </div>
 

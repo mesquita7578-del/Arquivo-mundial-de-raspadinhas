@@ -24,9 +24,8 @@ import { ScratchcardData, CategoryItem, SiteMetadata, Continent, VisitorEntry } 
 import { translations, Language } from './translations';
 import { DivineSignal, Signal } from './components/DivineSignal';
 
-const chloeChannel = typeof window !== 'undefined' && window.BroadcastChannel ? new BroadcastChannel('chloe_archive_sync') : null;
 const RECENT_THRESHOLD = 2592000000; // 30 dias
-const CURRENT_VERSION = '7.0'; // Chloe: A MareTA GIGANTE!
+const CURRENT_VERSION = '8.0'; // Chloe: Fim dos Conflitos!
 
 const App: React.FC = () => {
   const [images, setImages] = useState<ScratchcardData[]>([]);
@@ -45,8 +44,9 @@ const App: React.FC = () => {
   const [showWinnersOnly, setShowWinnersOnly] = useState(false);
   const [showSeriesOnly, setShowSeriesOnly] = useState(false);
   const [showNewOnly, setShowNewOnly] = useState(false);
-  const [showTodayOnly, setShowTodayOnly] = useState(false); // Chloe: NOVO FILTRO MARETA!
+  const [showTodayOnly, setShowTodayOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
   const [showUpload, setShowUpload] = useState(false);
@@ -83,7 +83,6 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    // Chloe: A MARETA GIGANTE NO CACHE!
     const savedVer = localStorage.getItem('chloe_archive_version');
     if (savedVer !== CURRENT_VERSION) {
       localStorage.setItem('chloe_archive_version', CURRENT_VERSION);
@@ -100,7 +99,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleForceRefresh = async () => {
-    addSignal("Vovô, Chloe a bater com a mareta gigante... hihi!", "info");
+    addSignal("Chloe a limpar conflitos com a mareta... hihi!", "info");
     if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
       for (let registration of registrations) {
@@ -113,8 +112,7 @@ const App: React.FC = () => {
         await caches.delete(key);
       }
     }
-    // Chloe: Expulsão total da cache antiga
-    window.location.href = window.location.origin + window.location.pathname + '?mareta=' + Date.now();
+    window.location.href = window.location.origin + window.location.pathname + '?v=' + CURRENT_VERSION + '&t=' + Date.now();
   };
 
   const addSignal = (message: string, type: Signal['type'] = 'info') => {
@@ -124,28 +122,19 @@ const App: React.FC = () => {
 
   const filteredImages = useMemo(() => {
     if (!images) return [];
-    
     return images.filter(img => {
       const imgDate = img.createdAt || 0;
       const now = Date.now();
 
-      // 1. Prioridade Absoluta: REGISTADOS HOJE (24h)
       if (showTodayOnly) {
         const startOfToday = new Date().setHours(0, 0, 0, 0);
-        const isToday = imgDate >= startOfToday;
-        if (!isToday) return false;
-        // Se registado hoje, ignoramos filtros de país/continente para mostrar tudo o que o vovô acabou de fazer!
-        return true; 
+        return imgDate >= startOfToday;
       }
 
-      // 2. Prioridade: NOVIDADES (30 dias)
       if (showNewOnly) {
-        const isRecent = (now - imgDate) < RECENT_THRESHOLD;
-        if (!isRecent) return false;
-        return true;
+        return (now - imgDate) < RECENT_THRESHOLD;
       }
 
-      // 3. Filtros Normais
       const gName = (img.gameName || "").toLowerCase();
       const s = searchTerm.toLowerCase();
       const matchesSearch = !searchTerm || gName.includes(s) || (img.country || "").toLowerCase().includes(s) || (img.customId || "").toLowerCase().includes(s);
@@ -175,26 +164,73 @@ const App: React.FC = () => {
   }, [images, searchTerm, activeContinent, activeCountry, activeSubRegion, activeCategory, activeTheme, showRaritiesOnly, showWinnersOnly, showSeriesOnly, showNewOnly, showTodayOnly, currentPage, currentUser]);
 
   const handleExport = async () => {
+    if (isExporting) return;
     try {
-      addSignal("Chloe a preparar backup... hihi!", "info");
+      setIsExporting(true);
+      addSignal("Chloe a preparar backup... Aguarde! hihi!", "info");
+      
+      // Chloe: Agora usamos EXCLUSIVAMENTE o storageService correto
       const dataStr = await storageService.exportData();
       const blob = new Blob([dataStr], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
       const fileName = `backup-arquivo-${new Date().toISOString().split('T')[0]}.json`;
+      
+      // Plano A: Download Automático
       const link = document.createElement('a');
       link.href = url;
       link.download = fileName;
       document.body.appendChild(link);
       link.click();
-      addSignal(`Backup Guardado! hihi!`, "success");
+      document.body.removeChild(link);
+      
+      // Plano B: Botão Gigante de Backup para Tablets Teimosos
+      const fallbackId = 'chloe-manual-backup';
+      const existing = document.getElementById(fallbackId);
+      if (existing) document.body.removeChild(existing);
+
+      const fallback = document.createElement('div');
+      fallback.id = fallbackId;
+      fallback.style.position = 'fixed';
+      fallback.style.inset = '0';
+      fallback.style.zIndex = '20000';
+      fallback.style.display = 'flex';
+      fallback.style.alignItems = 'center';
+      fallback.style.justifyContent = 'center';
+      fallback.style.backgroundColor = 'rgba(0,0,0,0.85)';
+      fallback.style.backdropFilter = 'blur(10px)';
+      
+      fallback.innerHTML = `
+        <div style="background:#0f172a; border:2px solid #3b82f6; padding:40px; border-radius:32px; text-align:center; max-width:90%; box-shadow:0 0 50px rgba(59,130,246,0.3);">
+          <h2 style="color:white; font-family:sans-serif; font-weight:900; margin-bottom:10px; font-style:italic; text-transform:uppercase;">Backup Pronto, Vovô!</h2>
+          <p style="color:#94a3b8; font-family:sans-serif; margin-bottom:30px; font-size:14px;">Se o tablet não descarregou sozinho, clique no botão azul abaixo!</p>
+          <a href="${url}" download="${fileName}" id="backup-direct-link" style="display:inline-block; background:#2563eb; color:white; padding:20px 40px; border-radius:20px; font-weight:900; text-decoration:none; font-family:sans-serif; border:4px solid white; box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+            GUARDAR BACKUP AGORA 💾
+          </a>
+          <button id="close-backup-overlay" style="display:block; margin:30px auto 0; background:transparent; color:#64748b; border:none; font-weight:bold; cursor:pointer; text-decoration:underline;">Fechar este aviso</button>
+        </div>
+      `;
+      document.body.appendChild(fallback);
+
+      document.getElementById('close-backup-overlay')?.addEventListener('click', () => {
+        document.body.removeChild(fallback);
+      });
+      document.getElementById('backup-direct-link')?.addEventListener('click', () => {
+        setTimeout(() => {
+          if (document.body.contains(fallback)) document.body.removeChild(fallback);
+        }, 1000);
+      });
+
+      addSignal(`Backup gerado com sucesso! hihi!`, "success");
     } catch (err) {
-      addSignal("Erro no tablet!", "warning");
+      addSignal("Erro ao gerar backup. Tente recarregar!", "warning");
+    } finally {
+      setIsExporting(false);
     }
   };
 
   const handleImport = async (file: File) => {
     try {
-      addSignal("A ler backup no tablet... hihi!", "info");
+      addSignal("Chloe a ler backup... hihi!", "info");
       const text = await file.text();
       const count = await storageService.importData(text);
       addSignal(`${count} registos integrados! hihi!`, "success");
@@ -208,7 +244,6 @@ const App: React.FC = () => {
     const willShow = !showTodayOnly;
     setShowTodayOnly(willShow);
     if (willShow) {
-      // Chloe: Limpeza total para ver o que registou HOJE!
       setShowNewOnly(false);
       setActiveCategory('all');
       setActiveCountry('');
@@ -277,7 +312,6 @@ const App: React.FC = () => {
                       <button key={cat.id} onClick={() => { setActiveCategory(cat.id); setShowNewOnly(false); setShowTodayOnly(false); }} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white' : 'bg-slate-900/40 text-slate-500'}`}><cat.icon className="w-3 h-3" /> {cat.label}</button>
                     ))}
                     
-                    {/* Chloe: Botão HOJE com Mareta! */}
                     <button onClick={handleToggleToday} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showTodayOnly ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)]' : 'bg-slate-900/40 text-slate-500 hover:text-red-400'}`}>
                       <CalendarCheck className="w-3.5 h-3.5" /> HOJE
                     </button>
@@ -305,7 +339,7 @@ const App: React.FC = () => {
         {isLoading ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-4">
             <Loader2 className="w-12 h-12 animate-spin text-brand-500" />
-            <p className="text-[10px] font-black uppercase tracking-widest">Chloe: Batendo com a Mareta Gigante V7... hihi!</p>
+            <p className="text-[10px] font-black uppercase tracking-widest">Chloe: Limpando conflitos... hihi!</p>
           </div>
         ) : (
           <div className="p-4 md:p-8 animate-fade-in">
