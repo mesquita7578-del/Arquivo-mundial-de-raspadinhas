@@ -24,8 +24,9 @@ import { ScratchcardData, CategoryItem, SiteMetadata, Continent, VisitorEntry } 
 import { translations, Language } from './translations';
 import { DivineSignal, Signal } from './components/DivineSignal';
 
-const chloeChannel = new BroadcastChannel('chloe_archive_sync');
-const RECENT_THRESHOLD = 172800000; 
+// Chloe: Suporte seguro para BroadcastChannel (tablets antigos podem não ter)
+const chloeChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('chloe_archive_sync') : null;
+const RECENT_THRESHOLD = 172800000; // 48 horas
 
 const App: React.FC = () => {
   const [images, setImages] = useState<ScratchcardData[]>([]);
@@ -80,7 +81,7 @@ const App: React.FC = () => {
         setSiteMetadata(updatedMeta);
         await storageService.saveSiteMetadata(updatedMeta);
         
-        chloeChannel.postMessage({ type: 'SYNC_METADATA', payload: updatedMeta });
+        chloeChannel?.postMessage({ type: 'SYNC_METADATA', payload: updatedMeta });
 
         if (currentUser) {
            recordVisitor(currentUser, isAdmin, updatedMeta);
@@ -124,7 +125,7 @@ const App: React.FC = () => {
     setSiteMetadata(updatedMeta);
     await storageService.saveSiteMetadata(updatedMeta);
     
-    chloeChannel.postMessage({ type: 'SYNC_METADATA', payload: updatedMeta });
+    chloeChannel?.postMessage({ type: 'SYNC_METADATA', payload: updatedMeta });
   };
 
   const addSignal = (message: string, type: Signal['type'] = 'info') => {
@@ -203,21 +204,32 @@ const App: React.FC = () => {
 
   const handleExport = async () => {
     try {
-      // Chloe: Agora garantimos que o ficheiro é criado e descarregado corretamente em tablets!
+      addSignal("A preparar backup... hihi!", "info");
       const dataStr = await storageService.exportData();
+      if (!dataStr || dataStr === '{}') {
+        throw new Error("Dados vazios");
+      }
+      
       const blob = new Blob([dataStr], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = `backup-arquivo-${new Date().toISOString().split('T')[0]}.json`;
+      
+      // Chloe: Obrigatório para alguns navegadores mobile
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      
+      // Cleanup imediato
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      
       addSignal("Arquivo exportado com sucesso! hihi!", "success");
     } catch (err) {
       console.error("Erro export:", err);
-      addSignal("Erro ao exportar arquivo.", "warning");
+      addSignal("O tablet bloqueou o backup ou os dados são muito grandes.", "warning");
     }
   };
 
@@ -231,7 +243,8 @@ const App: React.FC = () => {
         setImages(all || []);
         addSignal(`${count} itens integrados no arquivo! hihi!`, "success");
       } catch (err) {
-        addSignal("O ficheiro não é válido! hihi!", "warning");
+        console.error("Erro import:", err);
+        addSignal("O ficheiro não é válido ou está corrompido! hihi!", "warning");
       }
     };
     reader.readAsText(file);
@@ -265,6 +278,7 @@ const App: React.FC = () => {
           setCurrentPage('home');
           setShowNewOnly(false);
           setShowSeriesOnly(false);
+          setSearchTerm(''); // Chloe: Limpar pesquisa ao mudar país
         }}
         countriesByContinent={images.reduce((acc, img) => {
           if (!acc[img.continent]) acc[img.continent] = [];
@@ -326,7 +340,7 @@ const App: React.FC = () => {
                     
                     <button 
                       onClick={() => { 
-                        // Chloe: Garante que ao clicar em novidades, voltamos ao "Início" para ver os resultados!
+                        // Chloe: Reset absoluto para garantir que novidades aparecem no tablet!
                         setCurrentPage('home');
                         const willShow = !showNewOnly;
                         setShowNewOnly(willShow); 
@@ -337,6 +351,7 @@ const App: React.FC = () => {
                         setActiveCountry(''); 
                         setActiveSubRegion(''); 
                         setActiveTheme(''); 
+                        setSearchTerm(''); // Limpar busca para não filtrar indevidamente
                       }} 
                       className={`flex items-center gap-2 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showNewOnly ? 'bg-pink-600 text-white border border-pink-400/30 shadow-[0_0_15px_rgba(219,39,119,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-pink-400'}`}
                     >

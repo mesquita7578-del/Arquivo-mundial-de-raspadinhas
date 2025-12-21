@@ -20,6 +20,7 @@ class StorageService {
   private db: IDBDatabase | null = null;
 
   async init(): Promise<void> {
+    if (this.db) return;
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
       request.onerror = (event) => reject("Erro ao abrir base de dados");
@@ -51,7 +52,7 @@ class StorageService {
   }
 
   async getSiteMetadata(): Promise<SiteMetadata> {
-    if (!this.db) await this.init();
+    await this.init();
     return new Promise((resolve) => {
       const transaction = this.db!.transaction([STORE_SETTINGS], 'readonly');
       const store = transaction.objectStore(STORE_SETTINGS);
@@ -63,7 +64,7 @@ class StorageService {
   }
 
   async saveSiteMetadata(metadata: SiteMetadata): Promise<void> {
-    if (!this.db) await this.init();
+    await this.init();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_SETTINGS], 'readwrite');
       const store = transaction.objectStore(STORE_SETTINGS);
@@ -74,7 +75,7 @@ class StorageService {
   }
 
   async getCategories(): Promise<CategoryItem[]> {
-    if (!this.db) await this.init();
+    await this.init();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_CATEGORIES], 'readonly');
       const store = transaction.objectStore(STORE_CATEGORIES);
@@ -95,7 +96,7 @@ class StorageService {
   }
 
   async saveCategory(category: CategoryItem): Promise<void> {
-    if (!this.db) await this.init();
+    await this.init();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_CATEGORIES], 'readwrite');
       const store = transaction.objectStore(STORE_CATEGORIES);
@@ -106,7 +107,7 @@ class StorageService {
   }
 
   async deleteCategory(id: string): Promise<void> {
-    if (!this.db) await this.init();
+    await this.init();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_CATEGORIES], 'readwrite');
       const store = transaction.objectStore(STORE_CATEGORIES);
@@ -117,7 +118,7 @@ class StorageService {
   }
 
   async getAll(): Promise<ScratchcardData[]> {
-    if (!this.db) await this.init();
+    await this.init();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_ITEMS], 'readonly');
       const store = transaction.objectStore(STORE_ITEMS);
@@ -131,7 +132,7 @@ class StorageService {
   }
 
   async save(item: ScratchcardData): Promise<void> {
-    if (!this.db) await this.init();
+    await this.init();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_ITEMS], 'readwrite');
       const store = transaction.objectStore(STORE_ITEMS);
@@ -142,7 +143,7 @@ class StorageService {
   }
 
   async delete(id: string): Promise<void> {
-    if (!this.db) await this.init();
+    await this.init();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_ITEMS], 'readwrite');
       const store = transaction.objectStore(STORE_ITEMS);
@@ -153,18 +154,29 @@ class StorageService {
   }
 
   async exportData(): Promise<string> {
-    // Chloe: Garantimos que o DB está pronto antes de exportar!
-    if (!this.db) await this.init();
-    const [items, categories, settings] = await Promise.all([
-      this.getAll(),
-      this.getCategories(),
-      this.getSiteMetadata()
-    ]);
-    return JSON.stringify({ items, categories, settings }, null, 2);
+    await this.init();
+    try {
+      const [items, categories, settings] = await Promise.all([
+        this.getAll(),
+        this.getCategories(),
+        this.getSiteMetadata()
+      ]);
+      const dataToExport = {
+        items: items || [],
+        categories: categories || [],
+        settings: settings || { id: 'site_settings' },
+        exportDate: new Date().toISOString(),
+        version: DB_VERSION
+      };
+      return JSON.stringify(dataToExport, null, 2);
+    } catch (error) {
+      console.error("Erro na exportação do StorageService:", error);
+      throw new Error("Não foi possível consolidar os dados para backup.");
+    }
   }
 
   async importData(jsonString: string): Promise<number> {
-    if (!this.db) await this.init();
+    await this.init();
     return new Promise((resolve, reject) => {
        try {
           const data = JSON.parse(jsonString);
@@ -179,84 +191,99 @@ class StorageService {
           
           let count = 0;
           if (Array.isArray(items)) {
-            items.forEach((item: ScratchcardData) => { if (item.id && item.gameName) { store.put(item); count++; } });
+            items.forEach((item: ScratchcardData) => { 
+              if (item.id && (item.gameName || item.frontUrl)) { 
+                store.put(item); 
+                count++; 
+              } 
+            });
           }
           if (Array.isArray(categories)) {
-            categories.forEach((cat: CategoryItem) => { if (cat.id && cat.name) { catStore.put(cat); } });
+            categories.forEach((cat: CategoryItem) => { 
+              if (cat.id && cat.name) { 
+                catStore.put(cat); 
+              } 
+            });
           }
           if (settings) {
             setStore.put(settings);
           }
           
           transaction.oncomplete = () => resolve(count);
-          transaction.onerror = () => reject("Erro na importação");
-       } catch (e) { reject(e); }
+          transaction.onerror = (e) => {
+            console.error("Erro na transação de importação:", e);
+            reject("Erro na base de dados durante a importação.");
+          };
+       } catch (e) { 
+         console.error("Erro no parse do JSON de importação:", e);
+         reject("O ficheiro de backup não é válido."); 
+       }
     });
   }
 
   async getDocuments(): Promise<DocumentItem[]> {
-    if (!this.db) await this.init();
+    await this.init();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_DOCS], 'readonly');
       const store = transaction.objectStore(STORE_DOCS);
       const request = store.getAll();
       request.onsuccess = () => resolve((request.result || []).sort((a:any, b:any) => b.createdAt - a.createdAt));
-      request.onerror = () => reject("Erro documentos");
+      request.onerror = () => reject("Erro ao buscar documentos");
     });
   }
 
   async saveDocument(doc: DocumentItem): Promise<void> {
-    if (!this.db) await this.init();
+    await this.init();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_DOCS], 'readwrite');
       const store = transaction.objectStore(STORE_DOCS);
       const request = store.put(doc);
       request.onsuccess = () => resolve();
-      request.onerror = () => reject("Erro salvar documento");
+      request.onerror = () => reject("Erro ao salvar documento");
     });
   }
 
   async deleteDocument(id: string): Promise<void> {
-    if (!this.db) await this.init();
+    await this.init();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_DOCS], 'readwrite');
       const store = transaction.objectStore(STORE_DOCS);
       const request = store.delete(id);
       request.onsuccess = () => resolve();
-      request.onerror = () => reject("Erro deletar documento");
+      request.onerror = () => reject("Erro ao deletar documento");
     });
   }
 
   async getWebsites(): Promise<WebsiteLink[]> {
-    if (!this.db) await this.init();
+    await this.init();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_SITES], 'readonly');
       const store = transaction.objectStore(STORE_SITES);
       const request = store.getAll();
       request.onsuccess = () => resolve(request.result || []);
-      request.onerror = () => reject("Erro sites");
+      request.onerror = () => reject("Erro ao buscar sites");
     });
   }
 
   async saveWebsite(site: WebsiteLink): Promise<void> {
-    if (!this.db) await this.init();
+    await this.init();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_SITES], 'readwrite');
       const store = transaction.objectStore(STORE_SITES);
       const request = store.put(site);
       request.onsuccess = () => resolve();
-      request.onerror = () => reject("Erro site");
+      request.onerror = () => reject("Erro ao salvar site");
     });
   }
 
   async deleteWebsite(id: string): Promise<void> {
-    if (!this.db) await this.init();
+    await this.init();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_SITES], 'readwrite');
       const store = transaction.objectStore(STORE_SITES);
       const request = store.delete(id);
       request.onsuccess = () => resolve();
-      request.onerror = () => reject("Erro site delete");
+      request.onerror = () => reject("Erro ao deletar site");
     });
   }
 }
