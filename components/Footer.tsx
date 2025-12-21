@@ -7,12 +7,10 @@ interface FooterProps {
   onNavigate: (page: any) => void;
   onWebsitesClick: () => void;
   onRadioClick: () => void;
-  visitorCount?: number;
-  onVisitorsClick: () => void;
   onInstall?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onRadioClick, visitorCount = 0, onVisitorsClick }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onRadioClick }) => {
   return (
     <footer className="fixed bottom-0 left-0 w-full bg-[#020617]/98 border-t border-white/5 px-6 py-1.5 z-[1000] shadow-[0_-15px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl">
       <div className="max-w-[1800px] mx-auto flex items-center justify-between gap-4">
@@ -31,14 +29,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onR
         {/* Centro */}
         <div className="flex-1 flex items-center justify-center gap-6">
            <ChloeClock />
-           <button 
-             onClick={onVisitorsClick} 
-             className="hidden md:flex items-center bg-slate-900/60 border border-white/10 px-4 py-1.5 rounded-full hover:border-cyan-500/50 transition-all shadow-inner"
-             title="Radar de Visitas"
-           >
-              <Users className="w-3.5 h-3.5 text-cyan-500 mr-2.5" />
-              <span className="text-xs font-black text-white font-mono">{visitorCount}</span>
-           </button>
         </div>
 
         {/* Fabio & Ações */}

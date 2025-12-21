@@ -118,19 +118,18 @@ export interface SiteMetadata {
   founderBio?: string;
   founderQuote?: string;
   milestones?: Milestone[];
-  visitorCount?: number; 
-  visitorLog?: VisitorEntry[]; 
-}
-
-export interface VisitorEntry {
-  name: string;
-  timestamp: number;
-  isAdmin: boolean;
-  location?: string;
 }
 
 export interface Milestone {
   year: string;
   title: string;
   description: string;
+}
+
+// Interface para registo de acessos no Livro de Honra
+export interface VisitorEntry {
+  name: string;
+  timestamp: number;
+  isAdmin: boolean;
+  location?: string;
 }

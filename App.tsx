@@ -13,7 +13,6 @@ import { LoginModal } from './components/LoginModal';
 import { HistoryModal } from './components/HistoryModal';
 import { WebsitesModal } from './components/WebsitesModal';
 import { RadioModal } from './components/RadioModal';
-import { VisitorsModal } from './components/VisitorsModal';
 import { StatsSection } from './components/StatsSection';
 import { ThemesPage } from './components/ThemesPage';
 import { AboutPage } from './components/AboutPage';
@@ -25,7 +24,7 @@ import { translations, Language } from './translations';
 import { DivineSignal, Signal } from './components/DivineSignal';
 
 const RECENT_THRESHOLD = 2592000000;
-const VERSION = '11.5'; // Chloe: ETERNAL BACKUP 🛡️✨
+const VERSION = '11.6'; // Chloe: CLEAN ARCHIVE & SECURE LOGIN 🛡️✨
 
 const App: React.FC = () => {
   const [images, setImages] = useState<ScratchcardData[]>([]);
@@ -52,7 +51,6 @@ const App: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [showWebsites, setShowWebsites] = useState(false);
   const [showRadio, setShowRadio] = useState(false);
-  const [showVisitors, setShowVisitors] = useState(false);
   
   const [isAdmin, setIsAdmin] = useState(localStorage.getItem('archive_admin') === 'true');
   const [currentUser, setCurrentUser] = useState<string | null>(localStorage.getItem('archive_user'));
@@ -421,7 +419,7 @@ const App: React.FC = () => {
         ) : renderContent()}
       </main>
 
-      <Footer onNavigate={setCurrentPage} onWebsitesClick={() => setShowWebsites(true)} onRadioClick={() => setShowRadio(true)} visitorCount={siteMetadata?.visitorCount} onVisitorsClick={() => setShowVisitors(true)} />
+      <Footer onNavigate={setCurrentPage} onWebsitesClick={() => setShowWebsites(true)} onRadioClick={() => setShowRadio(true)} />
 
       <div className="fixed bottom-24 left-6 z-[1001] flex flex-col gap-3">
         <button onClick={handleForceRefresh} className="p-4 bg-red-600 text-white rounded-full shadow-2xl border-4 border-white group flex items-center gap-2"><Wrench className="w-6 h-6" /><span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all text-[10px] font-black uppercase">Reparar</span></button>
@@ -434,7 +432,6 @@ const App: React.FC = () => {
       {showHistory && <HistoryModal onClose={() => setShowHistory(false)} isAdmin={isAdmin} t={{...t.header, ...t.history}} />}
       {showWebsites && <WebsitesModal onClose={() => setShowWebsites(false)} isAdmin={isAdmin} t={t.header} />}
       {showRadio && <RadioModal onClose={() => setShowRadio(false)} />}
-      {showVisitors && <VisitorsModal onClose={() => setShowVisitors(false)} visitors={siteMetadata?.visitorLog || []} totalCount={siteMetadata?.visitorCount || 0} />}
       <DivineSignal signals={signals} onRemove={(id) => setSignals(s => s.filter(sig => sig.id !== id))} />
     </div>
   );
