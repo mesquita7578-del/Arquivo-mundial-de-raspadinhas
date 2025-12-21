@@ -42,18 +42,22 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onR
                  <span className="text-[10px] font-black text-white font-mono leading-tight">{visitorCount}</span>
               </div>
            </button>
+           
+           {/* Chloe: Carimbo de Versão para o Vovô ver no tablet! */}
+           <div className="hidden lg:block px-3 py-1 bg-slate-800/50 rounded-lg border border-white/5">
+              <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">v4.0 Chloe 🐉</span>
+           </div>
         </div>
 
         {/* Lado Direito: Fabio & Ações */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="hidden md:flex items-center gap-4 border-r border-slate-800 pr-3">
-            {/* Botão Descarregar App - Vermelho Neon */}
             <button 
               onClick={() => {
                 if (onInstall) onInstall();
                 else alert("Vovô, para instalar no telemóvel, clique nos 'três pontinhos' do seu navegador e escolha 'Instalar App' ou 'Adicionar ao Ecrã Principal'! hihi!");
               }}
-              className="flex items-center gap-1.5 text-[7px] font-black text-red-500 hover:text-red-400 uppercase tracking-[0.15em] transition-all drop-shadow-[0_0_8px_rgba(239,68,68,0.6)] hover:drop-shadow-[0_0_12px_rgba(239,68,68,0.9)] animate-pulse"
+              className="flex items-center gap-1.5 text-[7px] font-black text-red-500 hover:text-red-400 uppercase tracking-[0.15em] transition-all drop-shadow-[0_0_8px_rgba(239,68,68,0.6)] animate-pulse"
             >
               <MobileIcon className="w-2.5 h-2.5" /> Descarregar App
             </button>

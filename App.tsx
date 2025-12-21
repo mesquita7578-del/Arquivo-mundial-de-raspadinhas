@@ -25,7 +25,8 @@ import { translations, Language } from './translations';
 import { DivineSignal, Signal } from './components/DivineSignal';
 
 const chloeChannel = typeof window !== 'undefined' && window.BroadcastChannel ? new BroadcastChannel('chloe_archive_sync') : null;
-const RECENT_THRESHOLD = 604800000; 
+// Chloe: Agora mostramos novidades dos últimos 30 dias (era 7)! hihi!
+const RECENT_THRESHOLD = 2592000000; 
 
 const App: React.FC = () => {
   const [images, setImages] = useState<ScratchcardData[]>([]);
@@ -74,7 +75,6 @@ const App: React.FC = () => {
       setSiteMetadata(meta);
       return true;
     } catch (err) {
-      console.error("Erro no carregamento:", err);
       return false;
     } finally {
       setTimeout(() => setIsLoading(false), 500);
@@ -82,47 +82,32 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    const init = async () => {
-      const success = await loadAllData();
-      if (success && siteMetadata) {
+    loadAllData().then(() => {
+      if (siteMetadata) {
         const updatedMeta = { ...siteMetadata, visitorCount: (siteMetadata.visitorCount || 0) + 1 };
-        setSiteMetadata(updatedMeta);
-        await storageService.saveSiteMetadata(updatedMeta);
-        chloeChannel?.postMessage({ type: 'SYNC_METADATA', payload: updatedMeta });
-        if (currentUser) recordVisitor(currentUser, isAdmin, updatedMeta);
+        storageService.saveSiteMetadata(updatedMeta);
       }
-    };
-    init();
+    });
   }, []);
 
   const handleForceRefresh = async () => {
-    addSignal("Chloe a limpar o tablet... hihi!", "info");
-    // Chloe: Limpa caches e força reload total
+    addSignal("Chloe a dar um empurrão no tablet... hihi!", "info");
+    // Chloe: Método ninja para limpar o tablet de vez!
     if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
       for (let registration of registrations) {
-        await registration.unregister();
+        registration.unregister();
       }
     }
-    await loadAllData();
-    window.location.reload();
-  };
-
-  const recordVisitor = async (name: string, isAdm: boolean, currentMeta?: SiteMetadata) => {
-    const meta = currentMeta || siteMetadata;
-    if (!meta) return;
-    let location = 'Local Desconhecido';
-    try {
-      const response = await fetch('https://ipapi.co/json/');
-      const data = await response.json();
-      if (data.city && data.country_name) location = `${data.city}, ${data.country_name}`;
-    } catch (e) {}
-    const newEntry: VisitorEntry = { name, isAdmin: isAdm, timestamp: Date.now(), location };
-    const updatedLog = [newEntry, ...(meta.visitorLog || [])].slice(0, 50);
-    const updatedMeta = { ...meta, visitorLog: updatedLog };
-    setSiteMetadata(updatedMeta);
-    await storageService.saveSiteMetadata(updatedMeta);
-    chloeChannel?.postMessage({ type: 'SYNC_METADATA', payload: updatedMeta });
+    // Chloe: Limpa caches do browser se possível
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      for (let key of keys) {
+        await caches.delete(key);
+      }
+    }
+    // Chloe: Recarrega com um "segredo" no URL para enganar o tablet
+    window.location.href = window.location.origin + window.location.pathname + '?refresh=' + Date.now();
   };
 
   const addSignal = (message: string, type: Signal['type'] = 'info') => {
@@ -130,61 +115,42 @@ const App: React.FC = () => {
     setSignals(prev => [...prev, { id, message, type }]);
   };
 
-  const handleLogout = () => {
-    setIsAdmin(false);
-    setCurrentUser(null);
-    localStorage.removeItem('archive_user');
-    localStorage.removeItem('archive_admin');
-    addSignal("Até à próxima, vovô! hihi!");
-    if (currentPage === 'collection') setCurrentPage('home');
-  };
-
   const filteredImages = useMemo(() => {
     if (!images) return [];
     return images.filter(img => {
       const gName = (img.gameName || "").toLowerCase();
-      const gCountry = (img.country || "").toLowerCase();
-      const gIsland = (img.island || "").toLowerCase();
       const s = searchTerm.toLowerCase();
       const isRecent = (Date.now() - (img.createdAt || 0)) < RECENT_THRESHOLD;
-      const matchesSearch = gName.includes(s) || gCountry.includes(s) || gIsland.includes(s);
+      
+      const matchesSearch = !searchTerm || gName.includes(s) || (img.country || "").toLowerCase().includes(s);
       const matchesContinent = activeContinent === 'Mundo' || img.continent === activeContinent;
-      let matchesLocation = true;
-      if (activeCountry) {
-        const countryMatch = gCountry === activeCountry.toLowerCase();
-        if (activeSubRegion) {
-          const sub = activeSubRegion.toLowerCase();
-          matchesLocation = countryMatch && (img.subRegion?.toLowerCase() === sub || gIsland === sub);
-        } else {
-          matchesLocation = countryMatch;
-        }
-      }
       const matchesCategory = activeCategory === 'all' || img.category === activeCategory;
       const matchesTheme = !activeTheme || img.theme?.toLowerCase() === activeTheme.toLowerCase();
       const matchesRarity = !showRaritiesOnly || img.isRarity;
       const matchesWinners = !showWinnersOnly || img.isWinner;
       const matchesSeries = !showSeriesOnly || img.isSeries;
       const matchesNew = !showNewOnly || isRecent;
-      if (currentPage === 'collection') if (!currentUser || !img.owners?.includes(currentUser)) return false;
+
+      let matchesLocation = true;
+      if (activeCountry) {
+        matchesLocation = (img.country || "").toLowerCase() === activeCountry.toLowerCase();
+        if (activeSubRegion) {
+          const sub = activeSubRegion.toLowerCase();
+          matchesLocation = matchesLocation && (img.subRegion?.toLowerCase() === sub || img.island?.toLowerCase() === sub);
+        }
+      }
+
+      if (currentPage === 'collection') {
+        if (!currentUser || !img.owners?.includes(currentUser)) return false;
+      }
+
       return matchesSearch && matchesContinent && matchesLocation && matchesCategory && matchesTheme && matchesRarity && matchesWinners && matchesSeries && matchesNew;
     });
   }, [images, searchTerm, activeContinent, activeCountry, activeSubRegion, activeCategory, activeTheme, showRaritiesOnly, showWinnersOnly, showSeriesOnly, showNewOnly, currentPage, currentUser]);
 
-  const recentCountriesData = useMemo(() => {
-    const recent = images.filter(img => (Date.now() - (img.createdAt || 0)) < RECENT_THRESHOLD);
-    const counts: Record<string, number> = {};
-    recent.forEach(img => { counts[img.country] = (counts[img.country] || 0) + 1; });
-    return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
-  }, [images]);
-
-  const collectionCount = useMemo(() => {
-    if (!currentUser) return 0;
-    return images.filter(img => img.owners?.includes(currentUser)).length;
-  }, [images, currentUser]);
-
   const handleExport = async () => {
     try {
-      addSignal("Chloe a preparar backup para o tablet... hihi!", "info");
+      addSignal("Chloe a preparar backup... hihi!", "info");
       const dataStr = await storageService.exportData();
       const blob = new Blob([dataStr], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
@@ -197,7 +163,7 @@ const App: React.FC = () => {
       link.click();
       
       setTimeout(() => {
-        addSignal(`Backup pronto! Se não descarregou, use o botão azul! hihi!`, "success");
+        addSignal(`Pronto! Use o botão azul se não descarregar!`, "success");
         const fallback = document.createElement('div');
         fallback.style.position = 'fixed';
         fallback.style.top = '100px';
@@ -216,10 +182,8 @@ const App: React.FC = () => {
            if (el) document.body.removeChild(el);
         }, 15000);
       }, 1000);
-
-      if (document.body.contains(link)) document.body.removeChild(link);
     } catch (err) {
-      addSignal("Erro ao exportar. Tente recarregar o arquivo!", "warning");
+      addSignal("Erro no tablet. Recarregue!", "warning");
     }
   };
 
@@ -238,15 +202,34 @@ const App: React.FC = () => {
     reader.readAsText(file);
   };
 
+  // Chloe: Função especial para o botão de novidades não falhar!
+  const handleToggleNew = () => {
+    const willShow = !showNewOnly;
+    setShowNewOnly(willShow);
+    if (willShow) {
+      // Se ligar novidades, desligamos filtros que podem "esconder" as novidades
+      setActiveCategory('all');
+      setActiveCountry('');
+      setActiveSubRegion('');
+      setActiveTheme('');
+      setShowSeriesOnly(false);
+      setShowRaritiesOnly(false);
+      setShowWinnersOnly(false);
+      setSearchTerm('');
+      setCurrentPage('home');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#020617] text-slate-100 pt-24 md:pt-28">
       <Header 
         isAdmin={isAdmin} currentUser={currentUser} language={language} setLanguage={setLanguage}
-        currentPage={currentPage} onNavigate={setCurrentPage} onAdminToggle={() => setShowLogin(true)} onLogout={handleLogout}
+        currentPage={currentPage} onNavigate={setCurrentPage} onAdminToggle={() => setShowLogin(true)} onLogout={() => { setIsAdmin(false); setCurrentUser(null); localStorage.removeItem('archive_user'); localStorage.removeItem('archive_admin'); addSignal("Até logo, vovô!"); }}
         onHistoryClick={() => setShowHistory(true)} onRadioClick={() => setShowRadio(true)} onExport={handleExport}
         onImport={handleImport} onExportTXT={() => {}} onExportCSV={() => {}} t={t.header}
         recentCount={images.filter(img => (Date.now() - (img.createdAt || 0)) < RECENT_THRESHOLD).length}
-        collectionCount={collectionCount}
+        collectionCount={images.filter(img => img.owners?.includes(currentUser || '')).length}
         onCountrySelect={(cont, loc, sub) => {
           setActiveContinent(cont); setActiveCountry(loc); setActiveSubRegion(sub || ''); setActiveTheme(''); setCurrentPage('home'); setShowNewOnly(false); setShowSeriesOnly(false); setSearchTerm(''); 
         }}
@@ -259,33 +242,29 @@ const App: React.FC = () => {
             <div className="flex flex-col lg:flex-row items-center justify-between gap-1 md:gap-3 py-1">
               <div className="flex flex-wrap items-center justify-center gap-1 md:gap-1.5">
                 <div className="flex items-center gap-1 border-r border-white/10 pr-1 mr-0.5">
-                  {activeTheme && (
-                      <button onClick={() => setActiveTheme('')} className="bg-brand-600 text-white px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-2">Tema: {activeTheme} <X className="w-2.5 h-2.5" /></button>
-                  )}
-                  <button onClick={() => { setShowSeriesOnly(!showSeriesOnly); setShowRaritiesOnly(false); setShowWinnersOnly(false); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); setShowNewOnly(false); }} className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showSeriesOnly ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-blue-400'}`}><Layers className="w-3 h-3" /> Séries</button>
-                  <button onClick={() => { setShowRaritiesOnly(!showRaritiesOnly); setShowSeriesOnly(false); setShowWinnersOnly(false); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); setShowNewOnly(false); }} className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-amber-400'}`}><Diamond className="w-3 h-3" /> Raridades</button>
-                  <button onClick={() => { setShowWinnersOnly(!showWinnersOnly); setShowSeriesOnly(false); setShowRaritiesOnly(false); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); setShowNewOnly(false); }} className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-emerald-400'}`}><Trophy className="w-3 h-3" /> Premiadas</button>
+                  <button onClick={() => { setShowSeriesOnly(!showSeriesOnly); setShowNewOnly(false); }} className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showSeriesOnly ? 'bg-blue-600 text-white' : 'bg-slate-900/40 text-slate-500'}`}><Layers className="w-3 h-3" /> Séries</button>
+                  <button onClick={() => { setShowRaritiesOnly(!showRaritiesOnly); setShowNewOnly(false); }} className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950' : 'bg-slate-900/40 text-slate-500'}`}><Diamond className="w-3 h-3" /> Raridades</button>
+                  <button onClick={() => { setShowWinnersOnly(!showWinnersOnly); setShowNewOnly(false); }} className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white' : 'bg-slate-900/40 text-slate-500'}`}><Trophy className="w-3 h-3" /> Premiadas</button>
                 </div>
                 <div className="flex flex-wrap items-center gap-1 py-1">
                     {[
                       { id: 'all', label: 'Tudo', icon: LayoutGrid },
                       { id: 'raspadinha', label: 'Raspadinhas', icon: Ticket },
                       { id: 'lotaria', label: 'Lotarias', icon: Star },
-                      { id: 'boletim', label: 'Boletins', icon: Layers },
-                      { id: 'objeto', label: 'Objetos', icon: Box },
                     ].map(cat => (
-                      <button key={cat.id} onClick={() => { setActiveCategory(cat.id); setShowSeriesOnly(false); setShowRaritiesOnly(false); setShowWinnersOnly(false); setShowNewOnly(false); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); }} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white border border-brand-400/30' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-brand-400'}`}><cat.icon className="w-3 h-3" /> {cat.label}</button>
+                      <button key={cat.id} onClick={() => { setActiveCategory(cat.id); setShowNewOnly(false); }} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white' : 'bg-slate-900/40 text-slate-500'}`}><cat.icon className="w-3 h-3" /> {cat.label}</button>
                     ))}
-                    <button onClick={() => { setCurrentPage('home'); const willShow = !showNewOnly; setShowNewOnly(willShow); setActiveCategory('all'); setShowSeriesOnly(false); setShowRaritiesOnly(false); setShowWinnersOnly(false); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); setSearchTerm(''); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showNewOnly ? 'bg-pink-600 text-white border border-pink-400/30 shadow-[0_0_15px_rgba(219,39,119,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-pink-400'}`}><Sparkles className="w-3.5 h-3.5" /> Novidades</button>
+                    {/* Chloe: Botão de Novidades melhorado! */}
+                    <button onClick={handleToggleNew} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showNewOnly ? 'bg-pink-600 text-white shadow-[0_0_15px_rgba(219,39,119,0.5)]' : 'bg-slate-900/40 text-slate-500 hover:text-pink-400'}`}><Sparkles className="w-3.5 h-3.5" /> Novidades</button>
                 </div>
               </div>
               <div className="flex items-center gap-2 w-full lg:w-auto">
                 <div className="relative flex-1 lg:w-48 group">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
-                  <input type="text" placeholder="Pesquisar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-full pl-8 pr-4 py-1.5 text-[9px] focus:border-brand-500/50 outline-none transition-all uppercase tracking-wider text-white shadow-inner" />
+                  <input type="text" placeholder="Pesquisar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-full pl-8 pr-4 py-1.5 text-[9px] focus:border-brand-500/50 outline-none text-white shadow-inner" />
                 </div>
                 {isAdmin && (
-                  <button onClick={() => setShowUpload(true)} className="bg-emerald-600/90 hover:bg-emerald-500 text-white px-3.5 py-1.5 rounded-full font-black text-[8px] uppercase tracking-widest transition-all flex items-center gap-1.5 shadow-lg active:scale-95 border border-emerald-400/20 whitespace-nowrap"><Plus className="w-3 h-3" /> Novo Item</button>
+                  <button onClick={() => setShowUpload(true)} className="bg-emerald-600 text-white px-3.5 py-1.5 rounded-full font-black text-[8px] uppercase tracking-widest transition-all flex items-center gap-1.5 shadow-lg"><Plus className="w-3 h-3" /> Novo Item</button>
                 )}
               </div>
             </div>
@@ -314,26 +293,20 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <Footer 
-        onNavigate={setCurrentPage} 
-        onWebsitesClick={() => setShowWebsites(true)} 
-        onRadioClick={() => setShowRadio(true)} 
-        visitorCount={siteMetadata?.visitorCount} 
-        onVisitorsClick={() => setShowVisitors(true)} 
-      />
+      <Footer onNavigate={setCurrentPage} onWebsitesClick={() => setShowWebsites(true)} onRadioClick={() => setShowRadio(true)} visitorCount={siteMetadata?.visitorCount} onVisitorsClick={() => setShowVisitors(true)} />
 
-      {/* Botão Flutuante de Sincronização para Tablets (Fundo à esquerda) */}
+      {/* Chloe: Botão de Sincronização Ninja no tablet */}
       <button 
         onClick={handleForceRefresh}
-        className="fixed bottom-4 left-4 z-[1001] p-2 bg-slate-900/80 border border-white/10 rounded-full text-slate-500 hover:text-brand-400 shadow-xl backdrop-blur-md"
+        className="fixed bottom-4 left-4 z-[1001] p-2 bg-slate-900/90 border border-white/10 rounded-full text-slate-500 hover:text-brand-400 shadow-2xl backdrop-blur-md"
         title="Sincronizar Arquivo"
       >
         <RefreshCw className="w-4 h-4" />
       </button>
 
-      {showUpload && <UploadModal onClose={() => setShowUpload(false)} onUploadComplete={(data) => { setImages([data, ...images]); addSignal(`${data.gameName} arquivado! hihi!`, 'success'); }} existingImages={images} initialFile={null} currentUser={currentUser} t={t.upload} categories={categories} />}
-      {selectedImage && <ImageViewer image={selectedImage} onClose={() => setSelectedImage(null)} onUpdate={async (data) => { await storageService.save(data); setImages(images.map(img => img.id === data.id ? data : img)); setSelectedImage(data); addSignal("Registo atualizado! hihi!", "info"); }} onDelete={async (id) => { await storageService.delete(id); setImages(images.filter(img => img.id !== id)); setSelectedImage(null); addSignal("Item removido.", "warning"); }} isAdmin={isAdmin} currentUser={currentUser} contextImages={images} onImageSelect={setSelectedImage} t={t.viewer} categories={categories} />}
-      {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={(u, p, type) => { if (type === 'admin' && p === '123456') { setIsAdmin(true); setCurrentUser(u); localStorage.setItem('archive_user', u); localStorage.setItem('archive_admin', 'true'); recordVisitor(u, true); addSignal(`Bem-vindo, Comandante ${u}! hihi!`, 'divine'); return true; } else if (type === 'visitor') { setCurrentUser(u); localStorage.setItem('archive_user', u); localStorage.setItem('archive_admin', 'false'); recordVisitor(u, false); addSignal(`Olá, ${u}! Bom ver-te aqui! hihi!`, 'success'); return true; } return false; }} t={t.login} />}
+      {showUpload && <UploadModal onClose={() => setShowUpload(false)} onUploadComplete={(data) => { setImages([data, ...images]); addSignal(`${data.gameName} arquivado!`, 'success'); }} existingImages={images} initialFile={null} currentUser={currentUser} t={t.upload} categories={categories} />}
+      {selectedImage && <ImageViewer image={selectedImage} onClose={() => setSelectedImage(null)} onUpdate={async (data) => { await storageService.save(data); setImages(images.map(img => img.id === data.id ? data : img)); setSelectedImage(data); addSignal("Atualizado!", "info"); }} onDelete={async (id) => { await storageService.delete(id); setImages(images.filter(img => img.id !== id)); setSelectedImage(null); addSignal("Removido.", "warning"); }} isAdmin={isAdmin} currentUser={currentUser} contextImages={images} onImageSelect={setSelectedImage} t={t.viewer} categories={categories} />}
+      {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={(u, p, type) => { if (type === 'admin' && p === '123456') { setIsAdmin(true); setCurrentUser(u); localStorage.setItem('archive_user', u); localStorage.setItem('archive_admin', 'true'); addSignal(`Olá, Comandante ${u}!`); return true; } else if (type === 'visitor') { setCurrentUser(u); localStorage.setItem('archive_user', u); localStorage.setItem('archive_admin', 'false'); addSignal(`Olá, ${u}!`); return true; } return false; }} t={t.login} />}
       {showHistory && <HistoryModal onClose={() => setShowHistory(false)} isAdmin={isAdmin} t={{...t.header, ...t.history}} />}
       {showWebsites && <WebsitesModal onClose={() => setShowWebsites(false)} isAdmin={isAdmin} t={t.header} />}
       {showRadio && <RadioModal onClose={() => setShowRadio(false)} />}
