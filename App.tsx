@@ -25,6 +25,8 @@ import { translations, Language } from './translations';
 import { DivineSignal, Signal } from './components/DivineSignal';
 
 const chloeChannel = new BroadcastChannel('chloe_archive_sync');
+// Chloe: Definimos 48 horas (em milissegundos) como o tempo padrão de "Novidade"
+const RECENT_THRESHOLD = 172800000; 
 
 const App: React.FC = () => {
   const [images, setImages] = useState<ScratchcardData[]>([]);
@@ -151,7 +153,8 @@ const App: React.FC = () => {
       const gNum = (img.gameNumber || "").toLowerCase();
       const s = searchTerm.toLowerCase();
       
-      const isRecent = (Date.now() - (img.createdAt || 0)) < 43200000;
+      // Chloe: Agora verificamos as últimas 48 horas!
+      const isRecent = (Date.now() - (img.createdAt || 0)) < RECENT_THRESHOLD;
       
       const matchesSearch = gName.includes(s) || gCountry.includes(s) || gIsland.includes(s) || gNum.includes(s) || gRegion.includes(s);
       const matchesContinent = activeContinent === 'Mundo' || img.continent === activeContinent;
@@ -184,9 +187,8 @@ const App: React.FC = () => {
     });
   }, [images, searchTerm, activeContinent, activeCountry, activeSubRegion, activeCategory, activeTheme, showRaritiesOnly, showWinnersOnly, showSeriesOnly, showNewOnly, currentPage, currentUser]);
 
-  // NOVO: Países com novidades e a respetiva contagem bué de fixe hihi!
   const recentCountriesData = useMemo(() => {
-    const recent = images.filter(img => (Date.now() - (img.createdAt || 0)) < 43200000);
+    const recent = images.filter(img => (Date.now() - (img.createdAt || 0)) < RECENT_THRESHOLD);
     const counts: Record<string, number> = {};
     recent.forEach(img => {
       counts[img.country] = (counts[img.country] || 0) + 1;
@@ -251,7 +253,7 @@ const App: React.FC = () => {
         onExportTXT={() => {}}
         onExportCSV={() => {}}
         t={t.header}
-        recentCount={images.filter(img => (Date.now() - (img.createdAt || 0)) < 43200000).length}
+        recentCount={images.filter(img => (Date.now() - (img.createdAt || 0)) < RECENT_THRESHOLD).length}
         collectionCount={collectionCount}
         onCountrySelect={(cont, loc, sub) => {
           setActiveContinent(cont);
@@ -361,7 +363,7 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* SUB-BARRA DE PAÍSES PARA NOVIDADES RESTAURADA hihi! */}
+            {/* SUB-BARRA DE PAÍSES PARA NOVIDADES hihi! */}
             {showNewOnly && recentCountriesData.length > 0 && (
               <div className="flex items-center gap-2 py-1.5 border-t border-white/5 animate-fade-in overflow-x-auto scrollbar-hide">
                  <div className="flex items-center gap-2 px-1 shrink-0">

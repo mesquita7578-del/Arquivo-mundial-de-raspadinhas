@@ -37,9 +37,10 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
 
   // Chloe: Sempre que a lista de imagens mudar (filtros/pesquisa), voltamos para a página 1!
-  // Isso resolve o problema de "não atualizar" nos tablets quando mudamos o filtro.
+  // Usamos uma chave composta (length + primeiro id) para garantir que tablets detetem a mudança.
   useEffect(() => {
     setCurrentPage(1);
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, [images.length, images[0]?.id]); 
 
   const sortedImages = useMemo(() => {
@@ -64,7 +65,8 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
     currentPage * ITEMS_PER_PAGE
   );
 
-  const isRecent = (createdAt: number) => (Date.now() - createdAt) < 43200000;
+  // Chloe: Mantemos a mesma regra de 48h aqui para o selo visual
+  const isRecent = (createdAt: number) => (Date.now() - createdAt) < 172800000;
 
   if (images.length === 0) {
     return (
@@ -78,7 +80,6 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Grid Otimizada: Adicionamos colunas específicas para tablets (5 e 6 colunas) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-2 md:gap-3 transition-all">
         {displayedImages.map((item) => (
           <div
