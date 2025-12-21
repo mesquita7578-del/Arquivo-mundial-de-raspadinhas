@@ -79,6 +79,16 @@ export const Header: React.FC<HeaderProps> = ({
 
   const hasSpecialSubs = (country: string) => ['Portugal', 'Espanha', 'Alemanha', 'Canadá', 'Austrália'].includes(country);
 
+  // Helper para Tooltip Neon
+  const Tooltip = ({ text, color = "border-brand-500 shadow-brand-500/30" }: { text: string; color?: string }) => (
+    <div className={`absolute top-full mt-3 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-300 z-[3000] scale-90 group-hover:scale-100`}>
+      <div className={`bg-slate-900/95 backdrop-blur-md border ${color} px-3 py-1.5 rounded-xl shadow-lg`}>
+        <span className="text-[9px] font-black text-white uppercase tracking-[0.15em] whitespace-nowrap">{text}</span>
+      </div>
+      <div className={`w-2 h-2 bg-slate-900 border-l border-t ${color.split(' ')[0]} rotate-45 absolute -top-1 left-1/2 -translate-x-1/2`}></div>
+    </div>
+  );
+
   return (
     <header className="fixed top-0 left-0 w-full z-[2000] bg-slate-900 border-b border-brand-500/20 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
       <div className="max-w-[1800px] mx-auto h-20 px-4 md:px-8 flex items-center justify-between">
@@ -87,7 +97,6 @@ export const Header: React.FC<HeaderProps> = ({
         <div 
           className="flex items-center gap-4 cursor-pointer group shrink-0" 
           onClick={() => onNavigate('home')}
-          title="Página Inicial"
         >
           <div className="bg-brand-600 p-2.5 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
             <Ticket className="w-6 h-6 text-white" />
@@ -102,31 +111,35 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Navegação Central */}
         <nav className="flex items-center gap-2 md:gap-4">
-           <button 
-             onClick={() => onNavigate('home')} 
-             className={`p-2.5 rounded-2xl transition-all ${currentPage === 'home' ? 'bg-brand-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
-             title="Página Inicial"
-           >
-             <Home className="w-6 h-6" />
-           </button>
+           <div className="relative group">
+             <button 
+               onClick={() => onNavigate('home')} 
+               className={`p-2.5 rounded-2xl transition-all ${currentPage === 'home' ? 'bg-brand-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
+             >
+               <Home className="w-6 h-6" />
+             </button>
+             <Tooltip text="Página Inicial" />
+           </div>
 
-           <button 
-             onClick={() => onNavigate('map')} 
-             className={`p-2.5 rounded-2xl transition-all ${currentPage === 'map' ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
-             title="Mapa Mundi Interativo"
-           >
-             <Globe className="w-6 h-6" />
-           </button>
+           <div className="relative group">
+             <button 
+               onClick={() => onNavigate('map')} 
+               className={`p-2.5 rounded-2xl transition-all ${currentPage === 'map' ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
+             >
+               <Globe className="w-6 h-6" />
+             </button>
+             <Tooltip text="Mapa Mundi" color="border-blue-500 shadow-blue-500/30" />
+           </div>
 
-           <div className="relative" ref={exploreRef}>
+           <div className="relative group" ref={exploreRef}>
               <button 
                 onClick={() => setShowExplore(!showExplore)} 
                 className={`p-2.5 rounded-2xl transition-all flex items-center gap-2 ${showExplore ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
-                title="Explorar por Países e Continentes"
               >
                 <MapIcon className="w-6 h-6" />
                 <span className="hidden xl:inline text-[10px] font-black uppercase tracking-widest">Explorar</span>
               </button>
+              <Tooltip text="Navegar Países" color="border-slate-500 shadow-slate-500/30" />
               
               {showExplore && (
                 <div className="absolute top-full left-0 mt-4 flex z-[2100] animate-bounce-in">
@@ -179,67 +192,74 @@ export const Header: React.FC<HeaderProps> = ({
               )}
            </div>
 
-           <button 
-             onClick={() => onNavigate('themes')} 
-             className={`p-2.5 rounded-2xl transition-all ${currentPage === 'themes' ? 'bg-pink-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
-             title="Temas e Categorias Visuais"
-           >
-             <Layout className="w-6 h-6" />
-           </button>
+           <div className="relative group">
+             <button 
+               onClick={() => onNavigate('themes')} 
+               className={`p-2.5 rounded-2xl transition-all ${currentPage === 'themes' ? 'bg-pink-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
+             >
+               <Layout className="w-6 h-6" />
+             </button>
+             <Tooltip text="Galerias Temáticas" color="border-pink-500 shadow-pink-500/30" />
+           </div>
 
-           <button 
-             onClick={() => onNavigate('stats')} 
-             className={`p-2.5 rounded-2xl transition-all ${currentPage === 'stats' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
-             title="Estatísticas Detalhadas do Arquivo"
-           >
-             <BarChart2 className="w-6 h-6" />
-           </button>
+           <div className="relative group">
+             <button 
+               onClick={() => onNavigate('stats')} 
+               className={`p-2.5 rounded-2xl transition-all ${currentPage === 'stats' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
+             >
+               <BarChart2 className="w-6 h-6" />
+             </button>
+             <Tooltip text="Estatísticas" color="border-indigo-500 shadow-indigo-500/30" />
+           </div>
 
            {currentUser && (
-             <button 
-               onClick={() => onNavigate('collection')} 
-               className={`p-2.5 rounded-2xl transition-all flex items-center gap-2 relative ${currentPage === 'collection' ? 'bg-amber-500 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
-               title="Minha Coleção Particular"
-             >
-               <Star className={`w-6 h-6 ${currentPage === 'collection' ? 'fill-current' : ''}`} />
-               {collectionCount > 0 && (
-                 <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-slate-900">
-                   {collectionCount}
-                 </span>
-               )}
-             </button>
+             <div className="relative group">
+               <button 
+                 onClick={() => onNavigate('collection')} 
+                 className={`p-2.5 rounded-2xl transition-all flex items-center gap-2 relative ${currentPage === 'collection' ? 'bg-amber-500 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
+               >
+                 <Star className={`w-6 h-6 ${currentPage === 'collection' ? 'fill-current' : ''}`} />
+                 {collectionCount > 0 && (
+                   <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-slate-900">
+                     {collectionCount}
+                   </span>
+                 )}
+               </button>
+               <Tooltip text="Minha Coleção" color="border-amber-500 shadow-amber-500/30" />
+             </div>
            )}
 
-           <button 
-             onClick={onHistoryClick} 
-             className="p-2.5 rounded-2xl text-slate-500 hover:text-white hover:bg-white/5 transition-all" 
-             title="Biblioteca Técnica e Documentos PDF"
-           >
-             <BookOpen className="w-6 h-6" />
-           </button>
+           <div className="relative group">
+             <button 
+               onClick={onHistoryClick} 
+               className="p-2.5 rounded-2xl text-slate-500 hover:text-white hover:bg-white/5 transition-all" 
+             >
+               <BookOpen className="w-6 h-6" />
+             </button>
+             <Tooltip text="Biblioteca Técnica" color="border-blue-400 shadow-blue-400/30" />
+           </div>
 
-           <div className="relative" ref={toolsRef}>
+           <div className="relative group" ref={toolsRef}>
               <button 
                 onClick={() => setShowTools(!showTools)} 
                 className={`p-2.5 rounded-2xl transition-all flex items-center gap-2 ${showTools ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
-                title="Configurações de Dados e Backup"
               >
                 <Database className="w-6 h-6" />
                 <ChevronDown className={`w-4 h-4 transition-transform ${showTools ? 'rotate-180' : ''}`} />
               </button>
+              <Tooltip text="Dados & Backup" color="border-emerald-500 shadow-emerald-500/30" />
+              
               {showTools && (
                 <div className="absolute top-full right-0 mt-4 w-56 bg-slate-900 border border-white/10 rounded-3xl shadow-2xl p-2.5 z-[2200] animate-bounce-in">
                    <button 
                      onClick={onExport} 
                      className="w-full text-left px-4 py-4 text-[11px] text-slate-400 hover:bg-brand-600 hover:text-white rounded-2xl font-black uppercase tracking-widest flex items-center gap-4 transition-all"
-                     title="Exportar base de dados JSON"
                    >
                       <Download className="w-5 h-5" /> Backup JSON
                    </button>
                    <button 
                      onClick={handleImportClick} 
                      className="w-full text-left px-4 py-4 text-[11px] text-slate-400 hover:bg-emerald-600 hover:text-white rounded-2xl font-black uppercase tracking-widest flex items-center gap-4 transition-all"
-                     title="Importar base de dados JSON"
                    >
                       <Upload className="w-5 h-5" /> Importar JSON
                    </button>
@@ -252,45 +272,53 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Login / Logout / Idiomas */}
         <div className="flex items-center gap-4 md:gap-6">
           <div className="hidden sm:flex bg-slate-950 rounded-2xl p-1.5 border border-white/5">
-            <button 
-              onClick={() => setLanguage('pt')} 
-              className={`px-4 py-1.5 rounded-xl text-[10px] font-black transition-all ${language === 'pt' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-300'}`}
-              title="Mudar para Português"
-            >
-              PT
-            </button>
-            <button 
-              onClick={() => setLanguage('it')} 
-              className={`px-4 py-1.5 rounded-xl text-[10px] font-black transition-all ${language === 'it' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-300'}`}
-              title="Passa a Italiano"
-            >
-              IT
-            </button>
+            <div className="relative group">
+              <button 
+                onClick={() => setLanguage('pt')} 
+                className={`px-4 py-1.5 rounded-xl text-[10px] font-black transition-all ${language === 'pt' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-300'}`}
+              >
+                PT
+              </button>
+              <Tooltip text="Português" />
+            </div>
+            <div className="relative group">
+              <button 
+                onClick={() => setLanguage('it')} 
+                className={`px-4 py-1.5 rounded-xl text-[10px] font-black transition-all ${language === 'it' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-300'}`}
+              >
+                IT
+              </button>
+              <Tooltip text="Italiano" />
+            </div>
           </div>
 
           {currentUser ? (
-            <button 
-              onClick={onLogout} 
-              className="flex items-center gap-4 pl-1.5 pr-5 py-1.5 bg-slate-800 hover:bg-red-600/10 text-white border border-white/10 rounded-full transition-all group" 
-              title="Encerrar Sessão"
-            >
-               <div className="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center text-sm font-black shadow-inner">
-                 {currentUser[0].toUpperCase()}
-               </div>
-               <div className="hidden lg:flex flex-col items-start leading-none">
-                  <span className="text-xs font-black uppercase">{currentUser}</span>
-                  <span className="text-[8px] text-slate-500 font-black uppercase mt-1">Sair</span>
-               </div>
-               <LogOut className="w-5 h-5 text-slate-500 group-hover:text-red-500 transition-colors" />
-            </button>
+            <div className="relative group">
+              <button 
+                onClick={onLogout} 
+                className="flex items-center gap-4 pl-1.5 pr-5 py-1.5 bg-slate-800 hover:bg-red-600/10 text-white border border-white/10 rounded-full transition-all group-btn" 
+              >
+                 <div className="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center text-sm font-black shadow-inner">
+                   {currentUser[0].toUpperCase()}
+                 </div>
+                 <div className="hidden lg:flex flex-col items-start leading-none">
+                    <span className="text-xs font-black uppercase">{currentUser}</span>
+                    <span className="text-[8px] text-slate-500 font-black uppercase mt-1">Sair</span>
+                 </div>
+                 <LogOut className="w-5 h-5 text-slate-500 group-hover/btn:text-red-500 transition-colors" />
+              </button>
+              <Tooltip text="Encerrar Sessão" color="border-red-500 shadow-red-500/30" />
+            </div>
           ) : (
-            <button 
-              onClick={onAdminToggle} 
-              className="flex items-center gap-3 px-6 py-3 bg-amber-500 hover:bg-white text-slate-950 hover:text-brand-600 rounded-full transition-all text-xs font-black uppercase tracking-widest shadow-xl active:scale-95"
-              title="Entrar na Área do Colecionador"
-            >
-              <Lock className="w-5 h-5" /> <span className="hidden md:inline">Entrar</span>
-            </button>
+            <div className="relative group">
+              <button 
+                onClick={onAdminToggle} 
+                className="flex items-center gap-3 px-6 py-3 bg-amber-500 hover:bg-white text-slate-950 hover:text-brand-600 rounded-full transition-all text-xs font-black uppercase tracking-widest shadow-xl active:scale-95"
+              >
+                <Lock className="w-5 h-5" /> <span className="hidden md:inline">Entrar</span>
+              </button>
+              <Tooltip text="Área Restrita" color="border-amber-500 shadow-amber-500/30" />
+            </div>
           )}
         </div>
       </div>
