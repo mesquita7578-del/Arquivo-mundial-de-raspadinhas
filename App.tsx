@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, Plus, Loader2, Sparkles, LayoutGrid, Trophy, Star, 
   Ticket, Layers, Diamond, Users, RefreshCw, CalendarCheck, CheckCircle2, AlertTriangle, Database, Wrench, ShieldAlert, X, Map as MapIcon,
-  MapPin
+  MapPin, Clipboard
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { ImageGrid } from './components/ImageGrid';
@@ -25,7 +25,7 @@ import { translations, Language } from './translations';
 import { DivineSignal, Signal } from './components/DivineSignal';
 
 const RECENT_THRESHOLD = 2592000000;
-const VERSION = '11.3'; // Chloe: MAPA MUNDI DASHBOARD 🌍
+const VERSION = '11.4'; // Chloe: BACKUP MASTER 📁✨
 
 const App: React.FC = () => {
   const [images, setImages] = useState<ScratchcardData[]>([]);
@@ -257,33 +257,66 @@ const App: React.FC = () => {
   const handleExport = async () => {
     try {
       const dataStr = await storageService.exportData();
-      const blob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
       const fileName = `arquivo-jorge-v11-${new Date().toISOString().split('T')[0]}.json`;
 
-      const emergencyExport = document.createElement('div');
-      emergencyExport.style.position = 'fixed';
-      emergencyExport.style.inset = '0';
-      emergencyExport.style.zIndex = '1000000';
-      emergencyExport.style.backgroundColor = '#020617';
-      emergencyExport.style.display = 'flex';
-      emergencyExport.style.flexDirection = 'column';
-      emergencyExport.style.alignItems = 'center';
-      emergencyExport.style.justifyContent = 'center';
-      emergencyExport.style.padding = '30px';
+      const exportOverlay = document.createElement('div');
+      exportOverlay.style.position = 'fixed';
+      exportOverlay.style.inset = '0';
+      exportOverlay.style.zIndex = '1000000';
+      exportOverlay.style.backgroundColor = 'rgba(2, 6, 23, 0.95)';
+      exportOverlay.style.backdropFilter = 'blur(10px)';
+      exportOverlay.style.display = 'flex';
+      exportOverlay.style.alignItems = 'center';
+      exportOverlay.style.justifyContent = 'center';
+      exportOverlay.style.padding = '20px';
 
-      emergencyExport.innerHTML = `
-        <div style="background:#0f172a; border:4px solid #2563eb; padding:50px; border-radius:40px; text-align:center; max-width:600px;">
-          <h1 style="color:white; font-family:sans-serif; font-weight:900;">BACKUP DE SEGURANÇA</h1>
-          <p style="color:#94a3b8; font-family:sans-serif; margin-bottom:40px;">Clique abaixo para salvar as suas raspadinhas.</p>
-          <a href="${url}" download="${fileName}" id="final-btn" style="display:inline-block; background:#2563eb; color:white; padding:25px 50px; border-radius:25px; font-weight:900; text-decoration:none;">DESCARREGAR AGORA 📁</a>
-          <br><br>
-          <button id="close-emergency" style="color:#475569; background:none; border:none; cursor:pointer;">Voltar</button>
+      exportOverlay.innerHTML = `
+        <div style="background:#0f172a; border:1px solid rgba(59, 130, 246, 0.3); padding:40px; border-radius:32px; text-align:center; max-width:500px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+          <div style="background:rgba(59, 130, 246, 0.1); width:64px; height:64px; border-radius:20px; display:flex; align-items:center; justify-center; margin:0 auto 24px;">
+            <svg style="color:#3b82f6; width:32px; height:32px; margin: auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          </div>
+          <h2 style="color:white; font-family:sans-serif; font-weight:900; font-size:24px; margin-bottom:8px; text-transform:uppercase; letter-spacing:-0.025em;">Cópia de Segurança</h2>
+          <p style="color:#94a3b8; font-family:sans-serif; margin-bottom:32px; font-size:14px; line-height:1.6;">Vovô, escolha como quer guardar os seus dados:</p>
+          
+          <div style="display:grid; gap:12px;">
+            <button id="btn-download" style="background:#2563eb; color:white; padding:16px; border-radius:16px; font-weight:900; border:none; cursor:pointer; font-size:12px; text-transform:uppercase; letter-spacing:0.1em; transition:all 0.2s;">
+              1. Descarregar Ficheiro (.json)
+            </button>
+            <button id="btn-copy" style="background:rgba(255,255,255,0.05); color:#cbd5e1; padding:16px; border-radius:16px; font-weight:900; border:1px solid rgba(255,255,255,0.1); cursor:pointer; font-size:12px; text-transform:uppercase; letter-spacing:0.1em; transition:all 0.2s;">
+              2. Copiar Texto (Plano B)
+            </button>
+          </div>
+          
+          <button id="close-export" style="color:#64748b; background:none; border:none; cursor:pointer; margin-top:32px; font-size:12px; font-weight:700; text-transform:uppercase;">Cancelar</button>
         </div>
       `;
-      document.body.appendChild(emergencyExport);
-      document.getElementById('close-emergency')?.addEventListener('click', () => { document.body.removeChild(emergencyExport); URL.revokeObjectURL(url); });
-      document.getElementById('final-btn')?.addEventListener('click', () => { addSignal("Backup salvo!", "success"); setTimeout(() => { if (document.body.contains(emergencyExport)) document.body.removeChild(emergencyExport); }, 2000); });
+      document.body.appendChild(exportOverlay);
+
+      // Ações
+      document.getElementById('close-export')?.addEventListener('click', () => document.body.removeChild(exportOverlay));
+
+      document.getElementById('btn-download')?.addEventListener('click', () => {
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        URL.revokeObjectURL(url);
+        addSignal("Download iniciado!", "success");
+        setTimeout(() => document.body.removeChild(exportOverlay), 500);
+      });
+
+      document.getElementById('btn-copy')?.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(dataStr);
+          addSignal("Copiado com sucesso!", "success");
+          setTimeout(() => document.body.removeChild(exportOverlay), 500);
+        } catch (err) {
+          addSignal("Erro ao copiar!", "warning");
+        }
+      });
+
     } catch (err) { addSignal("Erro no backup!", "warning"); }
   };
 
