@@ -78,13 +78,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     
     parts.push({ 
       text: `Analise minuciosamente esta imagem de raspadinha/lotaria. 
-      Procure por: 
-      1. Título do jogo (letras grandes). 
-      2. Número do jogo (geralmente 3 dígitos, ex: 105, 542). 
-      3. Preço (ex: 1€, 5€, 2$). 
-      4. Operador (Logotipos como SCML, ONCE, SELAE, Sisal, FDJ). 
-      5. Procure por carimbos de 'ESPECIME', 'AMOSTRA', 'VOID' ou 'SAMPLE' para determinar o estado.
-      6. Identifique se pertence a uma região específica como Açores ou Catalunha.
+      Identifique se é de PORTUGAL e se especifica 'Açores' ou 'Madeira'. Se for Portugal e não indicar ilhas, considere 'Portugal Continental'.
       Retorne os dados estruturados em JSON.` 
     });
 
@@ -95,12 +89,13 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
         systemInstruction: `Você é a Chloe, perita mundial em arquivística de loterias. Sua visão é super-aguda! 
         Ao analisar imagens:
         - Identifique o PAÍS e SUB-REGIÃO com precisão: 
-          * PORTUGAL: Verifique se diz 'Açores' ou 'Madeira'. Se não, é 'SCML Continente'.
+          * PORTUGAL: Verifique se diz explicitamente 'Açores' ou 'Madeira'. 
+            - Se disser 'Açores', coloque 'Açores' no campo 'island'.
+            - Se disser 'Madeira', coloque 'Madeira' no campo 'island'.
+            - Se for de Portugal mas não indicar ilhas, coloque 'Portugal Continental' no campo 'region'.
           * ESPANHA: Diferencie entre 'SELAE' (Nacional), 'ONCE' (Sorteios sociais) ou 'Loteries de Catalunya'.
-          * ITÁLIA: Verifique se é 'Lottomatica' ou 'Sisal'.
         - O campo 'gameNumber' é crucial: procure por 3 dígitos isolados em cantos ou perto de códigos de barras.
-        - Se vir carimbos de cancelamento ou amostra, defina 'state' como 'AMOSTRA'. Se estiver virgem/intacta, 'MINT'. Se raspada, 'SC'.
-        - No campo 'lines', se vir linhas de segurança (geralmente no verso ou margens), identifique a cor (blue, red, green...).`,
+        - No campo 'lines', identifique a cor das linhas de segurança se visíveis.`,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -109,26 +104,18 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
             gameNumber: { type: Type.STRING },
             price: { type: Type.STRING },
             country: { type: Type.STRING },
-            island: { type: Type.STRING },
+            island: { type: Type.STRING, description: "Açores, Madeira, Canárias, etc." },
             subRegion: { type: Type.STRING },
+            region: { type: Type.STRING, description: "Ex: Portugal Continental, Catalunha, Baviera" },
             continent: { type: Type.STRING },
             operator: { type: Type.STRING },
-            state: { 
-              type: Type.STRING,
-              description: "MINT, SC, CS, AMOSTRA, VOID, SAMPLE, MUESTRA, etc."
-            },
-            values: { 
-              type: Type.STRING,
-              description: "Notas sobre prémios ou curiosidades lidas na imagem"
-            },
+            state: { type: Type.STRING },
+            values: { type: Type.STRING },
             printer: { type: Type.STRING },
             size: { type: Type.STRING },
             releaseDate: { type: Type.STRING },
             emission: { type: Type.STRING },
-            lines: { 
-              type: Type.STRING,
-              description: "blue, red, multicolor, green, brown, pink, purple, yellow, gray, none"
-            }
+            lines: { type: Type.STRING }
           },
           required: ["gameName", "country"]
         },
@@ -137,8 +124,6 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     });
 
     const data = JSON.parse(response.text || "{}");
-    
-    // Fallback de continente inteligente
     const detectedCountry = data.country || "Portugal";
     const detectedContinent = (data.continent as Continent) || getContinentFromCountry(detectedCountry);
 
@@ -154,6 +139,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       country: detectedCountry,
       island: data.island || "",
       subRegion: data.subRegion || "",
+      region: data.region || "",
       continent: detectedContinent,
       operator: data.operator || "",
       printer: data.printer || "",

@@ -1,7 +1,7 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
-  Filter, Trophy, ChevronLeft, ChevronRight, Zap, Layers 
+  Filter, Trophy, ChevronLeft, ChevronRight, Zap, Layers, MapPin, Search, X, Check
 } from 'lucide-react';
 import { ScratchcardData } from '../types';
 
@@ -14,6 +14,7 @@ interface ImageGridProps {
 }
 
 const ITEMS_PER_PAGE = 50; 
+const FORTY_EIGHT_HOURS = 172800000; // 48 * 60 * 60 * 1000
 
 const StateBadge = ({ state }: { state: string }) => {
   const colors: Record<string, string> = {
@@ -35,16 +36,50 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   t 
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  // Chloe: Sempre que a lista de imagens mudar (filtros/pesquisa), voltamos para a página 1!
-  // Usamos uma chave composta (length + primeiro id) para garantir que tablets detetem a mudança.
+  // Chloe: Fecha as sugestões se clicar fora
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Chloe: Reset da página quando os filtros mudam
   useEffect(() => {
     setCurrentPage(1);
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [images.length, images[0]?.id]); 
+  }, [images.length, selectedCountry]);
 
+  // Chloe: Pega os países únicos disponíveis no conjunto atual de imagens
+  const availableCountries = useMemo(() => {
+    const countries = images.map(img => img.country).filter(Boolean);
+    return Array.from(new Set(countries)).sort();
+  }, [images]);
+
+  // Chloe: Filtra as sugestões conforme o utilizador digita
+  const filteredSuggestions = useMemo(() => {
+    if (!countrySearch) return [];
+    return availableCountries.filter(c => 
+      c.toLowerCase().includes(countrySearch.toLowerCase()) && c !== selectedCountry
+    );
+  }, [countrySearch, availableCountries, selectedCountry]);
+
+  // Chloe: Aplica o filtro de país selecionado
+  const filteredByCountry = useMemo(() => {
+    if (!selectedCountry) return images;
+    return images.filter(img => img.country === selectedCountry);
+  }, [images, selectedCountry]);
+
+  // Chloe: Ordenação final (por número de jogo)
   const sortedImages = useMemo(() => {
-    return [...images].sort((a, b) => {
+    return [...filteredByCountry].sort((a, b) => {
       const numA = a.gameNumber?.trim() || "";
       const numB = b.gameNumber?.trim() || "";
       
@@ -57,7 +92,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
         sensitivity: 'base' 
       });
     });
-  }, [images]);
+  }, [filteredByCountry]);
 
   const totalPages = Math.ceil(sortedImages.length / ITEMS_PER_PAGE);
   const displayedImages = sortedImages.slice(
@@ -65,8 +100,18 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
     currentPage * ITEMS_PER_PAGE
   );
 
-  // Chloe: Mantemos a mesma regra de 48h aqui para o selo visual
-  const isRecent = (createdAt: number) => (Date.now() - createdAt) < 172800000;
+  const isRecent = (createdAt: number) => (Date.now() - createdAt) < FORTY_EIGHT_HOURS;
+
+  const handleSelectCountry = (country: string) => {
+    setSelectedCountry(country);
+    setCountrySearch('');
+    setShowSuggestions(false);
+  };
+
+  const clearCountryFilter = () => {
+    setSelectedCountry(null);
+    setCountrySearch('');
+  };
 
   if (images.length === 0) {
     return (
@@ -80,6 +125,66 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* BARRA DE FILTRO DE PAÍS OTIMIZADA */}
+      <div className="flex flex-wrap items-center gap-4 bg-slate-900/40 border border-white/5 p-4 rounded-3xl backdrop-blur-md">
+         <div className="flex items-center gap-3 pr-4 border-r border-white/10">
+            <div className="p-2 bg-brand-600/20 rounded-xl">
+               <MapPin className="w-4 h-4 text-brand-400" />
+            </div>
+            <span className="text-[10px] font-black text-white uppercase tracking-widest hidden sm:inline">Países no Lote</span>
+         </div>
+
+         <div className="relative flex-1 max-w-sm" ref={suggestionsRef}>
+            <div className="relative group">
+               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 group-focus-within:text-brand-400 transition-colors" />
+               <input 
+                 type="text"
+                 placeholder="Filtrar por País..."
+                 value={countrySearch}
+                 onChange={(e) => {
+                   setCountrySearch(e.target.value);
+                   setShowSuggestions(true);
+                 }}
+                 onFocus={() => setShowSuggestions(true)}
+                 className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl pl-10 pr-4 py-2 text-xs text-white outline-none focus:border-brand-500/50 transition-all placeholder:text-slate-700"
+               />
+            </div>
+
+            {/* SUGESTÕES INTELIGENTES */}
+            {showSuggestions && filteredSuggestions.length > 0 && (
+               <div className="absolute top-full left-0 w-full mt-2 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl z-[100] max-h-60 overflow-y-auto custom-scrollbar p-2 animate-bounce-in">
+                  {filteredSuggestions.map(country => (
+                     <button 
+                       key={country}
+                       onClick={() => handleSelectCountry(country)}
+                       className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-brand-600 hover:text-white text-[10px] font-black uppercase tracking-widest text-slate-400 transition-all flex items-center justify-between"
+                     >
+                        {country}
+                        <ChevronRight className="w-3 h-3 opacity-30" />
+                     </button>
+                  ))}
+               </div>
+            )}
+         </div>
+
+         {/* TAG DE FILTRO ATIVO */}
+         {selectedCountry && (
+            <div className="flex items-center gap-2 bg-brand-600 text-white px-4 py-2 rounded-2xl text-[9px] font-black uppercase shadow-lg animate-fade-in border border-brand-400/30">
+               <Check className="w-3 h-3" />
+               <span>{selectedCountry}</span>
+               <button onClick={clearCountryFilter} className="ml-1 hover:text-red-200 transition-colors">
+                  <X className="w-3 h-3" />
+               </button>
+            </div>
+         )}
+
+         <div className="ml-auto flex items-center gap-2">
+            <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest italic">
+               A mostrar {sortedImages.length} de {images.length} itens
+            </span>
+         </div>
+      </div>
+
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-2 md:gap-3 transition-all">
         {displayedImages.map((item) => (
           <div
@@ -113,9 +218,9 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
               
               <div className="absolute top-0 right-0 flex flex-col gap-0.5 items-end z-20">
                 {isRecent(item.createdAt) && (
-                   <div className="flex items-center gap-1 bg-pink-600 text-white px-2 py-1 rounded-bl-lg text-[8px] font-black animate-pulse shadow-[0_0_15px_rgba(219,39,119,0.6)] border-l border-b border-pink-400/50">
-                     <Zap className="w-2 h-2 fill-white" />
-                     NOVO
+                   <div className="flex items-center gap-1 bg-gradient-to-r from-pink-600 to-rose-500 text-white px-2 py-1 rounded-bl-xl text-[7px] font-black animate-pulse shadow-[0_0_15px_rgba(225,29,72,0.5)] border-l border-b border-white/20">
+                     <Zap className="w-2 h-2 fill-current text-yellow-300" />
+                     <span>NOVO</span>
                    </div>
                 )}
                 <div className="flex flex-col gap-1 pr-1 pt-1">
@@ -138,7 +243,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 {item.gameName}
               </h3>
               <div className="mt-0.5 flex items-center justify-between">
-                <span className="text-[4px] text-slate-700 font-black uppercase tracking-widest">{item.customId.split('-')[1]}</span>
+                <span className="text-[4px] text-slate-700 font-black uppercase tracking-widest">{item.customId?.split('-')[1]}</span>
                 <StateBadge state={item.state} />
               </div>
             </div>
