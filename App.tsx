@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, Plus, Loader2, Sparkles, LayoutGrid, Trophy, Star, 
-  Ticket, Layers, Diamond, Users, RefreshCw, CalendarCheck, CheckCircle2, AlertTriangle, Database, Wrench, ShieldAlert, X
+  Ticket, Layers, Diamond, Users, RefreshCw, CalendarCheck, CheckCircle2, AlertTriangle, Database, Wrench, ShieldAlert, X, Map as MapIcon
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { ImageGrid } from './components/ImageGrid';
@@ -23,7 +23,7 @@ import { translations, Language } from './translations';
 import { DivineSignal, Signal } from './components/DivineSignal';
 
 const RECENT_THRESHOLD = 2592000000;
-const VERSION = '11.1'; // Chloe: CAMINHO LIVRE 🚀
+const VERSION = '11.2'; // Chloe: FOCO PC & NAVEGAÇÃO TOTAL 🚀
 
 const App: React.FC = () => {
   const [images, setImages] = useState<ScratchcardData[]>([]);
@@ -118,7 +118,11 @@ const App: React.FC = () => {
         matchesLocation = (img.country || "").toLowerCase() === activeCountry.toLowerCase();
         if (activeSubRegion) {
           const sub = activeSubRegion.toLowerCase();
-          matchesLocation = matchesLocation && (img.subRegion?.toLowerCase() === sub || img.island?.toLowerCase() === sub);
+          matchesLocation = matchesLocation && (
+            (img.region || "").toLowerCase() === sub || 
+            (img.island || "").toLowerCase() === sub ||
+            (img.subRegion || "").toLowerCase() === sub
+          );
         }
       }
       return matchesSearch && matchesContinent && matchesLocation && matchesCategory && matchesTheme;
@@ -129,26 +133,81 @@ const App: React.FC = () => {
     const res: Record<string, number> = { Europa: 0, América: 0, Ásia: 0, África: 0, Oceania: 0 };
     const countryStats: Record<string, number> = {};
     const stateStats: Record<string, number> = {};
+    const categoriesCount = { scratch: 0, lottery: 0 };
+
     images.forEach(img => {
       if (res[img.continent] !== undefined) res[img.continent]++;
       countryStats[img.country] = (countryStats[img.country] || 0) + 1;
       stateStats[img.state] = (stateStats[img.state] || 0) + 1;
+      
+      if (img.category === 'raspadinha') categoriesCount.scratch++;
+      else if (img.category === 'lotaria') categoriesCount.lottery++;
     });
-    return { continent: res, countries: countryStats, states: stateStats };
+
+    return { 
+      continent: res, 
+      countries: countryStats, 
+      states: stateStats,
+      categories: categoriesCount
+    };
   }, [images]);
+
+  const collectionImages = useMemo(() => {
+    return images.filter(img => currentUser && img.owners?.includes(currentUser));
+  }, [images, currentUser]);
 
   const renderContent = () => {
     switch (currentPage) {
       case 'stats':
-        return <StatsSection images={images} stats={stats.continent} countryStats={stats.countries} stateStats={stats.states} collectorStats={{}} totalRecords={images.length} t={t.stats} currentUser={currentUser} categoryStats={{scratch:0, lottery:0}} />;
+        return (
+          <div className="max-w-[1800px] mx-auto p-4 md:p-10 animate-fade-in">
+             <StatsSection 
+               images={images} 
+               stats={stats.continent} 
+               countryStats={stats.countries} 
+               stateStats={stats.states} 
+               collectorStats={{}} 
+               totalRecords={images.length} 
+               t={t.stats} 
+               currentUser={currentUser} 
+               categoryStats={stats.categories} 
+             />
+          </div>
+        );
       case 'themes':
-        return <ThemesPage images={images} onThemeSelect={(themeId) => { setActiveTheme(themeId); setCurrentPage('home'); addSignal(`Filtrado por: ${themeId.toUpperCase()}`); }} />;
+        return (
+          <div className="max-w-[1800px] mx-auto p-4 md:p-10 animate-fade-in">
+             <ThemesPage 
+               images={images} 
+               onThemeSelect={(themeId) => { 
+                 setActiveTheme(themeId); 
+                 setCurrentPage('home'); 
+                 addSignal(`Filtrado por: ${themeId.toUpperCase()}`); 
+               }} 
+             />
+          </div>
+        );
+      case 'collection':
+        return (
+          <div className="max-w-[1800px] mx-auto p-4 md:p-10 animate-fade-in">
+             <div className="mb-8 border-b border-white/5 pb-6 flex items-center justify-between">
+                <div>
+                   <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter">A Minha Coleção 🌟</h2>
+                   <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mt-2">
+                      Visualizando {collectionImages.length} itens marcados por {currentUser} hihi!
+                   </p>
+                </div>
+                <button onClick={() => setCurrentPage('home')} className="bg-slate-800 text-slate-400 px-6 py-2 rounded-xl text-[10px] font-black uppercase hover:text-white transition-all">Voltar ao arquivo</button>
+             </div>
+             <ImageGrid images={collectionImages} onImageClick={setSelectedImage} t={t.grid}/>
+          </div>
+        );
       case 'about':
         return <AboutPage t={t.about} isAdmin={isAdmin} founderPhoto={siteMetadata?.founderPhotoUrl} founderBio={siteMetadata?.founderBio} founderQuote={siteMetadata?.founderQuote} milestones={siteMetadata?.milestones} onUpdateFounderPhoto={(url) => setSiteMetadata(prev => prev ? {...prev, founderPhotoUrl: url} : null)} onUpdateMetadata={(data) => setSiteMetadata(prev => prev ? {...prev, ...data} : null)} />;
       case 'home':
       default:
         return (
-          <div className="p-4 md:p-8 animate-fade-in">
+          <div className="max-w-[1800px] mx-auto p-4 md:p-10 animate-fade-in">
              {activeTheme && (
                <div className="mb-6 flex items-center justify-between bg-pink-600/10 border border-pink-500/30 p-4 rounded-2xl">
                   <div className="flex items-center gap-3">
@@ -212,13 +271,19 @@ const App: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-[#020617] text-slate-100">
       <Header 
         isAdmin={isAdmin} currentUser={currentUser} language={language} setLanguage={setLanguage}
-        currentPage={currentPage} onNavigate={(p) => { setCurrentPage(p); if (p === 'home') { setActiveTheme(''); setActiveCountry(''); } }} onAdminToggle={() => setShowLogin(true)} 
+        currentPage={currentPage} onNavigate={(p) => { 
+          setCurrentPage(p); 
+          if (p === 'home') { setActiveTheme(''); setActiveCountry(''); } 
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }} 
+        onAdminToggle={() => setShowLogin(true)} 
         onLogout={() => { setIsAdmin(false); setCurrentUser(null); localStorage.clear(); window.location.reload(); }}
         onHistoryClick={() => setShowHistory(true)} onRadioClick={() => setShowRadio(true)} onExport={handleExport}
         onImport={handleImport} onExportTXT={() => {}} onExportCSV={() => {}} t={t.header}
         onCountrySelect={(cont, loc, sub) => {
           setActiveContinent(cont); setActiveCountry(loc); setActiveSubRegion(sub || ''); setActiveTheme(''); setCurrentPage('home');
         }}
+        collectionCount={collectionImages.length}
         countriesByContinent={images.reduce((acc, img) => { if (!acc[img.continent]) acc[img.continent] = []; if (!acc[img.continent].includes(img.country)) acc[img.continent].push(img.country); return acc; }, {} as any)}
       />
 
@@ -248,7 +313,7 @@ const App: React.FC = () => {
         {isLoading ? (
           <div className="h-[50vh] flex flex-col items-center justify-center gap-6">
             <Loader2 className="w-12 h-12 animate-spin text-brand-500" />
-            <h2 className="text-white font-black uppercase">A carregar...</h2>
+            <h2 className="text-white font-black uppercase">A carregar arquivo...</h2>
           </div>
         ) : renderContent()}
       </main>
@@ -262,7 +327,7 @@ const App: React.FC = () => {
 
       {showUpload && <UploadModal onClose={() => setShowUpload(false)} onUploadComplete={(data) => { setImages([data, ...images]); addSignal("Arquivado!"); }} existingImages={images} initialFile={null} currentUser={currentUser} t={t.upload} categories={categories} />}
       {selectedImage && <ImageViewer image={selectedImage} onClose={() => setSelectedImage(null)} onUpdate={async (data) => { await storageService.save(data); setImages(images.map(img => img.id === data.id ? data : img)); setSelectedImage(data); addSignal("Atualizado!"); }} onDelete={async (id) => { await storageService.delete(id); setImages(images.filter(img => img.id !== id)); setSelectedImage(null); addSignal("Removido.", "warning"); }} isAdmin={isAdmin} currentUser={currentUser} contextImages={images} onImageSelect={setSelectedImage} t={t.viewer} categories={categories} />}
-      {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={(u, p, type) => { if (type === 'admin' && p === '123456') { setIsAdmin(true); setCurrentUser(u); localStorage.setItem('archive_user', u); localStorage.setItem('archive_admin', 'true'); addSignal(`Bem-vindo ${u}!`); return true; } return false; }} t={t.login} />}
+      {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={(u, p, type) => { if (type === 'admin' && p === '123456') { setIsAdmin(true); setCurrentUser(u); localStorage.setItem('archive_user', u); localStorage.setItem('archive_admin', 'true'); addSignal(`Bem-vindo ${u}!`); return true; } else if (type === 'visitor') { setCurrentUser(u); localStorage.setItem('archive_user', u); addSignal(`Olá ${u}!`); return true; } return false; }} t={t.login} />}
       {showHistory && <HistoryModal onClose={() => setShowHistory(false)} isAdmin={isAdmin} t={{...t.header, ...t.history}} />}
       {showWebsites && <WebsitesModal onClose={() => setShowWebsites(false)} isAdmin={isAdmin} t={t.header} />}
       {showRadio && <RadioModal onClose={() => setShowRadio(false)} />}

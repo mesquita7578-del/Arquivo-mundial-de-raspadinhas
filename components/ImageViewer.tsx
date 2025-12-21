@@ -496,6 +496,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                        <div className="grid grid-cols-2 gap-3 animate-fade-in">
                           <DataTag icon={Hash} label="Nº Jogo" value={formData.gameNumber} colorClass="text-brand-500" />
                           <DataTag icon={Flag} label="País" value={formData.country} colorClass="text-red-500" />
+                          {formData.island && <DataTag icon={Ship} label="Ilha / Arquip." value={formData.island.toUpperCase()} colorClass="text-cyan-500" />}
                           {formData.theme && <DataTag icon={Layout} label="Tema Curadoria" value={formData.theme.toUpperCase()} colorClass="text-pink-500" />}
                           <DataTag icon={Fingerprint} label="ID Único" value={formData.customId} colorClass="text-slate-500" />
                           <DataTag icon={Ruler} label="Formato" value={formData.size} colorClass="text-cyan-500" />
