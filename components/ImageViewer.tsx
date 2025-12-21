@@ -437,12 +437,25 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                           </div>
                        </section>
 
-                       <section className="space-y-4">
-                          <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2">
-                            <Info className="w-3.5 h-3.5" /> Observações
-                          </h3>
-                          <textarea value={formData.values} onChange={e => handleChange('values', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-4 rounded-xl border border-white/10 h-32 outline-none italic" placeholder="Notas históricas..." />
-                          <input type="text" value={formData.collector} onChange={e => handleChange('collector', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] font-black uppercase p-3 border border-white/10 rounded-xl outline-none" placeholder="Colecionador Responsável" />
+                       <section className="space-y-6">
+                          <div className="space-y-4">
+                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2">
+                              <Info className="w-3.5 h-3.5" /> Observações
+                            </h3>
+                            <textarea value={formData.values} onChange={e => handleChange('values', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-4 rounded-xl border border-white/10 h-32 outline-none italic" placeholder="Notas históricas..." />
+                          </div>
+
+                          <div className="relative group pt-4">
+                             <User className="absolute left-4 bottom-5 w-4 h-4 text-brand-500 z-10" />
+                             <input 
+                               type="text" 
+                               value={formData.collector} 
+                               onChange={e => handleChange('collector', e.target.value)} 
+                               className="w-full bg-slate-950 text-white text-[11px] font-black uppercase pl-12 pr-4 py-4 border border-brand-500/30 rounded-2xl outline-none focus:border-brand-500 transition-all shadow-lg" 
+                               placeholder="Colecionador Responsável" 
+                             />
+                             <span className="absolute -top-1 left-4 px-2 bg-slate-900 text-[8px] font-black text-brand-500 uppercase tracking-widest">Responsável pelo Registo</span>
+                          </div>
                        </section>
                     </div>
                  ) : (

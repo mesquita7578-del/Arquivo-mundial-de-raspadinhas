@@ -13,7 +13,7 @@ interface ImageGridProps {
   t: any;
 }
 
-const ITEMS_PER_PAGE = 50; 
+const ITEMS_PER_PAGE = 20; 
 const FORTY_EIGHT_HOURS = 172800000; // 48 * 60 * 60 * 1000
 
 const StateBadge = ({ state }: { state: string }) => {
@@ -77,16 +77,21 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
     return images.filter(img => img.country === selectedCountry);
   }, [images, selectedCountry]);
 
-  // Chloe: Ordenação final (por número de jogo)
+  /**
+   * CHLOE: ORDENAÇÃO MÁGICA CRESCENTE (1, 2, 3... 100)
+   * Garante que o gameNumber manda na ordem em todas as vistas.
+   */
   const sortedImages = useMemo(() => {
     return [...filteredByCountry].sort((a, b) => {
-      const numA = a.gameNumber?.trim() || "";
-      const numB = b.gameNumber?.trim() || "";
+      const numA = a.gameNumber?.toString().trim() || "";
+      const numB = b.gameNumber?.toString().trim() || "";
       
+      // Chloe: Itens sem número vão para o final da fila (hihi!)
       if (numA === "" && numB === "") return 0;
       if (numA === "") return 1;
       if (numB === "") return -1;
       
+      // Chloe: numeric: true faz com que "2" venha antes de "10" (ordem natural)
       return numA.localeCompare(numB, undefined, { 
         numeric: true, 
         sensitivity: 'base' 
@@ -180,7 +185,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 
          <div className="ml-auto flex items-center gap-2">
             <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest italic">
-               A mostrar {sortedImages.length} de {images.length} itens
+               A mostrar {sortedImages.length} de {images.length} itens (Ordenado por Nº Jogo)
             </span>
          </div>
       </div>
