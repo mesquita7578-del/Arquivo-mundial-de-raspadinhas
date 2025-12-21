@@ -1,5 +1,4 @@
 
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult, ScratchcardData, Continent } from "../types";
 
@@ -83,7 +82,7 @@ export const getChloeMagicComment = async (item: ScratchcardData): Promise<strin
 };
 
 /**
- * Analyzes images to extract scratchcard metadata
+ * Analyzes images to extract scratchcard metadata with DEEP SEARCH
  */
 export const analyzeImage = async (frontBase64: string, backBase64: string | null, mimeType: string): Promise<AnalysisResult> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -94,27 +93,22 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     if (backBase64) parts.push({ inlineData: { mimeType: mimeType || 'image/jpeg', data: backBase64 } });
     
     parts.push({ 
-      text: `Analise minuciosamente esta imagem de raspadinha/lotaria. 
-      Retorne os dados técnicos exatos.
-      Dicas para a sua análise:
-      - O nome do jogo está no topo.
-      - O número do jogo são geralmente 3 dígitos (ex: 502, 601) perto de um código de barras ou num canto.
-      - A operadora (ex: Santa Casa, ONCE) é a entidade que emite.
-      - A gráfica (ex: Scientific Games, IGT) costuma estar em texto minúsculo no verso ou na borda.
-      - Verifique a cor das linhas de segurança no fundo do bilhete.` 
+      text: `BUSCA PROFUNDA: Analise esta raspadinha/lotaria como uma perita mundial.
+      Extraia dados técnicos avançados:
+      - TABELA DE PRÉMIOS: Liste os valores principais (ex: 5€, 100€, 20.000€) no campo 'values'.
+      - VITÓRIA: Se estiver raspada e os símbolos indicarem um prémio, marque 'isWinner' como true.
+      - RARIDADE: Se houver marcas de 'AMOSTRA', 'VOID', erros de impressão ou selos de tiragem limitada, marque 'isRarity' como true.
+      - SÉRIES: Procure por textos como "Série A", "Coleção X" ou "1 de 10" para preencher 'seriesGroupId' e 'setCount'.
+      - LINHAS: Identifique a cor exata das linhas microscópicas de segurança no fundo.` 
     });
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview', // Usando Pro para Busca Profunda
       contents: { parts },
       config: {
-        systemInstruction: `Você é a Chloe, perita mundial em arquivística de loterias. Sua visão é super-aguda! 
-        Ao analisar imagens:
-        - Identifique o PAÍS e SUB-REGIÃO (Açores/Madeira).
-        - Extraia o NÚMERO DO JOGO (3 dígitos).
-        - Extraia a OPERADORA e a GRÁFICA (Impressora).
-        - Identifique o PREÇO e a COR das linhas de segurança (blue, red, green, multicolor, etc).
-        - Se for de Portugal e não indicar ilhas, use 'Portugal Continental'.`,
+        systemInstruction: `Você é Chloe, a Guardiã do Arquivo. Sua visão é microscópica e você conhece todas as raspadinhas do mundo! 
+        Seja extremamente precisa nos números de jogo (geralmente 3 dígitos) e nas gráficas. 
+        Se identificar Portugal, verifique se é Continental ou Ilhas (Açores/Madeira).`,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -131,7 +125,12 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
             emission: { type: Type.STRING },
             winProbability: { type: Type.STRING },
             size: { type: Type.STRING },
-            lines: { type: Type.STRING }
+            lines: { type: Type.STRING },
+            values: { type: Type.STRING, description: "Lista de prémios principais encontrados" },
+            isWinner: { type: Type.BOOLEAN },
+            isRarity: { type: Type.BOOLEAN },
+            seriesGroupId: { type: Type.STRING },
+            setCount: { type: Type.STRING }
           },
           required: ["gameName", "country"]
         }
@@ -142,7 +141,6 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     const detectedCountry = data.country || "Portugal";
     const detectedContinent = getContinentFromCountry(detectedCountry);
 
-    // Mapeamento de cor para o tipo LineType
     const validLines: any = ['blue', 'red', 'multicolor', 'green', 'brown', 'pink', 'purple', 'yellow', 'gray', 'none'];
     const detectedLine = data.lines?.toLowerCase();
     const finalLine = validLines.includes(detectedLine) ? detectedLine : 'none';
@@ -155,7 +153,7 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       size: data.size || "",
       values: data.values || "",
       price: data.price || "",
-      state: "SC",
+      state: data.isRarity ? "AMOSTRA" : "SC",
       country: detectedCountry,
       island: data.island || "",
       region: data.region || "",
@@ -164,10 +162,14 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       printer: data.printer || "",
       emission: data.emission || "",
       winProbability: data.winProbability || "",
-      lines: finalLine
+      lines: finalLine,
+      isWinner: data.isWinner || false,
+      isRarity: data.isRarity || false,
+      seriesGroupId: data.seriesGroupId || "",
+      setCount: data.setCount || ""
     } as AnalysisResult;
   } catch (error) {
-    console.error("Erro na leitura da Chloe:", error);
+    console.error("Erro na leitura profunda da Chloe:", error);
     throw error;
   }
 };

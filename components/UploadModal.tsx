@@ -4,7 +4,8 @@ import {
   X, Upload, Sparkles, Check, Loader2, 
   ImagePlus, Wand2, Layers, Tag, MapPin, Palette, Info, 
   Calendar, Building2, Printer, ScanLine, Banknote, Globe2, Clock,
-  Camera, Hash, Ruler, Percent, Factory, BookOpen, Trash2, RefreshCcw
+  Camera, Hash, Ruler, Percent, Factory, BookOpen, Trash2, RefreshCcw,
+  Trophy, Star
 } from 'lucide-react';
 import { ScratchcardData, CategoryItem, Continent, LineType, ScratchcardState } from '../types';
 import { analyzeImage } from '../services/geminiService';
@@ -65,7 +66,9 @@ const INITIAL_FORM_STATE: Partial<ScratchcardData> = {
   seriesGroupId: '',
   theme: '',
   values: '',
-  customId: ''
+  customId: '',
+  isWinner: false,
+  isRarity: false
 };
 
 export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadComplete, currentUser, categories }) => {
@@ -123,7 +126,14 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
         lines: (result.lines as LineType) || prev.lines,
         size: result.size || prev.size,
         emission: result.emission || prev.emission,
-        winProbability: result.winProbability || prev.winProbability
+        winProbability: result.winProbability || prev.winProbability,
+        values: result.values || prev.values,
+        isWinner: result.isWinner || prev.isWinner,
+        isRarity: result.isRarity || prev.isRarity,
+        isSeries: !!result.seriesGroupId || prev.isSeries,
+        seriesGroupId: result.seriesGroupId || prev.seriesGroupId,
+        setCount: result.setCount || prev.setCount,
+        state: result.isRarity ? 'AMOSTRA' : prev.state
       }));
       setHasAiData(true);
     } catch (err) { 
@@ -201,7 +211,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                 </div>
                 <div className="flex flex-col gap-2">
                    <button onClick={startAnalysis} disabled={!frontPreview || isAnalyzing} className={`w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${frontPreview ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/40' : 'bg-slate-800 text-slate-600'}`}>
-                     {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />} {isAnalyzing ? 'A Ler Dados...' : 'Análise Chloe IA'}
+                     {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />} {isAnalyzing ? 'A Ler Dados...' : 'Busca Profunda IA'}
                    </button>
                    {frontPreview && (
                      <button onClick={() => { setFrontPreview(null); setBackPreview(null); setHasAiData(false); }} className="w-full py-2 text-[8px] font-black text-slate-600 uppercase hover:text-red-500 transition-colors">Remover Fotos</button>
@@ -231,10 +241,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                             <input type="text" placeholder="Ex: 5€" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-brand-500" />
                             <span className="absolute -top-1.5 left-2 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Preço</span>
                          </div>
-                      </div>
-                      <div className="relative">
-                         <input type="text" placeholder="Identificador Interno" value={formData.customId} onChange={e => setFormData({...formData, customId: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-brand-500" />
-                         <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">ID Personalizado</span>
                       </div>
                    </div>
                 </div>
@@ -307,32 +313,36 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                             <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Estado Físico</span>
                          </div>
                       </div>
-                      <div className="relative">
-                         <input type="text" placeholder="Açores, Madeira, Catalunha..." value={formData.island || formData.region} onChange={e => setFormData({...formData, island: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-blue-500" />
-                         <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Região / Sub-Divisão</span>
-                      </div>
                    </div>
                 </div>
 
-                {/* GRUPO E: Séries e Curadoria */}
+                {/* GRUPO E: Séries e Curadoria Profunda */}
                 <div className="space-y-5 bg-brand-500/5 p-6 rounded-[2.5rem] border border-brand-500/20 lg:col-span-2">
-                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                      <div className="flex-1 space-y-4">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
                          <div className="flex items-center justify-between">
-                            <h3 className="text-[10px] font-black text-brand-400 uppercase tracking-[0.3em] flex items-center gap-2"><Layers className="w-4 h-4" /> Agrupamento de Série / SET</h3>
+                            <h3 className="text-[10px] font-black text-brand-400 uppercase tracking-[0.3em] flex items-center gap-2"><Layers className="w-4 h-4" /> Série / SET</h3>
                             <label className="relative inline-flex items-center cursor-pointer scale-110">
                               <input type="checkbox" checked={formData.isSeries} onChange={e => setFormData({...formData, isSeries: e.target.checked})} className="sr-only peer" />
                               <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
                             </label>
                          </div>
                          {formData.isSeries && (
-                            <div className="flex gap-4 animate-fade-in">
-                               <input type="text" placeholder="Nome do SET (Ex: Coleção Verão)" value={formData.seriesGroupId} onChange={e => setFormData({...formData, seriesGroupId: e.target.value})} className="flex-1 bg-slate-900 border border-brand-500/30 rounded-xl p-3 text-white font-black text-xs outline-none" />
-                               <input type="text" placeholder="Total" value={formData.setCount} onChange={e => setFormData({...formData, setCount: e.target.value})} className="w-20 bg-slate-900 border border-brand-500/30 rounded-xl p-3 text-white font-black text-xs outline-none text-center" />
+                            <div className="flex gap-3 animate-fade-in">
+                               <input type="text" placeholder="Nome do SET" value={formData.seriesGroupId} onChange={e => setFormData({...formData, seriesGroupId: e.target.value})} className="flex-1 bg-slate-900 border border-brand-500/30 rounded-xl p-3 text-white font-black text-xs outline-none" />
+                               <input type="text" placeholder="Total" value={formData.setCount} onChange={e => setFormData({...formData, setCount: e.target.value})} className="w-16 bg-slate-900 border border-brand-500/30 rounded-xl p-3 text-white font-black text-xs outline-none text-center" />
                             </div>
                          )}
+                         <div className="flex gap-4 pt-2">
+                            <button onClick={() => setFormData({...formData, isWinner: !formData.isWinner})} className={`flex-1 p-3 rounded-xl border flex items-center justify-center gap-2 transition-all font-black text-[9px] uppercase ${formData.isWinner ? 'bg-emerald-600 border-emerald-400 text-white' : 'bg-slate-900 border-slate-800 text-slate-500'}`}>
+                               <Trophy className="w-3.5 h-3.5" /> Premiada
+                            </button>
+                            <button onClick={() => setFormData({...formData, isRarity: !formData.isRarity})} className={`flex-1 p-3 rounded-xl border flex items-center justify-center gap-2 transition-all font-black text-[9px] uppercase ${formData.isRarity ? 'bg-amber-600 border-amber-400 text-white' : 'bg-slate-900 border-slate-800 text-slate-500'}`}>
+                               <Star className="w-3.5 h-3.5" /> Raridade
+                            </button>
+                         </div>
                       </div>
-                      <div className="flex-1 space-y-4">
+                      <div className="space-y-4">
                          <h3 className="text-[10px] font-black text-pink-500 uppercase tracking-[0.3em] flex items-center gap-2"><Palette className="w-4 h-4" /> Tema Sugerido</h3>
                          <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
                             {THEME_OPTIONS.map(theme => (
@@ -347,8 +357,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
                 {/* GRUPO F: Notas e Curiosidades */}
                 <div className="space-y-4 bg-slate-950/40 p-6 rounded-[2.5rem] border border-white/5 lg:col-span-3">
-                   <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2"><Info className="w-4 h-4" /> Notas de Curador</h3>
-                   <textarea placeholder="Vovô, descreva aqui alguma curiosidade, tiragem especial ou defeitos de impressão... hihi!" value={formData.values} onChange={e => setFormData({...formData, values: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-[2rem] p-5 text-white text-xs h-24 outline-none italic resize-none focus:border-brand-500 transition-all" />
+                   <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2"><Info className="w-4 h-4" /> Notas e Tabela de Prémios</h3>
+                   <textarea placeholder="Vovô, descreva aqui os prémios ou curiosidades... hihi!" value={formData.values} onChange={e => setFormData({...formData, values: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-[2rem] p-5 text-white text-xs h-24 outline-none italic resize-none focus:border-brand-500 transition-all" />
                 </div>
 
              </div>

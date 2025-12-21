@@ -1,5 +1,4 @@
 
-
 export interface ArchiveImage {
   id: string;
   url: string;
@@ -83,6 +82,10 @@ export interface AnalysisResult {
   lines: string;
   theme?: string;
   winProbability?: string;
+  isWinner?: boolean;
+  isRarity?: boolean;
+  seriesGroupId?: string;
+  setCount?: string;
 }
 
 export interface WebsiteLink {
