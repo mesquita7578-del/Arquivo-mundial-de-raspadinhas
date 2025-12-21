@@ -43,6 +43,7 @@ export interface ScratchcardData {
   island?: string; 
   continent: Continent;
   category: string;
+  theme?: string; // Novo campo para Temas
   operator?: string;
   printer?: string;
   emission?: string;
@@ -58,7 +59,7 @@ export interface ScratchcardData {
   isSeries?: boolean;
   seriesDetails?: string;
   setCount?: string; 
-  subRegion?: string; // Novo: Para "ONCE", "Cantão", "SCML Continente", etc.
+  subRegion?: string;
 }
 
 export interface AnalysisResult {
@@ -78,6 +79,7 @@ export interface AnalysisResult {
   printer: string;
   emission: string;
   lines: string;
+  theme?: string;
 }
 
 export interface WebsiteLink {

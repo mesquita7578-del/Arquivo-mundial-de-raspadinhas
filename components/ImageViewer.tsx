@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   X, Edit2, Trash2, Save, 
@@ -7,7 +8,7 @@ import {
   LayoutGrid, Eye, User,
   RefreshCw, Layers as LayersIcon, ChevronLeft, ChevronRight,
   Maximize2, Activity, Ship, Palette, Calendar, Percent, Check, Star, ImagePlus, LayoutList,
-  Columns2, Grid3X3
+  Columns2, Grid3X3, Layout, StickyNote
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent, LineType, CategoryItem } from '../types';
 
@@ -23,6 +24,19 @@ interface ImageViewerProps {
   t: any;
   categories: CategoryItem[];
 }
+
+const THEME_OPTIONS = [
+  { id: 'animais', label: 'Animais' },
+  { id: 'natal', label: 'Natal' },
+  { id: 'desporto', label: 'Desporto' },
+  { id: 'ouro', label: 'Ouro' },
+  { id: 'espaco', label: 'Espaço' },
+  { id: 'automoveis', label: 'Automóveis' },
+  { id: 'natureza', label: 'Natureza' },
+  { id: 'artes', label: 'Artes' },
+  { id: 'historia', label: 'História' },
+  { id: 'amor', label: 'Amor' },
+];
 
 const LINE_COLORS: { id: LineType; label: string; bg: string }[] = [
   { id: 'blue', label: 'Azul', bg: 'bg-blue-500' },
@@ -62,13 +76,11 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   const hasNextRecord = currentIndexInContext < contextImages.length - 1;
   const hasPrevRecord = currentIndexInContext > 0;
 
-  // Encontrar itens da mesma série
   const seriesItems = useMemo(() => {
     if (!image.isSeries || !image.seriesGroupId) return [];
     return contextImages.filter(img => img.seriesGroupId === image.seriesGroupId);
   }, [image, contextImages]);
 
-  // Montar a galeria local deste registro
   const localGallery = useMemo(() => {
     const gal = [image.frontUrl];
     if (image.backUrl) gal.push(image.backUrl);
@@ -76,7 +88,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
     return gal;
   }, [image]);
 
-  // Cálculo de quantos itens a série tem
   const setDisplayCount = useMemo(() => {
     if (formData.setCount) return formData.setCount;
     const galleryItems = image.gallery ? image.gallery.length : 0;
@@ -111,7 +122,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
       setFormData(image);
       setActiveIndex(0);
       setIsEditing(false);
-      // Mantemos o modo série se o novo item também for da mesma série
     }
   }, [image]);
 
@@ -168,7 +178,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
 
       <div className={`w-full h-full md:h-[95vh] ${showSeriesComparison ? 'md:max-w-[95vw]' : 'md:max-w-7xl'} flex flex-col md:flex-row bg-[#020617] md:rounded-3xl overflow-hidden border border-white/5 shadow-2xl relative transition-all duration-500`} onClick={e => e.stopPropagation()}>
          
-         {/* LADO ESQUERDO: VISUALIZADOR DE IMAGEM OU COMPARAÇÃO DE SÉRIE */}
          <div className="flex-1 bg-black/40 relative flex flex-col min-h-0 border-r border-white/5">
             <button className="absolute top-4 right-4 text-white/50 hover:text-white z-50 p-2" onClick={onClose}><X className="w-6 h-6"/></button>
             
@@ -248,7 +257,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
             )}
          </div>
 
-         {/* LADO DIREITO: FICHA TÉCNICA */}
          <div className={`w-full md:w-[500px] bg-slate-900/30 flex flex-col h-full overflow-hidden shrink-0 ${showSeriesComparison ? 'md:border-l md:border-white/5' : ''}`}>
               <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/50">
                  <div className="flex items-center gap-2">
@@ -277,7 +285,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                  
                  {isEditing ? (
                     <div className="space-y-8 animate-fade-in pb-10">
-                       {/* Bloco: Identificação */}
                        <section className="space-y-4">
                           <h3 className="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em] flex items-center gap-2">
                             <User className="w-3.5 h-3.5" /> Identificação do Jogo
@@ -288,6 +295,19 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                                 <input type="text" value={formData.gameNumber} onChange={e => handleChange('gameNumber', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-3 border border-white/10 rounded-xl outline-none focus:border-brand-500" placeholder="Nº Jogo" />
                                 <input type="text" value={formData.customId} onChange={e => handleChange('customId', e.target.value)} className="w-full bg-slate-950 text-white text-xs p-3 border border-white/10 rounded-xl outline-none focus:border-brand-500" placeholder="ID Personalizado" />
                              </div>
+                             
+                             <div className="p-3 bg-slate-950 border border-pink-500/30 rounded-xl">
+                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">Tema da Curadoria:</label>
+                                <select 
+                                  value={formData.theme} 
+                                  onChange={e => handleChange('theme', e.target.value)}
+                                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-pink-500 uppercase font-black"
+                                >
+                                   <option value="">Sem Tema</option>
+                                   {THEME_OPTIONS.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
+                                </select>
+                             </div>
+
                              <div className="flex items-center gap-3 p-3 bg-slate-950 border border-brand-500/30 rounded-xl">
                                 <label className="flex items-center gap-2 cursor-pointer flex-1">
                                    <input type="checkbox" checked={formData.isSeries} onChange={e => handleChange('isSeries', e.target.checked)} className="w-4 h-4 rounded bg-slate-800 border-slate-700" />
@@ -295,12 +315,20 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                                 </label>
                              </div>
                              {formData.isSeries && (
-                                <input type="text" value={formData.seriesGroupId} onChange={e => handleChange('seriesGroupId', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-brand-500/50 rounded-xl outline-none uppercase font-black" placeholder="ID DO GRUPO (IGUAL PARA TODOS OS ITENS DA SÉRIE)" />
+                                <div className="space-y-3 animate-fade-in">
+                                   <div className="relative">
+                                      <input type="text" value={formData.seriesGroupId} onChange={e => handleChange('seriesGroupId', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-brand-500/50 rounded-xl outline-none uppercase font-black" placeholder="ID DO GRUPO (IGUAL PARA TODOS OS ITENS DA SÉRIE)" />
+                                      <span className="absolute -top-2 left-3 text-[7px] bg-slate-900 px-1 text-brand-400 font-black uppercase tracking-widest">ID do Grupo</span>
+                                   </div>
+                                   <div className="relative">
+                                      <input type="text" value={formData.seriesDetails || ''} onChange={e => handleChange('seriesDetails', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-brand-500/50 rounded-xl outline-none uppercase font-black" placeholder="EX: EDIÇÃO LIMITADA, VARIANTE B..." />
+                                      <span className="absolute -top-2 left-3 text-[7px] bg-slate-900 px-1 text-brand-400 font-black uppercase tracking-widest">Detalhes da Série</span>
+                                   </div>
+                                </div>
                              )}
                           </div>
                        </section>
 
-                       {/* Bloco: Técnico */}
                        <section className="space-y-4">
                           <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] flex items-center gap-2">
                             <ScanLine className="w-3.5 h-3.5" /> Detalhes Técnicos
@@ -334,7 +362,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                           </div>
                        </section>
 
-                       {/* Bloco: Datas e Preço */}
                        <section className="space-y-4">
                           <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] flex items-center gap-2">
                             <Calendar className="w-3.5 h-3.5" /> Datas e Valores
@@ -349,7 +376,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                           </div>
                        </section>
 
-                       {/* Bloco: Localização */}
                        <section className="space-y-4">
                           <h3 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] flex items-center gap-2">
                             <MapPin className="w-3.5 h-3.5" /> Localização Exata
@@ -378,6 +404,12 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                           <h2 className="text-3xl font-black text-white uppercase italic leading-none">{formData.gameName}</h2>
                           <div className="flex flex-wrap items-center gap-2 mt-4">
                             <span className="text-brand-500 text-[9px] font-black uppercase tracking-widest bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">{formData.category}</span>
+                            {formData.theme && (
+                               <div className="flex items-center gap-1.5 bg-pink-500/10 text-pink-400 px-2 py-1 rounded border border-pink-500/30">
+                                  <Layout className="w-3 h-3" />
+                                  <span className="text-[9px] font-black uppercase tracking-widest">{formData.theme}</span>
+                               </div>
+                            )}
                             {formData.island && (
                               <div className="flex items-center gap-1.5 bg-cyan-500/10 text-cyan-400 px-2 py-1 rounded border border-cyan-500/30">
                                  <Ship className="w-3 h-3" />
@@ -386,17 +418,24 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                             )}
                             <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{formData.operator}</span>
                             
-                            {/* BOTÃO DE SÉRIE PANORÂMICO */}
                             {image.isSeries && (
-                               <button 
-                                 onClick={() => setShowSeriesComparison(!showSeriesComparison)}
-                                 className={`flex items-center gap-1.5 px-3 py-1 rounded border transition-all ${showSeriesComparison ? 'bg-brand-600 text-white border-brand-400' : 'bg-brand-600/10 text-brand-400 border-brand-500/30 hover:bg-brand-600/20'}`}
-                               >
-                                  <Grid3X3 className="w-3 h-3" />
-                                  <span className="text-[9px] font-black uppercase tracking-widest">
-                                     {showSeriesComparison ? 'FECHAR COMPARAÇÃO' : 'COMPARAR SÉRIE'}
-                                  </span>
-                               </button>
+                               <div className="flex flex-wrap items-center gap-2">
+                                  <button 
+                                    onClick={() => setShowSeriesComparison(!showSeriesComparison)}
+                                    className={`flex items-center gap-1.5 px-3 py-1 rounded border transition-all ${showSeriesComparison ? 'bg-brand-600 text-white border-brand-400' : 'bg-brand-600/10 text-brand-400 border-brand-500/30 hover:bg-brand-600/20'}`}
+                                  >
+                                     <Grid3X3 className="w-3 h-3" />
+                                     <span className="text-[9px] font-black uppercase tracking-widest">
+                                        {showSeriesComparison ? 'FECHAR COMPARAÇÃO' : 'COMPARAR SÉRIE'}
+                                     </span>
+                                  </button>
+                                  {formData.seriesDetails && (
+                                     <div className="flex items-center gap-1.5 bg-amber-500/10 text-amber-400 px-2 py-1 rounded border border-amber-500/30">
+                                        <StickyNote className="w-3 h-3" />
+                                        <span className="text-[9px] font-black uppercase tracking-widest">{formData.seriesDetails}</span>
+                                     </div>
+                                  )}
+                               </div>
                             )}
                             
                             {setDisplayCount && (
@@ -411,7 +450,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                        <div className="grid grid-cols-2 gap-3 animate-fade-in">
                           <DataTag icon={Hash} label="Nº Jogo" value={formData.gameNumber} colorClass="text-brand-500" />
                           <DataTag icon={Flag} label="País" value={formData.country} colorClass="text-red-500" />
-                          {formData.island && <DataTag icon={MapPin} label="Ilha / Arquipélago" value={formData.island} colorClass="text-cyan-500" />}
+                          {formData.theme && <DataTag icon={Layout} label="Tema Curadoria" value={formData.theme.toUpperCase()} colorClass="text-pink-500" />}
                           <DataTag icon={Fingerprint} label="ID Único" value={formData.customId} colorClass="text-slate-500" />
                           <DataTag icon={Ruler} label="Formato" value={formData.size} colorClass="text-cyan-500" />
                           <DataTag icon={Clock} label="Ano de Emissão" value={formData.releaseDate} colorClass="text-orange-500" />

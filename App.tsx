@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, Plus, Loader2, Sparkles, Zap, LayoutGrid, Trophy, Star, 
@@ -16,6 +17,7 @@ import { WebsitesModal } from './components/WebsitesModal';
 import { RadioModal } from './components/RadioModal';
 import { AboutPage } from './components/AboutPage';
 import { VisitorsModal } from './components/VisitorsModal';
+import { ThemesPage } from './components/ThemesPage';
 import { Footer } from './components/Footer';
 import { storageService } from './services/storage';
 import { ScratchcardData, CategoryItem, SiteMetadata, Continent, VisitorEntry } from './types';
@@ -29,13 +31,14 @@ const App: React.FC = () => {
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [siteMetadata, setSiteMetadata] = useState<SiteMetadata | null>(null);
   
-  const [currentPage, setCurrentPage] = useState<'home' | 'stats' | 'map' | 'about' | 'new-arrivals' | 'collection'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'stats' | 'map' | 'about' | 'new-arrivals' | 'collection' | 'themes'>('home');
   const [language, setLanguage] = useState<Language>('pt');
   const [searchTerm, setSearchTerm] = useState('');
   const [activeContinent, setActiveContinent] = useState<Continent | 'Mundo'>('Mundo');
   const [activeCountry, setActiveCountry] = useState<string>(''); 
   const [activeSubRegion, setActiveSubRegion] = useState<string>(''); 
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [activeTheme, setActiveTheme] = useState<string>('');
   const [showRaritiesOnly, setShowRaritiesOnly] = useState(false);
   const [showWinnersOnly, setShowWinnersOnly] = useState(false);
   const [showNewOnly, setShowNewOnly] = useState(false);
@@ -68,18 +71,6 @@ const App: React.FC = () => {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    chloeChannel.onmessage = (event) => {
-      if (event.data.type === 'SYNC_METADATA') {
-        setSiteMetadata(event.data.payload);
-      }
-    };
-    // Corrected the cleanup function to actually call close() instead of returning the function reference.
-    return () => {
-      chloeChannel.close();
-    };
   }, []);
 
   useEffect(() => {
@@ -182,13 +173,11 @@ const App: React.FC = () => {
       let matchesLocation = true;
       if (activeCountry) {
         const countryMatch = gCountry === activeCountry.toLowerCase();
-        
         if (activeSubRegion) {
           const sub = activeSubRegion.toLowerCase();
           if (activeCountry.toLowerCase() === 'portugal' && sub === 'continente') {
             matchesLocation = countryMatch && !img.island;
-          } 
-          else {
+          } else {
             matchesLocation = countryMatch && (gSub === sub || gIsland === sub || gRegion === sub || (img.operator && img.operator.toLowerCase().includes(sub)));
           }
         } else {
@@ -197,38 +186,16 @@ const App: React.FC = () => {
       }
 
       const matchesCategory = activeCategory === 'all' || img.category === activeCategory;
+      const matchesTheme = !activeTheme || img.theme?.toLowerCase() === activeTheme.toLowerCase();
       const matchesRarity = !showRaritiesOnly || img.isRarity;
       const matchesWinners = !showWinnersOnly || img.isWinner;
       const matchesNew = !showNewOnly || isRecent;
       
       if (currentPage === 'collection') if (!currentUser || !img.owners?.includes(currentUser)) return false;
       
-      return matchesSearch && matchesContinent && matchesLocation && matchesCategory && matchesRarity && matchesWinners && matchesNew;
+      return matchesSearch && matchesContinent && matchesLocation && matchesCategory && matchesTheme && matchesRarity && matchesWinners && matchesNew;
     });
-  }, [images, searchTerm, activeContinent, activeCountry, activeSubRegion, activeCategory, showRaritiesOnly, showWinnersOnly, showNewOnly, currentPage, currentUser]);
-
-  const newsDetailed = useMemo(() => {
-    const threshold = Date.now() - 86400000;
-    const newItems = images.filter(img => (img.createdAt || 0) > threshold);
-    
-    const countrySet = new Set<string>();
-    newItems.forEach(img => countrySet.add(img.country));
-
-    return {
-      countries: Array.from(countrySet).sort(),
-      getNewsFor: (country: string) => {
-        const countryNews = newItems.filter(i => i.country === country);
-        return {
-          total: countryNews.length,
-          subs: countryNews.reduce((acc, curr) => {
-            const label = curr.island || curr.subRegion || curr.region || 'Geral';
-            acc[label] = (acc[label] || 0) + 1;
-            return acc;
-          }, {} as Record<string, number>)
-        };
-      }
-    };
-  }, [images]);
+  }, [images, searchTerm, activeContinent, activeCountry, activeSubRegion, activeCategory, activeTheme, showRaritiesOnly, showWinnersOnly, showNewOnly, currentPage, currentUser]);
 
   const collectionCount = useMemo(() => {
     if (!currentUser) return 0;
@@ -267,18 +234,6 @@ const App: React.FC = () => {
     reader.readAsText(file);
   };
 
-  const handleExportTXT = () => {
-    const content = images.map(img => `${img.gameNumber} - ${img.gameName} (${img.island || img.country})`).join('\n');
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `checklist-arquivo-${new Date().toISOString().split('T')[0]}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    addSignal("Checklist gerada com sucesso! hihi!", "success");
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-[#020617] text-slate-100 pt-24 md:pt-28">
       <Header 
@@ -290,11 +245,11 @@ const App: React.FC = () => {
         onNavigate={setCurrentPage}
         onAdminToggle={() => setShowLogin(true)}
         onLogout={handleLogout}
-        onHistoryClick={() => setShowHistory(false)}
+        onHistoryClick={() => setShowHistory(true)}
         onRadioClick={() => setShowRadio(true)}
         onExport={handleExport}
         onImport={handleImport}
-        onExportTXT={handleExportTXT}
+        onExportTXT={() => {}}
         onExportCSV={() => {}}
         t={t.header}
         recentCount={images.filter(img => (Date.now() - (img.createdAt || 0)) < 43200000).length}
@@ -303,6 +258,7 @@ const App: React.FC = () => {
           setActiveContinent(cont);
           setActiveCountry(loc);
           setActiveSubRegion(sub || '');
+          setActiveTheme('');
           setCurrentPage('home');
           setShowNewOnly(false);
         }}
@@ -319,14 +275,22 @@ const App: React.FC = () => {
             
             <div className="flex flex-wrap items-center justify-center gap-1 md:gap-1.5">
                <div className="flex items-center gap-1 border-r border-white/10 pr-1 mr-0.5">
+                 {activeTheme && (
+                    <button 
+                      onClick={() => setActiveTheme('')}
+                      className="bg-brand-600 text-white px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-2"
+                    >
+                      Tema: {activeTheme} <X className="w-2.5 h-2.5" />
+                    </button>
+                 )}
                  <button 
-                   onClick={() => { setShowRaritiesOnly(!showRaritiesOnly); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); }} 
+                   onClick={() => { setShowRaritiesOnly(!showRaritiesOnly); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); }} 
                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-amber-400'}`}
                  >
                    <Diamond className="w-3 h-3" /> Raridades
                  </button>
                  <button 
-                   onClick={() => { setShowWinnersOnly(!showWinnersOnly); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); }} 
+                   onClick={() => { setShowWinnersOnly(!showWinnersOnly); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); }} 
                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-emerald-400'}`}
                  >
                    <Trophy className="w-3 h-3" /> Premiadas
@@ -343,97 +307,12 @@ const App: React.FC = () => {
                   ].map(cat => (
                     <button 
                       key={cat.id} 
-                      onClick={() => { setActiveCategory(cat.id); setShowRaritiesOnly(false); setShowWinnersOnly(false); setShowNewOnly(false); setActiveCountry(''); setActiveSubRegion(''); }} 
+                      onClick={() => { setActiveCategory(cat.id); setShowRaritiesOnly(false); setShowWinnersOnly(false); setShowNewOnly(false); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); }} 
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white border border-brand-400/30' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-brand-400'}`}
                     >
                       <cat.icon className="w-3 h-3" /> {cat.label}
                     </button>
                   ))}
-                  
-                  <div className="relative" ref={newSubmenuRef}>
-                    <button 
-                      onClick={() => { setShowNewOnly(!showNewOnly); setShowRaritiesOnly(false); setShowWinnersOnly(false); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); }} 
-                      onMouseEnter={() => setShowNewSubmenu(true)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ml-0.5 ${showNewOnly || showNewSubmenu ? 'bg-pink-600 text-white shadow-[0_0_15px_rgba(219,39,119,0.5)] border border-pink-400/30' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-pink-400'}`}
-                    >
-                      <Clock className="w-3 h-3" /> Novas Entradas
-                      {newsDetailed.countries.length > 0 && <ChevronDown className={`w-2.5 h-2.5 transition-transform ${showNewSubmenu ? 'rotate-180' : ''}`} />}
-                    </button>
-
-                    {showNewSubmenu && newsDetailed.countries.length > 0 && (
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 flex z-[100] animate-bounce-in">
-                        <div className="w-44 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-1.5 backdrop-blur-3xl h-fit">
-                           <div className="text-[7px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 py-1.5 border-b border-white/5 mb-1 flex items-center gap-2">
-                             <Sparkles className="w-2.5 h-2.5 text-pink-500" /> Países
-                           </div>
-                           {newsDetailed.countries.map(country => (
-                             <button
-                               key={country}
-                               onMouseEnter={() => setActiveNewCountrySub(country)}
-                               onClick={() => {
-                                 setActiveCountry(country);
-                                 setActiveSubRegion('');
-                                 setShowNewOnly(true);
-                                 setShowNewSubmenu(false);
-                                 setCurrentPage('home');
-                               }}
-                               className={`w-full text-left px-3 py-1.5 text-[8px] rounded-lg transition-all font-black uppercase tracking-widest flex items-center justify-between group ${activeNewCountrySub === country ? 'bg-pink-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                             >
-                               {country}
-                               <ChevronRight className={`w-2.5 h-2.5 transition-opacity ${activeNewCountrySub === country ? 'opacity-100 translate-x-1' : 'opacity-0'}`} />
-                             </button>
-                           ))}
-                        </div>
-
-                        {activeNewCountrySub && (
-                          <div className="w-48 ml-1 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-1.5 backdrop-blur-3xl animate-fade-in h-fit">
-                             <div className="text-[7px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 py-1.5 border-b border-white/5 mb-1 flex items-center gap-2">
-                               <MapPin className="w-2.5 h-2.5 text-blue-500" /> Filtrar {activeNewCountrySub}
-                             </div>
-                             
-                             {activeNewCountrySub === 'Portugal' && (
-                               <>
-                                 <button onClick={() => { setActiveCountry('Portugal'); setActiveSubRegion('continente'); setShowNewOnly(true); setShowNewSubmenu(false); }} className="w-full text-left px-3 py-2 text-[8px] text-slate-400 hover:bg-pink-600 hover:text-white rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
-                                    <Landmark className="w-3 h-3 text-blue-400" /> SCML (Continente)
-                                 </button>
-                                 <button onClick={() => { setActiveCountry('Portugal'); setActiveSubRegion('açores'); setShowNewOnly(true); setShowNewSubmenu(false); }} className="w-full text-left px-3 py-2 text-[8px] text-slate-400 hover:bg-pink-600 hover:text-white rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
-                                    <Ship className="w-3 h-3 text-cyan-400" /> Açores
-                                 </button>
-                                 <button onClick={() => { setActiveCountry('Portugal'); setActiveSubRegion('madeira'); setShowNewOnly(true); setShowNewSubmenu(false); }} className="w-full text-left px-3 py-2 text-[8px] text-slate-400 hover:bg-pink-600 hover:text-white rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
-                                    <MapPin className="w-3 h-3 text-emerald-400" /> Madeira
-                                 </button>
-                               </>
-                             )}
-
-                             {activeNewCountrySub === 'Espanha' && (
-                               <>
-                                 <button onClick={() => { setActiveCountry('Espanha'); setActiveSubRegion('nacional'); setShowNewOnly(true); setShowNewSubmenu(false); }} className="w-full text-left px-3 py-2 text-[8px] text-slate-400 hover:bg-pink-600 hover:text-white rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
-                                    <Landmark className="w-3 h-3 text-red-500" /> SELAE (Nacional)
-                                 </button>
-                                 <button onClick={() => { setActiveCountry('Espanha'); setActiveSubRegion('once'); setShowNewOnly(true); setShowNewSubmenu(false); }} className="w-full text-left px-3 py-2 text-[8px] text-slate-400 hover:bg-pink-600 hover:text-white rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
-                                    <Crown className="w-3 h-3 text-emerald-500" /> ONCE
-                                 </button>
-                                 <button onClick={() => { setActiveCountry('Espanha'); setActiveSubRegion('catalunha'); setShowNewOnly(true); setShowNewSubmenu(false); }} className="w-full text-left px-3 py-2 text-[8px] text-slate-400 hover:bg-pink-600 hover:text-white rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
-                                    <Flag className="w-3 h-3 text-yellow-500" /> Catalunha
-                                 </button>
-                               </>
-                             )}
-
-                             {activeNewCountrySub === 'Alemanha' && (
-                               <>
-                                 <button onClick={() => { setActiveCountry('Alemanha'); setActiveSubRegion('lotto'); setShowNewOnly(true); setShowNewSubmenu(false); }} className="w-full text-left px-3 py-2 text-[8px] text-slate-400 hover:bg-pink-600 hover:text-white rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
-                                    <Star className="w-3 h-3 text-blue-500" /> Lotto (Geral)
-                                 </button>
-                                 <button onClick={() => { setActiveCountry('Alemanha'); setActiveSubRegion('baviera'); setShowNewOnly(true); setShowNewSubmenu(false); }} className="w-full text-left px-3 py-2 text-[8px] text-slate-400 hover:bg-pink-600 hover:text-white rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
-                                    <MapPin className="w-3 h-3 text-blue-300" /> Baviera
-                                 </button>
-                               </>
-                             )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
                </div>
             </div>
 
@@ -466,6 +345,16 @@ const App: React.FC = () => {
           <div className="p-4 md:p-8 animate-fade-in">
             <ImageGrid images={filteredImages} onImageClick={setSelectedImage} isAdmin={isAdmin} currentUser={currentUser} t={t.grid}/>
           </div>
+        )}
+
+        {currentPage === 'themes' && (
+           <ThemesPage 
+             images={images}
+             onThemeSelect={(themeId) => {
+                setActiveTheme(themeId);
+                setCurrentPage('home');
+             }}
+           />
         )}
 
         {currentPage === 'stats' && (

@@ -4,7 +4,7 @@ import {
   Ticket, Lock, LogOut, BookOpen, Home, 
   BarChart2, ChevronDown, Globe, User, 
   Info, Database, ClipboardList, ChevronRight, Map as MapIcon, Radio, Menu, X as CloseIcon,
-  Download, Upload, MapPin, Star, Landmark, Ship, Flag, Crown
+  Download, Upload, MapPin, Star, Landmark, Ship, Flag, Crown, Layout
 } from 'lucide-react';
 import { Language } from '../translations';
 import { Continent } from '../types';
@@ -216,10 +216,10 @@ export const Header: React.FC<HeaderProps> = ({
                         {activeCountrySub === 'Austrália' && (
                           <>
                             <button onClick={() => { onCountrySelect?.('Oceania', 'Austrália', 'tatts'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
-                               <Landmark className="w-2.5 h-2.5 text-blue-500" /> Tatts (Tattersall’s)
+                               <Landmark className="w-2.5 h-2.5 text-blue-500" /> Tatts (Victoria)
                             </button>
                             <button onClick={() => { onCountrySelect?.('Oceania', 'Austrália', 'tattsnt'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
-                               <Landmark className="w-2.5 h-2.5 text-orange-500" /> Tatts NT Lotteries
+                               <Landmark className="w-2.5 h-2.5 text-orange-500" /> Tatts NT
                             </button>
                             <button onClick={() => { onCountrySelect?.('Oceania', 'Austrália', 'nsw'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
                                <Landmark className="w-2.5 h-2.5 text-cyan-400" /> NSW Lotteries
@@ -228,7 +228,7 @@ export const Header: React.FC<HeaderProps> = ({
                                <Landmark className="w-2.5 h-2.5 text-yellow-500" /> Golden Casket
                             </button>
                             <button onClick={() => { onCountrySelect?.('Oceania', 'Austrália', 'sa'); setShowExplore(false); }} className="w-full text-left px-3 py-2 text-[7px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-lg transition-all font-black uppercase tracking-widest flex items-center gap-2">
-                               <Landmark className="w-2.5 h-2.5 text-red-500" /> Loterias SA (Tatts SA)
+                               <Landmark className="w-2.5 h-2.5 text-red-500" /> SA Lotteries
                             </button>
                           </>
                         )}
@@ -238,6 +238,10 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
               )}
            </div>
+
+           <button onClick={() => onNavigate('themes')} className={`p-1.5 rounded-lg transition-all ${currentPage === 'themes' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} title="Temas">
+             <Layout className="w-3.5 h-3.5" />
+           </button>
 
            <button onClick={() => onNavigate('map')} className={`p-1.5 rounded-lg transition-all ${currentPage === 'map' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} title="Mapa">
              <MapIcon className="w-3.5 h-3.5" />

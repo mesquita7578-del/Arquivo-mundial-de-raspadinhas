@@ -4,7 +4,7 @@ import {
   X, Upload, Sparkles, Check, Loader2, ArrowLeft, 
   ImageIcon, ScanLine, Star, Hash, Globe, 
   Printer, Ruler, Banknote, Clock, Info, MapPin, 
-  Building2, Layers, User, Palette, Activity, Percent, Calendar, AlertCircle, Ship, ImagePlus, Trash2, LayoutList
+  Building2, Layers, User, Palette, Activity, Percent, Calendar, AlertCircle, Ship, ImagePlus, Trash2, LayoutList, Layout
 } from 'lucide-react';
 import { ScratchcardData, Category, ScratchcardState, LineType, CategoryItem } from '../types';
 import { analyzeImage } from '../services/geminiService';
@@ -19,6 +19,19 @@ interface UploadModalProps {
   t: any;
   categories: CategoryItem[];
 }
+
+const THEME_OPTIONS = [
+  { id: 'animais', label: 'Animais' },
+  { id: 'natal', label: 'Natal' },
+  { id: 'desporto', label: 'Desporto' },
+  { id: 'ouro', label: 'Ouro' },
+  { id: 'espaco', label: 'Espaço' },
+  { id: 'automoveis', label: 'Automóveis' },
+  { id: 'natureza', label: 'Natureza' },
+  { id: 'artes', label: 'Artes' },
+  { id: 'historia', label: 'História' },
+  { id: 'amor', label: 'Amor' },
+];
 
 const LINE_COLORS: { id: LineType; label: string; bg: string }[] = [
   { id: 'blue', label: 'Azul', bg: 'bg-blue-500' },
@@ -65,6 +78,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     country: 'Portugal',
     island: '',
     operator: '',
+    theme: '',
     lines: 'none',
     gameNumber: '',
     size: '',
@@ -185,6 +199,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       island: formData.island || '',
       continent: (formData.continent as any) || 'Europa',
       category: formData.category || 'raspadinha',
+      theme: formData.theme || '',
       operator: formData.operator || '',
       printer: formData.printer || '',
       emission: formData.emission || '',
@@ -225,7 +240,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
               </div>
            </div>
 
-           {/* Seção de Galeria para Séries */}
            <div className="mb-8">
               <div className="flex items-center justify-between mb-3">
                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
@@ -289,7 +303,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                          <img src={frontPreview || ''} className="w-full rounded-xl object-contain max-h-[400px]" />
                       </div>
                       
-                      {/* Galeria de Thumbnails no Editor */}
                       {(backPreview || galleryPreviews.length > 0) && (
                          <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800 flex flex-wrap gap-2">
                             {backPreview && <div className="w-20 h-20 rounded-lg border border-brand-500/30 overflow-hidden"><img src={backPreview} className="w-full h-full object-cover" /></div>}
@@ -319,6 +332,24 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Codigo / ID:</span>
                            <input type="text" value={formData.customId} onChange={e => setFormData({...formData, customId: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" placeholder="Gerado automaticamente" />
                         </label>
+                      </div>
+                   </section>
+
+                   {/* NOVO: SECÇÃO DE TEMA */}
+                   <section className="space-y-4">
+                      <h3 className="text-[10px] font-black text-pink-500 uppercase tracking-[0.3em] flex items-center gap-2">
+                        <Layout className="w-3 h-3" /> Curadoria Temática
+                      </h3>
+                      <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
+                         <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-2">Selecione o Tema Principal:</span>
+                         <select 
+                           value={formData.theme} 
+                           onChange={e => setFormData({...formData, theme: e.target.value})}
+                           className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-black text-xs uppercase outline-none focus:border-pink-500"
+                         >
+                            <option value="">Sem Tema Específico</option>
+                            {THEME_OPTIONS.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
+                         </select>
                       </div>
                    </section>
 
