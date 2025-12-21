@@ -78,19 +78,14 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   const hasNextRecord = currentIndexInContext < contextImages.length - 1;
   const hasPrevRecord = currentIndexInContext > 0;
 
-  // LÓGICA CORRIGIDA: Encontra todos os itens que pertencem logicamente à mesma série
   const seriesItems = useMemo(() => {
     return contextImages.filter(img => {
-      // 1. Se tiverem o mesmo ID de Grupo (Regra de Ouro)
       if (image.seriesGroupId && img.seriesGroupId && img.seriesGroupId.toLowerCase() === image.seriesGroupId.toLowerCase()) {
         return true;
       }
-      
-      // 2. Fallback: Se tiverem o mesmo Nome de Jogo, País e Operador (Mesma coleção técnica)
       const sameName = img.gameName.toLowerCase() === image.gameName.toLowerCase();
       const sameCountry = img.country.toLowerCase() === image.country.toLowerCase();
       const sameOperator = (img.operator || '').toLowerCase() === (image.operator || '').toLowerCase();
-      
       return sameName && sameCountry && sameOperator;
     });
   }, [image, contextImages]);
@@ -136,7 +131,9 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
       setFormData(image);
       setActiveIndex(0);
       setIsEditing(false);
-      setShowSeriesComparison(false);
+      // Mantém a comparação aberta se o novo item pertencer à mesma série
+      const isSameSeries = seriesItems.some(s => s.id === image.id);
+      if (!isSameSeries) setShowSeriesComparison(false);
     }
   }, [image]);
 

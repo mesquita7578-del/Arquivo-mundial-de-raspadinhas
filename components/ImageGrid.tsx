@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { 
-  Filter, Trophy, ChevronLeft, ChevronRight, Zap 
+  Filter, Trophy, ChevronLeft, ChevronRight, Zap, Layers 
 } from 'lucide-react';
 import { ScratchcardData } from '../types';
 
@@ -58,7 +58,6 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
     currentPage * ITEMS_PER_PAGE
   );
 
-  // Alterado para 12 horas (43200000ms) como o vovô pediu!
   const isRecent = (createdAt: number) => (Date.now() - createdAt) < 43200000;
 
   if (images.length === 0) {
@@ -108,16 +107,18 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                      NOVO
                    </div>
                 )}
-                {item.isWinner && !isRecent(item.createdAt) && (
-                  <div className="bg-green-600 p-0.5 rounded-full shadow-md mr-1 mt-1">
-                    <Trophy className="w-1.5 h-1.5 text-white" />
-                  </div>
-                )}
-                {item.isWinner && isRecent(item.createdAt) && (
-                  <div className="bg-green-600 p-0.5 rounded-full shadow-md mr-1 mt-0.5">
-                    <Trophy className="w-1.5 h-1.5 text-white" />
-                  </div>
-                )}
+                <div className="flex flex-col gap-1 pr-1 pt-1">
+                   {item.isWinner && (
+                     <div className="bg-green-600 p-0.5 rounded-full shadow-md">
+                       <Trophy className="w-1.5 h-1.5 text-white" />
+                     </div>
+                   )}
+                   {item.isSeries && (
+                     <div className="bg-blue-600 p-0.5 rounded-full shadow-md border border-blue-400/50" title="Faz parte de uma série">
+                       <Layers className="w-1.5 h-1.5 text-white" />
+                     </div>
+                   )}
+                </div>
               </div>
             </div>
 
