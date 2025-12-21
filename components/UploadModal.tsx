@@ -4,9 +4,9 @@ import {
   X, Upload, Sparkles, Check, Loader2, ArrowLeft, 
   ImageIcon, ScanLine, Star, Hash, Globe, 
   Printer, Ruler, Banknote, Clock, Info, MapPin, 
-  Building2, Layers, User, Palette, Activity, Percent, Calendar, AlertCircle, Ship, ImagePlus, Trash2, LayoutList, Layout
+  Building2, Layers, User, Palette, Activity, Percent, Calendar, AlertCircle, Ship, ImagePlus, Trash2, LayoutList, Layout, Wand2
 } from 'lucide-react';
-import { ScratchcardData, Category, ScratchcardState, LineType, CategoryItem } from '../types';
+import { ScratchcardData, Category, ScratchcardState, LineType, CategoryItem, AnalysisResult } from '../types';
 import { analyzeImage } from '../services/geminiService';
 import { storageService } from '../services/storage';
 
@@ -76,6 +76,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [aiResult, setAiResult] = useState<AnalysisResult | null>(null);
 
   const [formData, setFormData] = useState<Partial<ScratchcardData>>({
     category: 'raspadinha',
@@ -161,6 +162,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       const backBase64 = backPreview ? backPreview.split(',')[1] : null;
       const result = await analyzeImage(frontBase64, backBase64, frontFile.type);
       
+      setAiResult(result);
       setFormData(prev => ({
         ...prev,
         ...result,
@@ -228,6 +230,27 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     }
   };
 
+  /**
+   * Chloe: Componente de Sugestão Inteligente
+   */
+  const AiSuggestion = ({ field, aiValue }: { field: keyof ScratchcardData, aiValue?: string }) => {
+    if (!aiValue || !aiValue.trim()) return null;
+    const currentValue = formData[field]?.toString() || '';
+    
+    if (currentValue.trim().toLowerCase() === aiValue.trim().toLowerCase()) return null;
+
+    return (
+      <button 
+        type="button"
+        onClick={() => setFormData(prev => ({ ...prev, [field]: aiValue }))}
+        className="mt-1 inline-flex items-center gap-1.5 px-2 py-1 bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/30 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all group animate-fade-in"
+      >
+        <Wand2 className="w-2.5 h-2.5 group-hover:rotate-12 transition-transform" />
+        Chloe sugere: <span className="text-white italic">{aiValue}</span>
+      </button>
+    );
+  };
+
   const isUSA = formData.country?.toLowerCase() === 'eua' || formData.country?.toLowerCase() === 'usa' || formData.country?.toLowerCase() === 'estados unidos';
 
   return (
@@ -260,6 +283,19 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                 </div>
 
                 <div className="space-y-8">
+                   {/* Step transition / AI feedback */}
+                   {aiResult && (
+                      <div className="p-4 bg-brand-500/10 border border-brand-500/20 rounded-2xl flex items-center gap-4 animate-bounce-in">
+                         <div className="p-2 bg-brand-600 rounded-xl shadow-lg">
+                            <Sparkles className="w-5 h-5 text-white" />
+                         </div>
+                         <div>
+                            <p className="text-white text-xs font-black uppercase tracking-widest leading-none">A Chloe leu com sucesso!</p>
+                            <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mt-1.5 italic">Os campos foram pré-preenchidos. Verifique as sugestões hihi!</p>
+                         </div>
+                      </div>
+                   )}
+
                    <section className="space-y-4">
                       <h3 className="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em] flex items-center gap-2">
                         <User className="w-3 h-3" /> Identificação do Jogo
@@ -268,10 +304,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                         <label className="block col-span-2">
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Nome do jogo:</span>
                            <input list="game-names" type="text" value={formData.gameName} onChange={e => setFormData({...formData, gameName: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-brand-500 transition-all" />
+                           <AiSuggestion field="gameName" aiValue={aiResult?.gameName} />
                         </label>
                         <label className="block">
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Jogo nº:</span>
                            <input type="text" value={formData.gameNumber} onChange={e => setFormData({...formData, gameNumber: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" />
+                           <AiSuggestion field="gameNumber" aiValue={aiResult?.gameNumber} />
                         </label>
                         <label className="block">
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Codigo / ID:</span>
@@ -288,14 +326,17 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">País:</span>
                            <input list="countries" type="text" value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500" />
+                           <AiSuggestion field="country" aiValue={aiResult?.country} />
                         </label>
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Ilha / Arquipélago:</span>
                            <input list="islands" type="text" value={formData.island} onChange={e => setFormData({...formData, island: e.target.value})} className="w-full bg-slate-950 border border-brand-500/50 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500" placeholder="Ex: Açores, Madeira, Canárias..." />
+                           <AiSuggestion field="island" aiValue={aiResult?.island} />
                         </label>
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Região / Estado:</span>
                            <input list="regions" type="text" value={formData.region} onChange={e => setFormData({...formData, region: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500" placeholder="Ex: Continente, Catalunha..." />
+                           <AiSuggestion field="region" aiValue={aiResult?.region} />
                         </label>
                         <label>
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Continente:</span>
@@ -314,10 +355,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                         <label className="block col-span-2">
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Operador:</span>
                            <input list="operators" type="text" value={formData.operator} onChange={e => setFormData({...formData, operator: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" placeholder="Ex: SCML, ONCE, Sisal..." />
+                           <AiSuggestion field="operator" aiValue={aiResult?.operator} />
                         </label>
                         <label className="block">
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Custo:</span>
                            <input type="text" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" placeholder="Ex: 5€" />
+                           <AiSuggestion field="price" aiValue={aiResult?.price} />
                         </label>
                         <label className="block">
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Estado:</span>
@@ -331,6 +374,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    <section className="space-y-2">
                       <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Nota / Observações:</span>
                       <textarea value={formData.values} onChange={e => setFormData({...formData, values: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl p-4 text-white text-sm h-32 outline-none italic transition-all focus:border-brand-500 shadow-inner" placeholder="Notas sobre raridade ou histórico..." />
+                      <AiSuggestion field="values" aiValue={aiResult?.values} />
                    </section>
                 </div>
              </div>
