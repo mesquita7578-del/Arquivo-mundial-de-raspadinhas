@@ -5,9 +5,9 @@ import {
   ImagePlus, Wand2, Layers, Tag, MapPin, Palette, Info, 
   Calendar, Building2, Printer, ScanLine, Banknote, Globe2, Clock,
   Camera, Hash, Ruler, Percent, Factory, BookOpen, Trash2, RefreshCcw,
-  Trophy, Star
+  Trophy, Star, Plus, Images, MousePointer2
 } from 'lucide-react';
-import { ScratchcardData, CategoryItem, Continent, LineType, ScratchcardState } from '../types';
+import { ScratchcardData, CategoryItem, Continent, LineType, ScratchcardState, AnalysisResult } from '../types';
 import { analyzeImage } from '../services/geminiService';
 import { storageService } from '../services/storage';
 
@@ -74,9 +74,11 @@ const INITIAL_FORM_STATE: Partial<ScratchcardData> = {
 export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadComplete, currentUser, categories }) => {
   const [frontPreview, setFrontPreview] = useState<string | null>(null);
   const [backPreview, setBackPreview] = useState<string | null>(null);
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasAiData, setHasAiData] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<Partial<AnalysisResult> | null>(null);
 
   const [formData, setFormData] = useState<Partial<ScratchcardData>>({
     ...INITIAL_FORM_STATE,
@@ -85,14 +87,21 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
 
   const frontInputRef = useRef<HTMLInputElement>(null);
   const backInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (file: File, type: 'front' | 'back') => {
+  const handleFileSelect = (file: File, type: 'front' | 'back' | 'gallery') => {
     const reader = new FileReader();
     reader.onload = (e) => {
-      if (type === 'front') setFrontPreview(e.target?.result as string);
-      else setBackPreview(e.target?.result as string);
+      const result = e.target?.result as string;
+      if (type === 'front') setFrontPreview(result);
+      else if (type === 'back') setBackPreview(result);
+      else setGalleryPreviews(prev => [...prev, result]);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleRemoveGalleryImage = (index: number) => {
+    setGalleryPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const clearFormFields = () => {
@@ -101,47 +110,60 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
         ...INITIAL_FORM_STATE,
         collector: currentUser || 'Jorge Mesquita'
       });
+      setFrontPreview(null);
+      setBackPreview(null);
+      setGalleryPreviews([]);
       setHasAiData(false);
+      setAiSuggestions(null);
     }
   };
 
   const startAnalysis = async () => {
     if (!frontPreview) return;
     setIsAnalyzing(true);
+    setAiSuggestions(null);
     try {
       const frontBase64 = frontPreview.split(',')[1];
       const backBase64 = backPreview ? backPreview.split(',')[1] : null;
       const result = await analyzeImage(frontBase64, backBase64, 'image/jpeg');
       
+      setAiSuggestions(result);
+      setHasAiData(true);
+      
+      // Auto-preenche campos que estejam vazios
       setFormData(prev => ({
         ...prev,
-        gameName: result.gameName || prev.gameName,
-        gameNumber: result.gameNumber || prev.gameNumber,
-        price: result.price || prev.price,
-        country: result.country || prev.country,
-        island: result.island || prev.island,
-        region: result.region || prev.region,
-        operator: result.operator || prev.operator,
-        printer: result.printer || prev.printer,
-        lines: (result.lines as LineType) || prev.lines,
-        size: result.size || prev.size,
-        emission: result.emission || prev.emission,
-        winProbability: result.winProbability || prev.winProbability,
-        values: result.values || prev.values,
-        isWinner: result.isWinner || prev.isWinner,
-        isRarity: result.isRarity || prev.isRarity,
-        isSeries: !!result.seriesGroupId || prev.isSeries,
-        seriesGroupId: result.seriesGroupId || prev.seriesGroupId,
-        setCount: result.setCount || prev.setCount,
+        gameName: prev.gameName || result.gameName,
+        gameNumber: prev.gameNumber || result.gameNumber,
+        price: prev.price || result.price,
+        country: prev.country || result.country,
+        island: prev.island || result.island,
+        region: prev.region || result.region,
+        operator: prev.operator || result.operator,
+        printer: prev.printer || result.printer,
+        lines: (prev.lines === 'none' ? (result.lines as LineType) : prev.lines),
+        size: prev.size || result.size,
+        emission: prev.emission || result.emission,
+        winProbability: prev.winProbability || result.winProbability,
+        values: prev.values || result.values,
+        isWinner: prev.isWinner || result.isWinner,
+        isRarity: prev.isRarity || result.isRarity,
+        isSeries: prev.isSeries || !!result.seriesGroupId,
+        seriesGroupId: prev.seriesGroupId || result.seriesGroupId,
+        setCount: prev.setCount || result.setCount,
         state: result.isRarity ? 'AMOSTRA' : prev.state
       }));
-      setHasAiData(true);
+
     } catch (err) { 
       console.error(err);
       alert("Chloe não conseguiu ler tudo desta vez! hihi!");
     } finally { 
       setIsAnalyzing(false); 
     }
+  };
+
+  const handleApplySuggestion = (field: keyof ScratchcardData, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSave = async () => {
@@ -153,6 +175,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       id: timestamp.toString(),
       frontUrl: frontPreview,
       backUrl: backPreview || undefined,
+      gallery: galleryPreviews.length > 0 ? galleryPreviews : undefined,
       createdAt: timestamp,
       customId: formData.customId || `ID-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
       owners: currentUser ? [currentUser] : []
@@ -163,6 +186,20 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       onUploadComplete(newItem);
       onClose();
     } catch (err) { alert("Erro ao arquivar!"); } finally { setIsSaving(false); }
+  };
+
+  // Helper para renderizar a sugestão da IA
+  const AISuggestion = ({ field, value }: { field: keyof ScratchcardData, value: any }) => {
+    if (!aiSuggestions || !value || formData[field] === value) return null;
+    return (
+      <button 
+        onClick={() => handleApplySuggestion(field, value)}
+        className="absolute -top-6 right-0 flex items-center gap-1.5 px-2 py-0.5 bg-brand-600 text-white rounded-full text-[7px] font-black uppercase tracking-widest shadow-lg animate-bounce-in hover:bg-emerald-500 transition-colors z-20"
+        title="Clique para aceitar a sugestão da Chloe"
+      >
+        <Sparkles className="w-2.5 h-2.5" /> {value}
+      </button>
+    );
   };
 
   return (
@@ -179,7 +216,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {hasAiData && (
+            {(hasAiData || frontPreview) && (
               <button 
                 onClick={clearFormFields}
                 className="flex items-center gap-2 px-4 py-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-xl border border-red-500/20 transition-all text-[9px] font-black uppercase tracking-widest"
@@ -197,24 +234,47 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
           
           {/* LADO ESQUERDO: Imagens e Análise */}
           <div className="w-full md:w-1/4 bg-slate-950/30 p-6 flex flex-col gap-6 border-r border-white/5 overflow-y-auto custom-scrollbar">
-             <div className="space-y-4">
-                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2"><ImagePlus className="w-3.5 h-3.5" /> Média Captura</h3>
-                <div className="grid grid-cols-1 gap-4">
-                   <div onClick={() => frontInputRef.current?.click()} className={`relative aspect-[3/4] rounded-3xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center gap-3 overflow-hidden ${frontPreview ? 'border-brand-500' : 'border-slate-800 bg-slate-900/30'}`}>
-                     {frontPreview ? <img src={frontPreview} className="w-full h-full object-cover" /> : <div className="text-center"><Upload className="w-8 h-8 mx-auto text-slate-700 mb-2"/><span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Frente</span></div>}
-                     <input type="file" ref={frontInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0], 'front')} />
-                   </div>
-                   <div onClick={() => backInputRef.current?.click()} className={`relative aspect-[3/4] rounded-3xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center gap-3 overflow-hidden ${backPreview ? 'border-brand-500' : 'border-slate-800 bg-slate-900/30'}`}>
-                     {backPreview ? <img src={backPreview} className="w-full h-full object-cover" /> : <div className="text-center"><Upload className="w-8 h-8 mx-auto text-slate-700 mb-2"/><span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Verso</span></div>}
-                     <input type="file" ref={backInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0], 'back')} />
+             <div className="space-y-6">
+                <div>
+                   <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2 mb-4"><ImagePlus className="w-3.5 h-3.5" /> Média Principal</h3>
+                   <div className="grid grid-cols-2 gap-3">
+                      <div onClick={() => frontInputRef.current?.click()} className={`relative aspect-square rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center gap-2 overflow-hidden ${frontPreview ? 'border-brand-500' : 'border-slate-800 bg-slate-900/30'}`}>
+                        {frontPreview ? <img src={frontPreview} className="w-full h-full object-cover" /> : <div className="text-center"><Upload className="w-5 h-5 mx-auto text-slate-700 mb-1"/><span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Frente</span></div>}
+                        <input type="file" ref={frontInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0], 'front')} />
+                      </div>
+                      <div onClick={() => backInputRef.current?.click()} className={`relative aspect-square rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center gap-2 overflow-hidden ${backPreview ? 'border-brand-500' : 'border-slate-800 bg-slate-900/30'}`}>
+                        {backPreview ? <img src={backPreview} className="w-full h-full object-cover" /> : <div className="text-center"><Upload className="w-5 h-5 mx-auto text-slate-700 mb-1"/><span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Verso</span></div>}
+                        <input type="file" ref={backInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0], 'back')} />
+                      </div>
                    </div>
                 </div>
+
+                {/* GALERIA DO SET */}
+                <div>
+                   <h3 className="text-[10px] font-black text-brand-400 uppercase tracking-[0.3em] flex items-center gap-2 mb-4"><Images className="w-3.5 h-3.5" /> Galeria do SET</h3>
+                   <div className="grid grid-cols-3 gap-2">
+                      {galleryPreviews.map((src, i) => (
+                        <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-white/10 group">
+                           <img src={src} className="w-full h-full object-cover" />
+                           <button onClick={() => handleRemoveGalleryImage(i)} className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-3 h-3" /></button>
+                        </div>
+                      ))}
+                      <button onClick={() => galleryInputRef.current?.click()} className="aspect-square rounded-xl border-2 border-dashed border-slate-800 hover:border-brand-500/50 hover:bg-brand-500/5 transition-all flex flex-col items-center justify-center gap-1 text-slate-600 hover:text-brand-400">
+                         <Plus className="w-5 h-5" />
+                         <span className="text-[7px] font-black uppercase">Mais Fotos</span>
+                      </button>
+                      <input type="file" ref={galleryInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0], 'gallery')} />
+                   </div>
+                </div>
+
                 <div className="flex flex-col gap-2">
                    <button onClick={startAnalysis} disabled={!frontPreview || isAnalyzing} className={`w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${frontPreview ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/40' : 'bg-slate-800 text-slate-600'}`}>
                      {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />} {isAnalyzing ? 'A Ler Dados...' : 'Busca Profunda IA'}
                    </button>
-                   {frontPreview && (
-                     <button onClick={() => { setFrontPreview(null); setBackPreview(null); setHasAiData(false); }} className="w-full py-2 text-[8px] font-black text-slate-600 uppercase hover:text-red-500 transition-colors">Remover Fotos</button>
+                   {hasAiData && (
+                     <p className="text-[7px] text-slate-500 font-black uppercase text-center mt-2 flex items-center justify-center gap-1">
+                       <MousePointer2 className="w-2.5 h-2.5" /> Clique nas etiquetas azuis para corrigir
+                     </p>
                    )}
                 </div>
              </div>
@@ -229,15 +289,18 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    <h3 className="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em] flex items-center gap-2"><Tag className="w-4 h-4" /> Identidade do Jogo</h3>
                    <div className="space-y-4">
                       <div className="relative">
+                         <AISuggestion field="gameName" value={aiSuggestions?.gameName} />
                          <input type="text" placeholder="Ex: Super Pé de Meia" value={formData.gameName} onChange={e => setFormData({...formData, gameName: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-brand-500" />
                          <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Nome do Jogo</span>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                          <div className="relative">
+                            <AISuggestion field="gameNumber" value={aiSuggestions?.gameNumber} />
                             <input type="text" placeholder="Ex: 502" value={formData.gameNumber} onChange={e => setFormData({...formData, gameNumber: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-brand-500" />
                             <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Nº Jogo</span>
                          </div>
                          <div className="relative">
+                            <AISuggestion field="price" value={aiSuggestions?.price} />
                             <input type="text" placeholder="Ex: 5€" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-brand-500" />
                             <span className="absolute -top-1.5 left-2 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Preço</span>
                          </div>
@@ -251,6 +314,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-3">
                          <div className="relative">
+                            <AISuggestion field="releaseDate" value={aiSuggestions?.releaseDate} />
                             <input type="date" value={formData.releaseDate} onChange={e => setFormData({...formData, releaseDate: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-[10px] outline-none focus:border-orange-500" />
                             <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Lançamento</span>
                          </div>
@@ -260,12 +324,9 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                          </div>
                       </div>
                       <div className="relative">
+                         <AISuggestion field="operator" value={aiSuggestions?.operator} />
                          <input type="text" placeholder="Ex: Jogos Santa Casa" value={formData.operator} onChange={e => setFormData({...formData, operator: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-orange-500" />
                          <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Operadora / Editora</span>
-                      </div>
-                      <div className="relative">
-                         <input type="text" placeholder="Ex: Scientific Games" value={formData.printer} onChange={e => setFormData({...formData, printer: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-orange-500" />
-                         <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Gráfica / Impressora</span>
                       </div>
                    </div>
                 </div>
@@ -275,24 +336,21 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] flex items-center gap-2"><BookOpen className="w-4 h-4" /> Ficha Técnica</h3>
                    <div className="space-y-4">
                       <div className="relative">
+                         <AISuggestion field="emission" value={aiSuggestions?.emission} />
                          <input type="text" placeholder="Ex: 20.000.000 exemplares" value={formData.emission} onChange={e => setFormData({...formData, emission: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-emerald-500" />
                          <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Emissão / Tiragem</span>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                          <div className="relative">
+                            <AISuggestion field="size" value={aiSuggestions?.size} />
                             <input type="text" placeholder="Ex: 10x15cm" value={formData.size} onChange={e => setFormData({...formData, size: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-emerald-500" />
                             <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Medidas</span>
                          </div>
                          <div className="relative">
+                            <AISuggestion field="winProbability" value={aiSuggestions?.winProbability} />
                             <input type="text" placeholder="Ex: 1 em 3.4" value={formData.winProbability} onChange={e => setFormData({...formData, winProbability: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-emerald-500" />
                             <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Probabilidade</span>
                          </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2 pt-2">
-                        <span className="text-[7px] font-black text-slate-600 uppercase tracking-widest w-full">Linhas de Segurança:</span>
-                        {LINE_COLORS.map(line => (
-                          <button key={line.id} onClick={() => setFormData({...formData, lines: line.id})} className={`w-8 h-8 rounded-full border-2 transition-all ${formData.lines === line.id ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-30 hover:opacity-100'} ${line.color}`} title={line.label} />
-                        ))}
                       </div>
                    </div>
                 </div>
@@ -303,6 +361,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-3">
                          <div className="relative">
+                            <AISuggestion field="country" value={aiSuggestions?.country} />
                             <input type="text" value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-white font-black text-xs outline-none focus:border-blue-500" />
                             <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">País</span>
                          </div>
@@ -329,8 +388,14 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                          </div>
                          {formData.isSeries && (
                             <div className="flex gap-3 animate-fade-in">
-                               <input type="text" placeholder="Nome do SET" value={formData.seriesGroupId} onChange={e => setFormData({...formData, seriesGroupId: e.target.value})} className="flex-1 bg-slate-900 border border-brand-500/30 rounded-xl p-3 text-white font-black text-xs outline-none" />
-                               <input type="text" placeholder="Total" value={formData.setCount} onChange={e => setFormData({...formData, setCount: e.target.value})} className="w-16 bg-slate-900 border border-brand-500/30 rounded-xl p-3 text-white font-black text-xs outline-none text-center" />
+                               <div className="relative flex-1">
+                                  <AISuggestion field="seriesGroupId" value={aiSuggestions?.seriesGroupId} />
+                                  <input type="text" placeholder="Nome do SET" value={formData.seriesGroupId} onChange={e => setFormData({...formData, seriesGroupId: e.target.value})} className="w-full bg-slate-900 border border-brand-500/30 rounded-xl p-3 text-white font-black text-xs outline-none" />
+                               </div>
+                               <div className="relative w-16">
+                                  <AISuggestion field="setCount" value={aiSuggestions?.setCount} />
+                                  <input type="text" placeholder="Total" value={formData.setCount} onChange={e => setFormData({...formData, setCount: e.target.value})} className="w-full bg-slate-900 border border-brand-500/30 rounded-xl p-3 text-white font-black text-xs outline-none text-center" />
+                               </div>
                             </div>
                          )}
                          <div className="flex gap-4 pt-2">
@@ -358,7 +423,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                 {/* GRUPO F: Notas e Curiosidades */}
                 <div className="space-y-4 bg-slate-950/40 p-6 rounded-[2.5rem] border border-white/5 lg:col-span-3">
                    <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2"><Info className="w-4 h-4" /> Notas e Tabela de Prémios</h3>
-                   <textarea placeholder="Vovô, descreva aqui os prémios ou curiosidades... hihi!" value={formData.values} onChange={e => setFormData({...formData, values: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-[2rem] p-5 text-white text-xs h-24 outline-none italic resize-none focus:border-brand-500 transition-all" />
+                   <div className="relative">
+                      <AISuggestion field="values" value={aiSuggestions?.values} />
+                      <textarea placeholder="Vovô, descreva aqui os prémios ou curiosidades... hihi!" value={formData.values} onChange={e => setFormData({...formData, values: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-[2rem] p-5 text-white text-xs h-24 outline-none italic resize-none focus:border-brand-500 transition-all" />
+                   </div>
                 </div>
 
              </div>

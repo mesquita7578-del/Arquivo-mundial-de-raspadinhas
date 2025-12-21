@@ -9,7 +9,7 @@ import {
   RefreshCw, Layers as LayersIcon, ChevronLeft, ChevronRight,
   Maximize2, Activity, Ship, Palette, Calendar, Percent, Check, Star, ImagePlus, LayoutList,
   Columns2, Grid3X3, Layout, StickyNote, AlertCircle, Factory, Tag, Trash,
-  CalendarDays, ShieldCheck, Zap, Layers, Microscope
+  CalendarDays, ShieldCheck, Zap, Layers, Microscope, Images
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent, LineType, CategoryItem } from '../types';
 
@@ -45,6 +45,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   const [formData, setFormData] = useState<ScratchcardData>(image);
   const [activeImage, setActiveImage] = useState<string>(image.frontUrl);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showFullScreen, setShowFullScreen] = useState<string | null>(null);
   
   const currentIndexInContext = useMemo(() => contextImages.findIndex(img => img.id === image.id), [image, contextImages]);
   const hasNextRecord = currentIndexInContext < contextImages.length - 1;
@@ -81,11 +82,14 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
       if (isEditing) return;
       if (e.key === 'ArrowRight') handleNextRecord();
       if (e.key === 'ArrowLeft') handlePrevRecord();
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        if (showFullScreen) setShowFullScreen(null);
+        else onClose();
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndexInContext, isEditing]);
+  }, [currentIndexInContext, isEditing, showFullScreen]);
 
   useEffect(() => {
     if (image) {
@@ -151,6 +155,14 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-md" onClick={onClose}>
       
+      {/* FullScreen Overlay */}
+      {showFullScreen && (
+        <div className="fixed inset-0 z-[10005] bg-black/98 flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowFullScreen(null)}>
+           <img src={showFullScreen} className="max-w-full max-h-full object-contain shadow-2xl rounded-lg" />
+           <button className="absolute top-8 right-8 bg-white/10 hover:bg-white/20 p-4 rounded-full text-white"><X className="w-8 h-8" /></button>
+        </div>
+      )}
+
       {!showSeriesComparison && hasPrevRecord && (
         <button onClick={(e) => { e.stopPropagation(); handlePrevRecord(); }} className="absolute left-6 z-[10001] p-3 bg-slate-900/50 hover:bg-brand-600 text-white rounded-full border border-white/10 transition-all active:scale-95 hidden md:block">
           <ChevronLeft className="w-6 h-6" />
@@ -162,10 +174,10 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
         </button>
       )}
 
-      <div className={`w-full h-full md:h-[92vh] ${showSeriesComparison ? 'md:max-w-[95vw]' : 'md:max-w-6xl'} flex flex-col md:flex-row bg-[#020617] md:rounded-3xl overflow-hidden border border-white/5 shadow-2xl relative transition-all duration-500`} onClick={e => e.stopPropagation()}>
+      <div className={`w-full h-full md:h-[92vh] ${showSeriesComparison ? 'md:max-w-[95vw]' : 'md:max-w-[1400px]'} flex flex-col md:flex-row bg-[#020617] md:rounded-3xl overflow-hidden border border-white/5 shadow-2xl relative transition-all duration-500`} onClick={e => e.stopPropagation()}>
          
-         {/* Visual Side */}
-         <div className="flex-1 bg-black/40 relative flex flex-col min-h-0 border-r border-white/5">
+         {/* Visual Side: Grelha Especial para SETs */}
+         <div className="flex-1 bg-black/40 relative flex flex-col min-h-0 border-r border-white/5 overflow-hidden">
             <button className="absolute top-4 right-4 text-white/50 hover:text-white z-50 p-2 bg-slate-800/50 rounded-full" onClick={onClose}><X className="w-5 h-5"/></button>
             
             {showSeriesComparison ? (
@@ -189,12 +201,30 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                   </div>
                </div>
             ) : (
-               <div className="flex-1 relative flex items-center justify-center p-6 md:p-10">
-                  <img src={activeImage} className="max-w-full max-h-[70vh] object-contain shadow-2xl rounded-lg animate-fade-in" key={activeImage}/>
-                  {localGallery.length > 1 && (
-                     <button onClick={() => setActiveIndex((activeIndex + 1) % localGallery.length)} className="absolute bottom-4 right-4 bg-brand-600 text-white p-3 rounded-full shadow-xl hover:scale-110 transition-transform border border-brand-400">
-                        <RefreshCw className="w-4 h-4" />
-                     </button>
+               <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar">
+                  {localGallery.length === 1 ? (
+                    <div className="h-full flex items-center justify-center">
+                       <img src={localGallery[0]} className="max-w-full max-h-[70vh] object-contain shadow-2xl rounded-lg animate-fade-in" onClick={() => setShowFullScreen(localGallery[0])}/>
+                    </div>
+                  ) : (
+                    <div className="space-y-8 animate-fade-in">
+                       <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                          <Images className="w-6 h-6 text-brand-500" />
+                          <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Grelha do SET <span className="text-slate-500">({localGallery.length} imagens)</span></h3>
+                       </div>
+                       {/* GRELHA DINÂMICA: 2 colunas se poucas, 3 se muitas */}
+                       <div className={`grid gap-4 ${localGallery.length > 4 ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
+                          {localGallery.map((src, i) => (
+                            <div key={i} className="group relative aspect-square bg-slate-900 rounded-2xl overflow-hidden border border-white/5 hover:border-brand-500/50 transition-all cursor-zoom-in" onClick={() => setShowFullScreen(src)}>
+                               <img src={src} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                  <Maximize2 className="w-8 h-8 text-white drop-shadow-lg" />
+                               </div>
+                               <span className="absolute bottom-3 right-3 bg-black/60 text-white text-[8px] font-black px-2 py-1 rounded-md border border-white/10 uppercase">{i === 0 ? 'Frente' : i === 1 ? 'Verso' : `Extra ${i-1}`}</span>
+                            </div>
+                          ))}
+                       </div>
+                    </div>
                   )}
                </div>
             )}
@@ -253,7 +283,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                              </div>
                           </div>
                           <input type="text" value={formData.operator} onChange={e => handleChange('operator', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Operadora / Editora" />
-                          <input type="text" value={formData.printer} onChange={e => handleChange('printer', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Gráfica / Impressora" />
                        </section>
                        
                        <section className="space-y-4">
