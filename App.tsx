@@ -184,10 +184,16 @@ const App: React.FC = () => {
     });
   }, [images, searchTerm, activeContinent, activeCountry, activeSubRegion, activeCategory, activeTheme, showRaritiesOnly, showWinnersOnly, showSeriesOnly, showNewOnly, currentPage, currentUser]);
 
-  // NOVO: Países que têm novidades registradas para a Sub-Barra hihi!
-  const recentCountries = useMemo(() => {
+  // NOVO: Países com novidades e a respetiva contagem bué de fixe hihi!
+  const recentCountriesData = useMemo(() => {
     const recent = images.filter(img => (Date.now() - (img.createdAt || 0)) < 43200000);
-    return Array.from(new Set(recent.map(img => img.country))).sort();
+    const counts: Record<string, number> = {};
+    recent.forEach(img => {
+      counts[img.country] = (counts[img.country] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
   }, [images]);
 
   const collectionCount = useMemo(() => {
@@ -356,7 +362,7 @@ const App: React.FC = () => {
             </div>
 
             {/* SUB-BARRA DE PAÍSES PARA NOVIDADES RESTAURADA hihi! */}
-            {showNewOnly && recentCountries.length > 0 && (
+            {showNewOnly && recentCountriesData.length > 0 && (
               <div className="flex items-center gap-2 py-1.5 border-t border-white/5 animate-fade-in overflow-x-auto scrollbar-hide">
                  <div className="flex items-center gap-2 px-1 shrink-0">
                     <Zap className="w-2.5 h-2.5 text-pink-500 fill-pink-500 animate-pulse" />
@@ -365,17 +371,23 @@ const App: React.FC = () => {
                  <div className="flex items-center gap-1 pr-4">
                     <button 
                       onClick={() => setActiveCountry('')}
-                      className={`px-3 py-1 rounded-md text-[7px] font-black uppercase tracking-widest transition-all border ${!activeCountry ? 'bg-slate-100 text-slate-950 border-white' : 'bg-slate-900/60 text-slate-500 border-white/5 hover:border-white/20'}`}
+                      className={`px-3 py-1 rounded-md text-[7px] font-black uppercase tracking-widest transition-all border flex items-center gap-1.5 ${!activeCountry ? 'bg-slate-100 text-slate-950 border-white' : 'bg-slate-900/60 text-slate-500 border-white/5 hover:border-white/20'}`}
                     >
                       Tudo
+                      <span className={`px-1 rounded-sm text-[6px] ${!activeCountry ? 'bg-slate-300 text-slate-950' : 'bg-slate-800 text-slate-500'}`}>
+                        {recentCountriesData.reduce((acc, c) => acc + c.count, 0)}
+                      </span>
                     </button>
-                    {recentCountries.map(country => (
+                    {recentCountriesData.map(c => (
                       <button 
-                        key={country}
-                        onClick={() => setActiveCountry(country)}
-                        className={`px-3 py-1 rounded-md text-[7px] font-black uppercase tracking-widest transition-all border whitespace-nowrap ${activeCountry.toLowerCase() === country.toLowerCase() ? 'bg-pink-600 text-white border-pink-400 shadow-[0_0_10px_rgba(219,39,119,0.3)]' : 'bg-slate-900/60 text-slate-400 border-white/5 hover:border-white/20'}`}
+                        key={c.name}
+                        onClick={() => setActiveCountry(c.name)}
+                        className={`px-3 py-1 rounded-md text-[7px] font-black uppercase tracking-widest transition-all border whitespace-nowrap flex items-center gap-1.5 ${activeCountry.toLowerCase() === c.name.toLowerCase() ? 'bg-pink-600 text-white border-pink-400 shadow-[0_0_10px_rgba(219,39,119,0.3)]' : 'bg-slate-900/60 text-slate-400 border-white/5 hover:border-white/20'}`}
                       >
-                        {country}
+                        {c.name}
+                        <span className={`px-1 rounded-sm text-[6px] ${activeCountry.toLowerCase() === c.name.toLowerCase() ? 'bg-pink-400 text-white' : 'bg-slate-800 text-pink-500'}`}>
+                          {c.count}
+                        </span>
                       </button>
                     ))}
                  </div>
