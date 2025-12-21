@@ -8,7 +8,7 @@ import {
   LayoutGrid, Eye, User,
   RefreshCw, Layers as LayersIcon, ChevronLeft, ChevronRight,
   Maximize2, Activity, Ship, Palette, Calendar, Percent, Check, Star, ImagePlus, LayoutList,
-  Columns2, Grid3X3, Layout, StickyNote, AlertCircle, Factory, Tag
+  Columns2, Grid3X3, Layout, StickyNote, AlertCircle, Factory, Tag, Trash
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent, LineType, CategoryItem } from '../types';
 
@@ -134,6 +134,24 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleClearData = () => {
+    if (confirm("Quer limpar todos os campos de texto para preencher de novo, vovô? hihi!")) {
+      setFormData(prev => ({
+        ...prev,
+        gameNumber: '',
+        price: '',
+        releaseDate: '',
+        closeDate: '',
+        operator: '',
+        printer: '',
+        emission: '',
+        size: '',
+        winProbability: '',
+        values: ''
+      }));
+    }
+  };
+
   const handleSave = () => { onUpdate(formData); setIsEditing(false); };
   const handleDelete = () => { if (confirm(t.deleteConfirm)) onDelete(image.id); };
 
@@ -220,9 +238,16 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
               <div className="p-5 border-b border-white/5 flex justify-between items-center bg-slate-900/50">
                  <div className="flex items-center gap-2">
                    {isAdmin && (
-                      <button onClick={isEditing ? handleSave : () => setIsEditing(true)} className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${isEditing ? 'bg-emerald-600 text-white shadow-lg' : 'bg-white/5 text-brand-400 hover:bg-white/10 border border-white/10'}`}>
-                         {isEditing ? <Save className="w-3.5 h-3.5"/> : <Edit2 className="w-3.5 h-3.5"/>} {isEditing ? 'Gravar' : 'Editar'}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button onClick={isEditing ? handleSave : () => setIsEditing(true)} className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${isEditing ? 'bg-emerald-600 text-white shadow-lg' : 'bg-white/5 text-brand-400 hover:bg-white/10 border border-white/10'}`}>
+                           {isEditing ? <Save className="w-3.5 h-3.5"/> : <Edit2 className="w-3.5 h-3.5"/>} {isEditing ? 'Gravar' : 'Editar'}
+                        </button>
+                        {isEditing && (
+                          <button onClick={handleClearData} className="p-2 text-red-500 hover:bg-red-500/10 rounded-xl border border-red-500/20" title="Limpar Campos Técnicos">
+                             <Trash className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                    )}
                  </div>
                  <button onClick={onClose} className="p-2 text-slate-500 hover:text-white"><X className="w-5 h-5"/></button>
@@ -232,7 +257,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                  {isEditing ? (
                     <div className="space-y-6 animate-fade-in pb-10">
                        <section className="space-y-4">
-                          {/* Fixed: Tag was not imported from lucide-react */}
                           <h3 className="text-[9px] font-black text-brand-500 uppercase tracking-[0.3em] flex items-center gap-2"><Tag className="w-3 h-3" /> Identidade Técnica</h3>
                           <input type="text" value={formData.gameName} onChange={e => handleChange('gameName', e.target.value)} className="w-full bg-slate-950 text-white text-xs font-black rounded-xl p-3 border border-white/5 focus:border-brand-500 outline-none" placeholder="Nome" />
                           <div className="grid grid-cols-2 gap-3">
@@ -251,6 +275,15 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                           </div>
                           <input type="text" value={formData.operator} onChange={e => handleChange('operator', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Operadora / Editora" />
                           <input type="text" value={formData.printer} onChange={e => handleChange('printer', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Gráfica / Impressora" />
+                       </section>
+                       
+                       <section className="space-y-4">
+                          <h3 className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.3em] flex items-center gap-2"><LayoutList className="w-3 h-3" /> Ficha Técnica</h3>
+                          <div className="grid grid-cols-2 gap-3">
+                             <input type="text" value={formData.emission} onChange={e => handleChange('emission', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Emissão" />
+                             <input type="text" value={formData.size} onChange={e => handleChange('size', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Medidas" />
+                          </div>
+                          <input type="text" value={formData.winProbability} onChange={e => handleChange('winProbability', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Probabilidade de Ganho" />
                        </section>
                     </div>
                  ) : (

@@ -4,7 +4,7 @@ import {
   X, Upload, Sparkles, Check, Loader2, 
   ImagePlus, Wand2, Layers, Tag, MapPin, Palette, Info, 
   Calendar, Building2, Printer, ScanLine, Banknote, Globe2, Clock,
-  Camera, Hash, Ruler, Percent, Factory, BookOpen
+  Camera, Hash, Ruler, Percent, Factory, BookOpen, Trash2, RefreshCcw
 } from 'lucide-react';
 import { ScratchcardData, CategoryItem, Continent, LineType, ScratchcardState } from '../types';
 import { analyzeImage } from '../services/geminiService';
@@ -46,31 +46,37 @@ const STATE_OPTIONS: { id: ScratchcardState; label: string }[] = [
   { id: 'VOID', label: 'VOID' },
 ];
 
+const INITIAL_FORM_STATE: Partial<ScratchcardData> = {
+  category: 'raspadinha',
+  state: 'SC',
+  continent: 'Europa',
+  country: 'Portugal',
+  gameName: '',
+  gameNumber: '',
+  releaseDate: '',
+  closeDate: '',
+  operator: '',
+  emission: '',
+  printer: '',
+  size: '',
+  winProbability: '',
+  lines: 'none',
+  isSeries: false,
+  seriesGroupId: '',
+  theme: '',
+  values: '',
+  customId: ''
+};
+
 export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadComplete, currentUser, categories }) => {
   const [frontPreview, setFrontPreview] = useState<string | null>(null);
   const [backPreview, setBackPreview] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasAiData, setHasAiData] = useState(false);
 
   const [formData, setFormData] = useState<Partial<ScratchcardData>>({
-    category: 'raspadinha',
-    state: 'SC',
-    continent: 'Europa',
-    country: 'Portugal',
-    gameName: '',
-    gameNumber: '',
-    releaseDate: '',
-    closeDate: '',
-    operator: '',
-    emission: '',
-    printer: '',
-    size: '',
-    winProbability: '',
-    lines: 'none',
-    isSeries: false,
-    seriesGroupId: '',
-    theme: '',
-    values: '',
+    ...INITIAL_FORM_STATE,
     collector: currentUser || 'Jorge Mesquita'
   });
 
@@ -84,6 +90,16 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
       else setBackPreview(e.target?.result as string);
     };
     reader.readAsDataURL(file);
+  };
+
+  const clearFormFields = () => {
+    if (confirm("Vovô, quer mesmo apagar todos os dados desta ficha? hihi!")) {
+      setFormData({
+        ...INITIAL_FORM_STATE,
+        collector: currentUser || 'Jorge Mesquita'
+      });
+      setHasAiData(false);
+    }
   };
 
   const startAnalysis = async () => {
@@ -109,6 +125,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
         emission: result.emission || prev.emission,
         winProbability: result.winProbability || prev.winProbability
       }));
+      setHasAiData(true);
     } catch (err) { 
       console.error(err);
       alert("Chloe não conseguiu ler tudo desta vez! hihi!");
@@ -151,7 +168,18 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
               <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest">Controlo de Legado • Jorge Mesquita 🐉</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-500 hover:text-white transition-colors bg-slate-800/50 rounded-full"><X className="w-6 h-6" /></button>
+          <div className="flex items-center gap-3">
+            {hasAiData && (
+              <button 
+                onClick={clearFormFields}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-xl border border-red-500/20 transition-all text-[9px] font-black uppercase tracking-widest"
+                title="Limpar todos os campos da ficha"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Limpar Ficha
+              </button>
+            )}
+            <button onClick={onClose} className="p-2 text-slate-500 hover:text-white transition-colors bg-slate-800/50 rounded-full"><X className="w-6 h-6" /></button>
+          </div>
         </div>
 
         {/* Content View */}
@@ -171,9 +199,14 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                      <input type="file" ref={backInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0], 'back')} />
                    </div>
                 </div>
-                <button onClick={startAnalysis} disabled={!frontPreview || isAnalyzing} className={`w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${frontPreview ? 'bg-brand-600 text-white shadow-lg' : 'bg-slate-800 text-slate-600'}`}>
-                  {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />} {isAnalyzing ? 'A Ler Dados...' : 'Análise Chloe IA'}
-                </button>
+                <div className="flex flex-col gap-2">
+                   <button onClick={startAnalysis} disabled={!frontPreview || isAnalyzing} className={`w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${frontPreview ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/40' : 'bg-slate-800 text-slate-600'}`}>
+                     {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />} {isAnalyzing ? 'A Ler Dados...' : 'Análise Chloe IA'}
+                   </button>
+                   {frontPreview && (
+                     <button onClick={() => { setFrontPreview(null); setBackPreview(null); setHasAiData(false); }} className="w-full py-2 text-[8px] font-black text-slate-600 uppercase hover:text-red-500 transition-colors">Remover Fotos</button>
+                   )}
+                </div>
              </div>
           </div>
 
