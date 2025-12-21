@@ -24,7 +24,7 @@ import { translations, Language } from './translations';
 import { DivineSignal, Signal } from './components/DivineSignal';
 
 const RECENT_THRESHOLD = 2592000000;
-const VERSION = '11.6'; // Chloe: CLEAN ARCHIVE & SECURE LOGIN 🛡️✨
+const VERSION = '11.7'; // Chloe: ETERNAL SESSION & NEW UPLOAD 🛡️✨
 
 const App: React.FC = () => {
   const [images, setImages] = useState<ScratchcardData[]>([]);
@@ -368,6 +368,23 @@ const App: React.FC = () => {
     } catch (err) { addSignal("Ficheiro inválido!", "warning"); }
   };
 
+  const handleLogin = (u: string, p: string | null, type: 'admin' | 'visitor') => {
+    if (type === 'admin' && p === '123456') {
+      setIsAdmin(true);
+      setCurrentUser(u);
+      localStorage.setItem('archive_user', u);
+      localStorage.setItem('archive_admin', 'true');
+      addSignal(`Bem-vindo ${u}!`, 'success');
+      return true;
+    } else if (type === 'visitor') {
+      setCurrentUser(u);
+      localStorage.setItem('archive_user', u);
+      addSignal(`Olá ${u}!`, 'success');
+      return true;
+    }
+    return false;
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#020617] text-slate-100">
       <Header 
@@ -378,7 +395,13 @@ const App: React.FC = () => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }} 
         onAdminToggle={() => setShowLogin(true)} 
-        onLogout={() => { setIsAdmin(false); setCurrentUser(null); localStorage.clear(); window.location.reload(); }}
+        onLogout={() => { 
+          setIsAdmin(false); 
+          setCurrentUser(null); 
+          localStorage.removeItem('archive_user'); 
+          localStorage.removeItem('archive_admin'); 
+          window.location.reload(); 
+        }}
         onHistoryClick={() => setShowHistory(true)} onRadioClick={() => setShowRadio(true)} onExport={handleExport}
         onImport={handleImport} onExportTXT={() => {}} onExportCSV={() => {}} t={t.header}
         onCountrySelect={(cont, loc, sub) => {
@@ -426,9 +449,9 @@ const App: React.FC = () => {
         <button onClick={() => window.location.reload()} className="p-4 bg-slate-900 text-white rounded-full shadow-2xl border border-white/20"><RefreshCw className="w-6 h-6" /></button>
       </div>
 
-      {showUpload && <UploadModal onClose={() => setShowUpload(false)} onUploadComplete={(data) => { setImages([data, ...images]); addSignal("Arquivado!"); }} existingImages={images} initialFile={null} currentUser={currentUser} t={t.upload} categories={categories} />}
-      {selectedImage && <ImageViewer image={selectedImage} onClose={() => setSelectedImage(null)} onUpdate={async (data) => { await storageService.save(data); setImages(images.map(img => img.id === data.id ? data : img)); setSelectedImage(data); addSignal("Atualizado!"); }} onDelete={async (id) => { await storageService.delete(id); setImages(images.filter(img => img.id !== id)); setSelectedImage(null); addSignal("Removido.", "warning"); }} isAdmin={isAdmin} currentUser={currentUser} contextImages={images} onImageSelect={setSelectedImage} t={t.viewer} categories={categories} />}
-      {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={(u, p, type) => { if (type === 'admin' && p === '123456') { setIsAdmin(true); setCurrentUser(u); localStorage.setItem('archive_user', u); localStorage.setItem('archive_admin', 'true'); addSignal(`Bem-vindo ${u}!`); return true; } else if (type === 'visitor') { setCurrentUser(u); localStorage.setItem('archive_user', u); addSignal(`Olá ${u}!`); return true; } return false; }} t={t.login} />}
+      {showUpload && <UploadModal onClose={() => setShowUpload(false)} onUploadComplete={(data) => { setImages([data, ...images]); addSignal("Arquivado!", "success"); }} existingImages={images} currentUser={currentUser} t={t.upload} categories={categories} />}
+      {selectedImage && <ImageViewer image={selectedImage} onClose={() => setSelectedImage(null)} onUpdate={async (data) => { await storageService.save(data); setImages(images.map(img => img.id === data.id ? data : img)); setSelectedImage(data); addSignal("Atualizado!", "success"); }} onDelete={async (id) => { await storageService.delete(id); setImages(images.filter(img => img.id !== id)); setSelectedImage(null); addSignal("Removido.", "warning"); }} isAdmin={isAdmin} currentUser={currentUser} contextImages={images} onImageSelect={setSelectedImage} t={t.viewer} categories={categories} />}
+      {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={handleLogin} t={t.login} />}
       {showHistory && <HistoryModal onClose={() => setShowHistory(false)} isAdmin={isAdmin} t={{...t.header, ...t.history}} />}
       {showWebsites && <WebsitesModal onClose={() => setShowWebsites(false)} isAdmin={isAdmin} t={t.header} />}
       {showRadio && <RadioModal onClose={() => setShowRadio(false)} />}
