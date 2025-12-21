@@ -165,7 +165,8 @@ const App: React.FC = () => {
       const gNum = (img.gameNumber || "").toLowerCase();
       const s = searchTerm.toLowerCase();
       
-      const isRecent = (Date.now() - (img.createdAt || 0)) < 86400000;
+      // Ajustado para 12 horas (43200000ms) para bater com o badge NOVO do vovô!
+      const isRecent = (Date.now() - (img.createdAt || 0)) < 43200000;
       
       const matchesSearch = gName.includes(s) || gCountry.includes(s) || gIsland.includes(s) || gNum.includes(s) || gRegion.includes(s);
       const matchesContinent = activeContinent === 'Mundo' || img.continent === activeContinent;
@@ -284,20 +285,20 @@ const App: React.FC = () => {
                     </button>
                  )}
                  <button 
-                   onClick={() => { setShowRaritiesOnly(!showRaritiesOnly); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); }} 
+                   onClick={() => { setShowRaritiesOnly(!showRaritiesOnly); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); setShowNewOnly(false); }} 
                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-amber-400'}`}
                  >
                    <Diamond className="w-3 h-3" /> Raridades
                  </button>
                  <button 
-                   onClick={() => { setShowWinnersOnly(!showWinnersOnly); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); }} 
+                   onClick={() => { setShowWinnersOnly(!showWinnersOnly); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); setShowNewOnly(false); }} 
                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-emerald-400'}`}
                  >
                    <Trophy className="w-3 h-3" /> Premiadas
                  </button>
                </div>
 
-               <div className="flex items-center gap-1 py-1">
+               <div className="flex flex-wrap items-center gap-1 py-1">
                   {[
                     { id: 'all', label: 'Tudo', icon: LayoutGrid },
                     { id: 'raspadinha', label: 'Raspadinhas', icon: Ticket },
@@ -313,6 +314,14 @@ const App: React.FC = () => {
                       <cat.icon className="w-3 h-3" /> {cat.label}
                     </button>
                   ))}
+                  
+                  {/* BOTÃO NOVIDADES - Ao lado dos Objetos hihi! */}
+                  <button 
+                    onClick={() => { setShowNewOnly(!showNewOnly); setActiveCategory('all'); setShowRaritiesOnly(false); setShowWinnersOnly(false); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); }} 
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showNewOnly ? 'bg-pink-600 text-white border border-pink-400/30 shadow-[0_0_15px_rgba(219,39,119,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-pink-400'}`}
+                  >
+                    <Sparkles className="w-3 h-3" /> Novidades
+                  </button>
                </div>
             </div>
 
