@@ -12,49 +12,57 @@ interface FooterProps {
   onInstall?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onRadioClick, visitorCount = 0, onVisitorsClick, onInstall }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigate, onWebsitesClick, onRadioClick, visitorCount = 0, onVisitorsClick }) => {
   return (
-    <footer className="fixed bottom-0 left-0 w-full bg-[#020617]/95 border-t border-slate-900 px-6 py-2 z-[100] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] backdrop-blur-md">
+    <footer className="fixed bottom-0 left-0 w-full bg-[#020617]/98 border-t border-white/5 px-6 py-2.5 z-[1000] shadow-[0_-15px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl">
       <div className="max-w-[1800px] mx-auto flex items-center justify-between gap-4">
         
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="p-1 bg-slate-900 border border-brand-600/30 rounded-lg text-brand-500">
-             <User className="w-2.5 h-2.5" />
+        {/* Jorge */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="p-2 bg-slate-900 border border-brand-600/30 rounded-xl text-brand-500">
+             <User className="w-4 h-4" />
           </div>
           <div className="hidden sm:flex flex-col">
-            <span className="text-[8px] font-black text-white italic tracking-tighter uppercase leading-none">Jorge Mesquita</span>
-            <span className="text-[5px] font-black text-slate-600 uppercase tracking-[0.1em] mt-0.5">Albi-Celeste</span>
+            <span className="text-[10px] font-black text-white italic tracking-tighter uppercase leading-none">Jorge Mesquita</span>
+            <span className="text-[7px] font-black text-slate-600 uppercase tracking-[0.1em] mt-1">Albi-Celeste 🐉</span>
           </div>
         </div>
 
-        <div className="flex-1 flex items-center justify-center gap-4">
+        {/* Centro */}
+        <div className="flex-1 flex items-center justify-center gap-6">
            <ChloeClock />
-           <button onClick={onVisitorsClick} className="flex items-center bg-slate-900/40 border border-white/5 px-4 py-2 rounded-full hover:border-cyan-500/30 transition-all">
-              <Users className="w-3 h-3 text-cyan-500 mr-2" />
-              <span className="text-[10px] font-black text-white font-mono">{visitorCount}</span>
+           <button 
+             onClick={onVisitorsClick} 
+             className="hidden md:flex items-center bg-slate-900/60 border border-white/10 px-5 py-2 rounded-full hover:border-cyan-500/50 transition-all shadow-inner"
+             title="Radar de Visitas"
+           >
+              <Users className="w-4 h-4 text-cyan-500 mr-2.5" />
+              <span className="text-xs font-black text-white font-mono">{visitorCount}</span>
            </button>
            
-           <div className="hidden lg:block px-3 py-1 bg-emerald-600/10 rounded-lg border border-emerald-500/20">
-              <span className="text-[7px] font-black text-emerald-500 uppercase tracking-[0.2em]">v9.0 - DESCANSO DO GUERREIRO 🕊️</span>
+           <div className="hidden lg:block px-4 py-2 bg-emerald-600/10 rounded-2xl border border-emerald-500/30 shadow-lg">
+              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.2em] italic">v10.0 - REPARAÇÃO TOTAL 🛠️🕊️</span>
            </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:flex items-center gap-4 border-r border-slate-800 pr-3">
-            <button onClick={onRadioClick} className="text-[7px] font-black text-brand-400 hover:text-white uppercase tracking-[0.1em] flex items-center gap-1">
-              <Radio className="w-2.5 h-2.5" /> Rádios
+        {/* Fabio & Ações */}
+        <div className="flex items-center gap-4 shrink-0">
+          <div className="hidden md:flex items-center gap-5 border-r border-slate-800 pr-5">
+            <button onClick={onRadioClick} className="text-[9px] font-black text-brand-400 hover:text-white uppercase tracking-[0.15em] flex items-center gap-2 transition-colors">
+              <Radio className="w-4 h-4" /> Rádios & TV
             </button>
-            <button onClick={onWebsitesClick} className="text-[7px] font-black text-slate-500 hover:text-brand-400 uppercase tracking-[0.1em]">Diretório</button>
-            <button onClick={() => onNavigate('about')} className="text-[7px] font-black text-slate-500 hover:text-brand-400 uppercase tracking-[0.1em]">Sobre</button>
+            <button onClick={onWebsitesClick} className="text-[9px] font-black text-slate-500 hover:text-brand-400 uppercase tracking-[0.15em] transition-colors">Diretório</button>
+            <button onClick={() => onNavigate('about')} className="text-[9px] font-black text-slate-500 hover:text-brand-400 uppercase tracking-[0.15em] transition-colors">Sobre</button>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="p-1 bg-slate-900 border border-brand-500/30 rounded-lg text-white">
-               <ShieldCheck className="w-2.5 h-2.5" />
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex flex-col items-end leading-none mr-1">
+               <span className="text-[10px] font-black text-white italic uppercase tracking-tighter">Fabio Pagni</span>
+               <span className="text-[7px] font-black text-slate-600 uppercase tracking-[0.1em] mt-1">Sócio do Arquivo</span>
             </div>
-            <button onClick={() => window.location.reload()} className="p-1 text-slate-600 hover:text-white transition-colors">
-               <RefreshCw className="w-3 h-3" />
-            </button>
+            <div className="p-2 bg-slate-900 border border-brand-500/30 rounded-xl text-white shadow-lg">
+               <ShieldCheck className="w-4 h-4" />
+            </div>
           </div>
         </div>
       </div>

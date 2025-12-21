@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, Plus, Loader2, Sparkles, LayoutGrid, Trophy, Star, 
-  Ticket, Layers, Diamond, Users, RefreshCw, CalendarCheck, CheckCircle2, AlertTriangle, Database
+  Ticket, Layers, Diamond, Users, RefreshCw, CalendarCheck, CheckCircle2, AlertTriangle, Database, Wrench
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { ImageGrid } from './components/ImageGrid';
@@ -20,7 +20,7 @@ import { translations, Language } from './translations';
 import { DivineSignal, Signal } from './components/DivineSignal';
 
 const RECENT_THRESHOLD = 2592000000;
-const CURRENT_VERSION = '9.0'; // Chloe: DESCANSO DO GUERREIRO
+const CURRENT_VERSION = '10.0'; // Chloe: REPARAÇÃO TOTAL 🛠️
 
 const App: React.FC = () => {
   const [images, setImages] = useState<ScratchcardData[]>([]);
@@ -71,7 +71,9 @@ const App: React.FC = () => {
       setSiteMetadata(meta);
       setDbStatus('ok');
     } catch (err) {
+      console.error("DB Error:", err);
       setDbStatus('error');
+      addSignal("Erro de memória! Tente reparar.", "warning");
     } finally {
       setIsLoading(false);
     }
@@ -88,9 +90,16 @@ const App: React.FC = () => {
   }, []);
 
   const handleForceRefresh = () => {
-    localStorage.clear();
+    // Chloe: Limpeza radical de cache para tablets
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        for (let name of names) caches.delete(name);
+      });
+    }
+    localStorage.removeItem('archive_admin');
+    localStorage.removeItem('archive_user');
     localStorage.setItem('chloe_archive_version', CURRENT_VERSION);
-    window.location.href = window.location.origin + window.location.pathname + '?clean=' + Date.now();
+    window.location.href = window.location.origin + window.location.pathname + '?refresh=' + Date.now();
   };
 
   const addSignal = (message: string, type: Signal['type'] = 'info') => {
@@ -130,59 +139,72 @@ const App: React.FC = () => {
 
   const handleExport = async () => {
     try {
-      addSignal("Vovô, Chloe a preparar o ficheiro...", "info");
+      addSignal("Vovô, Chloe a gerar o arquivo de segurança...", "info");
       const dataStr = await storageService.exportData();
       const blob = new Blob([dataStr], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      const fileName = `arquivo-jorge-${new Date().toISOString().split('T')[0]}.json`;
+      const fileName = `backup-jorge-${new Date().toISOString().split('T')[0]}.json`;
 
-      // Chloe: Cria um link visível se o download falhar
-      const emergencyDiv = document.createElement('div');
-      emergencyDiv.style.position = 'fixed';
-      emergencyDiv.style.inset = '0';
-      emergencyDiv.style.zIndex = '99999';
-      emergencyDiv.style.background = '#020617';
-      emergencyDiv.style.display = 'flex';
-      emergencyDiv.style.flexDirection = 'column';
-      emergencyDiv.style.alignItems = 'center';
-      emergencyDiv.style.justifyContent = 'center';
-      emergencyDiv.style.padding = '20px';
-      emergencyDiv.style.textAlign = 'center';
+      // Chloe: Método infalível para tablets - Interface de download dedicada
+      const exportUI = document.createElement('div');
+      exportUI.id = "chloe-export-ui";
+      exportUI.style.position = 'fixed';
+      exportUI.style.inset = '0';
+      exportUI.style.zIndex = '999999';
+      exportUI.style.backgroundColor = 'rgba(2, 6, 23, 0.98)';
+      exportUI.style.display = 'flex';
+      exportUI.style.flexDirection = 'column';
+      exportUI.style.alignItems = 'center';
+      exportUI.style.justifyContent = 'center';
+      exportUI.style.padding = '20px';
 
-      emergencyDiv.innerHTML = `
-        <div style="background:#0f172a; border:2px solid #3b82f6; padding:30px; border-radius:24px; max-width:400px;">
-          <h2 style="color:white; font-family:sans-serif; margin-bottom:15px;">PRONTO, VOVÔ! hihi!</h2>
-          <p style="color:#94a3b8; font-family:sans-serif; margin-bottom:25px; font-size:14px;">Clique no botão abaixo para guardar o ficheiro no tablet.</p>
-          <a href="${url}" download="${fileName}" style="display:block; background:#2563eb; color:white; padding:15px; border-radius:12px; font-weight:bold; text-decoration:none; margin-bottom:20px;">DESCARREGAR AGORA 💾</a>
-          <button id="close-emergency" style="color:#475569; background:none; border:none; cursor:pointer; font-size:12px; text-decoration:underline;">Fechar este aviso</button>
+      exportUI.innerHTML = `
+        <div style="background:#0f172a; border:3px solid #3b82f6; padding:40px; border-radius:32px; max-width:500px; text-align:center; box-shadow:0 0 100px rgba(59,130,246,0.3);">
+          <div style="font-size:50px; margin-bottom:20px;">💾</div>
+          <h2 style="color:white; font-family:sans-serif; font-weight:900; margin-bottom:10px; font-style:italic; text-transform:uppercase;">Backup Pronto!</h2>
+          <p style="color:#94a3b8; font-family:sans-serif; margin-bottom:30px; font-size:16px; line-height:1.5;">Vovô Jorge, clique no botão azul abaixo para guardar a sua coleção no tablet.</p>
+          <a href="${url}" download="${fileName}" id="direct-download-btn" style="display:block; background:#2563eb; color:white; padding:20px; border-radius:20px; font-weight:900; text-decoration:none; font-family:sans-serif; margin-bottom:20px; border:4px solid white;">GUARDAR FICHEIRO 📁</a>
+          <button id="close-export-ui" style="color:#64748b; background:none; border:none; cursor:pointer; font-size:14px; text-decoration:underline; font-weight:bold;">Fechar este aviso</button>
         </div>
       `;
-      document.body.appendChild(emergencyDiv);
-      document.getElementById('close-emergency')?.addEventListener('click', () => document.body.removeChild(emergencyDiv));
+      document.body.appendChild(exportUI);
 
-      addSignal("Tudo pronto para o backup!", "success");
+      document.getElementById('close-export-ui')?.addEventListener('click', () => {
+        document.body.removeChild(exportUI);
+        URL.revokeObjectURL(url);
+      });
+
+      document.getElementById('direct-download-btn')?.addEventListener('click', () => {
+        addSignal("Backup descarregado! hihi!", "success");
+        setTimeout(() => {
+          if (document.body.contains(exportUI)) document.body.removeChild(exportUI);
+        }, 1500);
+      });
+
     } catch (err) {
-      addSignal("Erro no backup!", "warning");
+      addSignal("Erro ao exportar! Tente reparar o arquivo.", "warning");
     }
   };
 
   const handleImport = async (file: File) => {
     try {
-      addSignal("A ler ficheiro...", "info");
+      addSignal("Chloe a ler o arquivo...", "info");
       const text = await file.text();
       const count = await storageService.importData(text);
-      addSignal(`${count} registos recuperados!`, "success");
+      addSignal(`${count} itens restaurados com sucesso! hihi!`, "success");
       await loadAllData();
     } catch (err) {
-      addSignal("Erro na importação!", "warning");
+      addSignal("Erro na importação! Ficheiro inválido.", "warning");
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#020617] text-slate-100 pt-24 md:pt-28">
+    <div className="min-h-screen flex flex-col bg-[#020617] text-slate-100 pt-20 md:pt-24">
+      {/* Header Fixo e Seguro */}
       <Header 
         isAdmin={isAdmin} currentUser={currentUser} language={language} setLanguage={setLanguage}
-        currentPage={currentPage} onNavigate={setCurrentPage} onAdminToggle={() => setShowLogin(true)} onLogout={() => { setIsAdmin(false); setCurrentUser(null); localStorage.removeItem('archive_user'); localStorage.removeItem('archive_admin'); }}
+        currentPage={currentPage} onNavigate={setCurrentPage} onAdminToggle={() => setShowLogin(true)} 
+        onLogout={() => { setIsAdmin(false); setCurrentUser(null); localStorage.removeItem('archive_user'); localStorage.removeItem('archive_admin'); addSignal("Até à próxima, vovô!"); }}
         onHistoryClick={() => setShowHistory(true)} onRadioClick={() => setShowRadio(true)} onExport={handleExport}
         onImport={handleImport} onExportTXT={() => {}} onExportCSV={() => {}} t={t.header}
         recentCount={images.filter(img => (Date.now() - (img.createdAt || 0)) < RECENT_THRESHOLD).length}
@@ -192,47 +214,52 @@ const App: React.FC = () => {
         countriesByContinent={images.reduce((acc, img) => { if (!acc[img.continent]) acc[img.continent] = []; if (!acc[img.continent].includes(img.country)) acc[img.continent].push(img.country); return acc; }, {} as any)}
       />
 
-      <div className="bg-[#020617]/80 backdrop-blur-xl sticky top-[68px] md:top-[74px] z-[90] px-4 md:px-10 py-1.5 border-b border-white/5 shadow-xl">
+      {/* Barra de Ferramentas Reforçada */}
+      <div className="bg-[#020617] sticky top-0 z-[100] px-4 md:px-10 py-2 border-b border-white/10 shadow-2xl">
         <div className="max-w-[1800px] mx-auto flex items-center justify-between gap-4">
-           <div className="flex items-center gap-2">
-             <button onClick={() => setShowTodayOnly(!showTodayOnly)} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showTodayOnly ? 'bg-red-600 text-white shadow-lg' : 'bg-slate-900/40 text-slate-500'}`}>
-                <CalendarCheck className="w-3.5 h-3.5" /> HOJE
+           <div className="flex items-center gap-1.5">
+             <button onClick={() => { setShowTodayOnly(!showTodayOnly); setShowNewOnly(false); }} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${showTodayOnly ? 'bg-red-600 text-white shadow-lg' : 'bg-slate-900 text-slate-500 hover:text-white'}`}>
+                <CalendarCheck className="w-4 h-4" /> HOJE
              </button>
-             <button onClick={() => setShowNewOnly(!showNewOnly)} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showNewOnly ? 'bg-pink-600 text-white shadow-lg' : 'bg-slate-900/40 text-slate-500'}`}>
-                <Sparkles className="w-3.5 h-3.5" /> Novidades
+             <button onClick={() => { setShowNewOnly(!showNewOnly); setShowTodayOnly(false); }} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${showNewOnly ? 'bg-pink-600 text-white shadow-lg' : 'bg-slate-900 text-slate-500 hover:text-white'}`}>
+                <Sparkles className="w-4 h-4" /> Novos
              </button>
            </div>
            
-           {/* Chloe: Indicador de Saúde da Memória */}
-           <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-950 rounded-full border border-white/5">
-              <div className={`w-2 h-2 rounded-full animate-pulse ${dbStatus === 'ok' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-              <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">
-                {dbStatus === 'ok' ? 'Memória OK' : 'Erro de Acesso'}
-              </span>
-           </div>
-
            <div className="flex items-center gap-3">
-             <div className="relative group hidden md:block">
-               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-600" />
-               <input type="text" placeholder="Pesquisar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-slate-950/50 border border-white/5 rounded-full pl-8 pr-4 py-1.5 text-[9px] text-white outline-none w-48" />
-             </div>
-             {isAdmin && (
-               <button onClick={() => setShowUpload(true)} className="bg-emerald-600 text-white px-4 py-2 rounded-full font-black text-[8px] uppercase tracking-widest shadow-lg flex items-center gap-1.5">
-                 <Plus className="w-3.5 h-3.5" /> Novo
-               </button>
-             )}
+              {/* Saúde da Base de Dados */}
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${dbStatus === 'ok' ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-red-950/20 border-red-500/30'}`}>
+                 <div className={`w-2 h-2 rounded-full animate-pulse ${dbStatus === 'ok' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                 <span className={`text-[8px] font-black uppercase tracking-widest ${dbStatus === 'ok' ? 'text-emerald-500' : 'text-red-500'}`}>
+                    {dbStatus === 'ok' ? 'Arquivo Ativo' : 'Erro Crítico'}
+                 </span>
+              </div>
+
+              <div className="relative group hidden sm:block">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600" />
+                <input type="text" placeholder="Pesquisar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-slate-900 border border-white/5 rounded-full pl-9 pr-4 py-2 text-[10px] text-white outline-none w-40 focus:w-60 focus:border-brand-500 transition-all" />
+              </div>
+
+              {isAdmin && (
+                <button onClick={() => setShowUpload(true)} className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-full font-black text-[9px] uppercase tracking-widest shadow-xl flex items-center gap-2 transition-transform active:scale-95">
+                  <Plus className="w-4 h-4" /> Novo Item
+                </button>
+              )}
            </div>
         </div>
       </div>
 
-      <main className="flex-1 pb-20">
+      <main className="flex-1 pb-24">
         {isLoading ? (
-          <div className="h-96 flex flex-col items-center justify-center gap-4">
-            <Loader2 className="w-10 h-10 animate-spin text-brand-500" />
-            <p className="text-[10px] font-black uppercase text-slate-500">A carregar o arquivo...</p>
+          <div className="h-[60vh] flex flex-col items-center justify-center gap-6">
+            <Loader2 className="w-12 h-12 animate-spin text-brand-500" />
+            <div className="text-center">
+              <p className="text-[12px] font-black uppercase text-white tracking-[0.2em] mb-1">Chloe a preparar o Arquivo Mundial...</p>
+              <p className="text-[10px] font-black uppercase text-slate-600 tracking-widest">v10.0 - Reparação Total hihi!</p>
+            </div>
           </div>
         ) : (
-          <div className="p-4 md:p-8">
+          <div className="p-4 md:p-8 animate-fade-in">
              <ImageGrid images={filteredImages} onImageClick={setSelectedImage} t={t.grid}/>
           </div>
         )}
@@ -240,13 +267,28 @@ const App: React.FC = () => {
 
       <Footer onNavigate={setCurrentPage} onWebsitesClick={() => setShowWebsites(true)} onRadioClick={() => setShowRadio(true)} visitorCount={siteMetadata?.visitorCount} onVisitorsClick={() => setShowVisitors(true)} />
 
-      <button onClick={handleForceRefresh} className="fixed bottom-4 left-4 z-[1001] p-2 bg-slate-900 rounded-full text-slate-600 hover:text-brand-400 border border-white/10 shadow-xl" title="Limpar Tudo">
-        <RefreshCw className="w-4 h-4" />
-      </button>
+      {/* Botões de Emergência */}
+      <div className="fixed bottom-6 left-6 z-[1001] flex flex-col gap-2">
+        <button 
+          onClick={handleForceRefresh} 
+          className="p-3 bg-red-600 text-white rounded-full shadow-2xl border-2 border-white hover:bg-red-700 transition-all active:scale-90 flex items-center gap-2 group"
+          title="REPARAR TUDO"
+        >
+          <Wrench className="w-5 h-5" />
+          <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Reparar Tudo</span>
+        </button>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="p-3 bg-slate-900 text-slate-400 rounded-full shadow-2xl border border-white/10 hover:text-white transition-all active:scale-90"
+          title="Recarregar Página"
+        >
+          <RefreshCw className="w-5 h-5" />
+        </button>
+      </div>
 
-      {showUpload && <UploadModal onClose={() => setShowUpload(false)} onUploadComplete={(data) => { setImages([data, ...images]); addSignal("Arquivado!"); }} existingImages={images} initialFile={null} currentUser={currentUser} t={t.upload} categories={categories} />}
-      {selectedImage && <ImageViewer image={selectedImage} onClose={() => setSelectedImage(null)} onUpdate={async (data) => { await storageService.save(data); setImages(images.map(img => img.id === data.id ? data : img)); setSelectedImage(data); }} onDelete={async (id) => { await storageService.delete(id); setImages(images.filter(img => img.id !== id)); setSelectedImage(null); }} isAdmin={isAdmin} currentUser={currentUser} contextImages={images} onImageSelect={setSelectedImage} t={t.viewer} categories={categories} />}
-      {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={(u, p, type) => { if (type === 'admin' && p === '123456') { setIsAdmin(true); setCurrentUser(u); localStorage.setItem('archive_user', u); localStorage.setItem('archive_admin', 'true'); return true; } return false; }} t={t.login} />}
+      {showUpload && <UploadModal onClose={() => setShowUpload(false)} onUploadComplete={(data) => { setImages([data, ...images]); addSignal("Item arquivado com sucesso!"); }} existingImages={images} initialFile={null} currentUser={currentUser} t={t.upload} categories={categories} />}
+      {selectedImage && <ImageViewer image={selectedImage} onClose={() => setSelectedImage(null)} onUpdate={async (data) => { await storageService.save(data); setImages(images.map(img => img.id === data.id ? data : img)); setSelectedImage(data); addSignal("Dados atualizados!"); }} onDelete={async (id) => { await storageService.delete(id); setImages(images.filter(img => img.id !== id)); setSelectedImage(null); addSignal("Removido do arquivo.", "warning"); }} isAdmin={isAdmin} currentUser={currentUser} contextImages={images} onImageSelect={setSelectedImage} t={t.viewer} categories={categories} />}
+      {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={(u, p, type) => { if (type === 'admin' && p === '123456') { setIsAdmin(true); setCurrentUser(u); localStorage.setItem('archive_user', u); localStorage.setItem('archive_admin', 'true'); addSignal(`Bem-vindo de volta, Comandante ${u}!`); return true; } return false; }} t={t.login} />}
       {showHistory && <HistoryModal onClose={() => setShowHistory(false)} isAdmin={isAdmin} t={{...t.header, ...t.history}} />}
       {showWebsites && <WebsitesModal onClose={() => setShowWebsites(false)} isAdmin={isAdmin} t={t.header} />}
       {showRadio && <RadioModal onClose={() => setShowRadio(false)} />}
