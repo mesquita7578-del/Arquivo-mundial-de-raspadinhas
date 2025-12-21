@@ -1,4 +1,5 @@
-const CACHE_NAME = 'raspadinhas-arquivo-v2';
+
+const CACHE_NAME = 'raspadinhas-arquivo-v3'; // Chloe: Mudamos para V3 para o tablete acordar!
 const urlsToCache = [
   '/',
   '/index.html',
@@ -12,6 +13,7 @@ self.addEventListener('install', (event) => {
         return cache.addAll(urlsToCache);
       })
   );
+  self.skipWaiting(); // Chloe: Força a atualização imediata
 });
 
 self.addEventListener('fetch', (event) => {
@@ -30,15 +32,15 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
+            return caches.delete(cacheName); // Chloe: Apaga o lixo antigo!
           }
         })
       );
     })
   );
+  return self.clients.claim(); // Chloe: Assume o controlo do tablete logo
 });
 
-// Allow the web app to trigger skipWaiting via message
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();

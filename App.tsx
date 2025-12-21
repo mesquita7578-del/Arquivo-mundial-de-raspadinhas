@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, Plus, Loader2, Sparkles, Zap, LayoutGrid, Trophy, Star, 
   Ticket, Layers, Box, MapPin, X, Diamond, Crown, CheckCircle2, Users, Clock, ChevronDown, ChevronRight,
-  Ship, Landmark, Flag, Download
+  Ship, Landmark, Flag, Download, RefreshCw
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { ImageGrid } from './components/ImageGrid';
@@ -60,30 +60,53 @@ const App: React.FC = () => {
 
   const t = translations[language] || translations['pt'];
 
+  const loadAllData = async () => {
+    try {
+      setIsLoading(true);
+      await storageService.init();
+      const [allImages, allCats, meta] = await Promise.all([
+        storageService.getAll(),
+        storageService.getCategories(),
+        storageService.getSiteMetadata()
+      ]);
+      setImages(allImages || []);
+      setCategories(allCats || []);
+      setSiteMetadata(meta);
+      return true;
+    } catch (err) {
+      console.error("Erro no carregamento:", err);
+      return false;
+    } finally {
+      setTimeout(() => setIsLoading(false), 500);
+    }
+  };
+
   useEffect(() => {
     const init = async () => {
-      try {
-        await storageService.init();
-        const [allImages, allCats, meta] = await Promise.all([
-          storageService.getAll(),
-          storageService.getCategories(),
-          storageService.getSiteMetadata()
-        ]);
-        setImages(allImages || []);
-        setCategories(allCats || []);
-        const updatedMeta = { ...meta, visitorCount: (meta.visitorCount || 0) + 1 };
+      const success = await loadAllData();
+      if (success && siteMetadata) {
+        const updatedMeta = { ...siteMetadata, visitorCount: (siteMetadata.visitorCount || 0) + 1 };
         setSiteMetadata(updatedMeta);
         await storageService.saveSiteMetadata(updatedMeta);
         chloeChannel?.postMessage({ type: 'SYNC_METADATA', payload: updatedMeta });
         if (currentUser) recordVisitor(currentUser, isAdmin, updatedMeta);
-      } catch (err) {
-        console.error("Erro no carregamento:", err);
-      } finally {
-        setTimeout(() => setIsLoading(false), 800);
       }
     };
     init();
   }, []);
+
+  const handleForceRefresh = async () => {
+    addSignal("Chloe a limpar o tablet... hihi!", "info");
+    // Chloe: Limpa caches e força reload total
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (let registration of registrations) {
+        await registration.unregister();
+      }
+    }
+    await loadAllData();
+    window.location.reload();
+  };
 
   const recordVisitor = async (name: string, isAdm: boolean, currentMeta?: SiteMetadata) => {
     const meta = currentMeta || siteMetadata;
@@ -161,48 +184,42 @@ const App: React.FC = () => {
 
   const handleExport = async () => {
     try {
-      addSignal("Vovô Jorge, a Chloe está a preparar o backup... hihi!", "info");
+      addSignal("Chloe a preparar backup para o tablet... hihi!", "info");
       const dataStr = await storageService.exportData();
       const blob = new Blob([dataStr], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
-      
       const fileName = `backup-arquivo-${new Date().toISOString().split('T')[0]}.json`;
       
-      // Chloe: Cria o link e tenta descarregar automaticamente
       const link = document.createElement('a');
       link.href = url;
       link.download = fileName;
       document.body.appendChild(link);
       link.click();
       
-      // Chloe: Caso o tablet tenha bloqueado, mostramos um aviso com o link direto!
       setTimeout(() => {
-        addSignal(`Backup pronto! Se não descarregou, clique aqui no ecrã! hihi!`, "success");
-        // Criamos um botão temporário no topo se o download falhar
+        addSignal(`Backup pronto! Se não descarregou, use o botão azul! hihi!`, "success");
         const fallback = document.createElement('div');
         fallback.style.position = 'fixed';
         fallback.style.top = '100px';
         fallback.style.left = '50%';
         fallback.style.transform = 'translateX(-50%)';
         fallback.style.zIndex = '10000';
+        fallback.id = 'manual-download-btn';
         fallback.innerHTML = `
           <a href="${url}" download="${fileName}" style="background:#2563eb; color:white; padding:20px 40px; border-radius:20px; font-weight:900; text-decoration:none; box-shadow: 0 10px 40px rgba(0,0,0,0.5); display:flex; align-items:center; gap:10px; border: 4px solid white;">
              <span>CLIQUE AQUI PARA GUARDAR O BACKUP</span>
           </a>
         `;
         document.body.appendChild(fallback);
-        
-        // Remove o botão após 10 segundos
         setTimeout(() => {
-           if (document.body.contains(fallback)) document.body.removeChild(fallback);
-           window.URL.revokeObjectURL(url);
-        }, 10000);
-
+           const el = document.getElementById('manual-download-btn');
+           if (el) document.body.removeChild(el);
+        }, 15000);
       }, 1000);
 
       if (document.body.contains(link)) document.body.removeChild(link);
     } catch (err) {
-      addSignal("O tablet bloqueou o ficheiro. Tente outra vez!", "warning");
+      addSignal("Erro ao exportar. Tente recarregar o arquivo!", "warning");
     }
   };
 
@@ -212,11 +229,10 @@ const App: React.FC = () => {
       try {
         const content = e.target?.result as string;
         const count = await storageService.importData(content);
-        const all = await storageService.getAll();
-        setImages(all || []);
-        addSignal(`${count} itens integrados no arquivo! hihi!`, "success");
+        await loadAllData();
+        addSignal(`${count} itens integrados! hihi!`, "success");
       } catch (err) {
-        addSignal("Ficheiro inválido! hihi!", "warning");
+        addSignal("Ficheiro inválido!", "warning");
       }
     };
     reader.readAsText(file);
@@ -278,18 +294,43 @@ const App: React.FC = () => {
       )}
 
       <main className="flex-1 flex flex-col min-h-0 pb-20">
-        {(currentPage === 'home' || currentPage === 'collection') && (
-          <div className="p-4 md:p-8 animate-fade-in">
-            <ImageGrid images={filteredImages} onImageClick={setSelectedImage} isAdmin={isAdmin} currentUser={currentUser} t={t.grid}/>
+        {isLoading ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-4">
+            <Loader2 className="w-12 h-12 animate-spin text-brand-500" />
+            <p className="text-[10px] font-black uppercase tracking-widest">A ler o arquivo... hihi!</p>
           </div>
+        ) : (
+          <>
+            {(currentPage === 'home' || currentPage === 'collection') && (
+              <div className="p-4 md:p-8 animate-fade-in">
+                <ImageGrid images={filteredImages} onImageClick={setSelectedImage} isAdmin={isAdmin} currentUser={currentUser} t={t.grid}/>
+              </div>
+            )}
+            {currentPage === 'themes' && <ThemesPage images={images} onThemeSelect={(themeId) => { setActiveTheme(themeId); setCurrentPage('home'); }} />}
+            {currentPage === 'stats' && <StatsSection images={images} stats={images.reduce((acc, img) => { if (img.continent) acc[img.continent] = (acc[img.continent] || 0) + 1; return acc; }, {} as any)} categoryStats={{ scratch: images.filter(i => i.category === 'raspadinha').length, lottery: images.filter(i => i.category === 'lotaria').length }} countryStats={images.reduce((acc, img) => { if (img.country) acc[img.country] = (acc[img.country] || 0) + 1; return acc; }, {} as any)} stateStats={images.reduce((acc, img) => { if (img.state) acc[img.state] = (acc[img.state] || 0) + 1; return acc; }, {} as any)} collectorStats={images.reduce((acc, img) => { const c = img.collector || 'Geral'; acc[c] = (acc[c] || 0) + 1; return acc; }, {} as any)} totalRecords={images.length} t={t.stats} currentUser={currentUser} />}
+            {currentPage === 'map' && <div className="p-10 h-full min-h-[600px]"><WorldMap images={images} activeContinent={activeContinent} onCountrySelect={(country) => { setActiveCountry(country); setActiveSubRegion(''); setCurrentPage('home'); }} t={t.grid} /></div>}
+            {currentPage === 'about' && <AboutPage t={t.about} isAdmin={isAdmin} founderPhoto={siteMetadata?.founderPhotoUrl} founderBio={siteMetadata?.founderBio} founderQuote={siteMetadata?.founderQuote} milestones={siteMetadata?.milestones} onUpdateFounderPhoto={(url) => setSiteMetadata(prev => prev ? {...prev, founderPhotoUrl: url} : {id: 'site_settings', founderPhotoUrl: url})} onUpdateMetadata={(data) => { const updated = {...siteMetadata, ...data} as SiteMetadata; setSiteMetadata(updated); storageService.saveSiteMetadata(updated); addSignal("Memórias atualizadas! hihi!", "success"); }} />}
+          </>
         )}
-        {currentPage === 'themes' && <ThemesPage images={images} onThemeSelect={(themeId) => { setActiveTheme(themeId); setCurrentPage('home'); }} />}
-        {currentPage === 'stats' && <StatsSection images={images} stats={images.reduce((acc, img) => { if (img.continent) acc[img.continent] = (acc[img.continent] || 0) + 1; return acc; }, {} as any)} categoryStats={{ scratch: images.filter(i => i.category === 'raspadinha').length, lottery: images.filter(i => i.category === 'lotaria').length }} countryStats={images.reduce((acc, img) => { if (img.country) acc[img.country] = (acc[img.country] || 0) + 1; return acc; }, {} as any)} stateStats={images.reduce((acc, img) => { if (img.state) acc[img.state] = (acc[img.state] || 0) + 1; return acc; }, {} as any)} collectorStats={images.reduce((acc, img) => { const c = img.collector || 'Geral'; acc[c] = (acc[c] || 0) + 1; return acc; }, {} as any)} totalRecords={images.length} t={t.stats} currentUser={currentUser} />}
-        {currentPage === 'map' && <div className="p-10 h-full min-h-[600px]"><WorldMap images={images} activeContinent={activeContinent} onCountrySelect={(country) => { setActiveCountry(country); setActiveSubRegion(''); setCurrentPage('home'); }} t={t.grid} /></div>}
-        {currentPage === 'about' && <AboutPage t={t.about} isAdmin={isAdmin} founderPhoto={siteMetadata?.founderPhotoUrl} founderBio={siteMetadata?.founderBio} founderQuote={siteMetadata?.founderQuote} milestones={siteMetadata?.milestones} onUpdateFounderPhoto={(url) => setSiteMetadata(prev => prev ? {...prev, founderPhotoUrl: url} : {id: 'site_settings', founderPhotoUrl: url})} onUpdateMetadata={(data) => { const updated = {...siteMetadata, ...data} as SiteMetadata; setSiteMetadata(updated); storageService.saveSiteMetadata(updated); addSignal("Memórias atualizadas! hihi!", "success"); }} />}
       </main>
 
-      <Footer onNavigate={setCurrentPage} onWebsitesClick={() => setShowWebsites(true)} onRadioClick={() => setShowRadio(true)} visitorCount={siteMetadata?.visitorCount} onVisitorsClick={() => setShowVisitors(true)} />
+      <Footer 
+        onNavigate={setCurrentPage} 
+        onWebsitesClick={() => setShowWebsites(true)} 
+        onRadioClick={() => setShowRadio(true)} 
+        visitorCount={siteMetadata?.visitorCount} 
+        onVisitorsClick={() => setShowVisitors(true)} 
+      />
+
+      {/* Botão Flutuante de Sincronização para Tablets (Fundo à esquerda) */}
+      <button 
+        onClick={handleForceRefresh}
+        className="fixed bottom-4 left-4 z-[1001] p-2 bg-slate-900/80 border border-white/10 rounded-full text-slate-500 hover:text-brand-400 shadow-xl backdrop-blur-md"
+        title="Sincronizar Arquivo"
+      >
+        <RefreshCw className="w-4 h-4" />
+      </button>
+
       {showUpload && <UploadModal onClose={() => setShowUpload(false)} onUploadComplete={(data) => { setImages([data, ...images]); addSignal(`${data.gameName} arquivado! hihi!`, 'success'); }} existingImages={images} initialFile={null} currentUser={currentUser} t={t.upload} categories={categories} />}
       {selectedImage && <ImageViewer image={selectedImage} onClose={() => setSelectedImage(null)} onUpdate={async (data) => { await storageService.save(data); setImages(images.map(img => img.id === data.id ? data : img)); setSelectedImage(data); addSignal("Registo atualizado! hihi!", "info"); }} onDelete={async (id) => { await storageService.delete(id); setImages(images.filter(img => img.id !== id)); setSelectedImage(null); addSignal("Item removido.", "warning"); }} isAdmin={isAdmin} currentUser={currentUser} contextImages={images} onImageSelect={setSelectedImage} t={t.viewer} categories={categories} />}
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={(u, p, type) => { if (type === 'admin' && p === '123456') { setIsAdmin(true); setCurrentUser(u); localStorage.setItem('archive_user', u); localStorage.setItem('archive_admin', 'true'); recordVisitor(u, true); addSignal(`Bem-vindo, Comandante ${u}! hihi!`, 'divine'); return true; } else if (type === 'visitor') { setCurrentUser(u); localStorage.setItem('archive_user', u); localStorage.setItem('archive_admin', 'false'); recordVisitor(u, false); addSignal(`Olá, ${u}! Bom ver-te aqui! hihi!`, 'success'); return true; } return false; }} t={t.login} />}
