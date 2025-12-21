@@ -249,19 +249,19 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    </div>
                 </div>
 
-                {/* GALERIA DO SET */}
+                {/* GALERIA DO SET COMPACTA */}
                 <div>
                    <h3 className="text-[10px] font-black text-brand-400 uppercase tracking-[0.3em] flex items-center gap-2 mb-4"><Images className="w-3.5 h-3.5" /> Galeria do SET</h3>
-                   <div className="grid grid-cols-3 gap-2">
+                   <div className="grid grid-cols-4 gap-2">
                       {galleryPreviews.map((src, i) => (
-                        <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-white/10 group">
+                        <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-white/10 group shadow-md hover:border-brand-500/50 transition-all">
                            <img src={src} className="w-full h-full object-cover" />
-                           <button onClick={() => handleRemoveGalleryImage(i)} className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-3 h-3" /></button>
+                           <button onClick={(e) => { e.stopPropagation(); handleRemoveGalleryImage(i); }} className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity z-10"><X className="w-2.5 h-2.5" /></button>
                         </div>
                       ))}
                       <button onClick={() => galleryInputRef.current?.click()} className="aspect-square rounded-xl border-2 border-dashed border-slate-800 hover:border-brand-500/50 hover:bg-brand-500/5 transition-all flex flex-col items-center justify-center gap-1 text-slate-600 hover:text-brand-400">
-                         <Plus className="w-5 h-5" />
-                         <span className="text-[7px] font-black uppercase">Mais Fotos</span>
+                         <Plus className="w-4 h-4" />
+                         <span className="text-[6px] font-black uppercase">Add</span>
                       </button>
                       <input type="file" ref={galleryInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0], 'gallery')} />
                    </div>

@@ -4,7 +4,7 @@ import {
   Ticket, Lock, LogOut, BookOpen, Home, 
   BarChart2, ChevronDown, Globe, User, 
   Info, Database, ClipboardList, ChevronRight, Map as MapIcon, Radio, Menu, X as CloseIcon,
-  Download, Upload, MapPin, Star, Landmark, Ship, Flag, Crown, Layout
+  Download, Upload, MapPin, Star, Landmark, Ship, Flag, Crown, Layout, Zap
 } from 'lucide-react';
 import { Language } from '../translations';
 import { Continent } from '../types';
@@ -79,13 +79,18 @@ export const Header: React.FC<HeaderProps> = ({
 
   const hasSpecialSubs = (country: string) => ['Portugal', 'Espanha', 'Alemanha', 'Canadá', 'Austrália'].includes(country);
 
-  // Helper para Tooltip Neon
-  const Tooltip = ({ text, color = "border-brand-500 shadow-brand-500/30" }: { text: string; color?: string }) => (
-    <div className={`absolute top-full mt-3 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-300 z-[3000] scale-90 group-hover:scale-100`}>
-      <div className={`bg-slate-900/95 backdrop-blur-md border ${color} px-3 py-1.5 rounded-xl shadow-lg`}>
-        <span className="text-[9px] font-black text-white uppercase tracking-[0.15em] whitespace-nowrap">{text}</span>
+  /**
+   * CHLOE: Helper de Tooltip com Efeito Neon
+   */
+  const Tooltip = ({ text, color = "border-brand-500 shadow-brand-500/40" }: { text: string; color?: string }) => (
+    <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-300 z-[3000] scale-90 group-hover:scale-100 group-hover:translate-y-1">
+      <div className={`bg-slate-950/95 backdrop-blur-md border ${color} px-3 py-1.5 rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.6)]`}>
+        <span className="text-[9px] font-black text-white uppercase tracking-[0.2em] whitespace-nowrap drop-shadow-[0_0_2px_rgba(255,255,255,0.3)]">
+          {text}
+        </span>
       </div>
-      <div className={`w-2 h-2 bg-slate-900 border-l border-t ${color.split(' ')[0]} rotate-45 absolute -top-1 left-1/2 -translate-x-1/2`}></div>
+      {/* Triângulo de encaixe */}
+      <div className={`w-2 h-2 bg-slate-950 border-l border-t ${color.split(' ')[0]} rotate-45 absolute -top-1 left-1/2 -translate-x-1/2`}></div>
     </div>
   );
 
@@ -95,10 +100,10 @@ export const Header: React.FC<HeaderProps> = ({
         
         {/* Logo / Título */}
         <div 
-          className="flex items-center gap-4 cursor-pointer group shrink-0" 
+          className="flex items-center gap-4 cursor-pointer group shrink-0 relative" 
           onClick={() => onNavigate('home')}
         >
-          <div className="bg-brand-600 p-2.5 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
+          <div className="bg-brand-600 p-2.5 rounded-2xl shadow-lg group-hover:scale-110 group-hover:shadow-brand-500/30 transition-all">
             <Ticket className="w-6 h-6 text-white" />
           </div>
           <div className="flex flex-col">
@@ -107,6 +112,7 @@ export const Header: React.FC<HeaderProps> = ({
             </h1>
             <span className="text-[8px] md:text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] leading-none mt-1.5">Mestre de Arquivo: Jorge Mesquita</span>
           </div>
+          <Tooltip text="Início / Visionary Archive" />
         </div>
 
         {/* Navegação Central */}
@@ -114,7 +120,7 @@ export const Header: React.FC<HeaderProps> = ({
            <div className="relative group">
              <button 
                onClick={() => onNavigate('home')} 
-               className={`p-2.5 rounded-2xl transition-all ${currentPage === 'home' ? 'bg-brand-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
+               className={`p-2.5 rounded-2xl transition-all ${currentPage === 'home' ? 'bg-brand-600 text-white shadow-xl shadow-brand-900/40 scale-105' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
              >
                <Home className="w-6 h-6" />
              </button>
@@ -124,11 +130,11 @@ export const Header: React.FC<HeaderProps> = ({
            <div className="relative group">
              <button 
                onClick={() => onNavigate('map')} 
-               className={`p-2.5 rounded-2xl transition-all ${currentPage === 'map' ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
+               className={`p-2.5 rounded-2xl transition-all ${currentPage === 'map' ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/40 scale-105' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
              >
                <Globe className="w-6 h-6" />
              </button>
-             <Tooltip text="Mapa Mundi" color="border-blue-500 shadow-blue-500/30" />
+             <Tooltip text="Mapa Mundi" color="border-blue-500 shadow-blue-500/40" />
            </div>
 
            <div className="relative group" ref={exploreRef}>
@@ -139,7 +145,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <MapIcon className="w-6 h-6" />
                 <span className="hidden xl:inline text-[10px] font-black uppercase tracking-widest">Explorar</span>
               </button>
-              <Tooltip text="Navegar Países" color="border-slate-500 shadow-slate-500/30" />
+              <Tooltip text="Explorar Países" color="border-slate-500 shadow-slate-500/40" />
               
               {showExplore && (
                 <div className="absolute top-full left-0 mt-4 flex z-[2100] animate-bounce-in">
@@ -195,37 +201,37 @@ export const Header: React.FC<HeaderProps> = ({
            <div className="relative group">
              <button 
                onClick={() => onNavigate('themes')} 
-               className={`p-2.5 rounded-2xl transition-all ${currentPage === 'themes' ? 'bg-pink-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
+               className={`p-2.5 rounded-2xl transition-all ${currentPage === 'themes' ? 'bg-pink-600 text-white shadow-xl shadow-pink-900/40 scale-105' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
              >
                <Layout className="w-6 h-6" />
              </button>
-             <Tooltip text="Galerias Temáticas" color="border-pink-500 shadow-pink-500/30" />
+             <Tooltip text="Salas Temáticas" color="border-pink-500 shadow-pink-500/40" />
            </div>
 
            <div className="relative group">
              <button 
                onClick={() => onNavigate('stats')} 
-               className={`p-2.5 rounded-2xl transition-all ${currentPage === 'stats' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
+               className={`p-2.5 rounded-2xl transition-all ${currentPage === 'stats' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-900/40 scale-105' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
              >
                <BarChart2 className="w-6 h-6" />
              </button>
-             <Tooltip text="Estatísticas" color="border-indigo-500 shadow-indigo-500/30" />
+             <Tooltip text="Estatísticas" color="border-indigo-500 shadow-indigo-500/40" />
            </div>
 
            {currentUser && (
              <div className="relative group">
                <button 
                  onClick={() => onNavigate('collection')} 
-                 className={`p-2.5 rounded-2xl transition-all flex items-center gap-2 relative ${currentPage === 'collection' ? 'bg-amber-500 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
+                 className={`p-2.5 rounded-2xl transition-all flex items-center gap-2 relative ${currentPage === 'collection' ? 'bg-amber-500 text-white shadow-xl shadow-amber-900/40 scale-105' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
                >
                  <Star className={`w-6 h-6 ${currentPage === 'collection' ? 'fill-current' : ''}`} />
                  {collectionCount > 0 && (
-                   <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-slate-900">
+                   <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-slate-900 animate-pulse">
                      {collectionCount}
                    </span>
                  )}
                </button>
-               <Tooltip text="Minha Coleção" color="border-amber-500 shadow-amber-500/30" />
+               <Tooltip text="Minha Coleção" color="border-amber-500 shadow-amber-500/40" />
              </div>
            )}
 
@@ -236,7 +242,7 @@ export const Header: React.FC<HeaderProps> = ({
              >
                <BookOpen className="w-6 h-6" />
              </button>
-             <Tooltip text="Biblioteca Técnica" color="border-blue-400 shadow-blue-400/30" />
+             <Tooltip text="Biblioteca Técnica" color="border-blue-400 shadow-blue-400/40" />
            </div>
 
            <div className="relative group" ref={toolsRef}>
@@ -247,7 +253,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <Database className="w-6 h-6" />
                 <ChevronDown className={`w-4 h-4 transition-transform ${showTools ? 'rotate-180' : ''}`} />
               </button>
-              <Tooltip text="Dados & Backup" color="border-emerald-500 shadow-emerald-500/30" />
+              <Tooltip text="Backup & Dados" color="border-emerald-500 shadow-emerald-500/40" />
               
               {showTools && (
                 <div className="absolute top-full right-0 mt-4 w-56 bg-slate-900 border border-white/10 rounded-3xl shadow-2xl p-2.5 z-[2200] animate-bounce-in">
@@ -255,7 +261,7 @@ export const Header: React.FC<HeaderProps> = ({
                      onClick={onExport} 
                      className="w-full text-left px-4 py-4 text-[11px] text-slate-400 hover:bg-brand-600 hover:text-white rounded-2xl font-black uppercase tracking-widest flex items-center gap-4 transition-all"
                    >
-                      <Download className="w-5 h-5" /> Backup JSON
+                      <Download className="w-5 h-5" /> Exportar JSON
                    </button>
                    <button 
                      onClick={handleImportClick} 
@@ -275,7 +281,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="relative group">
               <button 
                 onClick={() => setLanguage('pt')} 
-                className={`px-4 py-1.5 rounded-xl text-[10px] font-black transition-all ${language === 'pt' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-300'}`}
+                className={`px-4 py-1.5 rounded-xl text-[10px] font-black transition-all ${language === 'pt' ? 'bg-brand-600 text-white shadow-md shadow-brand-900/30' : 'text-slate-600 hover:text-slate-300'}`}
               >
                 PT
               </button>
@@ -284,7 +290,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="relative group">
               <button 
                 onClick={() => setLanguage('it')} 
-                className={`px-4 py-1.5 rounded-xl text-[10px] font-black transition-all ${language === 'it' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-300'}`}
+                className={`px-4 py-1.5 rounded-xl text-[10px] font-black transition-all ${language === 'it' ? 'bg-brand-600 text-white shadow-md shadow-brand-900/30' : 'text-slate-600 hover:text-slate-300'}`}
               >
                 IT
               </button>
@@ -298,26 +304,26 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={onLogout} 
                 className="flex items-center gap-4 pl-1.5 pr-5 py-1.5 bg-slate-800 hover:bg-red-600/10 text-white border border-white/10 rounded-full transition-all group-btn" 
               >
-                 <div className="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center text-sm font-black shadow-inner">
+                 <div className="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center text-sm font-black shadow-inner shadow-black/40">
                    {currentUser[0].toUpperCase()}
                  </div>
                  <div className="hidden lg:flex flex-col items-start leading-none">
-                    <span className="text-xs font-black uppercase">{currentUser}</span>
-                    <span className="text-[8px] text-slate-500 font-black uppercase mt-1">Sair</span>
+                    <span className="text-xs font-black uppercase tracking-tight">{currentUser}</span>
+                    <span className="text-[8px] text-slate-500 font-black uppercase mt-1">Encerrar</span>
                  </div>
                  <LogOut className="w-5 h-5 text-slate-500 group-hover/btn:text-red-500 transition-colors" />
               </button>
-              <Tooltip text="Encerrar Sessão" color="border-red-500 shadow-red-500/30" />
+              <Tooltip text="Encerrar Sessão" color="border-red-500 shadow-red-500/40" />
             </div>
           ) : (
             <div className="relative group">
               <button 
                 onClick={onAdminToggle} 
-                className="flex items-center gap-3 px-6 py-3 bg-amber-500 hover:bg-white text-slate-950 hover:text-brand-600 rounded-full transition-all text-xs font-black uppercase tracking-widest shadow-xl active:scale-95"
+                className="flex items-center gap-3 px-6 py-3 bg-amber-500 hover:bg-white text-slate-950 hover:text-brand-600 rounded-full transition-all text-xs font-black uppercase tracking-widest shadow-xl shadow-amber-900/20 active:scale-95"
               >
                 <Lock className="w-5 h-5" /> <span className="hidden md:inline">Entrar</span>
               </button>
-              <Tooltip text="Área Restrita" color="border-amber-500 shadow-amber-500/30" />
+              <Tooltip text="Área Restrita" color="border-amber-500 shadow-amber-500/40" />
             </div>
           )}
         </div>

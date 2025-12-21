@@ -212,15 +212,20 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                           <Images className="w-6 h-6 text-brand-500" />
                           <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Grelha do SET <span className="text-slate-500">({localGallery.length} imagens)</span></h3>
                        </div>
-                       {/* GRELHA DINÂMICA: 2 colunas se poucas, 3 se muitas */}
-                       <div className={`grid gap-4 ${localGallery.length > 4 ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
+                       
+                       {/* GRELHA DINÂMICA COMPACTA: Ideal para SETs com muitas imagens */}
+                       <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                           {localGallery.map((src, i) => (
-                            <div key={i} className="group relative aspect-square bg-slate-900 rounded-2xl overflow-hidden border border-white/5 hover:border-brand-500/50 transition-all cursor-zoom-in" onClick={() => setShowFullScreen(src)}>
-                               <img src={src} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                  <Maximize2 className="w-8 h-8 text-white drop-shadow-lg" />
+                            <div key={i} className="group relative aspect-square bg-slate-900 rounded-2xl overflow-hidden border border-white/5 hover:border-brand-500/50 transition-all cursor-zoom-in shadow-lg" onClick={() => setShowFullScreen(src)}>
+                               <img src={src} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                  <Maximize2 className="w-6 h-6 text-white drop-shadow-lg" />
                                </div>
-                               <span className="absolute bottom-3 right-3 bg-black/60 text-white text-[8px] font-black px-2 py-1 rounded-md border border-white/10 uppercase">{i === 0 ? 'Frente' : i === 1 ? 'Verso' : `Extra ${i-1}`}</span>
+                               <div className="absolute bottom-2 left-2 right-2 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <span className="bg-black/70 text-white text-[6px] font-black px-1.5 py-0.5 rounded-md border border-white/10 uppercase tracking-tighter">
+                                     {i === 0 ? 'Frente' : i === 1 ? 'Verso' : `Part ${i-1}`}
+                                  </span>
+                               </div>
                             </div>
                           ))}
                        </div>
