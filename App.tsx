@@ -184,6 +184,12 @@ const App: React.FC = () => {
     });
   }, [images, searchTerm, activeContinent, activeCountry, activeSubRegion, activeCategory, activeTheme, showRaritiesOnly, showWinnersOnly, showSeriesOnly, showNewOnly, currentPage, currentUser]);
 
+  // NOVO: Países que têm novidades registradas
+  const recentCountries = useMemo(() => {
+    const recent = images.filter(img => (Date.now() - (img.createdAt || 0)) < 43200000);
+    return Array.from(new Set(recent.map(img => img.country))).sort();
+  }, [images]);
+
   const collectionCount = useMemo(() => {
     if (!currentUser) return 0;
     return images.filter(img => img.owners?.includes(currentUser)).length;
@@ -259,84 +265,122 @@ const App: React.FC = () => {
 
       {(currentPage === 'home' || currentPage === 'collection') && (
         <div className="bg-[#020617]/40 backdrop-blur-3xl sticky top-[68px] md:top-[74px] z-[90] px-4 md:px-10 py-1 border-b border-white/5 shadow-xl transition-all">
-          <div className="max-w-[1800px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-1 md:gap-3">
-            
-            <div className="flex flex-wrap items-center justify-center gap-1 md:gap-1.5">
-               <div className="flex items-center gap-1 border-r border-white/10 pr-1 mr-0.5">
-                 {activeTheme && (
-                    <button 
-                      onClick={() => setActiveTheme('')}
-                      className="bg-brand-600 text-white px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-2"
-                    >
-                      Tema: {activeTheme} <X className="w-2.5 h-2.5" />
-                    </button>
-                 )}
-                 <button 
-                   onClick={() => { setShowSeriesOnly(!showSeriesOnly); setShowRaritiesOnly(false); setShowWinnersOnly(false); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); setShowNewOnly(false); }} 
-                   className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showSeriesOnly ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-blue-400'}`}
-                 >
-                   <Layers className="w-3 h-3" /> Séries
-                 </button>
-                 <button 
-                   onClick={() => { setShowRaritiesOnly(!showRaritiesOnly); setShowSeriesOnly(false); setShowWinnersOnly(false); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); setShowNewOnly(false); }} 
-                   className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-amber-400'}`}
-                 >
-                   <Diamond className="w-3 h-3" /> Raridades
-                 </button>
-                 <button 
-                   onClick={() => { setShowWinnersOnly(!showWinnersOnly); setShowSeriesOnly(false); setShowRaritiesOnly(false); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); setShowNewOnly(false); }} 
-                   className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-emerald-400'}`}
-                 >
-                   <Trophy className="w-3 h-3" /> Premiadas
-                 </button>
-               </div>
-
-               <div className="flex flex-wrap items-center gap-1 py-1">
-                  {[
-                    { id: 'all', label: 'Tudo', icon: LayoutGrid },
-                    { id: 'raspadinha', label: 'Raspadinhas', icon: Ticket },
-                    { id: 'lotaria', label: 'Lotarias', icon: Star },
-                    { id: 'boletim', label: 'Boletins', icon: Layers },
-                    { id: 'objeto', label: 'Objetos', icon: Box },
-                  ].map(cat => (
-                    <button 
-                      key={cat.id} 
-                      onClick={() => { setActiveCategory(cat.id); setShowSeriesOnly(false); setShowRaritiesOnly(false); setShowWinnersOnly(false); setShowNewOnly(false); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); }} 
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white border border-brand-400/30' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-brand-400'}`}
-                    >
-                      <cat.icon className="w-3 h-3" /> {cat.label}
-                    </button>
-                  ))}
-                  
+          <div className="max-w-[1800px] mx-auto flex flex-col items-stretch">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-1 md:gap-3 py-1">
+              <div className="flex flex-wrap items-center justify-center gap-1 md:gap-1.5">
+                <div className="flex items-center gap-1 border-r border-white/10 pr-1 mr-0.5">
+                  {activeTheme && (
+                      <button 
+                        onClick={() => setActiveTheme('')}
+                        className="bg-brand-600 text-white px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-2"
+                      >
+                        Tema: {activeTheme} <X className="w-2.5 h-2.5" />
+                      </button>
+                  )}
                   <button 
-                    onClick={() => { setShowNewOnly(!showNewOnly); setActiveCategory('all'); setShowSeriesOnly(false); setShowRaritiesOnly(false); setShowWinnersOnly(false); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); }} 
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showNewOnly ? 'bg-pink-600 text-white border border-pink-400/30 shadow-[0_0_15px_rgba(219,39,119,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-pink-400'}`}
+                    onClick={() => { setShowSeriesOnly(!showSeriesOnly); setShowRaritiesOnly(false); setShowWinnersOnly(false); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); setShowNewOnly(false); }} 
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showSeriesOnly ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-blue-400'}`}
                   >
-                    <Sparkles className="w-3 h-3" /> Novidades
+                    <Layers className="w-3 h-3" /> Séries
                   </button>
-               </div>
+                  <button 
+                    onClick={() => { setShowRaritiesOnly(!showRaritiesOnly); setShowSeriesOnly(false); setShowWinnersOnly(false); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); setShowNewOnly(false); }} 
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-amber-400'}`}
+                  >
+                    <Diamond className="w-3 h-3" /> Raridades
+                  </button>
+                  <button 
+                    onClick={() => { setShowWinnersOnly(!showWinnersOnly); setShowSeriesOnly(false); setShowRaritiesOnly(false); setActiveCategory('all'); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); setShowNewOnly(false); }} 
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-emerald-400'}`}
+                  >
+                    <Trophy className="w-3 h-3" /> Premiadas
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1 py-1">
+                    {[
+                      { id: 'all', label: 'Tudo', icon: LayoutGrid },
+                      { id: 'raspadinha', label: 'Raspadinhas', icon: Ticket },
+                      { id: 'lotaria', label: 'Lotarias', icon: Star },
+                      { id: 'boletim', label: 'Boletins', icon: Layers },
+                      { id: 'objeto', label: 'Objetos', icon: Box },
+                    ].map(cat => (
+                      <button 
+                        key={cat.id} 
+                        onClick={() => { setActiveCategory(cat.id); setShowSeriesOnly(false); setShowRaritiesOnly(false); setShowWinnersOnly(false); setShowNewOnly(false); setActiveCountry(''); setActiveSubRegion(''); setActiveTheme(''); }} 
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white border border-brand-400/30' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-brand-400'}`}
+                      >
+                        <cat.icon className="w-3 h-3" /> {cat.label}
+                      </button>
+                    ))}
+                    
+                    <button 
+                      onClick={() => { 
+                        const willShow = !showNewOnly;
+                        setShowNewOnly(willShow); 
+                        setActiveCategory('all'); 
+                        setShowSeriesOnly(false); 
+                        setShowRaritiesOnly(false); 
+                        setShowWinnersOnly(false); 
+                        setActiveCountry(''); 
+                        setActiveSubRegion(''); 
+                        setActiveTheme(''); 
+                      }} 
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showNewOnly ? 'bg-pink-600 text-white border border-pink-400/30 shadow-[0_0_15px_rgba(219,39,119,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-pink-400'}`}
+                    >
+                      <Sparkles className="w-3 h-3" /> Novidades
+                    </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 w-full lg:w-auto">
+                <div className="relative flex-1 lg:w-48 group">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
+                  <input 
+                    type="text" 
+                    placeholder="Pesquisar..." 
+                    value={searchTerm} 
+                    onChange={(e) => setSearchTerm(e.target.value)} 
+                    className="w-full bg-slate-950/50 border border-white/5 rounded-full pl-8 pr-4 py-1 text-[9px] focus:border-brand-500/50 outline-none transition-all uppercase tracking-wider text-white shadow-inner"
+                  />
+                </div>
+                {isAdmin && (
+                  <button 
+                    onClick={() => setShowUpload(true)} 
+                    className="bg-emerald-600/90 hover:bg-emerald-500 text-white px-3.5 py-1 rounded-full font-black text-[8px] uppercase tracking-widest transition-all flex items-center gap-1.5 shadow-lg active:scale-95 border border-emerald-400/20 whitespace-nowrap"
+                  >
+                    <Plus className="w-3 h-3" /> Novo Item
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 w-full lg:w-auto">
-              <div className="relative flex-1 lg:w-48 group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
-                <input 
-                  type="text" 
-                  placeholder="Pesquisar..." 
-                  value={searchTerm} 
-                  onChange={(e) => setSearchTerm(e.target.value)} 
-                  className="w-full bg-slate-950/50 border border-white/5 rounded-full pl-8 pr-4 py-1 text-[9px] focus:border-brand-500/50 outline-none transition-all uppercase tracking-wider text-white shadow-inner"
-                />
+            {/* SUB-BARRA DE PAÍSES PARA NOVIDADES hihi! */}
+            {showNewOnly && recentCountries.length > 0 && (
+              <div className="flex items-center gap-2 py-1.5 border-t border-white/5 animate-fade-in overflow-x-auto scrollbar-hide">
+                 <div className="flex items-center gap-2 px-1 shrink-0">
+                    <Zap className="w-2.5 h-2.5 text-pink-500 fill-pink-500 animate-pulse" />
+                    <span className="text-[7px] font-black text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap">Países com Novas Entradas:</span>
+                 </div>
+                 <div className="flex items-center gap-1 pr-4">
+                    <button 
+                      onClick={() => setActiveCountry('')}
+                      className={`px-3 py-1 rounded-md text-[7px] font-black uppercase tracking-widest transition-all border ${!activeCountry ? 'bg-slate-100 text-slate-950 border-white' : 'bg-slate-900/60 text-slate-500 border-white/5 hover:border-white/20'}`}
+                    >
+                      Tudo
+                    </button>
+                    {recentCountries.map(country => (
+                      <button 
+                        key={country}
+                        onClick={() => setActiveCountry(country)}
+                        className={`px-3 py-1 rounded-md text-[7px] font-black uppercase tracking-widest transition-all border whitespace-nowrap ${activeCountry.toLowerCase() === country.toLowerCase() ? 'bg-pink-600 text-white border-pink-400 shadow-[0_0_10px_rgba(219,39,119,0.3)]' : 'bg-slate-900/60 text-slate-400 border-white/5 hover:border-white/20'}`}
+                      >
+                        {country}
+                      </button>
+                    ))}
+                 </div>
               </div>
-              {isAdmin && (
-                <button 
-                  onClick={() => setShowUpload(true)} 
-                  className="bg-emerald-600/90 hover:bg-emerald-500 text-white px-3.5 py-1 rounded-full font-black text-[8px] uppercase tracking-widest transition-all flex items-center gap-1.5 shadow-lg active:scale-95 border border-emerald-400/20 whitespace-nowrap"
-                >
-                  <Plus className="w-3 h-3" /> Novo Item
-                </button>
-              )}
-            </div>
+            )}
           </div>
         </div>
       )}
