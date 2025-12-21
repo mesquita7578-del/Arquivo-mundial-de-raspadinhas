@@ -25,8 +25,8 @@ import { translations, Language } from './translations';
 import { DivineSignal, Signal } from './components/DivineSignal';
 
 const chloeChannel = typeof window !== 'undefined' && window.BroadcastChannel ? new BroadcastChannel('chloe_archive_sync') : null;
-// Chloe: Agora mostramos novidades dos últimos 30 dias (era 7)! hihi!
-const RECENT_THRESHOLD = 2592000000; 
+const RECENT_THRESHOLD = 2592000000; // 30 dias
+const CURRENT_VERSION = '5.0';
 
 const App: React.FC = () => {
   const [images, setImages] = useState<ScratchcardData[]>([]);
@@ -82,6 +82,16 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
+    // Chloe: Força atualização se a versão for antiga
+    const savedVer = localStorage.getItem('chloe_archive_version');
+    if (savedVer !== CURRENT_VERSION) {
+      localStorage.setItem('chloe_archive_version', CURRENT_VERSION);
+      if (savedVer) {
+        handleForceRefresh();
+        return;
+      }
+    }
+
     loadAllData().then(() => {
       if (siteMetadata) {
         const updatedMeta = { ...siteMetadata, visitorCount: (siteMetadata.visitorCount || 0) + 1 };
@@ -91,23 +101,20 @@ const App: React.FC = () => {
   }, []);
 
   const handleForceRefresh = async () => {
-    addSignal("Chloe a dar um empurrão no tablet... hihi!", "info");
-    // Chloe: Método ninja para limpar o tablet de vez!
+    addSignal("Chloe a usar a mareta no tablet... hihi!", "info");
     if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
       for (let registration of registrations) {
         registration.unregister();
       }
     }
-    // Chloe: Limpa caches do browser se possível
     if ('caches' in window) {
       const keys = await caches.keys();
       for (let key of keys) {
         await caches.delete(key);
       }
     }
-    // Chloe: Recarrega com um "segredo" no URL para enganar o tablet
-    window.location.href = window.location.origin + window.location.pathname + '?refresh=' + Date.now();
+    window.location.href = window.location.origin + window.location.pathname + '?v=' + CURRENT_VERSION + '&t=' + Date.now();
   };
 
   const addSignal = (message: string, type: Signal['type'] = 'info') => {
@@ -115,21 +122,39 @@ const App: React.FC = () => {
     setSignals(prev => [...prev, { id, message, type }]);
   };
 
+  // Chloe: Lógica de filtragem REFEITA para ser infalível!
   const filteredImages = useMemo(() => {
     if (!images) return [];
+    
     return images.filter(img => {
+      // 1. Se "Novidades" estiver ligado, prioridade total ao tempo!
+      if (showNewOnly) {
+        const isRecent = (Date.now() - (img.createdAt || 0)) < RECENT_THRESHOLD;
+        if (!isRecent) return false;
+        
+        // Dentro das novidades, ainda permitimos pesquisar por nome
+        if (searchTerm) {
+          const s = searchTerm.toLowerCase();
+          const nameMatch = (img.gameName || "").toLowerCase().includes(s);
+          const countryMatch = (img.country || "").toLowerCase().includes(s);
+          if (!nameMatch && !countryMatch) return false;
+        }
+        
+        // Chloe: Nas novidades, ignoramos filtros de país/continente para mostrar TUDO o que é novo!
+        return true;
+      }
+
+      // 2. Filtros normais (quando novidades está desligado)
       const gName = (img.gameName || "").toLowerCase();
       const s = searchTerm.toLowerCase();
-      const isRecent = (Date.now() - (img.createdAt || 0)) < RECENT_THRESHOLD;
-      
       const matchesSearch = !searchTerm || gName.includes(s) || (img.country || "").toLowerCase().includes(s);
+      
       const matchesContinent = activeContinent === 'Mundo' || img.continent === activeContinent;
       const matchesCategory = activeCategory === 'all' || img.category === activeCategory;
       const matchesTheme = !activeTheme || img.theme?.toLowerCase() === activeTheme.toLowerCase();
       const matchesRarity = !showRaritiesOnly || img.isRarity;
       const matchesWinners = !showWinnersOnly || img.isWinner;
       const matchesSeries = !showSeriesOnly || img.isSeries;
-      const matchesNew = !showNewOnly || isRecent;
 
       let matchesLocation = true;
       if (activeCountry) {
@@ -144,7 +169,7 @@ const App: React.FC = () => {
         if (!currentUser || !img.owners?.includes(currentUser)) return false;
       }
 
-      return matchesSearch && matchesContinent && matchesLocation && matchesCategory && matchesTheme && matchesRarity && matchesWinners && matchesSeries && matchesNew;
+      return matchesSearch && matchesContinent && matchesLocation && matchesCategory && matchesTheme && matchesRarity && matchesWinners && matchesSeries;
     });
   }, [images, searchTerm, activeContinent, activeCountry, activeSubRegion, activeCategory, activeTheme, showRaritiesOnly, showWinnersOnly, showSeriesOnly, showNewOnly, currentPage, currentUser]);
 
@@ -187,31 +212,29 @@ const App: React.FC = () => {
     }
   };
 
+  // Chloe: Fix to implement handleImport correctly using storageService.importData
   const handleImport = async (file: File) => {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const content = e.target?.result as string;
-        const count = await storageService.importData(content);
-        await loadAllData();
-        addSignal(`${count} itens integrados! hihi!`, "success");
-      } catch (err) {
-        addSignal("Ficheiro inválido!", "warning");
-      }
-    };
-    reader.readAsText(file);
+    try {
+      addSignal("Chloe a ler o backup... hihi!", "info");
+      const text = await file.text();
+      const count = await storageService.importData(text);
+      addSignal(`${count} registos processados! hihi!`, "success");
+      await loadAllData();
+    } catch (err) {
+      addSignal("Erro na importação! O ficheiro é válido? hihi!", "warning");
+    }
   };
 
-  // Chloe: Função especial para o botão de novidades não falhar!
   const handleToggleNew = () => {
     const willShow = !showNewOnly;
     setShowNewOnly(willShow);
     if (willShow) {
-      // Se ligar novidades, desligamos filtros que podem "esconder" as novidades
+      // Quando liga as novidades, a Chloe limpa a mesa para o vovô ver tudo!
       setActiveCategory('all');
       setActiveCountry('');
       setActiveSubRegion('');
       setActiveTheme('');
+      setActiveContinent('Mundo');
       setShowSeriesOnly(false);
       setShowRaritiesOnly(false);
       setShowWinnersOnly(false);
@@ -227,7 +250,7 @@ const App: React.FC = () => {
         isAdmin={isAdmin} currentUser={currentUser} language={language} setLanguage={setLanguage}
         currentPage={currentPage} onNavigate={setCurrentPage} onAdminToggle={() => setShowLogin(true)} onLogout={() => { setIsAdmin(false); setCurrentUser(null); localStorage.removeItem('archive_user'); localStorage.removeItem('archive_admin'); addSignal("Até logo, vovô!"); }}
         onHistoryClick={() => setShowHistory(true)} onRadioClick={() => setShowRadio(true)} onExport={handleExport}
-        onImport={handleImport} onExportTXT={() => {}} onExportCSV={() => {}} t={t.header}
+        onImport={(f) => handleImport(f)} onExportTXT={() => {}} onExportCSV={() => {}} t={t.header}
         recentCount={images.filter(img => (Date.now() - (img.createdAt || 0)) < RECENT_THRESHOLD).length}
         collectionCount={images.filter(img => img.owners?.includes(currentUser || '')).length}
         onCountrySelect={(cont, loc, sub) => {
@@ -254,7 +277,6 @@ const App: React.FC = () => {
                     ].map(cat => (
                       <button key={cat.id} onClick={() => { setActiveCategory(cat.id); setShowNewOnly(false); }} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white' : 'bg-slate-900/40 text-slate-500'}`}><cat.icon className="w-3 h-3" /> {cat.label}</button>
                     ))}
-                    {/* Chloe: Botão de Novidades melhorado! */}
                     <button onClick={handleToggleNew} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showNewOnly ? 'bg-pink-600 text-white shadow-[0_0_15px_rgba(219,39,119,0.5)]' : 'bg-slate-900/40 text-slate-500 hover:text-pink-400'}`}><Sparkles className="w-3.5 h-3.5" /> Novidades</button>
                 </div>
               </div>
@@ -276,30 +298,21 @@ const App: React.FC = () => {
         {isLoading ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-4">
             <Loader2 className="w-12 h-12 animate-spin text-brand-500" />
-            <p className="text-[10px] font-black uppercase tracking-widest">A ler o arquivo... hihi!</p>
+            <p className="text-[10px] font-black uppercase tracking-widest">A Chloe está a varrer o arquivo... hihi!</p>
           </div>
         ) : (
-          <>
-            {(currentPage === 'home' || currentPage === 'collection') && (
-              <div className="p-4 md:p-8 animate-fade-in">
-                <ImageGrid images={filteredImages} onImageClick={setSelectedImage} isAdmin={isAdmin} currentUser={currentUser} t={t.grid}/>
-              </div>
-            )}
-            {currentPage === 'themes' && <ThemesPage images={images} onThemeSelect={(themeId) => { setActiveTheme(themeId); setCurrentPage('home'); }} />}
-            {currentPage === 'stats' && <StatsSection images={images} stats={images.reduce((acc, img) => { if (img.continent) acc[img.continent] = (acc[img.continent] || 0) + 1; return acc; }, {} as any)} categoryStats={{ scratch: images.filter(i => i.category === 'raspadinha').length, lottery: images.filter(i => i.category === 'lotaria').length }} countryStats={images.reduce((acc, img) => { if (img.country) acc[img.country] = (acc[img.country] || 0) + 1; return acc; }, {} as any)} stateStats={images.reduce((acc, img) => { if (img.state) acc[img.state] = (acc[img.state] || 0) + 1; return acc; }, {} as any)} collectorStats={images.reduce((acc, img) => { const c = img.collector || 'Geral'; acc[c] = (acc[c] || 0) + 1; return acc; }, {} as any)} totalRecords={images.length} t={t.stats} currentUser={currentUser} />}
-            {currentPage === 'map' && <div className="p-10 h-full min-h-[600px]"><WorldMap images={images} activeContinent={activeContinent} onCountrySelect={(country) => { setActiveCountry(country); setActiveSubRegion(''); setCurrentPage('home'); }} t={t.grid} /></div>}
-            {currentPage === 'about' && <AboutPage t={t.about} isAdmin={isAdmin} founderPhoto={siteMetadata?.founderPhotoUrl} founderBio={siteMetadata?.founderBio} founderQuote={siteMetadata?.founderQuote} milestones={siteMetadata?.milestones} onUpdateFounderPhoto={(url) => setSiteMetadata(prev => prev ? {...prev, founderPhotoUrl: url} : {id: 'site_settings', founderPhotoUrl: url})} onUpdateMetadata={(data) => { const updated = {...siteMetadata, ...data} as SiteMetadata; setSiteMetadata(updated); storageService.saveSiteMetadata(updated); addSignal("Memórias atualizadas! hihi!", "success"); }} />}
-          </>
+          <div className="p-4 md:p-8 animate-fade-in">
+             <ImageGrid images={filteredImages} onImageClick={setSelectedImage} isAdmin={isAdmin} currentUser={currentUser} t={t.grid}/>
+          </div>
         )}
       </main>
 
       <Footer onNavigate={setCurrentPage} onWebsitesClick={() => setShowWebsites(true)} onRadioClick={() => setShowRadio(true)} visitorCount={siteMetadata?.visitorCount} onVisitorsClick={() => setShowVisitors(true)} />
 
-      {/* Chloe: Botão de Sincronização Ninja no tablet */}
       <button 
         onClick={handleForceRefresh}
         className="fixed bottom-4 left-4 z-[1001] p-2 bg-slate-900/90 border border-white/10 rounded-full text-slate-500 hover:text-brand-400 shadow-2xl backdrop-blur-md"
-        title="Sincronizar Arquivo"
+        title="Forçar Atualização"
       >
         <RefreshCw className="w-4 h-4" />
       </button>
