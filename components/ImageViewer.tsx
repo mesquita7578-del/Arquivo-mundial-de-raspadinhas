@@ -28,6 +28,8 @@ interface ImageViewerProps {
 const THEME_OPTIONS = [
   { id: 'animais', label: 'Animais' },
   { id: 'natal', label: 'Natal' },
+  { id: 'filmes', label: 'Filmes' },
+  { id: 'desenhos', label: 'Desenhos Animados' },
   { id: 'desporto', label: 'Desporto' },
   { id: 'ouro', label: 'Ouro' },
   { id: 'espaco', label: 'Espaço' },

@@ -23,6 +23,8 @@ interface UploadModalProps {
 const THEME_OPTIONS = [
   { id: 'animais', label: 'Animais' },
   { id: 'natal', label: 'Natal' },
+  { id: 'filmes', label: 'Filmes' },
+  { id: 'desenhos', label: 'Desenhos Animados' },
   { id: 'desporto', label: 'Desporto' },
   { id: 'ouro', label: 'Ouro' },
   { id: 'espaco', label: 'Espaço' },
@@ -335,7 +337,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                       </div>
                    </section>
 
-                   {/* NOVO: SECÇÃO DE TEMA */}
                    <section className="space-y-4">
                       <h3 className="text-[10px] font-black text-pink-500 uppercase tracking-[0.3em] flex items-center gap-2">
                         <Layout className="w-3 h-3" /> Curadoria Temática
