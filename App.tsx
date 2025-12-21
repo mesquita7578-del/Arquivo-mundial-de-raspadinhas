@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, Plus, Loader2, Sparkles, LayoutGrid, Trophy, Star, 
   Ticket, Layers, Diamond, Users, RefreshCw, CalendarCheck, CheckCircle2, AlertTriangle, Database, Wrench, ShieldAlert, X, Map as MapIcon,
-  MapPin, Clipboard
+  MapPin, Clipboard, Share2, Download
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { ImageGrid } from './components/ImageGrid';
@@ -25,7 +25,7 @@ import { translations, Language } from './translations';
 import { DivineSignal, Signal } from './components/DivineSignal';
 
 const RECENT_THRESHOLD = 2592000000;
-const VERSION = '11.4'; // Chloe: BACKUP MASTER 📁✨
+const VERSION = '11.5'; // Chloe: ETERNAL BACKUP 🛡️✨
 
 const App: React.FC = () => {
   const [images, setImages] = useState<ScratchcardData[]>([]);
@@ -260,64 +260,105 @@ const App: React.FC = () => {
       const fileName = `arquivo-jorge-v11-${new Date().toISOString().split('T')[0]}.json`;
 
       const exportOverlay = document.createElement('div');
+      exportOverlay.id = "chloe-export-overlay";
       exportOverlay.style.position = 'fixed';
       exportOverlay.style.inset = '0';
       exportOverlay.style.zIndex = '1000000';
-      exportOverlay.style.backgroundColor = 'rgba(2, 6, 23, 0.95)';
-      exportOverlay.style.backdropFilter = 'blur(10px)';
+      exportOverlay.style.backgroundColor = 'rgba(2, 6, 23, 0.98)';
+      exportOverlay.style.backdropFilter = 'blur(20px)';
       exportOverlay.style.display = 'flex';
       exportOverlay.style.alignItems = 'center';
       exportOverlay.style.justifyContent = 'center';
       exportOverlay.style.padding = '20px';
 
       exportOverlay.innerHTML = `
-        <div style="background:#0f172a; border:1px solid rgba(59, 130, 246, 0.3); padding:40px; border-radius:32px; text-align:center; max-width:500px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
-          <div style="background:rgba(59, 130, 246, 0.1); width:64px; height:64px; border-radius:20px; display:flex; align-items:center; justify-center; margin:0 auto 24px;">
-            <svg style="color:#3b82f6; width:32px; height:32px; margin: auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <div style="background:#0f172a; border:2px solid rgba(59, 130, 246, 0.5); padding:40px; border-radius:40px; text-align:center; max-width:500px; width: 100%; box-shadow: 0 0 50px rgba(0,0,0,0.8); animation: bounceIn 0.5s ease-out;">
+          <div style="background:rgba(59, 130, 246, 0.1); width:80px; height:80px; border-radius:30px; display:flex; align-items:center; justify-center; margin:0 auto 24px; border:1px solid rgba(59, 130, 246, 0.3);">
+            <svg style="color:#3b82f6; width:40px; height:40px; margin: auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
           </div>
-          <h2 style="color:white; font-family:sans-serif; font-weight:900; font-size:24px; margin-bottom:8px; text-transform:uppercase; letter-spacing:-0.025em;">Cópia de Segurança</h2>
-          <p style="color:#94a3b8; font-family:sans-serif; margin-bottom:32px; font-size:14px; line-height:1.6;">Vovô, escolha como quer guardar os seus dados:</p>
+          <h2 style="color:white; font-family:sans-serif; font-weight:900; font-size:28px; margin-bottom:12px; text-transform:uppercase; letter-spacing:-0.05em; font-style: italic;">Backup do Vovô</h2>
+          <p style="color:#94a3b8; font-family:sans-serif; margin-bottom:32px; font-size:15px; line-height:1.6; font-weight: 500;">Chloe preparou três formas de salvar os dados. Escolha a que funcionar melhor no seu tablet! hihi!</p>
           
-          <div style="display:grid; gap:12px;">
-            <button id="btn-download" style="background:#2563eb; color:white; padding:16px; border-radius:16px; font-weight:900; border:none; cursor:pointer; font-size:12px; text-transform:uppercase; letter-spacing:0.1em; transition:all 0.2s;">
-              1. Descarregar Ficheiro (.json)
+          <div style="display:grid; gap:16px;">
+            <button id="btn-share" style="background:#2563eb; color:white; padding:20px; border-radius:20px; font-weight:900; border:none; cursor:pointer; font-size:13px; text-transform:uppercase; letter-spacing:0.1em; display:flex; align-items:center; justify-content:center; gap:12px; box-shadow: 0 10px 20px rgba(37,99,235,0.3);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+              1. Enviar / Partilhar
             </button>
-            <button id="btn-copy" style="background:rgba(255,255,255,0.05); color:#cbd5e1; padding:16px; border-radius:16px; font-weight:900; border:1px solid rgba(255,255,255,0.1); cursor:pointer; font-size:12px; text-transform:uppercase; letter-spacing:0.1em; transition:all 0.2s;">
-              2. Copiar Texto (Plano B)
+            <button id="btn-download" style="background:rgba(255,255,255,0.05); color:white; padding:18px; border-radius:20px; font-weight:900; border:1px solid rgba(255,255,255,0.1); cursor:pointer; font-size:13px; text-transform:uppercase; letter-spacing:0.1em; display:flex; align-items:center; justify-content:center; gap:12px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              2. Baixar Ficheiro
+            </button>
+            <button id="btn-copy" style="background:rgba(255,255,255,0.02); color:#64748b; padding:18px; border-radius:20px; font-weight:900; border:1px dashed rgba(255,255,255,0.1); cursor:pointer; font-size:13px; text-transform:uppercase; letter-spacing:0.1em; display:flex; align-items:center; justify-content:center; gap:12px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+              3. Copiar Tudo
             </button>
           </div>
           
-          <button id="close-export" style="color:#64748b; background:none; border:none; cursor:pointer; margin-top:32px; font-size:12px; font-weight:700; text-transform:uppercase;">Cancelar</button>
+          <button id="close-export" style="color:#475569; background:none; border:none; cursor:pointer; margin-top:32px; font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.1em;">Voltar ao Arquivo</button>
         </div>
       `;
       document.body.appendChild(exportOverlay);
 
-      // Ações
+      // AÇÕES DO OVERLAY
       document.getElementById('close-export')?.addEventListener('click', () => document.body.removeChild(exportOverlay));
 
+      // 1. Partilha Nativa (Melhor para iPads/Tablets)
+      document.getElementById('btn-share')?.addEventListener('click', async () => {
+        try {
+          const file = new File([dataStr], fileName, { type: 'application/json' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: 'Arquivo Mundial - Backup',
+              text: 'Aqui está a minha coleção de raspadinhas vovô! hihi!'
+            });
+            addSignal("Partilhado!", "success");
+            document.body.removeChild(exportOverlay);
+          } else {
+            // Se o tablet não suportar partilha de ficheiros, tenta partilha de texto
+            await navigator.share({
+              title: 'Backup Archive',
+              text: dataStr
+            });
+            addSignal("Partilhado como texto!", "success");
+            document.body.removeChild(exportOverlay);
+          }
+        } catch (err) {
+          console.log("Partilha cancelada ou não suportada");
+        }
+      });
+
+      // 2. Download Tradicional (Reforçado)
       document.getElementById('btn-download')?.addEventListener('click', () => {
         const blob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
         link.download = fileName;
+        document.body.appendChild(link); // Importante para alguns tablets
         link.click();
-        URL.revokeObjectURL(url);
-        addSignal("Download iniciado!", "success");
-        setTimeout(() => document.body.removeChild(exportOverlay), 500);
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }, 100);
+        addSignal("A baixar...", "info");
       });
 
+      // 3. Copiar para Clipboard
       document.getElementById('btn-copy')?.addEventListener('click', async () => {
         try {
           await navigator.clipboard.writeText(dataStr);
-          addSignal("Copiado com sucesso!", "success");
-          setTimeout(() => document.body.removeChild(exportOverlay), 500);
+          addSignal("Copiado! Pode colar no Email.", "success");
+          document.body.removeChild(exportOverlay);
         } catch (err) {
           addSignal("Erro ao copiar!", "warning");
         }
       });
 
-    } catch (err) { addSignal("Erro no backup!", "warning"); }
+    } catch (err) { 
+      console.error(err);
+      addSignal("Erro Crítico no Backup!", "warning"); 
+    }
   };
 
   const handleImport = async (file: File) => {
