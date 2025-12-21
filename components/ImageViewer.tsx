@@ -8,7 +8,7 @@ import {
   LayoutGrid, Eye, User,
   RefreshCw, Layers as LayersIcon, ChevronLeft, ChevronRight,
   Maximize2, Activity, Ship, Palette, Calendar, Percent, Check, Star, ImagePlus, LayoutList,
-  Columns2, Grid3X3, Layout, StickyNote
+  Columns2, Grid3X3, Layout, StickyNote, AlertCircle
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent, LineType, CategoryItem } from '../types';
 
@@ -80,7 +80,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
 
   const seriesItems = useMemo(() => {
     if (!image.isSeries || !image.seriesGroupId) return [];
-    return contextImages.filter(img => img.seriesGroupId === image.seriesGroupId);
+    // Busca em todo o contexto para encontrar os "irmãos" da série
+    return contextImages.filter(img => img.seriesGroupId && img.seriesGroupId.toLowerCase() === image.seriesGroupId?.toLowerCase());
   }, [image, contextImages]);
 
   const localGallery = useMemo(() => {
@@ -124,6 +125,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
       setFormData(image);
       setActiveIndex(0);
       setIsEditing(false);
+      setShowSeriesComparison(false);
     }
   }, [image]);
 
@@ -192,7 +194,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                         </div>
                         <div>
                            <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">Comparação de Série</h3>
-                           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{seriesItems.length} Itens Encontrados no Grupo</p>
+                           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{seriesItems.length} Itens Encontrados no Grupo: <span className="text-brand-400">"{image.seriesGroupId}"</span></p>
                         </div>
                      </div>
                      <button 
@@ -203,27 +205,43 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                      </button>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                     {seriesItems.map((sItem) => (
-                        <div 
-                           key={sItem.id} 
-                           onClick={() => onImageSelect(sItem)}
-                           className={`group relative aspect-[3/4] bg-slate-900 rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${sItem.id === image.id ? 'border-brand-500 shadow-[0_0_30px_rgba(37,99,235,0.3)]' : 'border-white/5 hover:border-white/20'}`}
-                        >
-                           <img src={sItem.frontUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={sItem.gameName} />
-                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
-                           <div className="absolute bottom-3 left-3 right-3">
-                              <span className="text-[10px] font-black text-brand-400 block mb-0.5">#{sItem.gameNumber}</span>
-                              <span className="text-[9px] font-black text-white uppercase tracking-tighter truncate block">{sItem.gameName}</span>
-                           </div>
-                           {sItem.id === image.id && (
-                              <div className="absolute top-3 right-3 bg-brand-500 text-white p-1 rounded-full animate-pulse">
-                                 <Check className="w-3 h-3" />
-                              </div>
-                           )}
-                        </div>
-                     ))}
-                  </div>
+                  {seriesItems.length <= 1 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center space-y-6">
+                       <div className="bg-slate-900 p-8 rounded-[3rem] border border-brand-500/20 shadow-2xl">
+                          <AlertCircle className="w-16 h-16 text-brand-500 mx-auto mb-4 animate-pulse" />
+                          <h4 className="text-xl font-black text-white uppercase italic mb-2 tracking-tighter">Este item sente-se sozinho! hihi!</h4>
+                          <p className="text-slate-400 text-xs max-w-sm mx-auto leading-relaxed">
+                             Vovô Jorge, para aparecerem aqui mais raspadinhas desta série, o vovô tem de lhes dar o mesmo <strong>ID do Grupo</strong>: <br/>
+                             <span className="text-brand-400 font-mono mt-2 block bg-slate-950 p-2 rounded-lg">"{image.seriesGroupId}"</span>
+                          </p>
+                       </div>
+                       <div className="relative aspect-[3/4] w-48 bg-slate-950 rounded-2xl border-2 border-brand-500 shadow-[0_0_30px_rgba(37,99,235,0.2)] overflow-hidden">
+                          <img src={image.frontUrl} className="w-full h-full object-cover" alt={image.gameName} />
+                       </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                       {seriesItems.map((sItem) => (
+                          <div 
+                             key={sItem.id} 
+                             onClick={() => onImageSelect(sItem)}
+                             className={`group relative aspect-[3/4] bg-slate-900 rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${sItem.id === image.id ? 'border-brand-500 shadow-[0_0_30px_rgba(37,99,235,0.3)]' : 'border-white/5 hover:border-white/20'}`}
+                          >
+                             <img src={sItem.frontUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={sItem.gameName} />
+                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
+                             <div className="absolute bottom-3 left-3 right-3">
+                                <span className="text-[10px] font-black text-brand-400 block mb-0.5">#{sItem.gameNumber}</span>
+                                <span className="text-[9px] font-black text-white uppercase tracking-tighter truncate block">{sItem.gameName}</span>
+                             </div>
+                             {sItem.id === image.id && (
+                                <div className="absolute top-3 right-3 bg-brand-500 text-white p-1 rounded-full animate-pulse">
+                                   <Check className="w-3 h-3" />
+                                </div>
+                             )}
+                          </div>
+                       ))}
+                    </div>
+                  )}
                </div>
             ) : (
                <div className="flex-1 relative flex items-center justify-center p-6 md:p-10 overflow-hidden">
@@ -320,7 +338,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                                 <div className="space-y-3 animate-fade-in">
                                    <div className="relative">
                                       <input type="text" value={formData.seriesGroupId} onChange={e => handleChange('seriesGroupId', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-brand-500/50 rounded-xl outline-none uppercase font-black" placeholder="ID DO GRUPO (IGUAL PARA TODOS OS ITENS DA SÉRIE)" />
-                                      <span className="absolute -top-2 left-3 text-[7px] bg-slate-900 px-1 text-brand-400 font-black uppercase tracking-widest">ID do Grupo</span>
+                                      <span className="absolute -top-2 left-3 text-[7px] bg-slate-900 px-1 text-brand-400 font-black uppercase tracking-widest">ID do Grupo (IDÊNTICO para toda a série)</span>
                                    </div>
                                    <div className="relative">
                                       <input type="text" value={formData.seriesDetails || ''} onChange={e => handleChange('seriesDetails', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-brand-500/50 rounded-xl outline-none uppercase font-black" placeholder="EX: EDIÇÃO LIMITADA, VARIANTE B..." />
@@ -424,7 +442,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                                <div className="flex flex-wrap items-center gap-2">
                                   <button 
                                     onClick={() => setShowSeriesComparison(!showSeriesComparison)}
-                                    className={`flex items-center gap-1.5 px-3 py-1 rounded border transition-all ${showSeriesComparison ? 'bg-brand-600 text-white border-brand-400' : 'bg-brand-600/10 text-brand-400 border-brand-500/30 hover:bg-brand-600/20'}`}
+                                    className={`flex items-center gap-1.5 px-3 py-1 rounded border transition-all ${showSeriesComparison ? 'bg-brand-600 text-white border-brand-400 shadow-[0_0_15px_rgba(37,99,235,0.4)]' : 'bg-brand-600/10 text-brand-400 border-brand-500/30 hover:bg-brand-600/20'}`}
                                   >
                                      <Grid3X3 className="w-3 h-3" />
                                      <span className="text-[9px] font-black uppercase tracking-widest">
