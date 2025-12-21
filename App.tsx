@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, Plus, Loader2, Sparkles, Zap, LayoutGrid, Trophy, Star, 
   Ticket, Layers, Box, MapPin, X, Diamond, Crown, CheckCircle2, Users, Clock, ChevronDown, ChevronRight,
-  Ship, Landmark, Flag, Download, RefreshCw
+  Ship, Landmark, Flag, Download, RefreshCw, CalendarCheck
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { ImageGrid } from './components/ImageGrid';
@@ -26,7 +26,7 @@ import { DivineSignal, Signal } from './components/DivineSignal';
 
 const chloeChannel = typeof window !== 'undefined' && window.BroadcastChannel ? new BroadcastChannel('chloe_archive_sync') : null;
 const RECENT_THRESHOLD = 2592000000; // 30 dias
-const CURRENT_VERSION = '5.0';
+const CURRENT_VERSION = '7.0'; // Chloe: A MareTA GIGANTE!
 
 const App: React.FC = () => {
   const [images, setImages] = useState<ScratchcardData[]>([]);
@@ -45,6 +45,7 @@ const App: React.FC = () => {
   const [showWinnersOnly, setShowWinnersOnly] = useState(false);
   const [showSeriesOnly, setShowSeriesOnly] = useState(false);
   const [showNewOnly, setShowNewOnly] = useState(false);
+  const [showTodayOnly, setShowTodayOnly] = useState(false); // Chloe: NOVO FILTRO MARETA!
   const [isLoading, setIsLoading] = useState(true);
   
   const [selectedImage, setSelectedImage] = useState<ScratchcardData | null>(null);
@@ -82,14 +83,12 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    // Chloe: Força atualização se a versão for antiga
+    // Chloe: A MARETA GIGANTE NO CACHE!
     const savedVer = localStorage.getItem('chloe_archive_version');
     if (savedVer !== CURRENT_VERSION) {
       localStorage.setItem('chloe_archive_version', CURRENT_VERSION);
-      if (savedVer) {
-        handleForceRefresh();
-        return;
-      }
+      handleForceRefresh();
+      return;
     }
 
     loadAllData().then(() => {
@@ -101,7 +100,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleForceRefresh = async () => {
-    addSignal("Chloe a usar a mareta no tablet... hihi!", "info");
+    addSignal("Vovô, Chloe a bater com a mareta gigante... hihi!", "info");
     if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
       for (let registration of registrations) {
@@ -114,7 +113,8 @@ const App: React.FC = () => {
         await caches.delete(key);
       }
     }
-    window.location.href = window.location.origin + window.location.pathname + '?v=' + CURRENT_VERSION + '&t=' + Date.now();
+    // Chloe: Expulsão total da cache antiga
+    window.location.href = window.location.origin + window.location.pathname + '?mareta=' + Date.now();
   };
 
   const addSignal = (message: string, type: Signal['type'] = 'info') => {
@@ -122,32 +122,33 @@ const App: React.FC = () => {
     setSignals(prev => [...prev, { id, message, type }]);
   };
 
-  // Chloe: Lógica de filtragem REFEITA para ser infalível!
   const filteredImages = useMemo(() => {
     if (!images) return [];
     
     return images.filter(img => {
-      // 1. Se "Novidades" estiver ligado, prioridade total ao tempo!
+      const imgDate = img.createdAt || 0;
+      const now = Date.now();
+
+      // 1. Prioridade Absoluta: REGISTADOS HOJE (24h)
+      if (showTodayOnly) {
+        const startOfToday = new Date().setHours(0, 0, 0, 0);
+        const isToday = imgDate >= startOfToday;
+        if (!isToday) return false;
+        // Se registado hoje, ignoramos filtros de país/continente para mostrar tudo o que o vovô acabou de fazer!
+        return true; 
+      }
+
+      // 2. Prioridade: NOVIDADES (30 dias)
       if (showNewOnly) {
-        const isRecent = (Date.now() - (img.createdAt || 0)) < RECENT_THRESHOLD;
+        const isRecent = (now - imgDate) < RECENT_THRESHOLD;
         if (!isRecent) return false;
-        
-        // Dentro das novidades, ainda permitimos pesquisar por nome
-        if (searchTerm) {
-          const s = searchTerm.toLowerCase();
-          const nameMatch = (img.gameName || "").toLowerCase().includes(s);
-          const countryMatch = (img.country || "").toLowerCase().includes(s);
-          if (!nameMatch && !countryMatch) return false;
-        }
-        
-        // Chloe: Nas novidades, ignoramos filtros de país/continente para mostrar TUDO o que é novo!
         return true;
       }
 
-      // 2. Filtros normais (quando novidades está desligado)
+      // 3. Filtros Normais
       const gName = (img.gameName || "").toLowerCase();
       const s = searchTerm.toLowerCase();
-      const matchesSearch = !searchTerm || gName.includes(s) || (img.country || "").toLowerCase().includes(s);
+      const matchesSearch = !searchTerm || gName.includes(s) || (img.country || "").toLowerCase().includes(s) || (img.customId || "").toLowerCase().includes(s);
       
       const matchesContinent = activeContinent === 'Mundo' || img.continent === activeContinent;
       const matchesCategory = activeCategory === 'all' || img.category === activeCategory;
@@ -171,7 +172,7 @@ const App: React.FC = () => {
 
       return matchesSearch && matchesContinent && matchesLocation && matchesCategory && matchesTheme && matchesRarity && matchesWinners && matchesSeries;
     });
-  }, [images, searchTerm, activeContinent, activeCountry, activeSubRegion, activeCategory, activeTheme, showRaritiesOnly, showWinnersOnly, showSeriesOnly, showNewOnly, currentPage, currentUser]);
+  }, [images, searchTerm, activeContinent, activeCountry, activeSubRegion, activeCategory, activeTheme, showRaritiesOnly, showWinnersOnly, showSeriesOnly, showNewOnly, showTodayOnly, currentPage, currentUser]);
 
   const handleExport = async () => {
     try {
@@ -180,56 +181,35 @@ const App: React.FC = () => {
       const blob = new Blob([dataStr], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
       const fileName = `backup-arquivo-${new Date().toISOString().split('T')[0]}.json`;
-      
       const link = document.createElement('a');
       link.href = url;
       link.download = fileName;
       document.body.appendChild(link);
       link.click();
-      
-      setTimeout(() => {
-        addSignal(`Pronto! Use o botão azul se não descarregar!`, "success");
-        const fallback = document.createElement('div');
-        fallback.style.position = 'fixed';
-        fallback.style.top = '100px';
-        fallback.style.left = '50%';
-        fallback.style.transform = 'translateX(-50%)';
-        fallback.style.zIndex = '10000';
-        fallback.id = 'manual-download-btn';
-        fallback.innerHTML = `
-          <a href="${url}" download="${fileName}" style="background:#2563eb; color:white; padding:20px 40px; border-radius:20px; font-weight:900; text-decoration:none; box-shadow: 0 10px 40px rgba(0,0,0,0.5); display:flex; align-items:center; gap:10px; border: 4px solid white;">
-             <span>CLIQUE AQUI PARA GUARDAR O BACKUP</span>
-          </a>
-        `;
-        document.body.appendChild(fallback);
-        setTimeout(() => {
-           const el = document.getElementById('manual-download-btn');
-           if (el) document.body.removeChild(el);
-        }, 15000);
-      }, 1000);
+      addSignal(`Backup Guardado! hihi!`, "success");
     } catch (err) {
-      addSignal("Erro no tablet. Recarregue!", "warning");
+      addSignal("Erro no tablet!", "warning");
     }
   };
 
-  // Chloe: Fix to implement handleImport correctly using storageService.importData
   const handleImport = async (file: File) => {
     try {
-      addSignal("Chloe a ler o backup... hihi!", "info");
+      addSignal("A ler backup no tablet... hihi!", "info");
       const text = await file.text();
       const count = await storageService.importData(text);
-      addSignal(`${count} registos processados! hihi!`, "success");
+      addSignal(`${count} registos integrados! hihi!`, "success");
       await loadAllData();
     } catch (err) {
-      addSignal("Erro na importação! O ficheiro é válido? hihi!", "warning");
+      addSignal("Erro na importação!", "warning");
     }
   };
 
-  const handleToggleNew = () => {
-    const willShow = !showNewOnly;
-    setShowNewOnly(willShow);
+  const handleToggleToday = () => {
+    const willShow = !showTodayOnly;
+    setShowTodayOnly(willShow);
     if (willShow) {
-      // Quando liga as novidades, a Chloe limpa a mesa para o vovô ver tudo!
+      // Chloe: Limpeza total para ver o que registou HOJE!
+      setShowNewOnly(false);
       setActiveCategory('all');
       setActiveCountry('');
       setActiveSubRegion('');
@@ -240,7 +220,26 @@ const App: React.FC = () => {
       setShowWinnersOnly(false);
       setSearchTerm('');
       setCurrentPage('home');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      addSignal("A mostrar tudo o que registou HOJE! hihi!");
+    }
+  };
+
+  const handleToggleNew = () => {
+    const willShow = !showNewOnly;
+    setShowNewOnly(willShow);
+    if (willShow) {
+      setShowTodayOnly(false);
+      setActiveCategory('all');
+      setActiveCountry('');
+      setActiveSubRegion('');
+      setActiveTheme('');
+      setActiveContinent('Mundo');
+      setShowSeriesOnly(false);
+      setShowRaritiesOnly(false);
+      setShowWinnersOnly(false);
+      setSearchTerm('');
+      setCurrentPage('home');
+      addSignal("Novidades dos últimos 30 dias! hihi!");
     }
   };
 
@@ -254,7 +253,7 @@ const App: React.FC = () => {
         recentCount={images.filter(img => (Date.now() - (img.createdAt || 0)) < RECENT_THRESHOLD).length}
         collectionCount={images.filter(img => img.owners?.includes(currentUser || '')).length}
         onCountrySelect={(cont, loc, sub) => {
-          setActiveContinent(cont); setActiveCountry(loc); setActiveSubRegion(sub || ''); setActiveTheme(''); setCurrentPage('home'); setShowNewOnly(false); setShowSeriesOnly(false); setSearchTerm(''); 
+          setActiveContinent(cont); setActiveCountry(loc); setActiveSubRegion(sub || ''); setActiveTheme(''); setCurrentPage('home'); setShowNewOnly(false); setShowTodayOnly(false); setShowSeriesOnly(false); setSearchTerm(''); 
         }}
         countriesByContinent={images.reduce((acc, img) => { if (!acc[img.continent]) acc[img.continent] = []; if (!acc[img.continent].includes(img.country)) acc[img.continent].push(img.country); return acc; }, {} as any)}
       />
@@ -265,9 +264,9 @@ const App: React.FC = () => {
             <div className="flex flex-col lg:flex-row items-center justify-between gap-1 md:gap-3 py-1">
               <div className="flex flex-wrap items-center justify-center gap-1 md:gap-1.5">
                 <div className="flex items-center gap-1 border-r border-white/10 pr-1 mr-0.5">
-                  <button onClick={() => { setShowSeriesOnly(!showSeriesOnly); setShowNewOnly(false); }} className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showSeriesOnly ? 'bg-blue-600 text-white' : 'bg-slate-900/40 text-slate-500'}`}><Layers className="w-3 h-3" /> Séries</button>
-                  <button onClick={() => { setShowRaritiesOnly(!showRaritiesOnly); setShowNewOnly(false); }} className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950' : 'bg-slate-900/40 text-slate-500'}`}><Diamond className="w-3 h-3" /> Raridades</button>
-                  <button onClick={() => { setShowWinnersOnly(!showWinnersOnly); setShowNewOnly(false); }} className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white' : 'bg-slate-900/40 text-slate-500'}`}><Trophy className="w-3 h-3" /> Premiadas</button>
+                  <button onClick={() => { setShowSeriesOnly(!showSeriesOnly); setShowNewOnly(false); setShowTodayOnly(false); }} className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showSeriesOnly ? 'bg-blue-600 text-white' : 'bg-slate-900/40 text-slate-500'}`}><Layers className="w-3 h-3" /> Séries</button>
+                  <button onClick={() => { setShowRaritiesOnly(!showRaritiesOnly); setShowNewOnly(false); setShowTodayOnly(false); }} className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showRaritiesOnly ? 'bg-amber-500 text-slate-950' : 'bg-slate-900/40 text-slate-500'}`}><Diamond className="w-3 h-3" /> Raridades</button>
+                  <button onClick={() => { setShowWinnersOnly(!showWinnersOnly); setShowNewOnly(false); setShowTodayOnly(false); }} className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showWinnersOnly ? 'bg-emerald-500 text-white' : 'bg-slate-900/40 text-slate-500'}`}><Trophy className="w-3 h-3" /> Premiadas</button>
                 </div>
                 <div className="flex flex-wrap items-center gap-1 py-1">
                     {[
@@ -275,9 +274,17 @@ const App: React.FC = () => {
                       { id: 'raspadinha', label: 'Raspadinhas', icon: Ticket },
                       { id: 'lotaria', label: 'Lotarias', icon: Star },
                     ].map(cat => (
-                      <button key={cat.id} onClick={() => { setActiveCategory(cat.id); setShowNewOnly(false); }} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white' : 'bg-slate-900/40 text-slate-500'}`}><cat.icon className="w-3 h-3" /> {cat.label}</button>
+                      <button key={cat.id} onClick={() => { setActiveCategory(cat.id); setShowNewOnly(false); setShowTodayOnly(false); }} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id ? 'bg-brand-600 text-white' : 'bg-slate-900/40 text-slate-500'}`}><cat.icon className="w-3 h-3" /> {cat.label}</button>
                     ))}
-                    <button onClick={handleToggleNew} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showNewOnly ? 'bg-pink-600 text-white shadow-[0_0_15px_rgba(219,39,119,0.5)]' : 'bg-slate-900/40 text-slate-500 hover:text-pink-400'}`}><Sparkles className="w-3.5 h-3.5" /> Novidades</button>
+                    
+                    {/* Chloe: Botão HOJE com Mareta! */}
+                    <button onClick={handleToggleToday} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showTodayOnly ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)]' : 'bg-slate-900/40 text-slate-500 hover:text-red-400'}`}>
+                      <CalendarCheck className="w-3.5 h-3.5" /> HOJE
+                    </button>
+
+                    <button onClick={handleToggleNew} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showNewOnly ? 'bg-pink-600 text-white shadow-[0_0_15px_rgba(219,39,119,0.5)]' : 'bg-slate-900/40 text-slate-500 hover:text-pink-400'}`}>
+                      <Sparkles className="w-3.5 h-3.5" /> Novidades
+                    </button>
                 </div>
               </div>
               <div className="flex items-center gap-2 w-full lg:w-auto">
@@ -298,10 +305,15 @@ const App: React.FC = () => {
         {isLoading ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-4">
             <Loader2 className="w-12 h-12 animate-spin text-brand-500" />
-            <p className="text-[10px] font-black uppercase tracking-widest">A Chloe está a varrer o arquivo... hihi!</p>
+            <p className="text-[10px] font-black uppercase tracking-widest">Chloe: Batendo com a Mareta Gigante V7... hihi!</p>
           </div>
         ) : (
           <div className="p-4 md:p-8 animate-fade-in">
+             {showTodayOnly && images.filter(img => (img.createdAt || 0) >= new Date().setHours(0,0,0,0)).length === 0 && (
+               <div className="text-center py-20 bg-slate-900/20 border border-dashed border-slate-800 rounded-3xl">
+                  <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Vovô, ainda não registou nada hoje no tablet! hihi!</p>
+               </div>
+             )}
              <ImageGrid images={filteredImages} onImageClick={setSelectedImage} isAdmin={isAdmin} currentUser={currentUser} t={t.grid}/>
           </div>
         )}
@@ -312,7 +324,7 @@ const App: React.FC = () => {
       <button 
         onClick={handleForceRefresh}
         className="fixed bottom-4 left-4 z-[1001] p-2 bg-slate-900/90 border border-white/10 rounded-full text-slate-500 hover:text-brand-400 shadow-2xl backdrop-blur-md"
-        title="Forçar Atualização"
+        title="MARETA GIGANTE"
       >
         <RefreshCw className="w-4 h-4" />
       </button>

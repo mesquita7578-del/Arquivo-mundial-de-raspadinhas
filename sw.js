@@ -1,5 +1,6 @@
 
-const CACHE_NAME = 'raspadinhas-arquivo-v5'; // Chloe: V5 - Agora o tablet tem de obedecer!
+const CACHE_NAME = 'raspadinhas-arquivo-v7'; // Chloe: V7 - A MARETA GIGANTE!
+
 const urlsToCache = [
   '/',
   '/index.html',
