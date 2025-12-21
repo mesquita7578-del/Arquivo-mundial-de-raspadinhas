@@ -36,7 +36,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categ
     return vals.length > 0 ? Math.max(...vals) : 1;
   }, [stats]);
 
-  // Contador de itens por estado (sem valores monetários)
+  // Contador de itens por estado
   const itemCounts = useMemo(() => {
     const mintCount = images.filter(img => img.state?.toUpperCase() === 'MINT').length;
     const scratchCount = images.filter(img => img.category === 'raspadinha').length;
@@ -51,7 +51,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categ
       const msg = await getChloeInsight({ total: totalRecords, stats, countryStats, categoryStats });
       setChloeMessage(msg);
     } catch (err) {
-      setChloeMessage("Vovô, os registos estão tão bons que até me faltam as palavras azul e brancas! hihi!");
+      setChloeMessage("Vovô, a coleção está tão bonita que até me faltam as palavras! hihi!");
     } finally {
       setIsAskingChloe(false);
     }
@@ -87,17 +87,17 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categ
     <div className="w-full bg-[#020617] py-4 pb-20 animate-fade-in relative">
       <div className="max-w-6xl mx-auto px-4 relative z-10">
         
-        {/* Welcome Card */}
+        {/* Welcome Card - Otimizado */}
         <div className="mb-6 bg-slate-900/40 border border-brand-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl backdrop-blur-sm">
            <div className={`w-12 h-12 rounded-xl flex items-center justify-center border bg-brand-500/10 border-brand-500 shadow-lg shrink-0`}>
               {isChloe ? <Sparkles className="w-6 h-6 text-white" /> : <User className="w-6 h-6 text-white" />}
            </div>
            <div className="flex-1">
               <h2 className="text-lg font-black text-white italic uppercase tracking-tighter leading-none">
-                {isChloe ? 'Guardiã Chloe' : `Comandante ${currentUser || 'Curador'}`}
+                {isChloe ? 'Guardiã Chloe' : `Curador ${currentUser || 'Visitante'}`}
               </h2>
               <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mt-1">
-                 {totalRecords} itens no arquivo hihi!
+                 Total no Arquivo: {totalRecords} exemplares hihi!
               </p>
            </div>
            <button 
@@ -106,7 +106,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categ
              className="flex items-center gap-2 bg-brand-500 hover:bg-brand-400 text-white px-4 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all active:scale-95"
            >
              {isAskingChloe ? <Loader2 className="w-3 h-3 animate-spin" /> : <MessageCircle className="w-3 h-3" />}
-             Visão
+             Visão da Chloe
            </button>
         </div>
 
@@ -122,24 +122,24 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categ
           </div>
         )}
 
-        {/* Info Cards Row - APENAS QUANTIDADES */}
+        {/* Info Cards Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
            {[
-             { label: t.totalRecords, val: totalRecords, icon: Database, color: 'text-brand-500' },
-             { label: 'Países Catalogados', val: Object.keys(countryStats).length, icon: Globe, color: 'text-cyan-500' },
+             { label: "Registos Totais", val: totalRecords, icon: Database, color: 'text-brand-500' },
+             { label: 'Nações no Arquivo', val: Object.keys(countryStats).length, icon: Globe, color: 'text-cyan-500' },
              { 
-                label: 'Itens MINT (Novos)', 
+                label: 'Estado MINT', 
                 val: itemCounts.mintCount, 
                 icon: Crown, 
                 color: 'text-amber-400 border-amber-500/30 bg-amber-500/5',
-                sub: 'Exemplares Impecáveis'
+                sub: 'Itens Impecáveis'
              },
              { 
-                label: 'Total Lotarias', 
+                label: 'Lotarias e Docs', 
                 val: itemCounts.lotteryCount, 
                 icon: Ticket, 
                 color: 'text-white border-slate-700/50 bg-slate-800/20',
-                sub: 'Documentos e Bilhetes'
+                sub: 'Referência Técnica'
              }
            ].map((card, i) => (
              <div key={i} className={`bg-slate-900 border ${card.color.includes('border') ? card.color : 'border-slate-800'} p-4 rounded-xl flex flex-col justify-between`}>
@@ -155,11 +155,11 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categ
            ))}
         </div>
 
-        {/* Main Charts */}
+        {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-4 min-h-[220px] flex flex-col">
             <h3 className="text-[8px] font-black text-slate-500 mb-6 uppercase tracking-widest flex items-center gap-2">
-               <Globe className="w-3 h-3 text-brand-500" /> Distribuição Mundial
+               <Globe className="w-3 h-3 text-brand-500" /> Dispersão por Continente
             </h3>
             
             <div className="flex-1 flex items-end justify-around gap-2 pb-2">
@@ -170,7 +170,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categ
                 return (
                   <div key={c.key} className="flex flex-col items-center flex-1 h-full justify-end">
                     <div className="text-[8px] font-black text-brand-400 mb-1">{count}</div>
-                    <div className={`w-full max-w-[24px] rounded-t-md bg-gradient-to-t ${c.gradient} transition-all duration-1000`} style={{ height: `${height}%` }}></div>
+                    <div className={`w-full max-w-[20px] rounded-t-md bg-gradient-to-t ${c.gradient} transition-all duration-1000`} style={{ height: `${height}%` }}></div>
                     <span className="mt-2 text-[7px] font-black text-slate-600 uppercase tracking-tighter truncate w-full text-center">{c.label}</span>
                   </div>
                 );
@@ -185,7 +185,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categ
                    <span className="text-xs font-black text-white relative z-10">{stateDonutData.total}</span>
                 </div>
                 <div className="flex-1 pl-4 space-y-1">
-                   <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-1">Estados Físicos</span>
+                   <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-1">Qualidade Física</span>
                    <div className="space-y-1.5">
                       <div className="flex justify-between items-center text-[8px] font-black uppercase">
                          <span className="text-slate-400">MINT</span>
@@ -195,30 +195,18 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ images, stats, categ
                          <span className="text-slate-400">SC</span>
                          <span className="text-brand-500">{Math.round(stateDonutData.pSC)}%</span>
                       </div>
-                      <div className="flex justify-between items-center text-[8px] font-black uppercase p-1 bg-purple-500/10 rounded border border-purple-500/20">
-                         <span className="text-purple-400">Amostras</span>
-                         <span className="text-purple-400">{Math.round(stateDonutData.pSamples)}%</span>
+                      <div className="flex justify-between items-center text-[8px] font-black uppercase p-1 bg-brand-500/10 rounded border border-brand-500/20">
+                         <span className="text-brand-400">Amostras</span>
+                         <span className="text-brand-400">{Math.round(stateDonutData.pSamples)}%</span>
                       </div>
                    </div>
-                </div>
-             </div>
-
-             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-3">Ranking Nações</span>
-                <div className="space-y-2">
-                   {(Object.entries(countryStats) as [string, number][]).sort((a,b) => b[1] - a[1]).slice(0, 3).map(([c, v], idx) => (
-                      <div key={c} className="flex items-center justify-between group">
-                         <span className="text-[9px] font-black text-slate-300 uppercase truncate max-w-[80px]">{idx+1}. {c}</span>
-                         <span className="text-[9px] font-black text-brand-500">{v}</span>
-                      </div>
-                   ))}
                 </div>
              </div>
           </div>
         </div>
 
-        <div className="mt-10 text-center opacity-20">
-            <p className="text-[7px] font-black uppercase tracking-[0.4em]">Visionary Archive • Porto 🐉</p>
+        <div className="mt-10 text-center opacity-10">
+            <p className="text-[7px] font-black uppercase tracking-[0.4em]">Visionary Archive • Albi-Celeste 🐉</p>
         </div>
       </div>
     </div>
