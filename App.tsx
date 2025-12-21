@@ -24,9 +24,10 @@ import { ScratchcardData, CategoryItem, SiteMetadata, Continent, VisitorEntry } 
 import { translations, Language } from './translations';
 import { DivineSignal, Signal } from './components/DivineSignal';
 
-// Chloe: Suporte seguro para BroadcastChannel (tablets antigos podem não ter)
-const chloeChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('chloe_archive_sync') : null;
-const RECENT_THRESHOLD = 172800000; // 48 horas
+// Chloe: Suporte seguro para tablets que podem não ter BroadcastChannel
+const chloeChannel = typeof window !== 'undefined' && window.BroadcastChannel ? new BroadcastChannel('chloe_archive_sync') : null;
+// Chloe: Aumentamos para 7 dias (em milissegundos) para garantir que sempre haja novidades!
+const RECENT_THRESHOLD = 604800000; 
 
 const App: React.FC = () => {
   const [images, setImages] = useState<ScratchcardData[]>([]);
@@ -204,32 +205,37 @@ const App: React.FC = () => {
 
   const handleExport = async () => {
     try {
-      addSignal("A preparar backup... hihi!", "info");
+      addSignal("Vovô Jorge, a Chloe está a preparar o backup... hihi!", "info");
+      
+      // Chloe: Garantir que os dados estão prontos antes de criar o link
       const dataStr = await storageService.exportData();
-      if (!dataStr || dataStr === '{}') {
-        throw new Error("Dados vazios");
+      if (!dataStr || dataStr.length < 10) {
+        throw new Error("Dados insuficientes para backup");
       }
       
+      // Chloe: Técnica de download robusta para tablets (bloqueio de pop-up bypass)
       const blob = new Blob([dataStr], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `backup-arquivo-${new Date().toISOString().split('T')[0]}.json`;
+      link.setAttribute('download', `backup-arquivo-${new Date().toISOString().split('T')[0]}.json`);
       
-      // Chloe: Obrigatório para alguns navegadores mobile
+      // Chloe: Obrigatório anexar ao corpo no mobile para o clique funcionar
       document.body.appendChild(link);
       link.click();
       
-      // Cleanup imediato
+      // Cleanup imediato após o clique
       setTimeout(() => {
-        document.body.removeChild(link);
+        if (document.body.contains(link)) {
+          document.body.removeChild(link);
+        }
         window.URL.revokeObjectURL(url);
-      }, 100);
+      }, 500);
       
       addSignal("Arquivo exportado com sucesso! hihi!", "success");
     } catch (err) {
-      console.error("Erro export:", err);
-      addSignal("O tablet bloqueou o backup ou os dados são muito grandes.", "warning");
+      console.error("Erro na exportação para tablet:", err);
+      addSignal("O tablet bloqueou o ficheiro. Verifique as definições de download!", "warning");
     }
   };
 
@@ -243,7 +249,6 @@ const App: React.FC = () => {
         setImages(all || []);
         addSignal(`${count} itens integrados no arquivo! hihi!`, "success");
       } catch (err) {
-        console.error("Erro import:", err);
         addSignal("O ficheiro não é válido ou está corrompido! hihi!", "warning");
       }
     };
@@ -278,7 +283,7 @@ const App: React.FC = () => {
           setCurrentPage('home');
           setShowNewOnly(false);
           setShowSeriesOnly(false);
-          setSearchTerm(''); // Chloe: Limpar pesquisa ao mudar país
+          setSearchTerm(''); 
         }}
         countriesByContinent={images.reduce((acc, img) => {
           if (!acc[img.continent]) acc[img.continent] = [];
@@ -340,7 +345,7 @@ const App: React.FC = () => {
                     
                     <button 
                       onClick={() => { 
-                        // Chloe: Reset absoluto para garantir que novidades aparecem no tablet!
+                        // Chloe: Reset Absoluto para o tablet não falhar!
                         setCurrentPage('home');
                         const willShow = !showNewOnly;
                         setShowNewOnly(willShow); 
@@ -351,7 +356,9 @@ const App: React.FC = () => {
                         setActiveCountry(''); 
                         setActiveSubRegion(''); 
                         setActiveTheme(''); 
-                        setSearchTerm(''); // Limpar busca para não filtrar indevidamente
+                        setSearchTerm(''); 
+                        // Forçar scroll para o topo para as novidades aparecerem logo
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                       }} 
                       className={`flex items-center gap-2 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${showNewOnly ? 'bg-pink-600 text-white border border-pink-400/30 shadow-[0_0_15px_rgba(219,39,119,0.4)]' : 'bg-slate-900/40 border border-white/5 text-slate-500 hover:text-pink-400'}`}
                     >
@@ -491,7 +498,7 @@ const App: React.FC = () => {
         <ImageViewer 
           image={selectedImage} onClose={() => setSelectedImage(null)}
           onUpdate={async (data) => { await storageService.save(data); setImages(images.map(img => img.id === data.id ? data : img)); setSelectedImage(data); addSignal("Registo atualizado! hihi!", "info"); }}
-          onDelete={async (id) => { await storageService.delete(id); setImages(images.filter(img => img.id !== id)); setSelectedImage(null); addSignal("Item removido.", "warning"); }}
+          onDelete={async (id) => { await storageService.delete(id); setImages(images.filter(img => id !== id)); setSelectedImage(null); addSignal("Item removido.", "warning"); }}
           isAdmin={isAdmin} currentUser={currentUser} contextImages={images} onImageSelect={setSelectedImage} t={t.viewer} categories={categories}
         />
       )}
