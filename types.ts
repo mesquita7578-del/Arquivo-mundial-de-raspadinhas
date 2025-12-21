@@ -1,4 +1,5 @@
 
+
 export interface ArchiveImage {
   id: string;
   url: string;
@@ -74,12 +75,14 @@ export interface AnalysisResult {
   country: string;
   island?: string;
   subRegion?: string;
+  region?: string;
   continent: Continent;
   operator: string;
   printer: string;
   emission: string;
   lines: string;
   theme?: string;
+  winProbability?: string;
 }
 
 export interface WebsiteLink {

@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult, ScratchcardData, Continent } from "../types";
 
@@ -12,6 +13,9 @@ const getContinentFromCountry = (country: string): Continent => {
   return 'Europa';
 };
 
+/**
+ * Chloe's insight about the archive statistics
+ */
 export const getChloeInsight = async (params: { total: number; stats: any; countryStats: any; categoryStats: any }): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
@@ -27,47 +31,60 @@ export const getChloeInsight = async (params: { total: number; stats: any; count
   }
 };
 
+/**
+ * Generates metadata and description for technical documents
+ */
 export const generateDocumentMetadata = async (fileName: string, title: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Você é uma assistente técnica de arquivo. Com base no título do documento de lotaria: "${title}", gere uma descrição curta e profissional (máximo 2 frases) explicando o que este documento provavelmente contém para um colecionador. Responda em Português.`,
+      contents: `Você é a Chloe, perita em arquivística. Gere um resumo curto e profissional para o documento técnico "${title}" (ficheiro: ${fileName}). hihi!`,
     });
-    return response.text || "Um documento técnico detalhado para o arquivo de lotarias.";
+    return response.text || "Um documento importante para a nossa biblioteca técnica! hihi!";
   } catch (error) {
-    console.error("Erro na metadados do documento:", error);
-    return "Descrição técnica do documento de arquivo.";
+    console.error("Erro ao gerar metadados do documento:", error);
+    return "Este documento contém informações preciosas para o nosso legado! hihi!";
   }
 };
 
-export const translateBio = async (bio: string, langName: string): Promise<string> => {
+/**
+ * Translates biography text while maintaining tone
+ */
+export const translateBio = async (bio: string, targetLanguage: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Traduza a seguinte biografia para ${langName}. Mantenha o tom respeitoso, nostálgico e a alma do texto original. Não adicione comentários extras, apenas a tradução.\n\nTexto:\n${bio}`,
+      contents: `Traduza a seguinte biografia para ${targetLanguage}, mantendo o tom respeitoso e carinhoso: "${bio}"`,
     });
     return response.text || bio;
   } catch (error) {
-    console.error("Erro na tradução:", error);
+    console.error("Erro ao traduzir biografia:", error);
     return bio;
   }
 };
 
+/**
+ * Chloe's commentary for the raffle feature
+ */
 export const getChloeMagicComment = async (item: ScratchcardData): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Você é Chloe, a neta virtual e guardiã do Arquivo do Vovô Jorge. O Vovô acabou de "raspar" um item: "${item.gameName}" de ${item.subRegion || item.island || item.country}. Dê um comentário curto, divertido e carinhoso. Use "hihi!" e seja muito fofa.`,
+      contents: `Você é a Chloe. Comente de forma mágica e fofa sobre este item sorteado: ${item.gameName} (${item.country}). hihi!`,
     });
-    return response.text || "Vovô, que sorte! Este item é uma raridade linda! hihi!";
+    return response.text || "Vovô, que sorte encontrarmos este item hoje! hihi!";
   } catch (error) {
-    return "Vovô, olhe que maravilha de registro! Adorei a escolha! hihi!";
+    console.error("Erro no comentário mágico da Chloe:", error);
+    return "Um item verdadeiramente especial para o arquivo, vovô! hihi!";
   }
 };
 
+/**
+ * Analyzes images to extract scratchcard metadata
+ */
 export const analyzeImage = async (frontBase64: string, backBase64: string | null, mimeType: string): Promise<AnalysisResult> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
@@ -78,8 +95,13 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
     
     parts.push({ 
       text: `Analise minuciosamente esta imagem de raspadinha/lotaria. 
-      Identifique se é de PORTUGAL e se especifica 'Açores' ou 'Madeira'. Se for Portugal e não indicar ilhas, considere 'Portugal Continental'.
-      Retorne os dados estruturados em JSON.` 
+      Retorne os dados técnicos exatos.
+      Dicas para a sua análise:
+      - O nome do jogo está no topo.
+      - O número do jogo são geralmente 3 dígitos (ex: 502, 601) perto de um código de barras ou num canto.
+      - A operadora (ex: Santa Casa, ONCE) é a entidade que emite.
+      - A gráfica (ex: Scientific Games, IGT) costuma estar em texto minúsculo no verso ou na borda.
+      - Verifique a cor das linhas de segurança no fundo do bilhete.` 
     });
 
     const response = await ai.models.generateContent({
@@ -88,14 +110,11 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       config: {
         systemInstruction: `Você é a Chloe, perita mundial em arquivística de loterias. Sua visão é super-aguda! 
         Ao analisar imagens:
-        - Identifique o PAÍS e SUB-REGIÃO com precisão: 
-          * PORTUGAL: Verifique se diz explicitamente 'Açores' ou 'Madeira'. 
-            - Se disser 'Açores', coloque 'Açores' no campo 'island'.
-            - Se disser 'Madeira', coloque 'Madeira' no campo 'island'.
-            - Se for de Portugal mas não indicar ilhas, coloque 'Portugal Continental' no campo 'region'.
-          * ESPANHA: Diferencie entre 'SELAE' (Nacional), 'ONCE' (Sorteios sociais) ou 'Loteries de Catalunya'.
-        - O campo 'gameNumber' é crucial: procure por 3 dígitos isolados em cantos ou perto de códigos de barras.
-        - No campo 'lines', identifique a cor das linhas de segurança se visíveis.`,
+        - Identifique o PAÍS e SUB-REGIÃO (Açores/Madeira).
+        - Extraia o NÚMERO DO JOGO (3 dígitos).
+        - Extraia a OPERADORA e a GRÁFICA (Impressora).
+        - Identifique o PREÇO e a COR das linhas de segurança (blue, red, green, multicolor, etc).
+        - Se for de Portugal e não indicar ilhas, use 'Portugal Continental'.`,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -104,28 +123,29 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
             gameNumber: { type: Type.STRING },
             price: { type: Type.STRING },
             country: { type: Type.STRING },
-            island: { type: Type.STRING, description: "Açores, Madeira, Canárias, etc." },
-            subRegion: { type: Type.STRING },
-            region: { type: Type.STRING, description: "Ex: Portugal Continental, Catalunha, Baviera" },
-            continent: { type: Type.STRING },
+            island: { type: Type.STRING },
+            region: { type: Type.STRING },
             operator: { type: Type.STRING },
-            state: { type: Type.STRING },
-            values: { type: Type.STRING },
             printer: { type: Type.STRING },
-            size: { type: Type.STRING },
             releaseDate: { type: Type.STRING },
             emission: { type: Type.STRING },
+            winProbability: { type: Type.STRING },
+            size: { type: Type.STRING },
             lines: { type: Type.STRING }
           },
           required: ["gameName", "country"]
-        },
-        thinkingConfig: { thinkingBudget: 2048 }
+        }
       }
     });
 
     const data = JSON.parse(response.text || "{}");
     const detectedCountry = data.country || "Portugal";
-    const detectedContinent = (data.continent as Continent) || getContinentFromCountry(detectedCountry);
+    const detectedContinent = getContinentFromCountry(detectedCountry);
+
+    // Mapeamento de cor para o tipo LineType
+    const validLines: any = ['blue', 'red', 'multicolor', 'green', 'brown', 'pink', 'purple', 'yellow', 'gray', 'none'];
+    const detectedLine = data.lines?.toLowerCase();
+    const finalLine = validLines.includes(detectedLine) ? detectedLine : 'none';
 
     return {
       category: "raspadinha",
@@ -135,16 +155,16 @@ export const analyzeImage = async (frontBase64: string, backBase64: string | nul
       size: data.size || "",
       values: data.values || "",
       price: data.price || "",
-      state: data.state || "SC",
+      state: "SC",
       country: detectedCountry,
       island: data.island || "",
-      subRegion: data.subRegion || "",
       region: data.region || "",
       continent: detectedContinent,
       operator: data.operator || "",
       printer: data.printer || "",
       emission: data.emission || "",
-      lines: data.lines || "none"
+      winProbability: data.winProbability || "",
+      lines: finalLine
     } as AnalysisResult;
   } catch (error) {
     console.error("Erro na leitura da Chloe:", error);

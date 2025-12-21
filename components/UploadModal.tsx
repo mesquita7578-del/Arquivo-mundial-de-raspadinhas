@@ -91,9 +91,30 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
     setIsAnalyzing(true);
     try {
       const frontBase64 = frontPreview.split(',')[1];
-      const result = await analyzeImage(frontBase64, null, 'image/jpeg');
-      setFormData(prev => ({ ...prev, ...result }));
-    } catch (err) { console.error(err); } finally { setIsAnalyzing(false); }
+      const backBase64 = backPreview ? backPreview.split(',')[1] : null;
+      const result = await analyzeImage(frontBase64, backBase64, 'image/jpeg');
+      
+      setFormData(prev => ({
+        ...prev,
+        gameName: result.gameName || prev.gameName,
+        gameNumber: result.gameNumber || prev.gameNumber,
+        price: result.price || prev.price,
+        country: result.country || prev.country,
+        island: result.island || prev.island,
+        region: result.region || prev.region,
+        operator: result.operator || prev.operator,
+        printer: result.printer || prev.printer,
+        lines: (result.lines as LineType) || prev.lines,
+        size: result.size || prev.size,
+        emission: result.emission || prev.emission,
+        winProbability: result.winProbability || prev.winProbability
+      }));
+    } catch (err) { 
+      console.error(err);
+      alert("Chloe não conseguiu ler tudo desta vez! hihi!");
+    } finally { 
+      setIsAnalyzing(false); 
+    }
   };
 
   const handleSave = async () => {
@@ -151,7 +172,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUploadCompl
                    </div>
                 </div>
                 <button onClick={startAnalysis} disabled={!frontPreview || isAnalyzing} className={`w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${frontPreview ? 'bg-brand-600 text-white shadow-lg' : 'bg-slate-800 text-slate-600'}`}>
-                  {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />} {isAnalyzing ? 'A Ler...' : 'Chloe IA: Ler Dados'}
+                  {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />} {isAnalyzing ? 'A Ler Dados...' : 'Análise Chloe IA'}
                 </button>
              </div>
           </div>
