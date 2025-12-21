@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, Plus, Loader2, Sparkles, LayoutGrid, Trophy, Star, 
-  Ticket, Layers, Diamond, Users, RefreshCw, CalendarCheck, CheckCircle2, AlertTriangle, Database, Wrench, ShieldAlert, X, Map as MapIcon
+  Ticket, Layers, Diamond, Users, RefreshCw, CalendarCheck, CheckCircle2, AlertTriangle, Database, Wrench, ShieldAlert, X, Map as MapIcon,
+  MapPin
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { ImageGrid } from './components/ImageGrid';
@@ -16,6 +17,7 @@ import { VisitorsModal } from './components/VisitorsModal';
 import { StatsSection } from './components/StatsSection';
 import { ThemesPage } from './components/ThemesPage';
 import { AboutPage } from './components/AboutPage';
+import { WorldMap } from './components/WorldMap';
 import { Footer } from './components/Footer';
 import { storageService } from './services/storage';
 import { ScratchcardData, CategoryItem, SiteMetadata, Continent } from './types';
@@ -23,7 +25,7 @@ import { translations, Language } from './translations';
 import { DivineSignal, Signal } from './components/DivineSignal';
 
 const RECENT_THRESHOLD = 2592000000;
-const VERSION = '11.2'; // Chloe: FOCO PC & NAVEGAÇÃO TOTAL 🚀
+const VERSION = '11.3'; // Chloe: MAPA MUNDI DASHBOARD 🌍
 
 const App: React.FC = () => {
   const [images, setImages] = useState<ScratchcardData[]>([]);
@@ -174,6 +176,22 @@ const App: React.FC = () => {
              />
           </div>
         );
+      case 'map':
+        return (
+          <div className="max-w-[1800px] mx-auto p-4 md:p-10 animate-fade-in">
+             <WorldMap 
+               images={images} 
+               onCountrySelect={(country) => {
+                 setActiveCountry(country);
+                 setActiveContinent('Mundo');
+                 setCurrentPage('home');
+                 addSignal(`Explorando: ${country.toUpperCase()}`);
+               }}
+               activeContinent={activeContinent}
+               t={t.grid}
+             />
+          </div>
+        );
       case 'themes':
         return (
           <div className="max-w-[1800px] mx-auto p-4 md:p-10 animate-fade-in">
@@ -216,6 +234,17 @@ const App: React.FC = () => {
                   </div>
                   <button onClick={() => setActiveTheme('')} className="flex items-center gap-2 bg-pink-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase hover:bg-pink-500 transition-all">
                     <X className="w-3 h-3" /> Limpar Filtro
+                  </button>
+               </div>
+             )}
+             {activeCountry && (
+               <div className="mb-6 flex items-center justify-between bg-brand-600/10 border border-brand-500/30 p-4 rounded-2xl">
+                  <div className="flex items-center gap-3">
+                    <MapPin className="w-5 h-5 text-brand-400" />
+                    <span className="text-sm font-black text-white uppercase tracking-widest">Localização: <span className="text-brand-400">{activeCountry.toUpperCase()}</span></span>
+                  </div>
+                  <button onClick={() => setActiveCountry('')} className="flex items-center gap-2 bg-brand-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase hover:bg-brand-500 transition-all">
+                    <X className="w-3 h-3" /> Ver Tudo
                   </button>
                </div>
              )}
