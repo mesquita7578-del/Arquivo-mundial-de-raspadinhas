@@ -2,7 +2,7 @@
 import { ScratchcardData, DocumentItem, WebsiteLink, CategoryItem, SiteMetadata } from "../types";
 
 const DB_NAME = 'raspadinhas-archive-db';
-const DB_VERSION = 6; // Incremented for new store
+const DB_VERSION = 6; 
 const STORE_ITEMS = 'items';
 const STORE_DOCS = 'documents';
 const STORE_SITES = 'websites';
@@ -130,52 +130,6 @@ class StorageService {
     });
   }
 
-  async syncInitialItems(initialItems: ScratchcardData[]): Promise<void> {
-    if (!this.db) await this.init();
-    return new Promise((resolve) => {
-      const transaction = this.db!.transaction([STORE_ITEMS], 'readwrite');
-      const store = transaction.objectStore(STORE_ITEMS);
-      initialItems.forEach(item => store.put(item));
-      transaction.oncomplete = () => resolve();
-    });
-  }
-
-  async getStats(): Promise<any> {
-     if (!this.db) await this.init();
-     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([STORE_ITEMS], 'readonly');
-      const store = transaction.objectStore(STORE_ITEMS);
-      const request = store.openCursor();
-      const stats: Record<string, number> = { 'Europa': 0, 'América': 0, 'Ásia': 0, 'África': 0, 'Oceania': 0 };
-      const categoryStats: Record<string, number> = {};
-      const countryStats: Record<string, number> = {};
-      const stateStats: Record<string, number> = {};
-      const collectorStats: Record<string, number> = {};
-      let total = 0;
-
-      request.onsuccess = (event) => {
-        const cursor = (event.target as IDBRequest).result as IDBCursorWithValue;
-        if (cursor) {
-          const img = cursor.value as ScratchcardData;
-          total++;
-          if (stats[img.continent] !== undefined) stats[img.continent]++;
-          const cat = img.category || 'raspadinha';
-          categoryStats[cat] = (categoryStats[cat] || 0) + 1;
-          const countryKey = img.country || 'Desconhecido';
-          countryStats[countryKey] = (countryStats[countryKey] || 0) + 1;
-          const stateKey = img.state || 'Outro';
-          stateStats[stateKey] = (stateStats[stateKey] || 0) + 1;
-          let collector = (img.collector || 'Arquivo Geral').trim();
-          collectorStats[collector] = (collectorStats[collector] || 0) + 1;
-          cursor.continue();
-        } else {
-          resolve({ stats, total, categoryStats, countryStats, stateStats, collectorStats });
-        }
-      };
-      request.onerror = () => reject("Erro stats");
-     });
-  }
-
   async save(item: ScratchcardData): Promise<void> {
     if (!this.db) await this.init();
     return new Promise((resolve, reject) => {
@@ -199,9 +153,13 @@ class StorageService {
   }
 
   async exportData(): Promise<string> {
-    const items = await this.getAll();
-    const categories = await this.getCategories();
-    const settings = await this.getSiteMetadata();
+    // Chloe: Garantimos que o DB está pronto antes de exportar!
+    if (!this.db) await this.init();
+    const [items, categories, settings] = await Promise.all([
+      this.getAll(),
+      this.getCategories(),
+      this.getSiteMetadata()
+    ]);
     return JSON.stringify({ items, categories, settings }, null, 2);
   }
 
