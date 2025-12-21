@@ -9,7 +9,7 @@ import {
   RefreshCw, Layers as LayersIcon, ChevronLeft, ChevronRight,
   Maximize2, Activity, Ship, Palette, Calendar, Percent, Check, Star, ImagePlus, LayoutList,
   Columns2, Grid3X3, Layout, StickyNote, AlertCircle, Factory, Tag, Trash,
-  CalendarDays, ShieldCheck, Zap, Layers, Microscope, Images
+  CalendarDays, ShieldCheck, Zap, Layers, Microscope, Images, ChevronDown
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent, LineType, CategoryItem } from '../types';
 
@@ -50,6 +50,13 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   const currentIndexInContext = useMemo(() => contextImages.findIndex(img => img.id === image.id), [image, contextImages]);
   const hasNextRecord = currentIndexInContext < contextImages.length - 1;
   const hasPrevRecord = currentIndexInContext > 0;
+
+  // Lista única de colecionadores existentes para o dropdown
+  const collectors = useMemo(() => {
+    const names = new Set(contextImages.map(img => img.collector).filter(Boolean));
+    if (currentUser) names.add(currentUser);
+    return Array.from(names).sort();
+  }, [contextImages, currentUser]);
 
   const seriesItems = useMemo(() => {
     return contextImages.filter(img => {
@@ -287,6 +294,22 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                                 <input type="date" value={formData.closeDate} onChange={e => handleChange('closeDate', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" />
                              </div>
                           </div>
+                          
+                          {/* CAMPO COLECIONADOR ESTILIZADO EM EDIT */}
+                          <div className="relative group">
+                            <select 
+                              value={formData.collector} 
+                              onChange={e => handleChange('collector', e.target.value)} 
+                              className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none appearance-none cursor-pointer focus:border-brand-500 font-black uppercase"
+                            >
+                              {collectors.map(c => (
+                                <option key={c} value={c}>{c}</option>
+                              ))}
+                            </select>
+                            <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase pointer-events-none">Colecionador Responsável</span>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-brand-500 pointer-events-none" />
+                          </div>
+
                           <input type="text" value={formData.operator} onChange={e => handleChange('operator', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Operadora / Editora" />
                        </section>
                        
@@ -317,6 +340,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                              <DataCard icon={Hash} label="Nº Jogo" value={formData.gameNumber} colorClass="text-brand-500" />
                              <DataCard icon={Banknote} label="Valor Facial" value={formData.price} colorClass="text-emerald-500" />
                              <DataCard icon={ShieldCheck} label="Estado Físico" value={formData.state} colorClass="text-amber-500" />
+                             <DataCard icon={User} label="Colecionador" value={formData.collector} colorClass="text-brand-400" />
                              <DataCard icon={Zap} label="Raridade" value={formData.isRarity ? 'PEÇA RARA' : 'COMUM'} colorClass={formData.isRarity ? 'text-rose-500' : 'text-slate-500'} />
                           </div>
                        </section>
