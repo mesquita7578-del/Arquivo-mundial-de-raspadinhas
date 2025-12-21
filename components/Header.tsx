@@ -80,65 +80,65 @@ export const Header: React.FC<HeaderProps> = ({
   const hasSpecialSubs = (country: string) => ['Portugal', 'Espanha', 'Alemanha', 'Canadá', 'Austrália'].includes(country);
 
   return (
-    <header className="fixed top-0 left-0 w-full z-[1000] bg-slate-900 border-b border-white/10 shadow-2xl">
-      <div className="max-w-[1800px] mx-auto h-16 md:h-20 px-4 md:px-8 flex items-center justify-between">
+    <header className="fixed top-0 left-0 w-full z-[2000] bg-slate-900 border-b border-brand-500/20 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
+      <div className="max-w-[1800px] mx-auto h-20 px-4 md:px-8 flex items-center justify-between">
         
         {/* Logo / Título */}
         <div 
-          className="flex items-center gap-3 cursor-pointer group shrink-0" 
+          className="flex items-center gap-4 cursor-pointer group shrink-0" 
           onClick={() => onNavigate('home')}
-          title={t.home}
+          title="Ir para o Início"
         >
-          <div className="bg-brand-600 p-2 rounded-xl shadow-lg group-hover:scale-105 transition-transform">
-            <Ticket className="w-5 h-5 text-white" />
+          <div className="bg-brand-600 p-2.5 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
+            <Ticket className="w-6 h-6 text-white" />
           </div>
           <div className="flex flex-col">
-            <h1 className="text-sm md:text-lg font-black text-white uppercase italic tracking-tighter leading-none">
+            <h1 className="text-base md:text-xl font-black text-white uppercase italic tracking-tighter leading-none group-hover:text-brand-400 transition-colors">
               {t.title}
             </h1>
-            <span className="text-[7px] md:text-[9px] text-brand-400 font-black uppercase tracking-[0.2em] leading-none mt-1">Legado de Jorge Mesquita</span>
+            <span className="text-[8px] md:text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] leading-none mt-1.5">Mestre de Arquivo: Jorge Mesquita</span>
           </div>
         </div>
 
         {/* Navegação Central */}
-        <nav className="flex items-center gap-1 md:gap-3">
+        <nav className="flex items-center gap-2 md:gap-4">
            <button 
              onClick={() => onNavigate('home')} 
-             className={`p-2 rounded-xl transition-all ${currentPage === 'home' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
-             title={t.home}
+             className={`p-2.5 rounded-2xl transition-all ${currentPage === 'home' ? 'bg-brand-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
+             title="Página Inicial"
            >
-             <Home className="w-5 h-5" />
+             <Home className="w-6 h-6" />
            </button>
 
            <div className="relative" ref={exploreRef}>
               <button 
                 onClick={() => setShowExplore(!showExplore)} 
-                className={`p-2 rounded-xl transition-all flex items-center gap-2 ${showExplore ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
-                title={t.explore}
+                className={`p-2.5 rounded-2xl transition-all flex items-center gap-2 ${showExplore ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
+                title="Explorar por Países"
               >
-                <Globe className="w-5 h-5" />
-                <span className="hidden lg:inline text-[10px] font-black uppercase tracking-widest">Explorar</span>
+                <Globe className="w-6 h-6" />
+                <span className="hidden xl:inline text-[10px] font-black uppercase tracking-widest">Explorar</span>
               </button>
               
               {showExplore && (
-                <div className="absolute top-full left-0 mt-3 flex z-[1200] animate-fade-in">
+                <div className="absolute top-full left-0 mt-4 flex z-[2100] animate-bounce-in">
                   <div className="flex gap-2">
-                    <div className="w-44 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-1.5 backdrop-blur-3xl">
+                    <div className="w-48 bg-slate-900 border border-white/10 rounded-3xl shadow-2xl p-2 backdrop-blur-3xl">
                        {continents.map(cont => (
                          <button 
                            key={cont} 
                            onMouseEnter={() => { setActiveSubMenu(cont); setActiveCountrySub(null); }} 
                            onClick={() => { onNavigate('home'); onCountrySelect?.(cont, ''); setShowExplore(false); }} 
-                           className={`w-full text-left px-4 py-2 text-[10px] rounded-xl transition-all flex items-center justify-between font-black uppercase tracking-widest ${activeSubMenu === cont ? 'bg-brand-600 text-white' : 'text-slate-400 hover:bg-white/5'}`}
+                           className={`w-full text-left px-4 py-2.5 text-[11px] rounded-xl transition-all flex items-center justify-between font-black uppercase tracking-widest ${activeSubMenu === cont ? 'bg-brand-600 text-white' : 'text-slate-400 hover:bg-white/5'}`}
                          >
                            {cont}
-                           <ChevronRight className={`w-3 h-3 transition-transform ${activeSubMenu === cont ? 'translate-x-1' : 'opacity-20'}`} />
+                           <ChevronRight className={`w-4 h-4 transition-transform ${activeSubMenu === cont ? 'translate-x-1' : 'opacity-20'}`} />
                          </button>
                        ))}
                     </div>
 
                     {activeSubMenu && countriesByContinent[activeSubMenu] && (
-                      <div className="w-56 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-1.5 backdrop-blur-3xl max-h-[400px] overflow-y-auto custom-scrollbar animate-fade-in">
+                      <div className="w-64 bg-slate-900 border border-white/10 rounded-3xl shadow-2xl p-2 backdrop-blur-3xl max-h-[450px] overflow-y-auto custom-scrollbar animate-fade-in">
                         {countriesByContinent[activeSubMenu].sort().map(country => (
                           <button 
                             key={country}
@@ -150,10 +150,10 @@ export const Header: React.FC<HeaderProps> = ({
                                 onNavigate('home');
                               }
                             }}
-                            className={`w-full text-left px-4 py-2 text-[9px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-xl transition-all font-black uppercase tracking-widest flex items-center justify-between group ${activeCountrySub === country ? 'bg-brand-600 text-white' : ''}`}
+                            className={`w-full text-left px-4 py-2.5 text-[10px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-xl transition-all font-black uppercase tracking-widest flex items-center justify-between group ${activeCountrySub === country ? 'bg-brand-600 text-white' : ''}`}
                           >
-                            <span className="flex items-center gap-2 truncate"><MapPin className="w-3 h-3" /> {country}</span>
-                            {hasSpecialSubs(country) && <ChevronRight className="w-3 h-3" />}
+                            <span className="flex items-center gap-3 truncate"><MapPin className="w-4 h-4" /> {country}</span>
+                            {hasSpecialSubs(country) && <ChevronRight className="w-4 h-4" />}
                           </button>
                         ))}
                       </div>
@@ -165,29 +165,29 @@ export const Header: React.FC<HeaderProps> = ({
 
            <button 
              onClick={() => onNavigate('themes')} 
-             className={`p-2 rounded-xl transition-all ${currentPage === 'themes' ? 'bg-pink-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
+             className={`p-2.5 rounded-2xl transition-all ${currentPage === 'themes' ? 'bg-pink-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
              title="Temas da Coleção"
            >
-             <Layout className="w-5 h-5" />
+             <Layout className="w-6 h-6" />
            </button>
 
            <button 
              onClick={() => onNavigate('stats')} 
-             className={`p-2 rounded-xl transition-all ${currentPage === 'stats' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
-             title={t.stats}
+             className={`p-2.5 rounded-2xl transition-all ${currentPage === 'stats' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
+             title="Estatísticas do Arquivo"
            >
-             <BarChart2 className="w-5 h-5" />
+             <BarChart2 className="w-6 h-6" />
            </button>
 
            {currentUser && (
              <button 
                onClick={() => onNavigate('collection')} 
-               className={`p-2 rounded-xl transition-all flex items-center gap-2 relative ${currentPage === 'collection' ? 'bg-amber-500 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
-               title={t.myCollection}
+               className={`p-2.5 rounded-2xl transition-all flex items-center gap-2 relative ${currentPage === 'collection' ? 'bg-amber-500 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
+               title="Minha Coleção Pessoal"
              >
-               <Star className={`w-5 h-5 ${currentPage === 'collection' ? 'fill-current' : ''}`} />
+               <Star className={`w-6 h-6 ${currentPage === 'collection' ? 'fill-current' : ''}`} />
                {collectionCount > 0 && (
-                 <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[7px] font-black w-4 h-4 flex items-center justify-center rounded-full border-2 border-slate-900">
+                 <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-slate-900">
                    {collectionCount}
                  </span>
                )}
@@ -196,36 +196,36 @@ export const Header: React.FC<HeaderProps> = ({
 
            <button 
              onClick={onHistoryClick} 
-             className="p-2 rounded-xl text-slate-500 hover:text-white hover:bg-white/5 transition-all" 
-             title="Biblioteca e PDF"
+             className="p-2.5 rounded-2xl text-slate-500 hover:text-white hover:bg-white/5 transition-all" 
+             title="Biblioteca e Arquivo PDF"
            >
-             <BookOpen className="w-5 h-5" />
+             <BookOpen className="w-6 h-6" />
            </button>
 
            <div className="relative" ref={toolsRef}>
               <button 
                 onClick={() => setShowTools(!showTools)} 
-                className={`p-2 rounded-xl transition-all flex items-center gap-2 ${showTools ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
-                title="Ferramentas de Dados"
+                className={`p-2.5 rounded-2xl transition-all flex items-center gap-2 ${showTools ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-white hover:bg-white/5'}`} 
+                title="Gestão de Dados"
               >
-                <Database className="w-5 h-5" />
-                <ChevronDown className={`w-3 h-3 transition-transform ${showTools ? 'rotate-180' : ''}`} />
+                <Database className="w-6 h-6" />
+                <ChevronDown className={`w-4 h-4 transition-transform ${showTools ? 'rotate-180' : ''}`} />
               </button>
               {showTools && (
-                <div className="absolute top-full right-0 mt-3 w-48 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-2 z-[1200] animate-fade-in">
+                <div className="absolute top-full right-0 mt-4 w-56 bg-slate-900 border border-white/10 rounded-3xl shadow-2xl p-2.5 z-[2200] animate-bounce-in">
                    <button 
                      onClick={onExport} 
-                     className="w-full text-left px-4 py-3 text-[10px] text-slate-400 hover:bg-brand-600 hover:text-white rounded-xl font-black uppercase tracking-widest flex items-center gap-3 transition-all"
-                     title="Exportar base de dados JSON"
+                     className="w-full text-left px-4 py-4 text-[11px] text-slate-400 hover:bg-brand-600 hover:text-white rounded-2xl font-black uppercase tracking-widest flex items-center gap-4 transition-all"
+                     title="Fazer Cópia de Segurança"
                    >
-                      <Download className="w-4 h-4" /> Backup JSON
+                      <Download className="w-5 h-5" /> Backup JSON
                    </button>
                    <button 
                      onClick={handleImportClick} 
-                     className="w-full text-left px-4 py-3 text-[10px] text-slate-400 hover:bg-emerald-600 hover:text-white rounded-xl font-black uppercase tracking-widest flex items-center gap-3 transition-all"
-                     title="Importar base de dados JSON"
+                     className="w-full text-left px-4 py-4 text-[11px] text-slate-400 hover:bg-emerald-600 hover:text-white rounded-2xl font-black uppercase tracking-widest flex items-center gap-4 transition-all"
+                     title="Restaurar de Ficheiro"
                    >
-                      <Upload className="w-4 h-4" /> Importar JSON
+                      <Upload className="w-5 h-5" /> Importar JSON
                    </button>
                    <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileChange} />
                 </div>
@@ -233,19 +233,19 @@ export const Header: React.FC<HeaderProps> = ({
            </div>
         </nav>
 
-        {/* Login / Logout */}
-        <div className="flex items-center gap-2 md:gap-4">
-          <div className="hidden sm:flex bg-slate-950 rounded-xl p-1 border border-white/10">
+        {/* Login / Logout / Idiomas */}
+        <div className="flex items-center gap-4 md:gap-6">
+          <div className="hidden sm:flex bg-slate-950 rounded-2xl p-1.5 border border-white/5">
             <button 
               onClick={() => setLanguage('pt')} 
-              className={`px-3 py-1 rounded-lg text-[9px] font-black transition-all ${language === 'pt' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-300'}`}
+              className={`px-4 py-1.5 rounded-xl text-[10px] font-black transition-all ${language === 'pt' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-300'}`}
               title="Português"
             >
               PT
             </button>
             <button 
               onClick={() => setLanguage('it')} 
-              className={`px-3 py-1 rounded-lg text-[9px] font-black transition-all ${language === 'it' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-300'}`}
+              className={`px-4 py-1.5 rounded-xl text-[10px] font-black transition-all ${language === 'it' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-300'}`}
               title="Italiano"
             >
               IT
@@ -255,25 +255,25 @@ export const Header: React.FC<HeaderProps> = ({
           {currentUser ? (
             <button 
               onClick={onLogout} 
-              className="flex items-center gap-3 pl-1 pr-4 py-1 bg-slate-800 hover:bg-red-600/10 text-white border border-white/10 rounded-full transition-all group" 
-              title="Sair do Arquivo"
+              className="flex items-center gap-4 pl-1.5 pr-5 py-1.5 bg-slate-800 hover:bg-red-600/10 text-white border border-white/10 rounded-full transition-all group" 
+              title="Fechar Sessão"
             >
-               <div className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-xs font-black shadow-inner">
+               <div className="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center text-sm font-black shadow-inner">
                  {currentUser[0].toUpperCase()}
                </div>
-               <div className="hidden md:flex flex-col items-start leading-none">
-                  <span className="text-[10px] font-black uppercase">{currentUser}</span>
-                  <span className="text-[7px] text-slate-500 font-black uppercase">Sair</span>
+               <div className="hidden lg:flex flex-col items-start leading-none">
+                  <span className="text-xs font-black uppercase">{currentUser}</span>
+                  <span className="text-[8px] text-slate-500 font-black uppercase mt-1">Sair</span>
                </div>
-               <LogOut className="w-4 h-4 text-slate-500 group-hover:text-red-500 transition-colors ml-1" />
+               <LogOut className="w-5 h-5 text-slate-500 group-hover:text-red-500 transition-colors" />
             </button>
           ) : (
             <button 
               onClick={onAdminToggle} 
-              className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-white text-slate-950 hover:text-brand-600 rounded-full transition-all text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95"
-              title="Acesso Administrador"
+              className="flex items-center gap-3 px-6 py-3 bg-amber-500 hover:bg-white text-slate-950 hover:text-brand-600 rounded-full transition-all text-xs font-black uppercase tracking-widest shadow-xl active:scale-95"
+              title="Área do Colecionador"
             >
-              <Lock className="w-4 h-4" /> <span className="hidden md:inline">Entrar</span>
+              <Lock className="w-5 h-5" /> <span className="hidden md:inline">Entrar</span>
             </button>
           )}
         </div>
