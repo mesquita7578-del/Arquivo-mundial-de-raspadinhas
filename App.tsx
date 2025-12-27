@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, Plus, Loader2, Sparkles, LayoutGrid, Trophy, Star, 
@@ -445,7 +444,6 @@ const App: React.FC = () => {
       <Footer onNavigate={setCurrentPage} onWebsitesClick={() => setShowWebsites(true)} onRadioClick={() => setShowRadio(true)} />
 
       <div className="fixed bottom-24 left-6 z-[1001] flex flex-col gap-3">
-        <button onClick={handleForceRefresh} className="p-4 bg-red-600 text-white rounded-full shadow-2xl border-4 border-white group flex items-center gap-2"><Wrench className="w-6 h-6" /><span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all text-[10px] font-black uppercase">Reparar</span></button>
         <button onClick={() => window.location.reload()} className="p-4 bg-slate-900 text-white rounded-full shadow-2xl border border-white/20"><RefreshCw className="w-6 h-6" /></button>
       </div>
 
