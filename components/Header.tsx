@@ -80,16 +80,15 @@ export const Header: React.FC<HeaderProps> = ({
   const hasSpecialSubs = (country: string) => ['Portugal', 'Espanha', 'Alemanha', 'Canadá', 'Austrália'].includes(country);
 
   /**
-   * CHLOE: Helper de Tooltip com Efeito Neon
+   * CHLOE: Helper de Tooltip com Efeito Neon Sutil
    */
-  const Tooltip = ({ text, color = "border-brand-500 shadow-brand-500/40" }: { text: string; color?: string }) => (
+  const Tooltip = ({ text, color = "border-brand-500 shadow-brand-500/30" }: { text: string; color?: string }) => (
     <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-300 z-[3000] scale-90 group-hover:scale-100 group-hover:translate-y-1">
-      <div className={`bg-slate-950/95 backdrop-blur-md border ${color} px-3 py-1.5 rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.6)]`}>
-        <span className="text-[9px] font-black text-white uppercase tracking-[0.2em] whitespace-nowrap drop-shadow-[0_0_2px_rgba(255,255,255,0.3)]">
+      <div className={`bg-slate-950/95 backdrop-blur-md border ${color} px-3 py-1.5 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.5)]`}>
+        <span className="text-[9px] font-black text-white uppercase tracking-[0.2em] whitespace-nowrap">
           {text}
         </span>
       </div>
-      {/* Triângulo de encaixe */}
       <div className={`w-2 h-2 bg-slate-950 border-l border-t ${color.split(' ')[0]} rotate-45 absolute -top-1 left-1/2 -translate-x-1/2`}></div>
     </div>
   );
@@ -112,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
             </h1>
             <span className="text-[8px] md:text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] leading-none mt-1.5">Mestre de Arquivo: Jorge Mesquita</span>
           </div>
-          <Tooltip text="Início / Visionary Archive" />
+          <Tooltip text="Visionary Archive" />
         </div>
 
         {/* Navegação Central */}
@@ -134,7 +133,7 @@ export const Header: React.FC<HeaderProps> = ({
              >
                <Globe className="w-6 h-6" />
              </button>
-             <Tooltip text="Mapa Mundi" color="border-blue-500 shadow-blue-500/40" />
+             <Tooltip text="Explorar Mapa" color="border-blue-500 shadow-blue-500/20" />
            </div>
 
            <div className="relative group" ref={exploreRef}>
@@ -145,7 +144,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <MapIcon className="w-6 h-6" />
                 <span className="hidden xl:inline text-[10px] font-black uppercase tracking-widest">Explorar</span>
               </button>
-              <Tooltip text="Explorar Países" color="border-slate-500 shadow-slate-500/40" />
+              <Tooltip text="Menu de Países" color="border-slate-500 shadow-slate-500/20" />
               
               {showExplore && (
                 <div className="absolute top-full left-0 mt-4 flex z-[2100] animate-bounce-in">
@@ -162,14 +161,6 @@ export const Header: React.FC<HeaderProps> = ({
                            <ChevronRight className={`w-4 h-4 transition-transform ${activeSubMenu === cont ? 'translate-x-1' : 'opacity-20'}`} />
                          </button>
                        ))}
-                       <div className="border-t border-white/5 mt-1 pt-1">
-                          <button 
-                            onClick={() => { onNavigate('map'); setShowExplore(false); }}
-                            className="w-full text-left px-4 py-2.5 text-[10px] text-brand-400 hover:bg-white/5 rounded-xl font-black uppercase tracking-widest flex items-center gap-3"
-                          >
-                             <Globe className="w-4 h-4" /> Ver Mapa Completo
-                          </button>
-                       </div>
                     </div>
 
                     {activeSubMenu && countriesByContinent[activeSubMenu] && (
@@ -179,11 +170,9 @@ export const Header: React.FC<HeaderProps> = ({
                             key={country}
                             onMouseEnter={() => setActiveCountrySub(country)}
                             onClick={() => {
-                              if (!hasSpecialSubs(country)) {
                                 onCountrySelect?.(activeSubMenu, country);
                                 setShowExplore(false);
                                 onNavigate('home');
-                              }
                             }}
                             className={`w-full text-left px-4 py-2.5 text-[10px] text-slate-400 hover:text-white hover:bg-brand-600 rounded-xl transition-all font-black uppercase tracking-widest flex items-center justify-between group ${activeCountrySub === country ? 'bg-brand-600 text-white' : ''}`}
                           >
@@ -205,7 +194,7 @@ export const Header: React.FC<HeaderProps> = ({
              >
                <Layout className="w-6 h-6" />
              </button>
-             <Tooltip text="Salas Temáticas" color="border-pink-500 shadow-pink-500/40" />
+             <Tooltip text="Salas Temáticas" color="border-pink-500 shadow-pink-500/20" />
            </div>
 
            <div className="relative group">
@@ -215,7 +204,7 @@ export const Header: React.FC<HeaderProps> = ({
              >
                <BarChart2 className="w-6 h-6" />
              </button>
-             <Tooltip text="Estatísticas" color="border-indigo-500 shadow-indigo-500/40" />
+             <Tooltip text="Estatísticas" color="border-indigo-500 shadow-indigo-500/20" />
            </div>
 
            {currentUser && (
@@ -231,7 +220,7 @@ export const Header: React.FC<HeaderProps> = ({
                    </span>
                  )}
                </button>
-               <Tooltip text="Minha Coleção" color="border-amber-500 shadow-amber-500/40" />
+               <Tooltip text="Minha Coleção" color="border-amber-500 shadow-amber-500/20" />
              </div>
            )}
 
@@ -242,7 +231,7 @@ export const Header: React.FC<HeaderProps> = ({
              >
                <BookOpen className="w-6 h-6" />
              </button>
-             <Tooltip text="Biblioteca Técnica" color="border-blue-400 shadow-blue-400/40" />
+             <Tooltip text="Biblioteca Técnica" color="border-emerald-500 shadow-emerald-500/20" />
            </div>
 
            <div className="relative group" ref={toolsRef}>
@@ -253,7 +242,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <Database className="w-6 h-6" />
                 <ChevronDown className={`w-4 h-4 transition-transform ${showTools ? 'rotate-180' : ''}`} />
               </button>
-              <Tooltip text="Backup & Dados" color="border-emerald-500 shadow-emerald-500/40" />
+              <Tooltip text="Base de Dados" color="border-slate-400 shadow-slate-400/20" />
               
               {showTools && (
                 <div className="absolute top-full right-0 mt-4 w-56 bg-slate-900 border border-white/10 rounded-3xl shadow-2xl p-2.5 z-[2200] animate-bounce-in">
@@ -309,11 +298,11 @@ export const Header: React.FC<HeaderProps> = ({
                  </div>
                  <div className="hidden lg:flex flex-col items-start leading-none">
                     <span className="text-xs font-black uppercase tracking-tight">{currentUser}</span>
-                    <span className="text-[8px] text-slate-500 font-black uppercase mt-1">Encerrar</span>
+                    <span className="text-[8px] text-slate-500 font-black uppercase mt-1">Sair</span>
                  </div>
                  <LogOut className="w-5 h-5 text-slate-500 group-hover/btn:text-red-500 transition-colors" />
               </button>
-              <Tooltip text="Encerrar Sessão" color="border-red-500 shadow-red-500/40" />
+              <Tooltip text="Encerrar Sessão" color="border-red-500 shadow-red-500/20" />
             </div>
           ) : (
             <div className="relative group">
@@ -323,7 +312,7 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Lock className="w-5 h-5" /> <span className="hidden md:inline">Entrar</span>
               </button>
-              <Tooltip text="Área Restrita" color="border-amber-500 shadow-amber-500/40" />
+              <Tooltip text="Área Restrita" color="border-amber-500 shadow-amber-500/20" />
             </div>
           )}
         </div>
