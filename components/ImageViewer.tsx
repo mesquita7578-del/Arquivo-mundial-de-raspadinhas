@@ -9,7 +9,7 @@ import {
   RefreshCw, Layers as LayersIcon, ChevronLeft, ChevronRight,
   Maximize2, Activity, Ship, Palette, Calendar, Percent, Check, Star, ImagePlus, LayoutList,
   Columns2, Grid3X3, Layout, StickyNote, AlertCircle, Factory, Tag, Trash,
-  CalendarDays, ShieldCheck, Zap, Layers, Microscope, Images, ChevronDown
+  CalendarDays, ShieldCheck, Zap, Layers, Microscope, Images, ChevronDown, Globe2, Trophy
 } from 'lucide-react';
 import { ScratchcardData, ScratchcardState, Continent, LineType, CategoryItem } from '../types';
 
@@ -27,6 +27,7 @@ interface ImageViewerProps {
 }
 
 const LINE_COLORS: { id: LineType; label: string; bg: string }[] = [
+  { id: 'none', label: 'Sem Linhas', bg: 'bg-slate-800 border-slate-700' },
   { id: 'blue', label: 'Azul', bg: 'bg-blue-500' },
   { id: 'red', label: 'Vermelho', bg: 'bg-red-500' },
   { id: 'multicolor', label: 'Multi', bg: 'bg-gradient-to-tr from-red-500 via-green-500 to-blue-500' },
@@ -35,15 +36,15 @@ const LINE_COLORS: { id: LineType; label: string; bg: string }[] = [
   { id: 'pink', label: 'Rosa', bg: 'bg-pink-500' },
   { id: 'purple', label: 'Violeta', bg: 'bg-purple-600' },
   { id: 'yellow', label: 'Amarelo', bg: 'bg-yellow-400' },
-  { id: 'gray', label: 'Cinza', bg: 'bg-slate-500' },
-  { id: 'none', label: 'Sem', bg: 'bg-slate-800 border-slate-700' }
+  { id: 'gray', label: 'Cinza', bg: 'bg-slate-500' }
 ];
+
+const CONTINENT_OPTIONS: Continent[] = ['Europa', 'América', 'Ásia', 'África', 'Oceania'];
 
 export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpdate, onDelete, isAdmin, currentUser, contextImages, onImageSelect, t, categories }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [showSeriesComparison, setShowSeriesComparison] = useState(false);
   const [formData, setFormData] = useState<ScratchcardData>(image);
-  const [activeImage, setActiveImage] = useState<string>(image.frontUrl);
   const [activeIndex, setActiveIndex] = useState(0);
   const [showFullScreen, setShowFullScreen] = useState<string | null>(null);
   
@@ -51,11 +52,9 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   const hasNextRecord = currentIndexInContext < contextImages.length - 1;
   const hasPrevRecord = currentIndexInContext > 0;
 
-  // Lista única de colecionadores existentes para o dropdown
   const collectors = useMemo(() => {
     const names = new Set(contextImages.map(img => img.collector).filter(Boolean));
     if (currentUser) names.add(currentUser);
-    // Adiciona o colecionador atual do item se não estiver na lista
     if (image.collector) names.add(image.collector);
     return Array.from(names).sort();
   }, [contextImages, currentUser, image.collector]);
@@ -81,10 +80,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
 
   const handleNextRecord = () => { if (hasNextRecord) onImageSelect(contextImages[currentIndexInContext + 1]); };
   const handlePrevRecord = () => { if (hasPrevRecord) onImageSelect(contextImages[currentIndexInContext - 1]); };
-
-  useEffect(() => {
-    setActiveImage(localGallery[activeIndex]);
-  }, [activeIndex, localGallery]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -115,32 +110,25 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   };
 
   const handleClearData = () => {
-    if (confirm("Quer limpar todos os campos de texto para preencher de novo, vovô? hihi!")) {
+    if (confirm("Vovô, quer mesmo zerar todos os campos de texto? hihi!")) {
       setFormData(prev => ({
         ...prev,
-        gameNumber: '',
-        price: '',
-        releaseDate: '',
-        closeDate: '',
-        operator: '',
-        printer: '',
-        emission: '',
-        size: '',
-        winProbability: '',
-        values: ''
+        gameNumber: '', price: '', releaseDate: '', closeDate: '',
+        operator: '', printer: '', emission: '', size: '',
+        winProbability: '', values: ''
       }));
     }
   };
 
   const handleSave = () => { onUpdate(formData); setIsEditing(false); };
   const handleDelete = () => { 
-    if (confirm("Vovô Jorge, tem a certeza que quer REMOVER TODO ESTE REGISTO do arquivo para sempre? hihi!")) {
+    if (confirm("Vovô Jorge, tem a certeza que quer REMOVER TODO ESTE REGISTO para sempre? hihi!")) {
       onDelete(image.id);
     } 
   };
 
   const DataCard = ({ icon: Icon, label, value, colorClass = "text-slate-400", subValue }: any) => (
-    <div className="group bg-slate-900/40 border border-white/5 hover:border-brand-500/30 p-3 rounded-2xl transition-all duration-300 shadow-sm hover:shadow-brand-900/10">
+    <div className="group bg-slate-900/40 border border-white/5 hover:border-brand-500/30 p-3 rounded-2xl transition-all duration-300 shadow-sm">
       <div className="flex items-start justify-between mb-2">
         <div className={`p-1.5 rounded-lg bg-slate-950 border border-white/5 group-hover:scale-110 transition-transform`}>
           <Icon className={`w-3.5 h-3.5 ${colorClass}`} />
@@ -164,7 +152,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-md" onClick={onClose}>
       
-      {/* FullScreen Overlay */}
       {showFullScreen && (
         <div className="fixed inset-0 z-[10005] bg-black/98 flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowFullScreen(null)}>
            <img src={showFullScreen} className="max-w-full max-h-full object-contain shadow-2xl rounded-lg" />
@@ -173,19 +160,14 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
       )}
 
       {!showSeriesComparison && hasPrevRecord && (
-        <button onClick={(e) => { e.stopPropagation(); handlePrevRecord(); }} className="absolute left-6 z-[10001] p-3 bg-slate-900/50 hover:bg-brand-600 text-white rounded-full border border-white/10 transition-all active:scale-95 hidden md:block">
-          <ChevronLeft className="w-6 h-6" />
-        </button>
+        <button onClick={(e) => { e.stopPropagation(); handlePrevRecord(); }} className="absolute left-6 z-[10001] p-3 bg-slate-900/50 hover:bg-brand-600 text-white rounded-full border border-white/10 hidden md:block"><ChevronLeft className="w-6 h-6" /></button>
       )}
       {!showSeriesComparison && hasNextRecord && (
-        <button onClick={(e) => { e.stopPropagation(); handleNextRecord(); }} className="absolute right-6 z-[10001] p-3 bg-slate-900/50 hover:bg-brand-600 text-white rounded-full border border-white/10 transition-all active:scale-95 hidden md:block">
-          <ChevronRight className="w-6 h-6" />
-        </button>
+        <button onClick={(e) => { e.stopPropagation(); handleNextRecord(); }} className="absolute right-6 z-[10001] p-3 bg-slate-900/50 hover:bg-brand-600 text-white rounded-full border border-white/10 hidden md:block"><ChevronRight className="w-6 h-6" /></button>
       )}
 
       <div className={`w-full h-full md:h-[92vh] ${showSeriesComparison ? 'md:max-w-[95vw]' : 'md:max-w-[1400px]'} flex flex-col md:flex-row bg-[#020617] md:rounded-3xl overflow-hidden border border-white/5 shadow-2xl relative transition-all duration-500`} onClick={e => e.stopPropagation()}>
          
-         {/* Visual Side: Grelha Ultra-Compacta para SETs */}
          <div className="flex-1 bg-black/40 relative flex flex-col min-h-0 border-r border-white/5 overflow-hidden">
             <button className="absolute top-4 right-4 text-white/50 hover:text-white z-50 p-2 bg-slate-800/50 rounded-full" onClick={onClose}><X className="w-5 h-5"/></button>
             
@@ -211,41 +193,26 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                </div>
             ) : (
                <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar">
-                  {localGallery.length === 1 ? (
-                    <div className="h-full flex items-center justify-center">
-                       <img src={localGallery[0]} className="max-w-full max-h-[70vh] object-contain shadow-2xl rounded-lg animate-fade-in" onClick={() => setShowFullScreen(localGallery[0])}/>
-                    </div>
-                  ) : (
-                    <div className="space-y-8 animate-fade-in">
-                       <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-                          <Images className="w-6 h-6 text-brand-500" />
-                          <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Grelha do SET <span className="text-slate-500">({localGallery.length} imagens)</span></h3>
-                       </div>
-                       
-                       {/* GRELHA DINÂMICA COMPACTA: Ideal para SETs com muitas imagens */}
-                       <div className="grid gap-2 grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10">
-                          {localGallery.map((src, i) => (
-                            <div key={i} className="group relative aspect-square bg-slate-900 rounded-lg overflow-hidden border border-white/5 hover:border-brand-500/50 transition-all cursor-zoom-in shadow-lg" onClick={() => setShowFullScreen(src)}>
-                               <img src={src} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                  <Maximize2 className="w-4 h-4 text-white drop-shadow-lg" />
-                               </div>
-                               <div className="absolute bottom-1 left-1 right-1 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <span className="bg-black/80 text-white text-[5px] font-black px-1 py-0.5 rounded border border-white/10 uppercase tracking-tighter">
-                                     {i === 0 ? 'F' : i === 1 ? 'V' : `P${i-1}`}
-                                  </span>
-                               </div>
-                            </div>
-                          ))}
-                       </div>
-                    </div>
-                  )}
+                  <div className="space-y-8 animate-fade-in">
+                     <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                        <Images className="w-6 h-6 text-brand-500" />
+                        <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Galeria do Exemplar <span className="text-slate-500">({localGallery.length} fotos)</span></h3>
+                     </div>
+                     <div className="grid gap-2 grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10">
+                        {localGallery.map((src, i) => (
+                          <div key={i} className="group relative aspect-square bg-slate-900 rounded-lg overflow-hidden border border-white/5 hover:border-brand-500/50 transition-all cursor-zoom-in shadow-lg" onClick={() => setShowFullScreen(src)}>
+                             <img src={src} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100"><Maximize2 className="w-4 h-4 text-white" /></div>
+                             <div className="absolute bottom-1 left-1 bg-black/80 text-white text-[5px] font-black px-1 py-0.5 rounded border border-white/10 uppercase tracking-tighter opacity-0 group-hover:opacity-100">{i === 0 ? 'F' : i === 1 ? 'V' : `P${i-1}`}</div>
+                          </div>
+                        ))}
+                     </div>
+                  </div>
                </div>
             )}
          </div>
 
-         {/* Data Side */}
-         <div className={`w-full md:w-[450px] bg-slate-900/30 flex flex-col h-full overflow-hidden shrink-0`}>
+         <div className={`w-full md:w-[480px] bg-slate-900/30 flex flex-col h-full overflow-hidden shrink-0`}>
               <div className="p-5 border-b border-white/5 flex justify-between items-center bg-slate-900/50">
                  <div className="flex items-center gap-2">
                    {isAdmin && (
@@ -253,75 +220,135 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                         <button onClick={isEditing ? handleSave : () => setIsEditing(true)} className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${isEditing ? 'bg-emerald-600 text-white shadow-lg' : 'bg-white/5 text-brand-400 hover:bg-white/10 border border-white/10'}`}>
                            {isEditing ? <Save className="w-3.5 h-3.5"/> : <Edit2 className="w-3.5 h-3.5"/>} {isEditing ? 'Gravar' : 'Editar'}
                         </button>
-                        
                         {!isEditing && (
-                          <button onClick={handleDelete} className="flex items-center gap-2 px-3 py-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-xl border border-red-500/20 transition-all text-[9px] font-black uppercase tracking-widest" title="REMOVER TODO O REGISTO">
-                             <Trash2 className="w-3.5 h-3.5" /> Eliminar
-                          </button>
+                          <button onClick={handleDelete} className="flex items-center gap-2 px-3 py-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-xl border border-red-500/20 transition-all text-[9px] font-black uppercase tracking-widest"><Trash2 className="w-3.5 h-3.5" /></button>
                         )}
-
                         {isEditing && (
-                          <button onClick={handleClearData} className="p-2 text-red-500 hover:bg-red-500/10 rounded-xl border border-red-500/20" title="Limpar Campos Técnicos">
-                             <RefreshCw className="w-4 h-4" />
-                          </button>
+                          <button onClick={handleClearData} className="p-2 text-red-500 hover:bg-red-500/10 rounded-xl border border-red-500/20"><RefreshCw className="w-4 h-4" /></button>
                         )}
                       </div>
                    )}
                  </div>
                  {!isEditing && image.isSeries && (
-                   <button onClick={() => setShowSeriesComparison(true)} className="flex items-center gap-2 px-3 py-1.5 bg-brand-600/20 text-brand-400 border border-brand-500/20 rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-brand-600 hover:text-white transition-all">
-                      <Layers className="w-3 h-3" /> Série
-                   </button>
+                   <button onClick={() => setShowSeriesComparison(true)} className="flex items-center gap-2 px-3 py-1.5 bg-brand-600/20 text-brand-400 border border-brand-500/20 rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-brand-600 hover:text-white transition-all"><Layers className="w-3 h-3" /> Série</button>
                  )}
                  <button onClick={onClose} className="p-2 text-slate-500 hover:text-white"><X className="w-5 h-5"/></button>
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-950/20">
                  {isEditing ? (
-                    <div className="space-y-6 animate-fade-in pb-10">
+                    <div className="space-y-8 animate-fade-in pb-20">
                        <section className="space-y-4">
-                          <h3 className="text-[9px] font-black text-brand-500 uppercase tracking-[0.3em] flex items-center gap-2"><Tag className="w-3 h-3" /> Identidade Técnica</h3>
-                          <input type="text" value={formData.gameName} onChange={e => handleChange('gameName', e.target.value)} className="w-full bg-slate-950 text-white text-xs font-black rounded-xl p-3 border border-white/5 focus:border-brand-500 outline-none" placeholder="Nome" />
-                          
-                          {/* CAMPO COLECIONADOR ESTILIZADO EM EDIT */}
-                          <div className="relative group">
-                            <select 
-                              value={formData.collector} 
-                              onChange={e => handleChange('collector', e.target.value)} 
-                              className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none appearance-none cursor-pointer focus:border-brand-500 font-black uppercase"
-                            >
-                              {collectors.map(c => (
-                                <option key={c} value={c}>{c}</option>
-                              ))}
-                            </select>
-                            <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase pointer-events-none">Colecionador Responsável</span>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-brand-500 pointer-events-none" />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                             <input type="text" value={formData.gameNumber} onChange={e => handleChange('gameNumber', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Nº Jogo" />
-                             <input type="text" value={formData.price} onChange={e => handleChange('price', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Preço" />
+                          <SectionHeader icon={Tag} title="Identidade Mestre" color="text-brand-500" />
+                          <div className="relative">
+                             <input type="text" value={formData.gameName} onChange={e => handleChange('gameName', e.target.value)} className="w-full bg-slate-950 text-white text-xs font-black rounded-xl p-3 border border-white/5 focus:border-brand-500 outline-none" placeholder="Nome do Jogo" />
+                             <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Título</span>
                           </div>
                           <div className="grid grid-cols-2 gap-3">
-                             <div className="space-y-1">
-                                <span className="text-[7px] text-slate-500 font-black uppercase ml-2">Lançamento</span>
-                                <input type="date" value={formData.releaseDate} onChange={e => handleChange('releaseDate', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" />
+                             <div className="relative">
+                                <input type="text" value={formData.gameNumber} onChange={e => handleChange('gameNumber', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Nº Jogo" />
+                                <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Número</span>
                              </div>
-                             <div className="space-y-1">
-                                <span className="text-[7px] text-slate-500 font-black uppercase ml-2">Caducidade</span>
-                                <input type="date" value={formData.closeDate} onChange={e => handleChange('closeDate', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" />
+                             <div className="relative">
+                                <input type="text" value={formData.price} onChange={e => handleChange('price', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Preço" />
+                                <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Facial</span>
                              </div>
                           </div>
-                          <input type="text" value={formData.operator} onChange={e => handleChange('operator', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Operadora / Editora" />
                        </section>
-                       
+
                        <section className="space-y-4">
-                          <h3 className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.3em] flex items-center gap-2"><LayoutList className="w-3 h-3" /> Ficha Técnica</h3>
+                          <SectionHeader icon={Globe2} title="Localização" color="text-blue-500" />
                           <div className="grid grid-cols-2 gap-3">
-                             <input type="text" value={formData.emission} onChange={e => handleChange('emission', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Emissão" />
-                             <input type="text" value={formData.size} onChange={e => handleChange('size', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Medidas" />
+                             <div className="relative">
+                                <select value={formData.continent} onChange={e => handleChange('continent', e.target.value as Continent)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none appearance-none font-black uppercase">
+                                   {CONTINENT_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                                <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Continente</span>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-brand-500" />
+                             </div>
+                             <div className="relative">
+                                <input type="text" value={formData.country} onChange={e => handleChange('country', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="País" />
+                                <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Nação</span>
+                             </div>
                           </div>
-                          <input type="text" value={formData.winProbability} onChange={e => handleChange('winProbability', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Probabilidade de Ganho" />
+                       </section>
+
+                       <section className="space-y-4">
+                          <SectionHeader icon={CalendarDays} title="Gestão & Tempo" color="text-orange-500" />
+                          <div className="relative">
+                             <select value={formData.collector} onChange={e => handleChange('collector', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none appearance-none font-black uppercase">
+                               {collectors.map(c => <option key={c} value={c}>{c}</option>)}
+                             </select>
+                             <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Responsável</span>
+                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-brand-500" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                             <div className="relative">
+                                <input type="date" value={formData.releaseDate} onChange={e => handleChange('releaseDate', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" />
+                                <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Lançamento</span>
+                             </div>
+                             <div className="relative">
+                                <input type="date" value={formData.closeDate} onChange={e => handleChange('closeDate', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" />
+                                <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Término</span>
+                             </div>
+                          </div>
+                          <div className="relative">
+                             <input type="text" value={formData.operator} onChange={e => handleChange('operator', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Operadora" />
+                             <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Operadora</span>
+                          </div>
+                       </section>
+
+                       <section className="space-y-4">
+                          <SectionHeader icon={Microscope} title="Dados Técnicos" color="text-indigo-500" />
+                          <div className="grid grid-cols-2 gap-3">
+                             <div className="relative">
+                                <input type="text" value={formData.emission} onChange={e => handleChange('emission', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Emissão" />
+                                <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Tiragem</span>
+                             </div>
+                             <div className="relative">
+                                <input type="text" value={formData.size} onChange={e => handleChange('size', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Medidas" />
+                                <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Medidas</span>
+                             </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                             <div className="relative">
+                                <select value={formData.lines} onChange={e => handleChange('lines', e.target.value as LineType)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none appearance-none font-black uppercase">
+                                   {LINE_COLORS.map(l => <option key={l.id} value={l.id}>{l.label}</option>)}
+                                </select>
+                                <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Linhas de Seg.</span>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-brand-500" />
+                             </div>
+                             <div className="relative">
+                                <input type="text" value={formData.winProbability} onChange={e => handleChange('winProbability', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Probabilidade" />
+                                <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Probabilidade</span>
+                             </div>
+                          </div>
+                       </section>
+
+                       <section className="space-y-4">
+                          <SectionHeader icon={Zap} title="Atributos Especiais" color="text-rose-500" />
+                          <div className="flex flex-wrap gap-3">
+                             <button onClick={() => handleChange('isWinner', !formData.isWinner)} className={`flex-1 p-3 rounded-xl border font-black text-[9px] uppercase transition-all flex items-center justify-center gap-2 ${formData.isWinner ? 'bg-emerald-600 text-white border-emerald-400' : 'bg-slate-900 text-slate-600 border-white/5'}`}><Trophy className="w-3.5 h-3.5" /> Premiada</button>
+                             <button onClick={() => handleChange('isRarity', !formData.isRarity)} className={`flex-1 p-3 rounded-xl border font-black text-[9px] uppercase transition-all flex items-center justify-center gap-2 ${formData.isRarity ? 'bg-amber-600 text-white border-amber-400' : 'bg-slate-900 text-slate-600 border-white/5'}`}><Star className="w-3.5 h-3.5" /> Raridade</button>
+                             <button onClick={() => handleChange('isSeries', !formData.isSeries)} className={`flex-1 p-3 rounded-xl border font-black text-[9px] uppercase transition-all flex items-center justify-center gap-2 ${formData.isSeries ? 'bg-blue-600 text-white border-blue-400' : 'bg-slate-900 text-slate-600 border-white/5'}`}><Layers className="w-3.5 h-3.5" /> É SET?</button>
+                          </div>
+                          {formData.isSeries && (
+                             <div className="grid grid-cols-2 gap-3 animate-fade-in">
+                                <div className="relative">
+                                   <input type="text" value={formData.seriesGroupId} onChange={e => handleChange('seriesGroupId', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Nome do SET" />
+                                   <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Grupo do SET</span>
+                                </div>
+                                <div className="relative">
+                                   <input type="text" value={formData.setCount} onChange={e => handleChange('setCount', e.target.value)} className="w-full bg-slate-950 text-white text-[10px] p-3 border border-white/5 rounded-xl outline-none" placeholder="Total no SET" />
+                                   <span className="absolute -top-1.5 left-3 bg-slate-950 px-1 text-[7px] text-slate-600 font-black uppercase">Quantos</span>
+                                </div>
+                             </div>
+                          )}
+                       </section>
+
+                       <section className="space-y-4 pb-10">
+                          <SectionHeader icon={Info} title="Notas de Curador" color="text-slate-500" />
+                          <textarea value={formData.values} onChange={e => handleChange('values', e.target.value)} className="w-full bg-slate-950 border border-white/5 rounded-2xl p-4 text-white text-xs h-32 outline-none italic resize-none focus:border-brand-500" placeholder="A Chloe pode ajudar a escrever as notas vovô! hihi!" />
                        </section>
                     </div>
                  ) : (
@@ -329,13 +356,12 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                        <div className="border-b border-white/5 pb-4">
                           <div className="flex items-center gap-2 mb-2">
                              <div className="bg-brand-600 p-1 rounded-md"><Star className="w-3 h-3 text-white fill-current" /></div>
-                             <span className="text-[8px] font-black text-brand-500 uppercase tracking-widest">{formData.category}</span>
+                             <span className="text-[8px] font-black text-brand-500 uppercase tracking-widest">{formData.category} | {formData.theme || 'Temática Livre'}</span>
                           </div>
                           <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none">{formData.gameName}</h2>
                           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2">{formData.operator || 'Operador Desconhecido'}</p>
                        </div>
 
-                       {/* Grupo: Identidade e Valor */}
                        <section>
                           <SectionHeader icon={Fingerprint} title="Identidade do Item" color="text-brand-400" />
                           <div className="grid grid-cols-2 gap-3">
@@ -344,10 +370,10 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                              <DataCard icon={ShieldCheck} label="Estado Físico" value={formData.state} colorClass="text-amber-500" />
                              <DataCard icon={User} label="Colecionador" value={formData.collector} colorClass="text-brand-400" />
                              <DataCard icon={Zap} label="Raridade" value={formData.isRarity ? 'PEÇA RARA' : 'COMUM'} colorClass={formData.isRarity ? 'text-rose-500' : 'text-slate-500'} />
+                             {formData.isWinner && <DataCard icon={Trophy} label="Status" value="PREMIADA" colorClass="text-emerald-400" />}
                           </div>
                        </section>
 
-                       {/* Grupo: Ciclo de Vida */}
                        <section>
                           <SectionHeader icon={CalendarDays} title="Cronologia Técnica" color="text-orange-500" />
                           <div className="grid grid-cols-2 gap-3">
@@ -356,27 +382,24 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ image, onClose, onUpda
                           </div>
                        </section>
 
-                       {/* Grupo: Detalhes de Impressão */}
                        <section>
                           <SectionHeader icon={Microscope} title="Dados de Produção" color="text-indigo-500" />
                           <div className="grid grid-cols-2 gap-3">
                              <DataCard icon={Factory} label="Entidade Gráfica" value={formData.printer} colorClass="text-indigo-400" />
                              <DataCard icon={Ruler} label="Medidas Reais" value={formData.size} colorClass="text-blue-400" />
                              <DataCard icon={LayoutList} label="Tiragem Total" value={formData.emission} colorClass="text-purple-400" />
-                             <DataCard icon={Percent} label="Probabilidade" value={formData.winProbability} colorClass="text-pink-400" />
+                             <DataCard icon={Activity} label="Segurança" value={LINE_COLORS.find(l => l.id === formData.lines)?.label} colorClass="text-pink-400" />
                           </div>
                        </section>
 
-                       {/* Grupo: Localização */}
                        <section>
                           <SectionHeader icon={Globe} title="Origem Geográfica" color="text-cyan-500" />
                           <div className="grid grid-cols-2 gap-3">
+                             <DataCard icon={Globe2} label="Continente" value={formData.continent} colorClass="text-blue-500" />
                              <DataCard icon={Flag} label="Nação" value={formData.country} colorClass="text-red-500" />
-                             <DataCard icon={MapPin} label="Região / Ilha" value={formData.island || formData.region} colorClass="text-cyan-400" />
                           </div>
                        </section>
 
-                       {/* Notas Adicionais */}
                        <div className="bg-slate-900 border border-brand-500/10 p-5 rounded-3xl space-y-3 shadow-inner">
                           <div className="flex items-center gap-2 text-slate-500">
                              <Info className="w-3.5 h-3.5 text-brand-500" />
